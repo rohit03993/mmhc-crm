@@ -93,9 +93,9 @@
                                 </li>
                                 
                                 <li class="nav-item">
-                                    <a class="nav-link text-white" href="{{ route('admin.plans') }}">
-                                        <i class="fas fa-cog me-2"></i>
-                                        Manage Plans
+                                    <a class="nav-link text-white" href="{{ route('admin.page-content.index') }}">
+                                        <i class="fas fa-edit me-2"></i>
+                                        Edit Landing Page
                                     </a>
                                 </li>
                                 

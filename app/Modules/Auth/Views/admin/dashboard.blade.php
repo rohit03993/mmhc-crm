@@ -109,10 +109,10 @@
                         </a>
                     </div>
                     <div class="col-6">
-                        <button class="btn btn-outline-success w-100">
-                            <i class="fas fa-file-medical me-2"></i>
-                            View Reports
-                        </button>
+                        <a href="{{ route('admin.page-content.index') }}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-edit me-2"></i>
+                            Edit Landing Page & Plans
+                        </a>
                     </div>
                     <div class="col-6">
                         <button class="btn btn-outline-info w-100">

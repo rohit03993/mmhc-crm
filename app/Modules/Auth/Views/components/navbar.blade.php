@@ -26,6 +26,12 @@
                                 Manage Users
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('admin.page-content.index') }}">
+                                <i class="fas fa-edit me-1"></i>
+                                Edit Landing Page
+                            </a>
+                        </li>
                     @endif
                 @endauth
             </ul>
