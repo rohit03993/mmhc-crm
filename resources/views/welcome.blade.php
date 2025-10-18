@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMHC - Your Health, Our Priority</title>
+    <title>Med Miracle Health Care - Your Health is Our Priority</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -169,16 +169,16 @@
                     <!-- Trust Indicators -->
                     <div class="flex flex-wrap gap-8 text-white">
                         <div>
-                            <div class="text-3xl font-bold">500+</div>
-                            <div class="text-sm text-gray-200">Patients Served</div>
+                            <div class="text-3xl font-bold">10,000+</div>
+                            <div class="text-sm text-gray-200">Successful Outcomes</div>
                         </div>
                         <div>
-                            <div class="text-3xl font-bold">50+</div>
-                            <div class="text-sm text-gray-200">Expert Caregivers</div>
+                            <div class="text-3xl font-bold">5 Cities</div>
+                            <div class="text-sm text-gray-200">Service Locations</div>
                         </div>
                         <div>
                             <div class="text-3xl font-bold">24/7</div>
-                            <div class="text-sm text-gray-200">Support Available</div>
+                            <div class="text-sm text-gray-200">Home Care Available</div>
                         </div>
                     </div>
                 </div>
@@ -230,10 +230,10 @@
             <!-- Section Header -->
             <div class="text-center mb-16">
                 <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                    Choose Your <span class="gradient-text">Healthcare Plan</span>
+                    Subscription <span class="gradient-text">Plans</span>
                 </h2>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Flexible healthcare plans designed to meet your needs. From basic checkups to comprehensive family care.
+                    Affordable monthly subscription plans for your family's healthcare needs. Starting at just Rs 999/month with 24x7 home nursing care.
                 </p>
             </div>
             
@@ -307,10 +307,10 @@
             <!-- Section Header -->
             <div class="text-center mb-16">
                 <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                    Meet Our <span class="gradient-text">Star Performers</span>
+                    Meet Our <span class="gradient-text">Expert Nursing Team</span>
                 </h2>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Our expert caregivers and nursing staff are dedicated to providing exceptional healthcare services with compassion and expertise.
+                    Trained & verified nurses and attendants providing all-round medical support with compassion and professionalism. हम समझते हैं आपकी हर जरूरत।
                 </p>
             </div>
             
@@ -542,10 +542,10 @@
             <!-- Section Header -->
             <div class="text-center mb-16">
                 <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                    Why Choose <span class="gradient-text">MMHC?</span>
+                    Why Choose <span class="gradient-text">Med Miracle Health Care?</span>
                 </h2>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    We're committed to providing exceptional healthcare services with cutting-edge technology, compassionate care, and unmatched expertise.
+                    India's first largest superhero nursing association providing comprehensive home healthcare with an empathetic approach. We solve problems of expensive equipment, poor medical environment, and incompetent staff.
                 </p>
             </div>
             
@@ -557,64 +557,64 @@
                     <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-blue-200 transition-colors">
                         <i class="fas fa-clock text-blue-600 text-3xl group-hover:scale-110 transition-transform"></i>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">24/7 Availability</h3>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">24x7 Home Health Care</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        Healthcare doesn't wait for business hours. Our team is available around the clock to provide immediate care and support whenever you need it.
+                        Round-the-clock personal nursing staff assistance at your doorstep. Free services with quick & easy booking.
                     </p>
                 </div>
                 
                 <!-- Feature 2 -->
                 <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center group">
                     <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-green-200 transition-colors">
-                        <i class="fas fa-pills text-green-600 text-3xl group-hover:scale-110 transition-transform"></i>
+                        <i class="fas fa-spa text-green-600 text-3xl group-hover:scale-110 transition-transform"></i>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Smart Medication Management</h3>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Body-Mind Relaxation Therapy</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        Never miss a dose again. Our advanced medication tracking system sends reminders and helps manage complex medication schedules.
+                        Unique holistic approach with advanced wellness equipment including full body massager, foot reflexology, brain & heart function monitoring at home.
                     </p>
                 </div>
                 
                 <!-- Feature 3 -->
                 <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center group">
                     <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-200 transition-colors">
-                        <i class="fas fa-mobile-alt text-purple-600 text-3xl group-hover:scale-110 transition-transform"></i>
+                        <i class="fas fa-user-nurse text-purple-600 text-3xl group-hover:scale-110 transition-transform"></i>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Easy Appointment Booking</h3>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Expert Nursing Staff</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        Book appointments with just a few clicks. Our intuitive platform makes scheduling healthcare visits simple and convenient.
+                        Well-experienced, trained & verified nursing staff for critical patients who understand psychological needs and provide all-round medical support.
                     </p>
                 </div>
                 
                 <!-- Feature 4 -->
                 <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center group">
                     <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-yellow-200 transition-colors">
-                        <i class="fas fa-graduation-cap text-yellow-600 text-3xl group-hover:scale-110 transition-transform"></i>
+                        <i class="fas fa-hands-helping text-yellow-600 text-3xl group-hover:scale-110 transition-transform"></i>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Certified Professionals</h3>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Professional Caretaker Services</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        All our caregivers are licensed, certified, and continuously trained to provide the highest quality healthcare services.
+                        Compassionate caretaker services at home with an empathetic approach, ensuring personal attention to every detail of patient care.
                     </p>
                 </div>
                 
                 <!-- Feature 5 -->
                 <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center group">
                     <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-red-200 transition-colors">
-                        <i class="fas fa-rupee-sign text-red-600 text-3xl group-hover:scale-110 transition-transform"></i>
+                        <i class="fas fa-baby text-red-600 text-3xl group-hover:scale-110 transition-transform"></i>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Affordable Plans</h3>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Special Care Programs</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        Quality healthcare shouldn't break the bank. Our flexible pricing plans make professional healthcare accessible to everyone.
+                        Dedicated support for pregnant ladies & newborns, plus regular check-ups and specialized care for senior citizens.
                     </p>
                 </div>
                 
                 <!-- Feature 6 -->
                 <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center group">
                     <div class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-orange-200 transition-colors">
-                        <i class="fas fa-ambulance text-orange-600 text-3xl group-hover:scale-110 transition-transform"></i>
+                        <i class="fas fa-rupee-sign text-orange-600 text-3xl group-hover:scale-110 transition-transform"></i>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Emergency Support</h3>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Affordable Subscriptions</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        When emergencies strike, we're here. Our rapid response team provides immediate medical assistance and coordination.
+                        Starting at just Rs 999/month. All-inclusive subscription plans with no expensive equipment costs - everything provided by us.
                     </p>
                 </div>
                 
@@ -624,34 +624,34 @@
             <div class="mt-20 bg-white rounded-2xl shadow-lg p-8">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
                     <div>
-                        <div class="text-4xl md:text-5xl font-bold text-blue-600 mb-2">500+</div>
-                        <div class="text-gray-600 font-semibold">Patients Served</div>
+                        <div class="text-4xl md:text-5xl font-bold text-blue-600 mb-2">10,000+</div>
+                        <div class="text-gray-600 font-semibold">Successful Outcomes</div>
                     </div>
                     <div>
-                        <div class="text-4xl md:text-5xl font-bold text-green-600 mb-2">50+</div>
-                        <div class="text-gray-600 font-semibold">Expert Caregivers</div>
+                        <div class="text-4xl md:text-5xl font-bold text-green-600 mb-2">₹999</div>
+                        <div class="text-gray-600 font-semibold">Starting Plan/Month</div>
                     </div>
                     <div>
-                        <div class="text-4xl md:text-5xl font-bold text-purple-600 mb-2">99%</div>
-                        <div class="text-gray-600 font-semibold">Patient Satisfaction</div>
+                        <div class="text-4xl md:text-5xl font-bold text-purple-600 mb-2">5 Cities</div>
+                        <div class="text-gray-600 font-semibold">Service Locations</div>
                     </div>
                     <div>
                         <div class="text-4xl md:text-5xl font-bold text-orange-600 mb-2">24/7</div>
-                        <div class="text-gray-600 font-semibold">Support Available</div>
+                        <div class="text-gray-600 font-semibold">Home Care Available</div>
                     </div>
                 </div>
             </div>
             
             <!-- Bottom CTA -->
             <div class="text-center mt-12">
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">Ready to Experience Better Healthcare?</h3>
-                <p class="text-gray-600 mb-8">Join thousands of satisfied patients who trust MMHC for their healthcare needs.</p>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">Ready to Experience Affordable Home Healthcare?</h3>
+                <p class="text-gray-600 mb-8">Join 10,000+ satisfied patients who trust Med Miracle Health Care. Starting at just Rs 999/month.</p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
                     <a href="{{ route('auth.register') }}?role=patient" class="bg-gradient-to-r from-blue-600 to-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition">
-                        Get Started Today
+                        Subscribe Now
                     </a>
                     <a href="#contact" class="border-2 border-blue-600 text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
-                        Learn More
+                        Contact Us
                     </a>
                 </div>
             </div>
@@ -664,10 +664,10 @@
             <!-- Section Header -->
             <div class="text-center mb-16">
                 <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                    About <span class="gradient-text">MMHC</span>
+                    About <span class="gradient-text">Med Miracle Health Care</span>
                 </h2>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Founded with a vision to revolutionize healthcare delivery, MMHC has been at the forefront of providing compassionate, accessible, and innovative healthcare services.
+                    Founded by Mantu Kumar with a vision to make quality healthcare accessible and affordable. India's newest home nursing subscription service with 10,000+ successful patient outcomes.
                 </p>
             </div>
             
@@ -678,13 +678,13 @@
                     <h3 class="text-3xl font-bold text-gray-800 mb-6">Our Story</h3>
                     <div class="space-y-6 text-gray-600 leading-relaxed">
                         <p>
-                            MMHC (Modern Medical Healthcare Center) was founded in 2018 with a simple yet powerful mission: to make quality healthcare accessible to everyone, everywhere. What started as a small team of dedicated healthcare professionals has grown into a comprehensive healthcare platform serving thousands of patients across the region.
+                            Meet our founder, Mantu Kumar, the visionary behind Med Miracle Health Care. With a deep commitment to holistic well-being, Mantu Kumar has built the company into a leader in personalized home healthcare.
                         </p>
                         <p>
-                            Our journey began when our founders, experienced healthcare professionals, recognized the challenges patients face in accessing timely, affordable, and quality healthcare services. They envisioned a platform that would bridge the gap between patients and caregivers while ensuring the highest standards of medical care.
+                            We at Med Miracle Healthcare are committed to making quality healthcare accessible and affordable. What sets us apart is our unique subscription model - starting at just Rs 999/month - that provides comprehensive nursing care at home, regular checkups, and body-mind relaxation sessions.
                         </p>
                         <p>
-                            Today, MMHC stands as a testament to innovation in healthcare delivery, combining cutting-edge technology with human compassion to create a healthcare experience that puts patients at the center of everything we do.
+                            His dedication to providing compassionate, evidence-based care has led to over 10,000 successful patient outcomes, establishing Med Miracle Health Care as a trusted name across Patna, Ranchi, Bhopal, Noida, and Gurgaon. We're proud to be India's first largest superhero nursing association.
                         </p>
                     </div>
                 </div>
@@ -707,7 +707,7 @@
                     </div>
                     <h3 class="text-2xl font-bold text-gray-800 mb-4">Our Mission</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        To provide accessible, affordable, and high-quality healthcare services through innovative technology and compassionate care, ensuring that every patient receives the medical attention they deserve, when they need it most.
+                        We at Med Miracle Healthcare are committed to making quality healthcare accessible and affordable through our monthly subscription plans. We provide nursing care at home, regular checkups, mind-body relaxation sessions and much more. Our mission is to solve the problems of non-empathetic healthcare, expensive medical equipment, poor medical environment, and incompetent staff by providing personalized, compassionate care at your doorstep.
                     </p>
                 </div>
                 
@@ -718,7 +718,7 @@
                     </div>
                     <h3 class="text-2xl font-bold text-gray-800 mb-4">Our Vision</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        To become the leading healthcare platform that transforms how people access and experience healthcare, creating a world where quality medical care is available to everyone, regardless of their location or circumstances.
+                        To become India's leading home healthcare provider, expanding our services beyond Patna, Ranchi, Bhopal, Noida, and Gurgaon to more cities. We envision a future where every family has access to affordable, professional healthcare services at home, with trained nursing staff who understand both the medical and psychological needs of patients.
                     </p>
                 </div>
             </div>
@@ -758,101 +758,84 @@
                 </div>
             </div>
             
-            <!-- Timeline -->
+            <!-- Awards & Achievements -->
             <div class="mb-20">
-                <h3 class="text-3xl font-bold text-gray-800 text-center mb-12">Our Journey</h3>
-                <div class="relative">
-                    <!-- Timeline Line -->
-                    <div class="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-blue-500 to-green-500"></div>
+                <h3 class="text-3xl font-bold text-gray-800 text-center mb-12">Awards & Recognition</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Award 1 -->
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
+                        <div class="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-trophy text-white text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">Indian Icon of the Year</h4>
+                        <p class="text-gray-600 text-sm">Recognized for outstanding contribution to healthcare</p>
+                    </div>
                     
-                    <!-- Timeline Items -->
-                    <div class="space-y-12">
-                        <!-- 2018 -->
-                        <div class="flex items-center">
-                            <div class="w-1/2 pr-8 text-right">
-                                <div class="bg-white rounded-lg shadow-lg p-6">
-                                    <h4 class="text-xl font-bold text-gray-800 mb-2">2018 - Foundation</h4>
-                                    <p class="text-gray-600">MMHC was founded with a vision to revolutionize healthcare delivery through technology and compassion.</p>
-                                </div>
-                            </div>
-                            <div class="w-8 h-8 bg-blue-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center relative z-10">
-                                <span class="text-white text-xs font-bold">18</span>
-                            </div>
-                            <div class="w-1/2 pl-8"></div>
+                    <!-- Award 2 -->
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
+                        <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-award text-white text-2xl"></i>
                         </div>
-                        
-                        <!-- 2020 -->
-                        <div class="flex items-center">
-                            <div class="w-1/2 pr-8"></div>
-                            <div class="w-8 h-8 bg-green-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center relative z-10">
-                                <span class="text-white text-xs font-bold">20</span>
-                            </div>
-                            <div class="w-1/2 pl-8">
-                                <div class="bg-white rounded-lg shadow-lg p-6">
-                                    <h4 class="text-xl font-bold text-gray-800 mb-2">2020 - Digital Platform</h4>
-                                    <p class="text-gray-600">Launched our comprehensive digital healthcare platform, connecting patients with caregivers seamlessly.</p>
-                                </div>
-                            </div>
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">India Excellence Award</h4>
+                        <p class="text-gray-600 text-sm">Fastest growing provider in healthcare segment</p>
+                    </div>
+                    
+                    <!-- Award 3 -->
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
+                        <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-globe text-white text-2xl"></i>
                         </div>
-                        
-                        <!-- 2022 -->
-                        <div class="flex items-center">
-                            <div class="w-1/2 pr-8 text-right">
-                                <div class="bg-white rounded-lg shadow-lg p-6">
-                                    <h4 class="text-xl font-bold text-gray-800 mb-2">2022 - Expansion</h4>
-                                    <p class="text-gray-600">Expanded our services to cover multiple cities and reached 1000+ satisfied patients.</p>
-                                </div>
-                            </div>
-                            <div class="w-8 h-8 bg-purple-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center relative z-10">
-                                <span class="text-white text-xs font-bold">22</span>
-                            </div>
-                            <div class="w-1/2 pl-8"></div>
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">International Excellence Award</h4>
+                        <p class="text-gray-600 text-sm">Powered by ACS for global healthcare standards</p>
+                    </div>
+                    
+                    <!-- Award 4 -->
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
+                        <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-star text-white text-2xl"></i>
                         </div>
-                        
-                        <!-- 2024 -->
-                        <div class="flex items-center">
-                            <div class="w-1/2 pr-8"></div>
-                            <div class="w-8 h-8 bg-orange-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center relative z-10">
-                                <span class="text-white text-xs font-bold">24</span>
-                            </div>
-                            <div class="w-1/2 pl-8">
-                                <div class="bg-white rounded-lg shadow-lg p-6">
-                                    <h4 class="text-xl font-bold text-gray-800 mb-2">2024 - Innovation</h4>
-                                    <p class="text-gray-600">Introduced AI-powered health monitoring and 24/7 emergency response services.</p>
-                                </div>
-                            </div>
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">Best Home Nursing Services</h4>
+                        <p class="text-gray-600 text-sm">Leading in home healthcare delivery</p>
+                    </div>
+                    
+                    <!-- Award 5 -->
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
+                        <div class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-heartbeat text-white text-2xl"></i>
                         </div>
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">Global Healthcare & Wellness Award</h4>
+                        <p class="text-gray-600 text-sm">Excellence in holistic healthcare approach</p>
+                    </div>
+                    
+                    <!-- Milestone -->
+                    <div class="bg-gradient-to-br from-blue-500 to-green-500 rounded-lg shadow-lg p-6 text-center hover-lift text-white">
+                        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-users text-blue-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold mb-2">10,000+ Success Stories</h4>
+                        <p class="text-sm">Successful patient outcomes across 5 cities</p>
                     </div>
                 </div>
             </div>
             
-            <!-- Team Section -->
+            <!-- Founder Section -->
             <div class="text-center">
-                <h3 class="text-3xl font-bold text-gray-800 mb-12">Meet Our Leadership Team</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-3xl font-bold text-gray-800 mb-12">Meet Our Founder</h3>
+                <div class="max-w-2xl mx-auto">
+                    <div class="bg-gradient-to-br from-blue-50 to-green-50 rounded-2xl shadow-xl p-8">
                         <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&h=200&fit=crop&crop=face" 
-                             alt="Dr. Rajesh Kumar" 
-                             class="w-24 h-24 rounded-full mx-auto mb-4 object-cover">
-                        <h4 class="text-xl font-bold text-gray-800 mb-2">Dr. Rajesh Kumar</h4>
-                        <p class="text-blue-600 font-semibold mb-2">Founder & CEO</p>
-                        <p class="text-gray-600 text-sm">15+ years in healthcare management and innovation</p>
-                    </div>
-                    <div class="bg-white rounded-2xl shadow-lg p-6">
-                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&h=200&fit=crop&crop=face" 
-                             alt="Dr. Priya Sharma" 
-                             class="w-24 h-24 rounded-full mx-auto mb-4 object-cover">
-                        <h4 class="text-xl font-bold text-gray-800 mb-2">Dr. Priya Sharma</h4>
-                        <p class="text-blue-600 font-semibold mb-2">Chief Medical Officer</p>
-                        <p class="text-gray-600 text-sm">Expert in patient care and medical technology</p>
-                    </div>
-                    <div class="bg-white rounded-2xl shadow-lg p-6">
-                        <img src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=200&h=200&fit=crop&crop=face" 
-                             alt="Amit Singh" 
-                             class="w-24 h-24 rounded-full mx-auto mb-4 object-cover">
-                        <h4 class="text-xl font-bold text-gray-800 mb-2">Amit Singh</h4>
-                        <p class="text-blue-600 font-semibold mb-2">CTO</p>
-                        <p class="text-gray-600 text-sm">Leading our technology and digital transformation</p>
+                             alt="Mantu Kumar - Founder" 
+                             class="w-32 h-32 rounded-full mx-auto mb-6 object-cover border-4 border-white shadow-lg">
+                        <h4 class="text-3xl font-bold text-gray-800 mb-3">Mantu Kumar</h4>
+                        <p class="text-blue-600 font-semibold text-xl mb-4">Founder & Visionary</p>
+                        <p class="text-gray-700 leading-relaxed mb-6">
+                            With a deep commitment to holistic well-being, Mantu Kumar has built Med Miracle Health Care into a leader in personalized home healthcare. His dedication to providing compassionate, evidence-based care has led to over <strong>10,000 successful patient outcomes</strong>, establishing MMHC as a trusted name in the industry.
+                        </p>
+                        <div class="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
+                            <span class="bg-white px-4 py-2 rounded-full shadow">🏆 Multiple Award Winner</span>
+                            <span class="bg-white px-4 py-2 rounded-full shadow">💼 BNI Member</span>
+                            <span class="bg-white px-4 py-2 rounded-full shadow">🏥 NACH Powered</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1059,16 +1042,16 @@
             <!-- Stats Row -->
             <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                 <div class="bg-white rounded-2xl shadow-lg p-6">
-                    <div class="text-3xl font-bold text-blue-600 mb-2">4.9/5</div>
-                    <div class="text-gray-600 font-semibold">Average Rating</div>
+                    <div class="text-3xl font-bold text-blue-600 mb-2">10,000+</div>
+                    <div class="text-gray-600 font-semibold">Successful Outcomes</div>
                 </div>
                 <div class="bg-white rounded-2xl shadow-lg p-6">
-                    <div class="text-3xl font-bold text-green-600 mb-2">98%</div>
-                    <div class="text-gray-600 font-semibold">Patient Satisfaction</div>
+                    <div class="text-3xl font-bold text-green-600 mb-2">24x7</div>
+                    <div class="text-gray-600 font-semibold">Home Care Available</div>
                 </div>
                 <div class="bg-white rounded-2xl shadow-lg p-6">
-                    <div class="text-3xl font-bold text-purple-600 mb-2">500+</div>
-                    <div class="text-gray-600 font-semibold">Happy Patients</div>
+                    <div class="text-3xl font-bold text-purple-600 mb-2">5 Cities</div>
+                    <div class="text-gray-600 font-semibold">Service Locations</div>
                 </div>
             </div>
             
@@ -1166,8 +1149,8 @@
                                     <i class="fas fa-map-marker-alt text-blue-600"></i>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-gray-800 mb-1">Address</h4>
-                                    <p class="text-gray-600">123 Healthcare Street<br>Medical District, Mumbai 400001<br>Maharashtra, India</p>
+                                    <h4 class="font-semibold text-gray-800 mb-1">Corporate Office</h4>
+                                    <p class="text-gray-600">Udgam Incubation Centre, Rohit Nagar<br>Phase 1 (Near Surya Children School)<br>Bhopal 462023, Madhya Pradesh</p>
                                 </div>
                             </div>
                             
@@ -1176,8 +1159,8 @@
                                     <i class="fas fa-phone text-green-600"></i>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-gray-800 mb-1">Phone</h4>
-                                    <p class="text-gray-600">+91 98765 43210<br>+91 98765 43211 (Emergency)</p>
+                                    <h4 class="font-semibold text-gray-800 mb-1">Phone (24x7)</h4>
+                                    <p class="text-gray-600">9113311256<br>www.themmhc.com</p>
                                 </div>
                             </div>
                             
@@ -1187,17 +1170,17 @@
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-gray-800 mb-1">Email</h4>
-                                    <p class="text-gray-600">info@themmhc.com<br>support@themmhc.com</p>
+                                    <p class="text-gray-600">Care@themmhc.com</p>
                                 </div>
                             </div>
                             
                             <div class="flex items-start">
                                 <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-clock text-orange-600"></i>
+                                    <i class="fas fa-map-marked-alt text-orange-600"></i>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-gray-800 mb-1">Business Hours</h4>
-                                    <p class="text-gray-600">Monday - Friday: 8:00 AM - 8:00 PM<br>Saturday: 9:00 AM - 6:00 PM<br>Sunday: Emergency Services Only</p>
+                                    <h4 class="font-semibold text-gray-800 mb-1">Service Locations</h4>
+                                    <p class="text-gray-600">Patna | Ranchi | Bhopal<br>Noida | Gurgaon</p>
                                 </div>
                             </div>
                         </div>
@@ -1256,7 +1239,7 @@
                         <span class="text-2xl font-bold">MMHC</span>
                     </div>
                     <p class="text-gray-300 leading-relaxed mb-6">
-                        Modern Medical Healthcare Center - Your trusted partner in healthcare. Providing compassionate, accessible, and innovative healthcare services to communities across India.
+                        Med Miracle Health Care - India's newest home nursing subscription service dedicated to making quality healthcare accessible and affordable. With 24x7 care, expert nursing staff, and body-mind relaxation therapy at your doorstep. Founded by Mantu Kumar.
                     </p>
                     <div class="flex space-x-4">
                         <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition">
@@ -1278,12 +1261,12 @@
                 <div>
                     <h3 class="text-xl font-bold mb-6">Our Services</h3>
                     <ul class="space-y-3">
-                        <li><a href="#plans" class="text-gray-300 hover:text-white transition">Healthcare Plans</a></li>
-                        <li><a href="#star-performers" class="text-gray-300 hover:text-white transition">Caregiver Services</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white transition">Emergency Care</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white transition">Telemedicine</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white transition">Medication Management</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white transition">Health Monitoring</a></li>
+                        <li><a href="#plans" class="text-gray-300 hover:text-white transition">24x7 Home Health Care</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white transition">Body-Mind Relaxation Therapy</a></li>
+                        <li><a href="#star-performers" class="text-gray-300 hover:text-white transition">Expert Nursing Staff</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white transition">Caretaker Services at Home</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white transition">Special Care for Pregnant Ladies & Newborns</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white transition">Regular Check-ups for Senior Citizens</a></li>
                     </ul>
                 </div>
                 
@@ -1307,18 +1290,18 @@
                         <div class="flex items-start">
                             <i class="fas fa-map-marker-alt text-blue-500 mr-3 mt-1"></i>
                             <div>
-                                <p class="text-gray-300">123 Healthcare Street</p>
-                                <p class="text-gray-300">Medical District, Mumbai 400001</p>
-                                <p class="text-gray-300">Maharashtra, India</p>
+                                <p class="text-gray-300">Udgam Incubation Centre</p>
+                                <p class="text-gray-300">Rohit Nagar, Phase 1, Bhopal 462023</p>
+                                <p class="text-gray-300">Madhya Pradesh, India</p>
                             </div>
                         </div>
                         <div class="flex items-center">
                             <i class="fas fa-phone text-green-500 mr-3"></i>
-                            <p class="text-gray-300">+91 98765 43210</p>
+                            <p class="text-gray-300">9113311256 (24x7)</p>
                         </div>
                         <div class="flex items-center">
                             <i class="fas fa-envelope text-purple-500 mr-3"></i>
-                            <p class="text-gray-300">info@themmhc.com</p>
+                            <p class="text-gray-300">Care@themmhc.com</p>
                         </div>
                     </div>
                 </div>
@@ -1328,7 +1311,7 @@
             <div class="border-t border-gray-800 pt-8">
                 <div class="flex flex-col md:flex-row justify-between items-center">
                     <div class="text-gray-400 text-sm mb-4 md:mb-0">
-                        © 2024 MMHC (Modern Medical Healthcare Center). All rights reserved.
+                        © 2024 Med Miracle Health Care (MMHC). All rights reserved. | Founded by Mantu Kumar
                     </div>
                     <div class="flex space-x-6 text-sm">
                         <a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a>
