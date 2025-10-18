@@ -81,11 +81,25 @@
             <div class="flex justify-between items-center h-20">
                 <!-- Logo -->
                 <div class="flex items-center">
-                    <a href="#" class="flex items-center space-x-2">
-                        <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center">
-                            <i class="fas fa-heartbeat text-white text-2xl"></i>
+                    <a href="#" class="flex items-center space-x-3">
+                        <!-- Med Miracle Logo -->
+                        <div class="flex items-center space-x-2">
+                            <!-- Green Heart + Blue Pills Logo -->
+                            <div class="relative w-12 h-12">
+                                <!-- Green Heart -->
+                                <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-green-500 rounded-full"></div>
+                                <!-- Blue Pills Crossing -->
+                                <div class="absolute bottom-2 left-1 w-6 h-3 bg-blue-600 rounded-full transform rotate-45"></div>
+                                <div class="absolute bottom-2 right-1 w-6 h-3 bg-blue-600 rounded-full transform -rotate-45"></div>
+                            </div>
+                            <!-- Text -->
+                            <div class="flex flex-col">
+                                <span class="text-2xl font-bold text-gray-800 leading-none">
+                                    <span class="text-2xl">M</span><span class="text-xl">e</span><span class="text-2xl">D</span>
+                                </span>
+                                <span class="text-xs text-gray-600 font-medium">Miracle Health Care</span>
+                            </div>
                         </div>
-                        <span class="text-2xl font-bold gradient-text">MMHC</span>
                     </a>
                 </div>
                 
@@ -1233,10 +1247,24 @@
                 <!-- Company Info -->
                 <div>
                     <div class="flex items-center mb-6">
-                        <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-500 rounded-lg flex items-center justify-center mr-3">
-                            <i class="fas fa-heartbeat text-white text-xl"></i>
+                        <!-- Med Miracle Logo -->
+                        <div class="flex items-center space-x-2 mr-3">
+                            <!-- Green Heart + Blue Pills Logo -->
+                            <div class="relative w-10 h-10">
+                                <!-- Green Heart -->
+                                <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-green-500 rounded-full"></div>
+                                <!-- Blue Pills Crossing -->
+                                <div class="absolute bottom-1 left-0 w-5 h-2 bg-blue-600 rounded-full transform rotate-45"></div>
+                                <div class="absolute bottom-1 right-0 w-5 h-2 bg-blue-600 rounded-full transform -rotate-45"></div>
+                            </div>
+                            <!-- Text -->
+                            <div class="flex flex-col">
+                                <span class="text-xl font-bold text-white leading-none">
+                                    <span class="text-xl">M</span><span class="text-lg">e</span><span class="text-xl">D</span>
+                                </span>
+                                <span class="text-xs text-gray-300 font-medium">Miracle Health Care</span>
+                            </div>
                         </div>
-                        <span class="text-2xl font-bold">MMHC</span>
                     </div>
                     <p class="text-gray-300 leading-relaxed mb-6">
                         Med Miracle Health Care - India's newest home nursing subscription service dedicated to making quality healthcare accessible and affordable. With 24x7 care, expert nursing staff, and body-mind relaxation therapy at your doorstep. Founded by Mantu Kumar.
