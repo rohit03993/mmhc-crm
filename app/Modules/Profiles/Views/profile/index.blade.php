@@ -72,7 +72,7 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label text-muted">Date of Birth</label>
-                        <p class="fw-bold">{{ $user->date_of_birth ? $user->date_of_birth->format('M d, Y') : 'Not provided' }}</p>
+                        <p class="fw-bold">{{ $user->getFormattedDateOfBirth() }}</p>
                     </div>
                     <div class="col-12 mb-3">
                         <label class="form-label text-muted">Address</label>

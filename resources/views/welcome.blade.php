@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Med Miracle Health Care - Your Health is Our Priority</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -82,23 +87,12 @@
                 <!-- Logo -->
                 <div class="flex items-center">
                     <a href="#" class="flex items-center space-x-3">
-                        <!-- Med Miracle Logo -->
-                        <div class="flex items-center space-x-2">
-                            <!-- Green Heart + Blue Pills Logo -->
-                            <div class="relative w-12 h-12">
-                                <!-- Green Heart -->
-                                <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-green-500 rounded-full"></div>
-                                <!-- Blue Pills Crossing -->
-                                <div class="absolute bottom-2 left-1 w-6 h-3 bg-blue-600 rounded-full transform rotate-45"></div>
-                                <div class="absolute bottom-2 right-1 w-6 h-3 bg-blue-600 rounded-full transform -rotate-45"></div>
-                            </div>
-                            <!-- Text -->
-                            <div class="flex flex-col">
-                                <span class="text-2xl font-bold text-gray-800 leading-none">
-                                    <span class="text-2xl">M</span><span class="text-xl">e</span><span class="text-2xl">D</span>
-                                </span>
-                                <span class="text-xs text-gray-600 font-medium">Miracle Health Care</span>
-                            </div>
+                        <!-- MeD Text Logo -->
+                        <div class="flex flex-col">
+                            <span class="text-3xl font-bold text-gray-800 leading-none">
+                                <span class="text-3xl">M</span><span class="text-2xl italic">e</span><span class="text-3xl">D</span>
+                            </span>
+                            <span class="text-sm text-gray-600 font-medium">Miracle Health Care</span>
                         </div>
                     </a>
                 </div>
@@ -1240,112 +1234,17 @@
     </section>
 
     <!-- FOOTER -->
-    <footer class="bg-gray-900 text-white py-16">
+    <footer class="bg-gray-900 text-white py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Footer Content -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-                <!-- Company Info -->
-                <div>
-                    <div class="flex items-center mb-6">
-                        <!-- Med Miracle Logo -->
-                        <div class="flex items-center space-x-2 mr-3">
-                            <!-- Green Heart + Blue Pills Logo -->
-                            <div class="relative w-10 h-10">
-                                <!-- Green Heart -->
-                                <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-green-500 rounded-full"></div>
-                                <!-- Blue Pills Crossing -->
-                                <div class="absolute bottom-1 left-0 w-5 h-2 bg-blue-600 rounded-full transform rotate-45"></div>
-                                <div class="absolute bottom-1 right-0 w-5 h-2 bg-blue-600 rounded-full transform -rotate-45"></div>
-                            </div>
-                            <!-- Text -->
-                            <div class="flex flex-col">
-                                <span class="text-xl font-bold text-white leading-none">
-                                    <span class="text-xl">M</span><span class="text-lg">e</span><span class="text-xl">D</span>
-                                </span>
-                                <span class="text-xs text-gray-300 font-medium">Miracle Health Care</span>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-gray-300 leading-relaxed mb-6">
-                        Med Miracle Health Care - India's newest home nursing subscription service dedicated to making quality healthcare accessible and affordable. With 24x7 care, expert nursing staff, and body-mind relaxation therapy at your doorstep. Founded by Mantu Kumar.
-                    </p>
-                    <div class="flex space-x-4">
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-400 transition">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-pink-600 transition">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-800 transition">
-                            <i class="fab fa-linkedin-in"></i>
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Services -->
-                <div>
-                    <h3 class="text-xl font-bold mb-6">Our Services</h3>
-                    <ul class="space-y-3">
-                        <li><a href="#plans" class="text-gray-300 hover:text-white transition">24x7 Home Health Care</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white transition">Body-Mind Relaxation Therapy</a></li>
-                        <li><a href="#star-performers" class="text-gray-300 hover:text-white transition">Expert Nursing Staff</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white transition">Caretaker Services at Home</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white transition">Special Care for Pregnant Ladies & Newborns</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white transition">Regular Check-ups for Senior Citizens</a></li>
-                    </ul>
-                </div>
-                
-                <!-- Quick Links -->
-                <div>
-                    <h3 class="text-xl font-bold mb-6">Quick Links</h3>
-                    <ul class="space-y-3">
-                        <li><a href="#about" class="text-gray-300 hover:text-white transition">About Us</a></li>
-                        <li><a href="#testimonials" class="text-gray-300 hover:text-white transition">Testimonials</a></li>
-                        <li><a href="{{ route('auth.login') }}" class="text-gray-300 hover:text-white transition">Patient Login</a></li>
-                        <li><a href="{{ route('auth.register') }}?role=patient" class="text-gray-300 hover:text-white transition">Patient Registration</a></li>
-                        <li><a href="{{ route('auth.register') }}?role=caregiver" class="text-gray-300 hover:text-white transition">Caregiver Registration</a></li>
-                        <li><a href="#contact" class="text-gray-300 hover:text-white transition">Contact Us</a></li>
-                    </ul>
-                </div>
-                
-                <!-- Contact Info -->
-                <div>
-                    <h3 class="text-xl font-bold mb-6">Contact Info</h3>
-                    <div class="space-y-4">
-                        <div class="flex items-start">
-                            <i class="fas fa-map-marker-alt text-blue-500 mr-3 mt-1"></i>
-                            <div>
-                                <p class="text-gray-300">Udgam Incubation Centre</p>
-                                <p class="text-gray-300">Rohit Nagar, Phase 1, Bhopal 462023</p>
-                                <p class="text-gray-300">Madhya Pradesh, India</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center">
-                            <i class="fas fa-phone text-green-500 mr-3"></i>
-                            <p class="text-gray-300">9113311256 (24x7)</p>
-                        </div>
-                        <div class="flex items-center">
-                            <i class="fas fa-envelope text-purple-500 mr-3"></i>
-                            <p class="text-gray-300">Care@themmhc.com</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
             <!-- Bottom Bar -->
-            <div class="border-t border-gray-800 pt-8">
-                <div class="flex flex-col md:flex-row justify-between items-center">
-                    <div class="text-gray-400 text-sm mb-4 md:mb-0">
-                        © 2024 Med Miracle Health Care (MMHC). All rights reserved. | Founded by Mantu Kumar
-                    </div>
-                    <div class="flex space-x-6 text-sm">
-                        <a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a>
-                        <a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a>
-                        <a href="#" class="text-gray-400 hover:text-white transition">Cookie Policy</a>
-                    </div>
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="text-gray-400 text-sm mb-4 md:mb-0">
+                    © 2025 Med Miracle Health Care (MMHC). All rights reserved. | Founded by Mantu Kumar
+                </div>
+                <div class="flex space-x-6 text-sm">
+                    <a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a>
+                    <a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a>
+                    <a href="#" class="text-gray-400 hover:text-white transition">Cookie Policy</a>
                 </div>
             </div>
         </div>

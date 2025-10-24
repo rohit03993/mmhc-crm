@@ -22,6 +22,9 @@ class User extends Authenticatable
         'unique_id',
         'address',
         'date_of_birth',
+        'qualification',
+        'experience',
+        'documents',
         'is_active',
         'email_verified_at',
     ];
@@ -39,8 +42,10 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'date_of_birth' => 'datetime',
         'password' => 'hashed',
         'is_active' => 'boolean',
+        'documents' => 'array',
     ];
 
     /**
@@ -49,6 +54,14 @@ class User extends Authenticatable
     public function isAdmin()
     {
         return $this->role === 'admin';
+    }
+
+    /**
+     * Get formatted date of birth
+     */
+    public function getFormattedDateOfBirth()
+    {
+        return $this->date_of_birth ? $this->date_of_birth->format('M d, Y') : 'Not provided';
     }
 
     /**

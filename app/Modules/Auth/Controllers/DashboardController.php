@@ -61,9 +61,9 @@ class DashboardController extends Controller
     protected function getAdminStats()
     {
         $stats = [
-            'total_users' => \App\Modules\Auth\Models\User::count(),
-            'total_caregivers' => \App\Modules\Auth\Models\User::where('role', 'caregiver')->count(),
-            'total_patients' => \App\Modules\Auth\Models\User::where('role', 'patient')->count(),
+            'total_users' => \App\Models\Core\User::count(),
+            'total_caregivers' => \App\Models\Core\User::where('role', 'caregiver')->count(),
+            'total_patients' => \App\Models\Core\User::where('role', 'patient')->count(),
             'pending_approvals' => 0, // Will be implemented in other modules
         ];
 

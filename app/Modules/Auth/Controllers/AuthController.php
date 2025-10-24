@@ -3,7 +3,7 @@
 namespace App\Modules\Auth\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Auth\Models\User;
+use App\Models\Core\User;
 use App\Modules\Auth\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -70,7 +70,7 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
 
-        return view('auth::register');
+        return view('auth::register-tabbed');
     }
 
     /**
@@ -81,9 +81,19 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'phone' => 'required|string|max:20|unique:users',
+            'phone' => 'required|string|regex:/^[0-9]{10}$/|unique:users',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:caregiver,patient',
+            'date_of_birth' => 'nullable|date',
+            'address' => 'nullable|string|max:500',
+            'qualification' => 'nullable|string|max:255',
+            'experience' => 'nullable|string|max:50',
+            'documents' => 'nullable|array',
+            'documents.*' => 'file|mimes:pdf,jpg,jpeg,png|max:2048',
+        ], [
+            'email.unique' => 'This email address is already registered.',
+            'phone.regex' => 'Phone number must be exactly 10 digits.',
+            'phone.unique' => 'This phone number is already registered.',
         ]);
 
         if ($validator->fails()) {
@@ -92,7 +102,7 @@ class AuthController extends Controller
                 ->withInput();
         }
 
-        $userData = $request->only(['name', 'email', 'phone', 'password', 'role']);
+        $userData = $request->only(['name', 'email', 'phone', 'password', 'role', 'date_of_birth', 'address']);
         $userData['password'] = Hash::make($userData['password']);
         
         // Generate unique ID based on role
@@ -100,10 +110,38 @@ class AuthController extends Controller
 
         $user = User::create($userData);
 
+        // Handle caregiver-specific data
+        if ($userData['role'] === 'caregiver') {
+            // Store additional caregiver information
+            $caregiverData = $request->only(['qualification', 'experience']);
+            
+            // Handle document uploads
+            if ($request->hasFile('documents')) {
+                $documents = [];
+                foreach ($request->file('documents') as $file) {
+                    $filename = time() . '_' . $file->getClientOriginalName();
+                    $file->storeAs('caregiver_documents/' . $user->id, $filename, 'public');
+                    $documents[] = $filename;
+                }
+                $caregiverData['documents'] = $documents;
+            }
+            
+            // Store caregiver data in user's meta field or create a separate profile
+            $user->update([
+                'qualification' => $caregiverData['qualification'] ?? null,
+                'experience' => $caregiverData['experience'] ?? null,
+                'documents' => json_encode($caregiverData['documents'] ?? []),
+            ]);
+        }
+
         Auth::login($user);
 
+        $roleMessage = $userData['role'] === 'caregiver' 
+            ? 'Caregiver registration successful! Your documents are under review.' 
+            : 'Patient registration successful! Welcome to MMHC CRM.';
+
         return redirect()->route('dashboard')
-            ->with('success', 'Registration successful! Welcome to MMHC CRM.');
+            ->with('success', $roleMessage);
     }
 
     /**
@@ -136,9 +174,13 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'phone' => 'required|string|max:20|unique:users',
+            'phone' => 'required|string|regex:/^[0-9]{10}$/|unique:users',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:admin,caregiver,patient',
+        ], [
+            'email.unique' => 'This email address is already registered.',
+            'phone.regex' => 'Phone number must be exactly 10 digits.',
+            'phone.unique' => 'This phone number is already registered.',
         ]);
 
         if ($validator->fails()) {

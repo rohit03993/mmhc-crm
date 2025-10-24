@@ -2,7 +2,7 @@
 
 namespace App\Modules\Auth\Services;
 
-use App\Modules\Auth\Models\User;
+use App\Models\Core\User;
 use Illuminate\Support\Str;
 
 class UserService

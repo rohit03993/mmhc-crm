@@ -74,7 +74,7 @@
                                class="form-control @error('date_of_birth') is-invalid @enderror" 
                                id="date_of_birth" 
                                name="date_of_birth" 
-                               value="{{ old('date_of_birth', $user->date_of_birth?->format('Y-m-d')) }}">
+                               value="{{ old('date_of_birth', $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : '') }}">
                     </div>
 
                     @if($user->role === 'caregiver')
