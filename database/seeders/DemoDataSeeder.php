@@ -17,11 +17,15 @@ class DemoDataSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create Admin User (if not exists)
-        $admin = User::firstOrCreate(
-            ['email' => 'mantu@themmhc.com'],
-            [
+        // Create Admin User (if not exists) - Check by email OR unique_id to avoid conflicts
+        $admin = User::where('email', 'mantu@themmhc.com')
+            ->orWhere('unique_id', 'M-UID-000001')
+            ->first();
+            
+        if (!$admin) {
+            $admin = User::create([
                 'name' => 'Mantu Kumar',
+                'email' => 'mantu@themmhc.com',
                 'phone' => '9113311256',
                 'password' => Hash::make('password123'),
                 'role' => 'admin',
@@ -29,8 +33,8 @@ class DemoDataSeeder extends Seeder
                 'address' => 'Udgam Incubation Centre, Rohit Nagar, Phase 1, Bhopal 462023',
                 'is_active' => true,
                 'email_verified_at' => now(),
-            ]
-        );
+            ]);
+        }
 
         // Create Demo Nurses
         $nurses = [
@@ -82,26 +86,28 @@ class DemoDataSeeder extends Seeder
         ];
 
         foreach ($nurses as $index => $nurseData) {
-            $nurse = User::firstOrCreate(
-                ['email' => $nurseData['email']],
-                [
+            $uniqueId = 'N-UID-' . str_pad($index + 1, 6, '0', STR_PAD_LEFT);
+            
+            // Check if user already exists by email or unique_id
+            $nurse = User::where('email', $nurseData['email'])
+                ->orWhere('unique_id', $uniqueId)
+                ->first();
+            
+            if (!$nurse) {
+                $nurse = User::create([
                     'name' => $nurseData['name'],
+                    'email' => $nurseData['email'],
                     'phone' => $nurseData['phone'],
                     'password' => Hash::make('password123'),
                     'role' => 'nurse',
-                    'unique_id' => 'N-UID-' . str_pad($index + 1, 6, '0', STR_PAD_LEFT),
+                    'unique_id' => $uniqueId,
                     'qualification' => $nurseData['qualification'],
                     'experience' => $nurseData['experience'],
                     'address' => $nurseData['address'],
                     'date_of_birth' => $nurseData['date_of_birth'],
                     'is_active' => true,
                     'email_verified_at' => now(),
-                ]
-            );
-            
-            // Update unique_id if it was already created
-            if ($nurse->wasRecentlyCreated === false) {
-                $nurse->update(['unique_id' => 'N-UID-' . str_pad($index + 1, 6, '0', STR_PAD_LEFT)]);
+                ]);
             }
         }
 
@@ -155,22 +161,29 @@ class DemoDataSeeder extends Seeder
         ];
 
         foreach ($caregivers as $index => $caregiverData) {
-            $caregiver = User::firstOrCreate(
-                ['email' => $caregiverData['email']],
-                [
+            $uniqueId = 'C-UID-' . str_pad($index + 1, 6, '0', STR_PAD_LEFT);
+            
+            // Check if user already exists by email or unique_id
+            $caregiver = User::where('email', $caregiverData['email'])
+                ->orWhere('unique_id', $uniqueId)
+                ->first();
+            
+            if (!$caregiver) {
+                $caregiver = User::create([
                     'name' => $caregiverData['name'],
+                    'email' => $caregiverData['email'],
                     'phone' => $caregiverData['phone'],
                     'password' => Hash::make('password123'),
                     'role' => 'caregiver',
-                    'unique_id' => 'C-UID-' . str_pad($index + 1, 6, '0', STR_PAD_LEFT),
+                    'unique_id' => $uniqueId,
                     'qualification' => $caregiverData['qualification'],
                     'experience' => $caregiverData['experience'],
                     'address' => $caregiverData['address'],
                     'date_of_birth' => $caregiverData['date_of_birth'],
                     'is_active' => true,
                     'email_verified_at' => now(),
-                ]
-            );
+                ]);
+            }
         }
 
         // Create Demo Patients
@@ -220,20 +233,27 @@ class DemoDataSeeder extends Seeder
         ];
 
         foreach ($patients as $index => $patientData) {
-            $patient = User::firstOrCreate(
-                ['email' => $patientData['email']],
-                [
+            $uniqueId = 'P-UID-' . str_pad($index + 1, 6, '0', STR_PAD_LEFT);
+            
+            // Check if user already exists by email or unique_id
+            $patient = User::where('email', $patientData['email'])
+                ->orWhere('unique_id', $uniqueId)
+                ->first();
+            
+            if (!$patient) {
+                $patient = User::create([
                     'name' => $patientData['name'],
+                    'email' => $patientData['email'],
                     'phone' => $patientData['phone'],
                     'password' => Hash::make('password123'),
                     'role' => 'patient',
-                    'unique_id' => 'P-UID-' . str_pad($index + 1, 6, '0', STR_PAD_LEFT),
+                    'unique_id' => $uniqueId,
                     'address' => $patientData['address'],
                     'date_of_birth' => $patientData['date_of_birth'],
                     'is_active' => true,
                     'email_verified_at' => now(),
-                ]
-            );
+                ]);
+            }
         }
 
         // Get service types
