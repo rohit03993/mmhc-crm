@@ -83,7 +83,7 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'required|string|regex:/^[0-9]{10}$/|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:caregiver,patient',
+            'role' => 'required|in:nurse,caregiver,patient',
             'date_of_birth' => 'nullable|date',
             'address' => 'nullable|string|max:500',
             'qualification' => 'nullable|string|max:255',
@@ -110,8 +110,8 @@ class AuthController extends Controller
 
         $user = User::create($userData);
 
-        // Handle caregiver-specific data
-        if ($userData['role'] === 'caregiver') {
+        // Handle staff-specific data (nurse or caregiver)
+        if (in_array($userData['role'], ['nurse', 'caregiver'])) {
             // Store additional caregiver information
             $caregiverData = $request->only(['qualification', 'experience']);
             
@@ -126,7 +126,7 @@ class AuthController extends Controller
                 $caregiverData['documents'] = $documents;
             }
             
-            // Store caregiver data in user's meta field or create a separate profile
+            // Store staff data in user's meta field or create a separate profile
             $user->update([
                 'qualification' => $caregiverData['qualification'] ?? null,
                 'experience' => $caregiverData['experience'] ?? null,
@@ -136,9 +136,12 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        $roleMessage = $userData['role'] === 'caregiver' 
-            ? 'Caregiver registration successful! Your documents are under review.' 
-            : 'Patient registration successful! Welcome to MMHC CRM.';
+        $roleMessage = match($userData['role']) {
+            'nurse' => 'Nurse registration successful! Your documents are under review.',
+            'caregiver' => 'Caregiver registration successful! Your documents are under review.',
+            'patient' => 'Patient registration successful! Welcome to MMHC CRM.',
+            default => 'Registration successful!'
+        };
 
         return redirect()->route('dashboard')
             ->with('success', $roleMessage);
@@ -176,7 +179,7 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'required|string|regex:/^[0-9]{10}$/|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:admin,caregiver,patient',
+            'role' => 'required|in:admin,nurse,caregiver,patient',
         ], [
             'email.unique' => 'This email address is already registered.',
             'phone.regex' => 'Phone number must be exactly 10 digits.',

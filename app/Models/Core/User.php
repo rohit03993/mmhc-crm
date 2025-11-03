@@ -65,7 +65,15 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is caregiver
+     * Check if user is nurse (licensed professional)
+     */
+    public function isNurse()
+    {
+        return $this->role === 'nurse';
+    }
+
+    /**
+     * Check if user is caregiver (general support)
      */
     public function isCaregiver()
     {
@@ -78,6 +86,14 @@ class User extends Authenticatable
     public function isPatient()
     {
         return $this->role === 'patient';
+    }
+
+    /**
+     * Check if user is staff (nurse or caregiver)
+     */
+    public function isStaff()
+    {
+        return in_array($this->role, ['nurse', 'caregiver']);
     }
 
     /**

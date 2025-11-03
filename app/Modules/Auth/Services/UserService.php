@@ -13,6 +13,7 @@ class UserService
     public function generateUniqueId(string $role): string
     {
         $prefix = match($role) {
+            'nurse' => 'N-UID',
             'caregiver' => 'C-UID',
             'patient' => 'P-UID',
             'admin' => 'M-UID',

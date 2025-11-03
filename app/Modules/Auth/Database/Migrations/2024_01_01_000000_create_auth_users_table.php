@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('phone')->unique();
             $table->string('password');
-            $table->enum('role', ['admin', 'caregiver', 'patient'])->default('patient');
+            $table->enum('role', ['admin', 'nurse', 'caregiver', 'patient'])->default('patient');
             $table->string('unique_id')->unique();
             $table->text('address')->nullable();
             $table->date('date_of_birth')->nullable();

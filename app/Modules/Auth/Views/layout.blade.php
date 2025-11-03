@@ -23,6 +23,7 @@
         .sidebar {
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
         }
         .main-content {
             background-color: #f8f9fa;
@@ -37,6 +38,84 @@
         }
         .navbar-brand {
             font-weight: bold;
+        }
+        
+        /* Modern Sidebar Styling */
+        .sidebar .nav-link {
+            border-radius: 12px;
+            margin: 0.25rem 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sidebar .nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: rgba(255,255,255,0.3);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.15);
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar .nav-link:hover::before,
+        .sidebar .nav-link.active::before {
+            transform: scaleY(1);
+            background: white;
+        }
+        
+        .sidebar .nav-link i {
+            width: 20px;
+            text-align: center;
+            margin-right: 0.75rem;
+        }
+        
+        .sidebar .nav-item.mt-3 {
+            margin-top: 2rem !important;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 1rem;
+        }
+        
+        .sidebar .nav-item.mt-3 .nav-link {
+            color: #ffcccb;
+        }
+        
+        .sidebar .nav-item.mt-3 .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        /* Sidebar Logo Enhancement */
+        .sidebar .text-center {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar .text-2xl {
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+        }
+        
+        .sidebar .text-xl {
+            font-size: 1.5rem;
+        }
+        
+        .sidebar .text-xs {
+            font-size: 0.7rem;
+            opacity: 0.9;
         }
         
         /* MeD Miracle Health Care Logo */
@@ -201,26 +280,59 @@
                         
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link text-white" href="{{ route('dashboard') }}">
+                                <a class="nav-link text-white {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('dashboard') }}">
                                     <i class="fas fa-home me-2"></i>
                                     Dashboard
                                 </a>
                             </li>
                             
                             <li class="nav-item">
-                                <a class="nav-link text-white" href="{{ route('profile.index') }}">
+                                <a class="nav-link text-white {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.index') }}">
                                     <i class="fas fa-user me-2"></i>
                                     My Profile
                                 </a>
                             </li>
                             
                             <li class="nav-item">
-                                <a class="nav-link text-white" href="{{ route('documents.index') }}">
+                                <a class="nav-link text-white {{ request()->routeIs('documents.*') ? 'active' : '' }}" href="{{ route('documents.index') }}">
                                     <i class="fas fa-file-alt me-2"></i>
                                     Documents
                                 </a>
                             </li>
                             
+                            @if(auth()->user()->isPatient())
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="{{ route('staff.index') }}">
+                                    <i class="fas fa-users me-2"></i>
+                                    Available Staff
+                                </a>
+                            </li>
+                            
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="{{ route('services.index') }}">
+                                    <i class="fas fa-user-md me-2"></i>
+                                    Request Service
+                                </a>
+                            </li>
+                            
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="{{ route('services.my-requests') }}">
+                                    <i class="fas fa-list me-2"></i>
+                                    My Requests
+                                </a>
+                            </li>
+                            @endif
+                            
+                            @if(auth()->user()->isStaff())
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="{{ route('staff.dashboard') }}">
+                                    <i class="fas fa-tasks me-2"></i>
+                                    My Assignments
+                                </a>
+                            </li>
+                            @endif
+                            
+                            @if(auth()->user()->isPatient())
                             <li class="nav-item">
                                 <a class="nav-link text-white" href="{{ route('plans.index') }}">
                                     <i class="fas fa-clipboard-list me-2"></i>
@@ -234,26 +346,35 @@
                                     My Subscriptions
                                 </a>
                             </li>
+                            @endif
                             
                             @if(auth()->user()->isAdmin())
                                 <li class="nav-item">
-                                    <a class="nav-link text-white" href="{{ route('admin.users') }}">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.users') || request()->routeIs('admin.profiles*') ? 'active' : '' }}" href="{{ route('admin.users') }}">
                                         <i class="fas fa-users me-2"></i>
                                         Manage Users
                                     </a>
                                 </li>
                                 
                                 <li class="nav-item">
-                                    <a class="nav-link text-white" href="{{ route('admin.page-content.index') }}">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.page-content*') ? 'active' : '' }}" href="{{ route('admin.page-content.index') }}">
                                         <i class="fas fa-edit me-2"></i>
                                         Edit Landing Page
                                     </a>
                                 </li>
                                 
                                 <li class="nav-item">
-                                    <a class="nav-link text-white" href="{{ route('admin.subscriptions') }}">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.subscriptions*') ? 'active' : '' }}" href="#">
                                         <i class="fas fa-list-alt me-2"></i>
                                         Manage Subscriptions
+                                        <small class="d-block text-white-50" style="font-size: 0.7rem;">Coming Soon</small>
+                                    </a>
+                                </li>
+                                
+                                <li class="nav-item">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.service-requests*') ? 'active' : '' }}" href="{{ route('admin.service-requests') }}">
+                                        <i class="fas fa-user-md me-2"></i>
+                                        Service Requests
                                     </a>
                                 </li>
                             @endif

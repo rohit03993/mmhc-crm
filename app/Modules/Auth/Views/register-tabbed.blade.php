@@ -48,6 +48,13 @@
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="nurse-tab" data-bs-toggle="pill" data-bs-target="#nurse-form" type="button" role="tab">
+                                <i class="fas fa-user-nurse me-2 d-none d-sm-inline"></i>
+                                <span class="d-block d-sm-none">Nurse</span>
+                                <span class="d-none d-sm-block">Nurse Registration</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
                             <button class="nav-link" id="caregiver-tab" data-bs-toggle="pill" data-bs-target="#caregiver-form" type="button" role="tab">
                                 <i class="fas fa-user-md me-2 d-none d-sm-inline"></i>
                                 <span class="d-block d-sm-none">Caregiver</span>
@@ -200,6 +207,196 @@
                             </div>
                         </div>
 
+                        <!-- Nurse Registration Form -->
+                        <div class="tab-pane fade" id="nurse-form" role="tabpanel">
+                            <div class="row">
+                                <!-- Mobile: Full width, Desktop: Half width -->
+                                <div class="col-12 col-lg-6 mb-4 mb-lg-0">
+                                    <div class="text-center mb-4">
+                                        <i class="fas fa-user-nurse fa-3x text-info mb-3"></i>
+                                        <h4 class="text-info">Nurse Registration</h4>
+                                        <p class="text-muted">Licensed nursing professionals - Higher earning potential</p>
+                                        <div class="alert alert-info">
+                                            <small><strong>Nurse Benefits:</strong><br>
+                                            • ₹2000/day (24h) • ₹1200/day (12h) • ₹800/day (8h)<br>
+                                            • Licensed professional rates • Priority assignments</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-lg-6">
+                                    <form method="POST" action="{{ route('auth.register.post') }}" id="nurseForm" enctype="multipart/form-data">
+                                        @csrf
+                                        <input type="hidden" name="role" value="nurse">
+                                        
+                                        <div class="mb-3">
+                                            <label for="nurse_name" class="form-label">Full Name</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-user"></i>
+                                                </span>
+                                                <input type="text" 
+                                                       class="form-control @error('name') is-invalid @enderror" 
+                                                       id="nurse_name" 
+                                                       name="name" 
+                                                       value="{{ old('name') }}" 
+                                                       required>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="nurse_email" class="form-label">Email Address</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-envelope"></i>
+                                                </span>
+                                                <input type="email" 
+                                                       class="form-control @error('email') is-invalid @enderror" 
+                                                       id="nurse_email" 
+                                                       name="email" 
+                                                       value="{{ old('email') }}" 
+                                                       required>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="nurse_phone" class="form-label">Phone Number</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-phone"></i>
+                                                </span>
+                                                <input type="tel" 
+                                                       class="form-control @error('phone') is-invalid @enderror" 
+                                                       id="nurse_phone" 
+                                                       name="phone" 
+                                                       value="{{ old('phone') }}" 
+                                                       pattern="[0-9]{10}"
+                                                       maxlength="10"
+                                                       placeholder="Enter 10-digit phone number"
+                                                       required>
+                                            </div>
+                                            <div class="form-text">Enter exactly 10 digits (e.g., 9876543210)</div>
+                                            @error('phone')
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="nurse_dob" class="form-label">Date of Birth</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-calendar"></i>
+                                                </span>
+                                                <input type="date" 
+                                                       class="form-control" 
+                                                       id="nurse_dob" 
+                                                       name="date_of_birth" 
+                                                       value="{{ old('date_of_birth') }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="nurse_qualification" class="form-label">Nursing Qualification</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-graduation-cap"></i>
+                                                </span>
+                                                <select class="form-control" id="nurse_qualification" name="qualification" required>
+                                                    <option value="">Select Qualification</option>
+                                                    <option value="GNM" {{ old('qualification') == 'GNM' ? 'selected' : '' }}>GNM (General Nursing & Midwifery)</option>
+                                                    <option value="B.Sc Nursing" {{ old('qualification') == 'B.Sc Nursing' ? 'selected' : '' }}>B.Sc Nursing</option>
+                                                    <option value="M.Sc Nursing" {{ old('qualification') == 'M.Sc Nursing' ? 'selected' : '' }}>M.Sc Nursing</option>
+                                                    <option value="ANM" {{ old('qualification') == 'ANM' ? 'selected' : '' }}>ANM (Auxiliary Nurse Midwife)</option>
+                                                    <option value="Other" {{ old('qualification') == 'Other' ? 'selected' : '' }}>Other</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="nurse_experience" class="form-label">Years of Experience</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-clock"></i>
+                                                </span>
+                                                <select class="form-control" id="nurse_experience" name="experience" required>
+                                                    <option value="">Select Experience</option>
+                                                    <option value="0-1" {{ old('experience') == '0-1' ? 'selected' : '' }}>0-1 years</option>
+                                                    <option value="1-3" {{ old('experience') == '1-3' ? 'selected' : '' }}>1-3 years</option>
+                                                    <option value="3-5" {{ old('experience') == '3-5' ? 'selected' : '' }}>3-5 years</option>
+                                                    <option value="5-10" {{ old('experience') == '5-10' ? 'selected' : '' }}>5-10 years</option>
+                                                    <option value="10+" {{ old('experience') == '10+' ? 'selected' : '' }}>10+ years</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="nurse_address" class="form-label">Address</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-map-marker-alt"></i>
+                                                </span>
+                                                <textarea class="form-control" 
+                                                          id="nurse_address" 
+                                                          name="address" 
+                                                          rows="3" 
+                                                          placeholder="Enter your full address">{{ old('address') }}</textarea>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="nurse_documents" class="form-label">Professional Documents</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-file-upload"></i>
+                                                </span>
+                                                <input type="file" 
+                                                       class="form-control" 
+                                                       id="nurse_documents" 
+                                                       name="documents[]" 
+                                                       multiple 
+                                                       accept=".pdf,.jpg,.jpeg,.png">
+                                            </div>
+                                            <div class="form-text">Upload nursing license, certificates, ID proof (PDF, JPG, PNG - Max 2MB each)</div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="nurse_password" class="form-label">Password</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-lock"></i>
+                                                </span>
+                                                <input type="password" 
+                                                       class="form-control @error('password') is-invalid @enderror" 
+                                                       id="nurse_password" 
+                                                       name="password" 
+                                                       required>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="nurse_password_confirmation" class="form-label">Confirm Password</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-lock"></i>
+                                                </span>
+                                                <input type="password" 
+                                                       class="form-control" 
+                                                       id="nurse_password_confirmation" 
+                                                       name="password_confirmation" 
+                                                       required>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-info btn-lg">
+                                                <i class="fas fa-user-nurse me-2"></i>
+                                                Register as Nurse
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Caregiver Registration Form -->
                         <div class="tab-pane fade" id="caregiver-form" role="tabpanel">
                             <div class="row">
@@ -208,7 +405,12 @@
                                     <div class="text-center mb-4">
                                         <i class="fas fa-user-md fa-3x text-success mb-3"></i>
                                         <h4 class="text-success">Caregiver Registration</h4>
-                                        <p class="text-muted">Join our healthcare team and make a difference</p>
+                                        <p class="text-muted">General support staff - Start your healthcare journey</p>
+                                        <div class="alert alert-success">
+                                            <small><strong>Caregiver Benefits:</strong><br>
+                                            • ₹1500/day (24h) • ₹900/day (12h) • ₹700/day (8h)<br>
+                                            • General support rates • Flexible assignments</small>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-12 col-lg-6">

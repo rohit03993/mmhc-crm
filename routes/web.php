@@ -19,8 +19,33 @@ Route::get('/landing', function () {
     return view('welcome', compact('pageContent', 'healthcarePlans'));
 })->name('landing');
 
+// Services module routes
+Route::middleware(['auth'])->group(function () {
+    // Service Routes
+    Route::prefix('services')->name('services.')->group(function () {
+        Route::get('/', [\App\Modules\Services\Controllers\ServiceController::class, 'index'])->name('index');
+        Route::get('/request', [\App\Modules\Services\Controllers\ServiceController::class, 'create'])->name('create');
+        Route::post('/request', [\App\Modules\Services\Controllers\ServiceController::class, 'store'])->name('store');
+        Route::get('/my-requests', [\App\Modules\Services\Controllers\ServiceController::class, 'myRequests'])->name('my-requests');
+        Route::get('/{serviceRequest}', [\App\Modules\Services\Controllers\ServiceController::class, 'show'])->name('show');
+    });
+    
+    // Staff Routes
+    Route::prefix('staff')->name('staff.')->group(function () {
+        Route::get('/', [\App\Modules\Services\Controllers\StaffController::class, 'index'])->name('index');
+        Route::get('/dashboard', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/service/{serviceRequest}', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'show'])->name('service-details');
+        
+        // Service action routes
+        Route::post('/service/{serviceRequest}/start', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'startService'])->name('service.start');
+        Route::post('/service/{serviceRequest}/complete', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'completeService'])->name('service.complete');
+    });
+});
+
 // Temporary fix - manually register Profiles module routes
 Route::middleware(['auth'])->group(function () {
+    // Dashboard Route - redirects staff/admin to appropriate dashboards
+    Route::get('/dashboard', [\App\Modules\Auth\Controllers\DashboardController::class, 'index'])->name('dashboard');
     
     // Profile Routes
     Route::prefix('profile')->name('profile.')->group(function () {
@@ -40,8 +65,15 @@ Route::middleware(['auth'])->group(function () {
     
     // Admin Routes for Profile Management
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [\App\Modules\Auth\Controllers\DashboardController::class, 'adminDashboard'])->name('dashboard');
         Route::get('/profiles', [ProfileController::class, 'adminIndex'])->name('profiles');
         Route::get('/profiles/{user}', [ProfileController::class, 'adminView'])->name('profiles.view');
+        
+        // Service Management Routes
+        Route::get('/service-requests', [\App\Modules\Services\Controllers\ServiceController::class, 'adminIndex'])->name('service-requests');
+        Route::get('/service-requests/{serviceRequest}/assign', [\App\Modules\Services\Controllers\ServiceController::class, 'assignForm'])->name('service-requests.assign');
+        Route::post('/service-requests/{serviceRequest}/assign', [\App\Modules\Services\Controllers\ServiceController::class, 'assign'])->name('service-requests.assign.post');
+        Route::post('/service-requests/{serviceRequest}/approve-payment', [\App\Modules\Services\Controllers\ServiceController::class, 'approvePayment'])->name('service-requests.approve-payment');
         
     // Page Content Management Routes
     Route::get('/page-content', [PageContentController::class, 'index'])->name('page-content.index');
