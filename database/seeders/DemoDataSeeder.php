@@ -85,6 +85,8 @@ class DemoDataSeeder extends Seeder
             ],
         ];
 
+        // Store created nurses with their unique IDs for reference
+        $createdNurses = [];
         foreach ($nurses as $index => $nurseData) {
             $uniqueId = 'N-UID-' . str_pad($index + 1, 6, '0', STR_PAD_LEFT);
             
@@ -109,6 +111,9 @@ class DemoDataSeeder extends Seeder
                     'email_verified_at' => now(),
                 ]);
             }
+            
+            // Store nurse by unique_id for service request assignment
+            $createdNurses[$uniqueId] = $nurse;
         }
 
         // Create Demo Caregivers
@@ -160,6 +165,8 @@ class DemoDataSeeder extends Seeder
             ],
         ];
 
+        // Store created caregivers with their unique IDs for reference
+        $createdCaregivers = [];
         foreach ($caregivers as $index => $caregiverData) {
             $uniqueId = 'C-UID-' . str_pad($index + 1, 6, '0', STR_PAD_LEFT);
             
@@ -184,6 +191,9 @@ class DemoDataSeeder extends Seeder
                     'email_verified_at' => now(),
                 ]);
             }
+            
+            // Store caregiver by unique_id for service request assignment
+            $createdCaregivers[$uniqueId] = $caregiver;
         }
 
         // Create Demo Patients
@@ -232,6 +242,8 @@ class DemoDataSeeder extends Seeder
             ],
         ];
 
+        // Store created patients with their unique IDs for reference
+        $createdPatients = [];
         foreach ($patients as $index => $patientData) {
             $uniqueId = 'P-UID-' . str_pad($index + 1, 6, '0', STR_PAD_LEFT);
             
@@ -254,15 +266,18 @@ class DemoDataSeeder extends Seeder
                     'email_verified_at' => now(),
                 ]);
             }
+            
+            // Store patient by unique_id for service request assignment
+            $createdPatients[$uniqueId] = $patient;
         }
 
         // Get service types
         $serviceTypes = ServiceType::all();
 
-        // Create Demo Service Requests
+        // Create Demo Service Requests - Use unique_id references instead of hardcoded IDs
         $serviceRequests = [
             [
-                'patient_id' => 7, // Ram Kumar Singh
+                'patient_unique_id' => 'P-UID-000001', // Ram Kumar Singh
                 'service_type_id' => 1, // 24 Hours Care
                 'preferred_staff_type' => 'nurse',
                 'start_date' => Carbon::now()->addDays(1),
@@ -273,11 +288,11 @@ class DemoDataSeeder extends Seeder
                 'notes' => 'Post-surgery care needed for knee replacement',
                 'special_requirements' => 'Experienced nurse for post-operative care, physiotherapy support',
                 'status' => 'assigned',
-                'assigned_staff_id' => 2, // Sister Meera Singh
+                'assigned_staff_unique_id' => 'N-UID-000002', // Sister Meera Singh
                 'assigned_at' => Carbon::now()->subHours(2),
             ],
             [
-                'patient_id' => 8, // Geeta Devi
+                'patient_unique_id' => 'P-UID-000002', // Geeta Devi
                 'service_type_id' => 2, // 12 Hours Care
                 'preferred_staff_type' => 'caregiver',
                 'start_date' => Carbon::now()->addDays(2),
@@ -288,12 +303,12 @@ class DemoDataSeeder extends Seeder
                 'notes' => 'Elderly care for 75-year-old patient',
                 'special_requirements' => 'Patient has diabetes, needs medication monitoring',
                 'status' => 'in_progress',
-                'assigned_staff_id' => 7, // Sita Devi
+                'assigned_staff_unique_id' => 'C-UID-000002', // Sita Devi
                 'assigned_at' => Carbon::now()->subDays(1),
                 'started_at' => Carbon::now()->subHours(6),
             ],
             [
-                'patient_id' => 9, // Rajesh Kumar
+                'patient_unique_id' => 'P-UID-000003', // Rajesh Kumar
                 'service_type_id' => 3, // 8 Hours Care
                 'preferred_staff_type' => 'nurse',
                 'start_date' => Carbon::now()->addDays(3),
@@ -306,7 +321,7 @@ class DemoDataSeeder extends Seeder
                 'status' => 'pending',
             ],
             [
-                'patient_id' => 10, // Sunita Sharma
+                'patient_unique_id' => 'P-UID-000004', // Sunita Sharma
                 'service_type_id' => 4, // Single Visit
                 'preferred_staff_type' => 'any',
                 'start_date' => Carbon::now()->addDays(1),
@@ -317,13 +332,13 @@ class DemoDataSeeder extends Seeder
                 'notes' => 'Health checkup and consultation',
                 'special_requirements' => 'General health assessment',
                 'status' => 'completed',
-                'assigned_staff_id' => 4, // Sister Anjali Gupta
+                'assigned_staff_unique_id' => 'N-UID-000004', // Sister Anjali Gupta
                 'assigned_at' => Carbon::now()->subDays(2),
                 'started_at' => Carbon::now()->subDays(1),
                 'completed_at' => Carbon::now()->subHours(2),
             ],
             [
-                'patient_id' => 11, // Mohan Prasad
+                'patient_unique_id' => 'P-UID-000005', // Mohan Prasad
                 'service_type_id' => 1, // 24 Hours Care
                 'preferred_staff_type' => 'nurse',
                 'start_date' => Carbon::now()->addDays(5),
@@ -334,11 +349,11 @@ class DemoDataSeeder extends Seeder
                 'notes' => 'Critical care for stroke patient',
                 'special_requirements' => 'ICU trained nurse, physiotherapy, speech therapy',
                 'status' => 'assigned',
-                'assigned_staff_id' => 5, // Nurse Sunita Devi
+                'assigned_staff_unique_id' => 'N-UID-000005', // Nurse Sunita Devi
                 'assigned_at' => Carbon::now()->subHours(1),
             ],
             [
-                'patient_id' => 12, // Kamla Devi
+                'patient_unique_id' => 'P-UID-000006', // Kamla Devi
                 'service_type_id' => 2, // 12 Hours Care
                 'preferred_staff_type' => 'caregiver',
                 'start_date' => Carbon::now()->addDays(7),
@@ -353,7 +368,19 @@ class DemoDataSeeder extends Seeder
         ];
 
         foreach ($serviceRequests as $requestData) {
+            // Look up patient by unique_id
+            $patient = $createdPatients[$requestData['patient_unique_id']] ?? null;
+            if (!$patient) {
+                $this->command->warn("Patient with unique_id {$requestData['patient_unique_id']} not found, skipping service request.");
+                continue;
+            }
+
             $serviceType = ServiceType::find($requestData['service_type_id']);
+            if (!$serviceType) {
+                $this->command->warn("Service type {$requestData['service_type_id']} not found, skipping service request.");
+                continue;
+            }
+
             $endDate = Carbon::parse($requestData['start_date'])->addDays($requestData['duration_days'] - 1);
             $totalAmount = $serviceType->patient_charge * $requestData['duration_days'];
 
@@ -361,10 +388,16 @@ class DemoDataSeeder extends Seeder
             $totalStaffPayout = null;
             $prepaidAmount = 0.00;
             $paymentStatus = 'pending';
+            $assignedStaffId = null;
             
-            if (isset($requestData['assigned_staff_id']) && $requestData['assigned_staff_id']) {
-                $staff = User::find($requestData['assigned_staff_id']);
+            if (isset($requestData['assigned_staff_unique_id']) && $requestData['assigned_staff_unique_id']) {
+                // Look up staff by unique_id from created nurses or caregivers
+                $staff = $createdNurses[$requestData['assigned_staff_unique_id']] 
+                    ?? $createdCaregivers[$requestData['assigned_staff_unique_id']] 
+                    ?? null;
+                
                 if ($staff) {
+                    $assignedStaffId = $staff->id;
                     $dailyStaffPayout = $staff->isNurse() ? $serviceType->nurse_payout : $serviceType->caregiver_payout;
                     $totalStaffPayout = $requestData['duration_days'] * $dailyStaffPayout;
                     
@@ -378,12 +411,14 @@ class DemoDataSeeder extends Seeder
                     } elseif ($prepaidAmount > 0) {
                         $paymentStatus = 'partially_paid';
                     }
+                } else {
+                    $this->command->warn("Staff with unique_id {$requestData['assigned_staff_unique_id']} not found for service request.");
                 }
             }
 
             $serviceRequest = ServiceRequest::firstOrCreate(
                 [
-                    'patient_id' => $requestData['patient_id'],
+                    'patient_id' => $patient->id,
                     'service_type_id' => $requestData['service_type_id'],
                     'start_date' => $requestData['start_date'],
                 ],
@@ -401,7 +436,7 @@ class DemoDataSeeder extends Seeder
                     'location' => $requestData['location'],
                     'contact_person' => $requestData['contact_person'],
                     'contact_phone' => $requestData['contact_phone'],
-                    'assigned_staff_id' => $requestData['assigned_staff_id'] ?? null,
+                    'assigned_staff_id' => $assignedStaffId,
                     'assigned_at' => $requestData['assigned_at'] ?? null,
                     'started_at' => $requestData['started_at'] ?? null,
                     'completed_at' => $requestData['completed_at'] ?? null,
