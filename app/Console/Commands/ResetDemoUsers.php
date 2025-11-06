@@ -33,11 +33,14 @@ class ResetDemoUsers extends Command
         // Delete old demo users (except admin)
         $this->info('Deleting old demo users...');
         
-        // Delete old nurses, caregivers, and patients
+        // Delete old nurses, caregivers, and patients by email OR unique_id pattern
         $deleted = User::where('role', '!=', 'admin')
             ->where(function($query) {
                 $query->where('email', 'like', '%@example.com')
-                      ->orWhere('email', 'like', '%@demo.com');
+                      ->orWhere('email', 'like', '%@demo.com')
+                      ->orWhere('unique_id', 'like', 'N-UID-%')
+                      ->orWhere('unique_id', 'like', 'C-UID-%')
+                      ->orWhere('unique_id', 'like', 'P-UID-%');
             })
             ->delete();
         
@@ -94,11 +97,30 @@ class ResetDemoUsers extends Command
             DB::table('users')->where('id', $caregiver->id)->update(['password' => Hash::make($password)]);
         }
         
-        // Create Patient
-        $patient = User::firstOrCreate(
-            ['email' => 'patient@demo.com'],
-            [
+        // Create Patient - check by email first, then by unique_id
+        $patient = User::where('email', 'patient@demo.com')
+            ->orWhere('unique_id', 'P-UID-000001')
+            ->first();
+        
+        if ($patient) {
+            // Update existing patient
+            $patient->update([
                 'name' => 'Shri Ram Kumar Singh',
+                'email' => 'patient@demo.com',
+                'phone' => '9876543220',
+                'role' => 'patient',
+                'unique_id' => 'P-UID-000001',
+                'address' => 'House No. 45, Gandhi Nagar, Patna, Bihar 800001',
+                'date_of_birth' => '1965-03-10',
+                'is_active' => true,
+                'email_verified_at' => now(),
+            ]);
+            DB::table('users')->where('id', $patient->id)->update(['password' => Hash::make($password)]);
+        } else {
+            // Create new patient
+            $patient = User::create([
+                'name' => 'Shri Ram Kumar Singh',
+                'email' => 'patient@demo.com',
                 'phone' => '9876543220',
                 'password' => $password,
                 'role' => 'patient',
@@ -107,12 +129,7 @@ class ResetDemoUsers extends Command
                 'date_of_birth' => '1965-03-10',
                 'is_active' => true,
                 'email_verified_at' => now(),
-            ]
-        );
-        
-        // Update password if user exists
-        if (!$patient->wasRecentlyCreated) {
-            DB::table('users')->where('id', $patient->id)->update(['password' => Hash::make($password)]);
+            ]);
         }
         
         $this->info('');

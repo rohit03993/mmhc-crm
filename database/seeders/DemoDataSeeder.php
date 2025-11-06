@@ -205,7 +205,7 @@ class DemoDataSeeder extends Seeder
                     'status' => $requestData['status'],
                     'notes' => $requestData['notes'],
                     'special_requirements' => $requestData['special_requirements'],
-                    'location' => $requestData['patient']->address,
+                    'location' => $requestData['patient']->address ?? 'Address not provided',
                     'contact_person' => $requestData['patient']->name,
                     'contact_phone' => $requestData['patient']->phone,
                     'assigned_staff_id' => $assignedStaff->id ?? null,
