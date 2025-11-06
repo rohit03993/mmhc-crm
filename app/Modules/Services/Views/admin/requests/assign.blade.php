@@ -64,6 +64,28 @@
                                 <div class="fw-bold">{{ ucfirst($serviceRequest->preferred_staff_type) }}</div>
                             </div>
                             
+                            @if($serviceRequest->preferred_staff_id && $serviceRequest->preferredStaff)
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Patient's Preferred Staff Member</label>
+                                <div class="alert alert-info mb-0">
+                                    <div class="fw-bold">{{ $serviceRequest->preferredStaff->name }}</div>
+                                    <small class="text-muted">
+                                        {{ $serviceRequest->preferredStaff->unique_id }} | 
+                                        {{ $serviceRequest->preferredStaff->qualification ?? 'N/A' }} |
+                                        {{ $serviceRequest->preferredStaff->experience ?? 'N/A' }} exp.
+                                    </small>
+                                    <div class="mt-2">
+                                        <span class="badge bg-{{ $serviceRequest->preferredStaff->isNurse() ? 'primary' : 'success' }}">
+                                            {{ $serviceRequest->preferredStaff->isNurse() ? 'Nurse' : 'Caregiver' }}
+                                        </span>
+                                    </div>
+                                    <div class="mt-2 small text-muted">
+                                        <i class="fas fa-info-circle"></i> Patient selected this staff member. You can assign them or choose another available staff.
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+                            
                             @if($serviceRequest->notes)
                             <div class="mb-3">
                                 <label class="form-label text-muted">Notes</label>
@@ -102,8 +124,10 @@
                                             <option value="{{ $nurse->id }}" 
                                                     data-role="nurse"
                                                     data-qualification="{{ $nurse->qualification }}"
-                                                    data-experience="{{ $nurse->experience }}">
+                                                    data-experience="{{ $nurse->experience }}"
+                                                    {{ $serviceRequest->preferred_staff_id == $nurse->id ? 'selected' : '' }}>
                                                 {{ $nurse->name }} ({{ $nurse->unique_id }}) - {{ $nurse->qualification }} - {{ $nurse->experience }}
+                                                @if($serviceRequest->preferred_staff_id == $nurse->id) ⭐ Patient's Choice @endif
                                             </option>
                                             @endforeach
                                         </optgroup>
@@ -114,12 +138,19 @@
                                             <option value="{{ $caregiver->id }}" 
                                                     data-role="caregiver"
                                                     data-qualification="{{ $caregiver->qualification }}"
-                                                    data-experience="{{ $caregiver->experience }}">
+                                                    data-experience="{{ $caregiver->experience }}"
+                                                    {{ $serviceRequest->preferred_staff_id == $caregiver->id ? 'selected' : '' }}>
                                                 {{ $caregiver->name }} ({{ $caregiver->unique_id }}) - {{ $caregiver->qualification }} - {{ $caregiver->experience }}
+                                                @if($serviceRequest->preferred_staff_id == $caregiver->id) ⭐ Patient's Choice @endif
                                             </option>
                                             @endforeach
                                         </optgroup>
                                     </select>
+                                    @if($serviceRequest->preferredStaff)
+                                    <div class="form-text text-info mt-2">
+                                        <i class="fas fa-info-circle"></i> Patient has selected <strong>{{ $serviceRequest->preferredStaff->name }}</strong> as their preferred staff member. This selection is pre-selected above.
+                                    </div>
+                                    @endif
                                 </div>
 
                                 <!-- Selected Staff Details -->

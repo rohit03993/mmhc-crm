@@ -106,7 +106,8 @@ class HealthcarePlansSeeder extends Seeder
         ];
 
         foreach ($plans as $plan) {
-            HealthcarePlan::updateOrCreate(
+            // Use firstOrCreate to only create if missing - protects existing live plans
+            HealthcarePlan::firstOrCreate(
                 ['name' => $plan['name']],
                 $plan
             );

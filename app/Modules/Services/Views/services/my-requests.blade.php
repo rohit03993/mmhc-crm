@@ -41,6 +41,14 @@
                                             @endif">
                                             {{ ucfirst(str_replace('_', ' ', $request->status)) }}
                                         </span>
+                                        @if($request->status === 'pending')
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Your request is pending with {{ $request->preferred_staff_type === 'nurse' ? 'nursing staff' : ($request->preferred_staff_type === 'caregiver' ? 'caregiver staff' : 'caregiver/nursing staff') }}
+                                            </small>
+                                        </div>
+                                        @endif
                                     </div>
                                     <div class="text-end">
                                         <div class="text-muted small">{{ $request->created_at->format('M d, Y') }}</div>

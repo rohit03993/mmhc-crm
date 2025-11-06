@@ -263,6 +263,19 @@
                                                 <div class="staff-role">{{ ucfirst($request->assignedStaff->role) }}</div>
                                             </div>
                                         </div>
+                                    @elseif($request->preferredStaff)
+                                        <div class="staff-cell preferred-staff">
+                                            <div class="staff-icon {{ $request->preferredStaff->isNurse() ? 'nurse-icon' : 'caregiver-icon' }}">
+                                                <i class="fas fa-user-{{ $request->preferredStaff->isNurse() ? 'nurse' : 'md' }}"></i>
+                                            </div>
+                                            <div class="staff-info">
+                                                <div class="staff-name">{{ $request->preferredStaff->name }} <span class="preferred-badge">Patient's Choice</span></div>
+                                                <div class="staff-role">{{ ucfirst($request->preferredStaff->role) }}</div>
+                                                @if($request->preferredStaff->qualification)
+                                                <div class="staff-qualification">{{ $request->preferredStaff->qualification }}</div>
+                                                @endif
+                                            </div>
+                                        </div>
                                     @else
                                         <span class="text-muted small">Not assigned</span>
                                     @endif
@@ -273,10 +286,19 @@
                                 <td>
                                     <div class="actions-cell">
                                         @if($request->status === 'pending' || $request->status === 'assigned')
-                                            <a href="{{ route('admin.service-requests.assign', $request) }}" 
-                                               class="btn-action btn-assign" title="Assign Staff">
-                                                <i class="fas fa-user-plus"></i>
-                                            </a>
+                                            {{-- Only show assign button if patient hasn't selected a preferred staff --}}
+                                            @if(!$request->preferred_staff_id && !$request->assignedStaff)
+                                                <a href="{{ route('admin.service-requests.assign', $request) }}" 
+                                                   class="btn-action btn-assign" title="Assign Staff">
+                                                    <i class="fas fa-user-plus"></i>
+                                                </a>
+                                            @elseif($request->preferredStaff && !$request->assignedStaff)
+                                                {{-- Patient selected a staff member - show approve/assign button --}}
+                                                <a href="{{ route('admin.service-requests.assign', $request) }}" 
+                                                   class="btn-action btn-assign" title="Approve Patient's Selected Staff">
+                                                    <i class="fas fa-check-circle"></i>
+                                                </a>
+                                            @endif
                                         @endif
                                         
                                         @if($request->status === 'completed' && !$request->isApprovedByAdmin())
@@ -710,6 +732,29 @@
 .staff-role {
     font-size: 0.7rem;
     color: #6c757d;
+}
+
+.preferred-staff {
+    position: relative;
+}
+
+.preferred-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 0.15rem 0.4rem;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+.staff-qualification {
+    font-size: 0.7rem;
+    color: #6c757d;
+    font-style: italic;
+    margin-top: 0.2rem;
 }
 
 .date-cell {

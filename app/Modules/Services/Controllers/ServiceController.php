@@ -28,12 +28,24 @@ class ServiceController extends Controller
     /**
      * Show service request form
      */
-    public function create()
+    public function create(Request $request)
     {
         $serviceTypes = ServiceType::getActiveServiceTypes();
         $user = Auth::user();
         
-        return view('services::services.create', compact('serviceTypes', 'user'));
+        // Get selected staff info from URL parameters (when coming from Available Staff page)
+        $selectedStaff = null;
+        $selectedStaffType = $request->get('staff_type'); // 'nurse' or 'caregiver'
+        $selectedStaffId = $request->get('staff_id');
+        
+        if ($selectedStaffId && $selectedStaffType) {
+            $selectedStaff = User::where('id', $selectedStaffId)
+                ->where('role', $selectedStaffType)
+                ->where('is_active', true)
+                ->first();
+        }
+        
+        return view('services::services.create', compact('serviceTypes', 'user', 'selectedStaff', 'selectedStaffType'));
     }
 
     /**
@@ -55,19 +67,18 @@ class ServiceController extends Controller
             'contact_phone' => 'required|string|regex:/^[0-9]{10}$/',
             'notes' => 'nullable|string|max:1000',
             'special_requirements' => 'nullable|string|max:1000',
+            'preferred_staff_id' => 'nullable|exists:users,id', // Optional: specific staff selected
         ];
         
-        // Duration validation: 7 days minimum for all services except single visits
+        // Duration validation: Allow 1 day minimum for all services (removed 7-day lock-in)
         if ($isSingleVisit) {
             $rules['duration_days'] = 'required|integer|min:1|max:1'; // Single visit = 1 day only
         } else {
-            $rules['duration_days'] = 'required|integer|min:7'; // Minimum 7 days for other services
+            $rules['duration_days'] = 'required|integer|min:1'; // Minimum 1 day (removed 7-day requirement)
         }
         
         $messages = [
-            'duration_days.min' => $isSingleVisit 
-                ? 'Single visit service is for 1 day only.' 
-                : 'Minimum 7 days care is required as per our policy.',
+            'duration_days.min' => 'Duration must be at least 1 day.',
             'duration_days.max' => 'Single visit service is for 1 day only.',
             'contact_phone.regex' => 'Contact phone must be exactly 10 digits.',
         ];
@@ -89,16 +100,31 @@ class ServiceController extends Controller
         // Calculate total amount
         $totalAmount = $serviceType->patient_charge * $request->duration_days;
 
+        // Validate preferred_staff_id matches preferred_staff_type if provided
+        $preferredStaffId = null;
+        if ($request->preferred_staff_id) {
+            $preferredStaff = User::find($request->preferred_staff_id);
+            if ($preferredStaff && $preferredStaff->isStaff()) {
+                // Check if staff type matches preferred_staff_type
+                if ($request->preferred_staff_type === 'any' || 
+                    ($request->preferred_staff_type === 'nurse' && $preferredStaff->isNurse()) ||
+                    ($request->preferred_staff_type === 'caregiver' && $preferredStaff->isCaregiver())) {
+                    $preferredStaffId = $request->preferred_staff_id;
+                }
+            }
+        }
+
         $serviceRequest = ServiceRequest::create([
             'patient_id' => Auth::id(),
             'service_type_id' => $request->service_type_id,
             'preferred_staff_type' => $request->preferred_staff_type,
+            'preferred_staff_id' => $preferredStaffId, // Store patient's selected staff
             'start_date' => $startDate,
             'end_date' => $endDate,
             'duration_days' => $request->duration_days,
             'total_amount' => $totalAmount,
             'total_staff_payout' => null, // Will be calculated when staff is assigned
-            'prepaid_amount' => 0.00,
+            'prepaid_amount' => 0.00, // No prepayment required initially
             'payment_status' => 'pending',
             'status' => 'pending',
             'notes' => $request->notes,
@@ -146,7 +172,7 @@ class ServiceController extends Controller
      */
     public function adminIndex()
     {
-        $serviceRequests = ServiceRequest::with(['patient', 'serviceType', 'assignedStaff', 'approvedBy'])
+        $serviceRequests = ServiceRequest::with(['patient', 'serviceType', 'assignedStaff', 'preferredStaff', 'approvedBy'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
         
@@ -172,6 +198,8 @@ class ServiceController extends Controller
         $availableStaff = User::whereIn('role', ['nurse', 'caregiver'])
             ->where('is_active', true)
             ->get();
+        
+        $serviceRequest->load(['patient', 'serviceType', 'preferredStaff']);
         
         return view('services::admin.requests.assign', compact('serviceRequest', 'availableStaff'));
     }
@@ -227,22 +255,7 @@ class ServiceController extends Controller
                 ->with('error', 'Staff member is already assigned to another service during this period. Please select a different staff member or adjust the service dates.');
         }
 
-        // CRITICAL FIX #2: Enforce 7-day prepayment before assignment
-        $serviceType = $serviceRequest->serviceType;
-        $minPrepaidDays = min(7, $serviceRequest->duration_days); // Minimum 7 days or full duration if less
-        $minPrepaidAmount = $serviceType->patient_charge * $minPrepaidDays;
-        
-        if ($serviceRequest->prepaid_amount < $minPrepaidAmount) {
-            $remainingAmount = $minPrepaidAmount - $serviceRequest->prepaid_amount;
-            return redirect()->back()
-                ->with('error', "Minimum 7-day prepayment required before assigning staff. Required: ₹" . number_format($minPrepaidAmount) . " (₹" . number_format($serviceRequest->prepaid_amount) . " paid, ₹" . number_format($remainingAmount) . " remaining).");
-        }
-        
-        // Also check payment status
-        if ($serviceRequest->payment_status === 'pending' && $serviceRequest->prepaid_amount == 0) {
-            return redirect()->back()
-                ->with('error', 'Payment must be received before assigning staff. Please update payment status first.');
-        }
+        // Removed prepayment requirement - admin can assign staff without payment barrier
 
         // Calculate staff payout based on staff type and service type (serviceType already loaded above)
         $dailyStaffPayout = $staff->isNurse() ? $serviceType->nurse_payout : $serviceType->caregiver_payout;

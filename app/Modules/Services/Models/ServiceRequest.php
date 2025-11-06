@@ -14,6 +14,7 @@ class ServiceRequest extends Model
         'patient_id',
         'service_type_id',
         'preferred_staff_type', // 'nurse', 'caregiver', 'any'
+        'preferred_staff_id', // Specific staff member patient selected
         'start_date',
         'end_date',
         'duration_days',
@@ -63,6 +64,14 @@ class ServiceRequest extends Model
     public function assignedStaff()
     {
         return $this->belongsTo(User::class, 'assigned_staff_id');
+    }
+
+    /**
+     * Get the preferred staff member (selected by patient)
+     */
+    public function preferredStaff()
+    {
+        return $this->belongsTo(User::class, 'preferred_staff_id');
     }
 
     /**

@@ -32,11 +32,30 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
         
+        // Get available staff for dashboard display (limit to 6 for better UI)
+        $availableNurses = \App\Models\Core\User::where('role', 'nurse')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->limit(3)
+            ->get();
+        
+        $availableCaregivers = \App\Models\Core\User::where('role', 'caregiver')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->limit(3)
+            ->get();
+        
+        // Get service types for pricing display
+        $serviceTypes = \App\Modules\Services\Models\ServiceType::getActiveServiceTypes();
+        
         $data = [
             'user' => $user,
             'stats' => $this->getUserStats($user),
             'recent_activity' => $this->getRecentActivity($user),
             'recent_requests' => $serviceRequests,
+            'available_nurses' => $availableNurses,
+            'available_caregivers' => $availableCaregivers,
+            'service_types' => $serviceTypes,
         ];
 
         return view('auth::dashboard', $data);

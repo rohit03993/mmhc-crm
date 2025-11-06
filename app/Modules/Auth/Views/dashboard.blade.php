@@ -104,6 +104,137 @@
         </div>
     </div>
 
+    <!-- Available Staff Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="modern-card-header bg-gradient-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users me-2"></i>Available Healthcare Staff
+                        </h5>
+                        <a href="{{ route('staff.index') }}" class="btn btn-light btn-sm">
+                            View All <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="modern-card-body">
+                    <!-- Nurses Section -->
+                    @if($available_nurses->count() > 0)
+                    <div class="mb-4">
+                        <h6 class="staff-section-title mb-3">
+                            <i class="fas fa-user-nurse me-2 text-primary"></i>Licensed Nurses
+                        </h6>
+                        <div class="row g-3">
+                            @foreach($available_nurses as $nurse)
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <div class="staff-card">
+                                    <div class="staff-avatar">
+                                        <i class="fas fa-user-nurse"></i>
+                                    </div>
+                                    <div class="staff-info">
+                                        <h6 class="staff-name">{{ $nurse->name }}</h6>
+                                        <div class="staff-details">
+                                            @if($nurse->qualification)
+                                            <div class="staff-detail-item">
+                                                <i class="fas fa-graduation-cap"></i>
+                                                <span>{{ $nurse->qualification }}</span>
+                                            </div>
+                                            @endif
+                                            @if($nurse->experience)
+                                            <div class="staff-detail-item">
+                                                <i class="fas fa-briefcase"></i>
+                                                <span>{{ $nurse->experience }} years exp.</span>
+                                            </div>
+                                            @endif
+                                        </div>
+                                        @if($service_types->count() > 0)
+                                        <div class="staff-pricing">
+                                            <small class="text-muted">Starting from</small>
+                                            <div class="staff-price">
+                                                ₹{{ number_format($service_types->first()->patient_charge) }}/day
+                                            </div>
+                                        </div>
+                                        @endif
+                                    </div>
+                                    <div class="staff-action">
+                                        <a href="{{ route('services.create') }}?staff_type=nurse&staff_id={{ $nurse->id }}" 
+                                           class="btn btn-primary btn-sm w-100">
+                                            <i class="fas fa-calendar-check me-1"></i>Request Service
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    <!-- Caregivers Section -->
+                    @if($available_caregivers->count() > 0)
+                    <div>
+                        <h6 class="staff-section-title mb-3">
+                            <i class="fas fa-user-md me-2 text-success"></i>Caregivers
+                        </h6>
+                        <div class="row g-3">
+                            @foreach($available_caregivers as $caregiver)
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <div class="staff-card">
+                                    <div class="staff-avatar caregiver">
+                                        <i class="fas fa-user-md"></i>
+                                    </div>
+                                    <div class="staff-info">
+                                        <h6 class="staff-name">{{ $caregiver->name }}</h6>
+                                        <div class="staff-details">
+                                            @if($caregiver->qualification)
+                                            <div class="staff-detail-item">
+                                                <i class="fas fa-graduation-cap"></i>
+                                                <span>{{ $caregiver->qualification }}</span>
+                                            </div>
+                                            @endif
+                                            @if($caregiver->experience)
+                                            <div class="staff-detail-item">
+                                                <i class="fas fa-briefcase"></i>
+                                                <span>{{ $caregiver->experience }} years exp.</span>
+                                            </div>
+                                            @endif
+                                        </div>
+                                        @if($service_types->count() > 0)
+                                        <div class="staff-pricing">
+                                            <small class="text-muted">Starting from</small>
+                                            <div class="staff-price">
+                                                ₹{{ number_format($service_types->first()->patient_charge) }}/day
+                                            </div>
+                                        </div>
+                                        @endif
+                                    </div>
+                                    <div class="staff-action">
+                                        <a href="{{ route('services.create') }}?staff_type=caregiver&staff_id={{ $caregiver->id }}" 
+                                           class="btn btn-success btn-sm w-100">
+                                            <i class="fas fa-calendar-check me-1"></i>Request Service
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if($available_nurses->count() == 0 && $available_caregivers->count() == 0)
+                    <div class="empty-state py-4">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h6 class="empty-state-title">No Staff Available</h6>
+                        <p class="empty-state-text">Check back later for available healthcare staff.</p>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="row g-4">
         <!-- Recent Service Requests -->
@@ -663,6 +794,119 @@
     
     .stat-value {
         font-size: 1.3rem;
+    }
+}
+
+/* Staff Cards */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.staff-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.staff-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.staff-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: #667eea;
+}
+
+.staff-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.8rem;
+    margin: 0 auto 1rem;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.staff-avatar.caregiver {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+}
+
+.staff-info {
+    flex: 1;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.staff-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+}
+
+.staff-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.staff-detail-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.staff-detail-item i {
+    color: #667eea;
+    width: 16px;
+}
+
+.staff-pricing {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.staff-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #28a745;
+    margin-top: 0.25rem;
+}
+
+.staff-action {
+    margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+    .staff-card {
+        margin-bottom: 1rem;
+    }
+    
+    .staff-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
     }
 }
 </style>
