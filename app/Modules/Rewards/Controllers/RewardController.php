@@ -8,6 +8,7 @@ use App\Modules\Rewards\Services\RewardService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class RewardController extends Controller
 {
@@ -52,14 +53,46 @@ class RewardController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'patient_name' => 'required|string|max:255',
-            'patient_phone' => 'required|string|max:20',
-            'hospital_name' => 'required|string|max:255',
-            'treatment_details' => 'nullable|string|max:2000',
-        ]);
+        $rawPhone = preg_replace('/\D/', '', (string) $request->input('patient_phone', ''));
 
-        $this->rewardService->createReward(Auth::user(), $validated);
+        $validator = Validator::make(
+            [
+                'patient_name' => $request->input('patient_name'),
+                'patient_phone' => $request->input('patient_phone'),
+                'patient_phone_digits' => $rawPhone,
+                'hospital_name' => $request->input('hospital_name'),
+                'treatment_details' => $request->input('treatment_details'),
+            ],
+            [
+                'patient_name' => 'required|string|max:255',
+                'patient_phone_digits' => [
+                    'required',
+                    'regex:/^[0-9]{10}$/',
+                    function (string $attribute, string $value, \Closure $fail) {
+                        $normalized = '+91' . $value;
+                        if (CaregiverReward::where('patient_phone', $normalized)->exists()) {
+                            $fail('This mobile number has already been submitted.');
+                        }
+                    },
+                ],
+                'hospital_name' => 'required|string|max:255',
+                'treatment_details' => 'nullable|string|max:2000',
+            ],
+            [
+                'patient_phone_digits.regex' => 'Enter a valid 10-digit Indian mobile number.',
+            ]
+        );
+
+        $validated = $validator->validate();
+
+        $payload = [
+            'patient_name' => $validated['patient_name'],
+            'patient_phone' => '+91' . $validated['patient_phone_digits'],
+            'hospital_name' => $validated['hospital_name'],
+            'treatment_details' => $validated['treatment_details'] ?? null,
+        ];
+
+        $this->rewardService->createReward(Auth::user(), $payload);
 
         return redirect()
             ->route('rewards.index')

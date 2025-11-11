@@ -30,9 +30,20 @@
 
                         <div class="mb-3">
                             <label class="form-label">Patient Mobile Number</label>
-                            <input type="text" name="patient_phone" value="{{ old('patient_phone') }}"
-                                   class="form-control @error('patient_phone') is-invalid @enderror" required>
-                            @error('patient_phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div class="input-group">
+                                <span class="input-group-text">+91</span>
+                                <input type="text"
+                                       name="patient_phone"
+                                       value="{{ old('patient_phone') }}"
+                                       pattern="[0-9]{10}"
+                                       maxlength="10"
+                                       inputmode="numeric"
+                                       class="form-control @error('patient_phone_digits') is-invalid @enderror"
+                                       placeholder="Enter 10-digit mobile number"
+                                       required>
+                            </div>
+                            <small class="text-muted">Indian mobile numbers only. Each number can be submitted once.</small>
+                            @error('patient_phone_digits')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>
 
                         <div class="mb-3">
