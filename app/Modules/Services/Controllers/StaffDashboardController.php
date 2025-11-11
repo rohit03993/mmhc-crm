@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Modules\Services\Models\ServiceRequest;
+use App\Modules\Rewards\Models\CaregiverReward;
+use App\Modules\Rewards\Services\RewardService;
 
 class StaffDashboardController extends Controller
 {
@@ -43,8 +45,19 @@ class StaffDashboardController extends Controller
             'pending_assignments' => ServiceRequest::where('assigned_staff_id', $user->id)
                 ->where('status', 'assigned')->count(),
         ];
+
+        $rewardService = app(RewardService::class);
+        $totalPoints = $user->reward_points ?? 0;
+        $recentRewards = CaregiverReward::where('user_id', $user->id)
+            ->latest()
+            ->limit(5)
+            ->get();
+        $rewardSummary = [
+            'points' => $totalPoints,
+            'amount' => $rewardService->calculateRewardAmount($totalPoints),
+        ];
         
-        return view('services::staff.dashboard', compact('assignedServices', 'stats'));
+        return view('services::staff.dashboard', compact('assignedServices', 'stats', 'recentRewards', 'rewardSummary'));
     }
     
     /**

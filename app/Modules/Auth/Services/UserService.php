@@ -111,8 +111,10 @@ class UserService
             'total' => User::count(),
             'active' => User::active()->count(),
             'caregivers' => User::role('caregiver')->count(),
+            'nurses' => User::role('nurse')->count(),
             'patients' => User::role('patient')->count(),
             'admins' => User::role('admin')->count(),
+            'staff' => User::whereIn('role', ['caregiver', 'nurse'])->count(),
         ];
     }
 }

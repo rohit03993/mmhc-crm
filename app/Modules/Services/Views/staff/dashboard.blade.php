@@ -103,6 +103,78 @@
         </div>
     </div>
 
+    <!-- Rewards Summary -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-lg-4">
+            <div class="reward-card shadow-sm border-0 h-100">
+                <div class="reward-card-body">
+                    <h5 class="reward-title">
+                        <i class="fas fa-gift me-2 text-warning"></i>My Reward Wallet
+                    </h5>
+                    <div class="reward-stats d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="reward-points">{{ number_format($rewardSummary['points']) }}</div>
+                            <div class="reward-label text-muted">Points Earned</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="reward-amount">₹{{ number_format($rewardSummary['amount'], 2) }}</div>
+                            <div class="reward-label text-muted">Reward Value</div>
+                        </div>
+                    </div>
+                    <form method="GET" action="{{ route('rewards.create') }}" class="mt-3">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-plus-circle me-2"></i>Add Patient Details
+                        </button>
+                    </form>
+                    <small class="text-muted d-block mt-2">Earn 1 point (₹10) for each successful submission.</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-8">
+            <div class="reward-card shadow-sm border-0 h-100">
+                <div class="reward-card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="reward-title mb-0">
+                            <i class="fas fa-list me-2 text-primary"></i>Recent Reward Entries
+                        </h5>
+                        <a href="{{ route('rewards.index') }}" class="btn btn-outline-secondary btn-sm">
+                            View All
+                        </a>
+                    </div>
+                    @if($recentRewards->count())
+                        <div class="reward-list">
+                            @foreach($recentRewards as $reward)
+                                <div class="reward-item">
+                                    <div>
+                                        <div class="reward-item-title">{{ $reward->patient_name }}</div>
+                                        <div class="text-muted small">
+                                            {{ $reward->hospital_name }} &middot; {{ $reward->patient_phone }}
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-success">
+                                            +{{ $reward->reward_points }} pts
+                                        </span>
+                                        <div class="text-muted small">
+                                            {{ $reward->created_at->diffForHumans() }}
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="empty-state text-center py-4">
+                            <div class="empty-state-icon mb-3">
+                                <i class="fas fa-gift"></i>
+                            </div>
+                            <p class="text-muted mb-0">No reward entries yet. Add patient details to earn rewards.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Assigned Services Section -->
     <div class="row">
         <div class="col-12">
@@ -378,6 +450,82 @@
     color: #6c757d;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+/* Rewards Card */
+.reward-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+
+.reward-card::after {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -60%;
+    width: 120%;
+    height: 120%;
+    background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+}
+
+.reward-card-body {
+    position: relative;
+    z-index: 2;
+}
+
+.reward-title {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.reward-stats {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.reward-points {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #6c5ce7;
+    line-height: 1;
+}
+
+.reward-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #27ae60;
+    line-height: 1;
+}
+
+.reward-label {
+    font-size: 0.85rem;
+}
+
+.reward-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.reward-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fb;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.reward-item:hover {
+    background: #eef2ff;
+    transform: translateX(4px);
 }
 
 /* Service Cards */

@@ -58,6 +58,7 @@
                                         <span class="badge 
                                             @if($user->role == 'admin') bg-danger
                                             @elseif($user->role == 'caregiver') bg-primary
+                                            @elseif($user->role == 'nurse') bg-info
                                             @else bg-success @endif">
                                             {{ ucfirst($user->role) }}
                                         </span>
@@ -130,6 +131,7 @@
                                 <option value="">Select Role</option>
                                 <option value="admin">Admin</option>
                                 <option value="caregiver">Caregiver</option>
+                                <option value="nurse">Nurse</option>
                                 <option value="patient">Patient</option>
                             </select>
                         </div>

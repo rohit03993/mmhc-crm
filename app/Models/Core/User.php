@@ -27,6 +27,7 @@ class User extends Authenticatable
         'documents',
         'is_active',
         'email_verified_at',
+        'reward_points',
     ];
 
     /**
@@ -46,6 +47,7 @@ class User extends Authenticatable
         'password' => 'hashed',
         'is_active' => 'boolean',
         'documents' => 'array',
+        'reward_points' => 'integer',
     ];
 
     /**
@@ -134,5 +136,13 @@ class User extends Authenticatable
     public function scopeRole($query, $role)
     {
         return $query->where('role', $role);
+    }
+
+    /**
+     * Get calculated reward amount in rupees.
+     */
+    public function getRewardAmountAttribute(): float
+    {
+        return (float) ($this->reward_points ?? 0) * \App\Modules\Rewards\Services\RewardService::POINT_VALUE;
     }
 }

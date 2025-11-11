@@ -330,6 +330,13 @@
                                     My Assignments
                                 </a>
                             </li>
+                            
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('rewards.*') ? 'active' : '' }}" href="{{ route('rewards.index') }}">
+                                    <i class="fas fa-gift me-2"></i>
+                                    Rewards & Points
+                                </a>
+                            </li>
                             @endif
                             
                             @if(auth()->user()->isPatient())
@@ -353,6 +360,13 @@
                                     <a class="nav-link text-white {{ request()->routeIs('admin.users') || request()->routeIs('admin.profiles*') ? 'active' : '' }}" href="{{ route('admin.users') }}">
                                         <i class="fas fa-users me-2"></i>
                                         Manage Users
+                                    </a>
+                                </li>
+                                
+                                <li class="nav-item">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.rewards.*') ? 'active' : '' }}" href="{{ route('admin.rewards.index') }}">
+                                        <i class="fas fa-star me-2"></i>
+                                        Reward Submissions
                                     </a>
                                 </li>
                                 

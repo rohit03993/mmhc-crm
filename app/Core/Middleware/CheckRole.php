@@ -14,11 +14,11 @@ class CheckRole
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         if (!auth()->check()) {
-            return redirect()->route('auth.login');
+            return abort(403, 'Access denied. You must be authenticated.');
         }
 
         $user = auth()->user();
-        
+
         if (!in_array($user->role, $roles)) {
             abort(403, 'Access denied. You do not have the required role.');
         }
