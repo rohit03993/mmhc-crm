@@ -1,8 +1,8 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<nav class="navbar navbar-expand-lg navbar-light top-navbar">
     <div class="container-fluid">
         <a class="navbar-brand" href="{{ route('dashboard') }}">
-            <i class="fas fa-heartbeat me-2"></i>
-            MMHC CRM
+            <img src="{{ asset('images/med-logo.png') }}" alt="MeD Miracle Health Care" class="brand-logo brand-logo--nav">
+            <span class="visually-hidden">MeD Miracle Health Care</span>
         </a>
         
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">

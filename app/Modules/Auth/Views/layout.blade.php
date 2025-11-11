@@ -20,36 +20,100 @@
     @yield('head')
     
     <style>
+        .top-navbar {
+            background: #ffffff;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+
+        .top-navbar .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .top-navbar .navbar-nav .nav-link {
+            color: #1f2937;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .top-navbar .navbar-nav .nav-link:hover,
+        .top-navbar .navbar-nav .nav-link:focus {
+            color: #2563eb;
+        }
+
         .sidebar {
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            background: linear-gradient(190deg, #312e81 0%, #1d4ed8 50%, #0f172a 100%);
+            box-shadow: 2px 0 18px rgba(15, 23, 42, 0.35);
         }
+
         .main-content {
-            background-color: #f8f9fa;
+            background-color: #f1f5f9;
         }
+
         .card {
             border: none;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
         }
+
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
             border: none;
         }
-        .navbar-brand {
-            font-weight: bold;
+
+        .brand-logo {
+            display: block;
+            width: 100%;
+            max-width: 160px;
+            height: auto;
         }
-        
-        /* Modern Sidebar Styling */
+
+        .brand-logo--nav {
+            max-width: 140px;
+        }
+
+        .brand-logo--sidebar {
+            max-width: 180px;
+            margin: 0 auto;
+        }
+
+        .brand-logo--auth {
+            max-width: 200px;
+            margin: 0 auto 1.25rem;
+        }
+
+        .brand-logo-card {
+            background: linear-gradient(160deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.06) 100%);
+            border: 1px solid rgba(255,255,255,0.28);
+            border-radius: 20px;
+            padding: 1.5rem 1.25rem;
+            margin-bottom: 0.5rem;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+            backdrop-filter: blur(10px);
+        }
+
+        .brand-tagline {
+            font-size: 0.8rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(241, 245, 249, 0.95);
+        }
+
         .sidebar .nav-link {
-            border-radius: 12px;
+            border-radius: 14px;
             margin: 0.25rem 0.5rem;
-            padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
+            padding: 0.8rem 1rem;
+            transition: all 0.25s ease;
             position: relative;
             overflow: hidden;
+            color: rgba(255,255,255,0.85);
         }
-        
+
         .sidebar .nav-link::before {
             content: '';
             position: absolute;
@@ -57,204 +121,41 @@
             top: 0;
             width: 4px;
             height: 100%;
-            background: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.8);
             transform: scaleY(0);
-            transition: transform 0.3s ease;
+            transform-origin: top;
+            transition: transform 0.25s ease;
         }
-        
+
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
-            background: rgba(255,255,255,0.15);
-            transform: translateX(5px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.18);
+            transform: translateX(4px);
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.2);
+            color: #ffffff;
         }
-        
+
         .sidebar .nav-link:hover::before,
         .sidebar .nav-link.active::before {
             transform: scaleY(1);
-            background: white;
         }
-        
+
         .sidebar .nav-link i {
-            width: 20px;
+            width: 22px;
             text-align: center;
             margin-right: 0.75rem;
         }
-        
+
         .sidebar .nav-item.mt-3 {
             margin-top: 2rem !important;
-            border-top: 1px solid rgba(255,255,255,0.2);
+            border-top: 1px solid rgba(148, 163, 184, 0.25);
             padding-top: 1rem;
         }
-        
-        .sidebar .nav-item.mt-3 .nav-link {
-            color: #ffcccb;
-        }
-        
-        .sidebar .nav-item.mt-3 .nav-link:hover {
-            background: rgba(255,255,255,0.1);
-            color: white;
-        }
-        
-        /* Sidebar Logo Enhancement */
+
         .sidebar .text-center {
-            padding: 1.5rem 1rem;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-            margin-bottom: 1rem;
-        }
-        
-        .sidebar .text-2xl {
-            font-size: 2rem;
-            font-weight: 900;
-            letter-spacing: -1px;
-        }
-        
-        .sidebar .text-xl {
-            font-size: 1.5rem;
-        }
-        
-        .sidebar .text-xs {
-            font-size: 0.7rem;
-            opacity: 0.9;
-        }
-        
-        /* MeD Miracle Health Care Logo */
-        .med-logo-icon {
-            position: relative;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .logo-heart {
-            position: absolute;
-            top: 2px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 18px;
-            z-index: 3;
-            color: #28a745;
-        }
-        
-        .logo-pill {
-            position: absolute;
-            bottom: 6px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 24px;
-            height: 6px;
-            background: #007bff;
-            border-radius: 3px;
-            z-index: 1;
-        }
-        
-        .logo-pill::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(45deg);
-            width: 24px;
-            height: 6px;
-            background: #007bff;
-            border-radius: 3px;
-        }
-        
-        .med-logo-text {
-            text-align: left;
-        }
-        
-        .med-text {
-            font-size: 1.8rem;
-            font-weight: 900;
-            color: #2c3e50;
-            line-height: 1;
-            letter-spacing: -1px;
-        }
-        
-        .miracle-text {
-            font-size: 0.7rem;
-            color: #6c757d;
-            font-weight: 500;
-            line-height: 1;
-            margin-top: 2px;
-        }
-        
-        /* Mobile Responsive Logo */
-        @media (max-width: 768px) {
-            .med-logo-icon {
-                width: 40px;
-                height: 40px;
-            }
-            
-            .logo-heart {
-                width: 14px;
-                height: 12px;
-                top: 2px;
-            }
-            
-            .logo-heart::before {
-                width: 14px;
-                height: 12px;
-            }
-            
-            .logo-pill {
-                width: 20px;
-                height: 5px;
-                bottom: 5px;
-            }
-            
-            .logo-pill::before {
-                width: 20px;
-                height: 5px;
-            }
-            
-            .med-text {
-                font-size: 1.4rem;
-            }
-            
-            .miracle-text {
-                font-size: 0.6rem;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .med-logo-icon {
-                width: 35px;
-                height: 35px;
-            }
-            
-            .logo-heart {
-                width: 12px;
-                height: 10px;
-                top: 1px;
-            }
-            
-            .logo-heart::before {
-                width: 12px;
-                height: 10px;
-            }
-            
-            .logo-pill {
-                width: 18px;
-                height: 4px;
-                bottom: 4px;
-            }
-            
-            .logo-pill::before {
-                width: 18px;
-                height: 4px;
-            }
-            
-            .med-text {
-                font-size: 1.2rem;
-            }
-            
-            .miracle-text {
-                font-size: 0.55rem;
-            }
+            padding: 1.6rem 1rem 1.25rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+            margin-bottom: 1.5rem;
         }
     </style>
 </head>
@@ -267,15 +168,10 @@
                 <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
                     <div class="position-sticky pt-3">
                         <div class="text-center mb-4">
-                            <div class="d-flex align-items-center justify-content-center mb-2">
-                                <!-- MeD Text Logo -->
-                                <div class="text-center">
-                                    <div class="text-2xl font-bold text-white mb-1">
-                                        <span class="text-2xl">M</span><span class="text-xl italic">e</span><span class="text-2xl">D</span>
-                                    </div>
-                                    <div class="text-xs text-gray-300">Miracle Health Care</div>
-                                </div>
+                            <div class="brand-logo-card">
+                                <img src="{{ asset('images/med-logo.png') }}" alt="MeD Miracle Health Care" class="brand-logo brand-logo--sidebar">
                             </div>
+                            <div class="brand-tagline">Miracle Health Care</div>
                         </div>
                         
                         <ul class="nav flex-column">

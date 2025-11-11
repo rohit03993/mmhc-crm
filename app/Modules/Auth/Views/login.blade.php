@@ -9,11 +9,8 @@
             <div class="card shadow-lg border-0">
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
-                        <h2 class="fw-bold text-primary">
-                            <i class="fas fa-heartbeat me-2"></i>
-                            MMHC CRM
-                        </h2>
-                        <p class="text-muted">Sign in to your account</p>
+                        <img src="{{ asset('images/med-logo.png') }}" alt="MeD Miracle Health Care" class="brand-logo brand-logo--auth">
+                        <p class="text-muted mb-0">Sign in to your account</p>
                     </div>
 
                     @if($errors->any())

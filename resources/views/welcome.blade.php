@@ -86,14 +86,9 @@
             <div class="flex justify-between items-center h-20">
                 <!-- Logo -->
                 <div class="flex items-center">
-                    <a href="#" class="flex items-center space-x-3">
-                        <!-- MeD Text Logo -->
-                        <div class="flex flex-col">
-                            <span class="text-3xl font-bold text-gray-800 leading-none">
-                                <span class="text-3xl">M</span><span class="text-2xl italic">e</span><span class="text-3xl">D</span>
-                            </span>
-                            <span class="text-sm text-gray-600 font-medium">Miracle Health Care</span>
-                        </div>
+                    <a href="#home" class="flex items-center space-x-3">
+                        <img src="{{ asset('images/med-logo.png') }}" alt="MeD Miracle Health Care" class="h-12 w-auto">
+                        <span class="sr-only">MeD Miracle Health Care</span>
                     </a>
                 </div>
                 

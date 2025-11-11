@@ -16,16 +16,8 @@
             <div class="card shadow-lg border-0">
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
-                        <div class="d-flex align-items-center justify-content-center mb-3">
-                            <!-- MeD Text Logo -->
-                            <div class="text-center">
-                                <div class="text-3xl font-bold text-gray-800 mb-1">
-                                    <span class="text-3xl">M</span><span class="text-2xl italic">e</span><span class="text-3xl">D</span>
-                                </div>
-                                <div class="text-sm text-gray-600">Miracle Health Care</div>
-                            </div>
-                        </div>
-                        <p class="text-muted">Create your account</p>
+                        <img src="{{ asset('images/med-logo.png') }}" alt="MeD Miracle Health Care" class="brand-logo brand-logo--auth">
+                        <p class="text-muted mb-0">Create your account</p>
                     </div>
 
                     @if($errors->any())
