@@ -260,6 +260,20 @@
                                 </li>
                                 
                                 <li class="nav-item">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.service-requests*') ? 'active' : '' }}" href="{{ route('admin.service-requests') }}">
+                                        <i class="fas fa-tasks me-2"></i>
+                                        Service Requests
+                                    </a>
+                                </li>
+                                
+                                <li class="nav-item">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.referrals.*') ? 'active' : '' }}" href="{{ route('admin.referrals.index') }}">
+                                        <i class="fas fa-share-alt me-2"></i>
+                                        Referral Management
+                                    </a>
+                                </li>
+                                
+                                <li class="nav-item">
                                     <a class="nav-link text-white {{ request()->routeIs('admin.rewards.*') ? 'active' : '' }}" href="{{ route('admin.rewards.index') }}">
                                         <i class="fas fa-star me-2"></i>
                                         Reward Submissions

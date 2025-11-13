@@ -184,6 +184,19 @@
                             </div>
                         </a>
                         
+                        <a href="{{ route('admin.referrals.index') }}" class="quick-action-btn">
+                            <div class="quick-action-icon bg-info">
+                                <i class="fas fa-share-alt"></i>
+                            </div>
+                            <div class="quick-action-content">
+                                <div class="quick-action-title">Referral Management</div>
+                                <div class="quick-action-desc">Track & Manage Referrals</div>
+                            </div>
+                            <div class="quick-action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </a>
+                        
                         <a href="{{ route('admin.page-content.index') }}" class="quick-action-btn">
                             <div class="quick-action-icon bg-warning">
                                 <i class="fas fa-edit"></i>

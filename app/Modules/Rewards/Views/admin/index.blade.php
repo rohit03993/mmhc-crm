@@ -45,7 +45,10 @@
                             <th>Submitted By</th>
                             <th>Role</th>
                             <th>Patient</th>
+                            <th>Age</th>
                             <th>Contact</th>
+                            <th>Address</th>
+                            <th>Pincode</th>
                             <th>Hospital</th>
                             <th>Reward</th>
                             <th>Submitted On</th>
@@ -61,15 +64,25 @@
                                 <td>
                                     <span class="badge bg-primary">{{ ucfirst($reward->user->role) }}</span>
                                 </td>
-                                <td>{{ $reward->patient_name }}</td>
+                                <td>
+                                    <strong>{{ $reward->patient_name }}</strong>
+                                    @if($reward->treatment_details)
+                                        <br><small class="text-muted">{{ Str::limit($reward->treatment_details, 25) }}</small>
+                                    @endif
+                                </td>
+                                <td>{{ $reward->patient_age ?? '—' }}</td>
                                 <td>{{ $reward->patient_phone }}</td>
+                                <td>
+                                    <small>{{ Str::limit($reward->patient_address ?? '—', 30) }}</small>
+                                </td>
+                                <td>{{ $reward->patient_pincode ?? '—' }}</td>
                                 <td>{{ $reward->hospital_name }}</td>
                                 <td>+{{ $reward->reward_points }} pts (₹{{ number_format($reward->reward_amount, 2) }})</td>
                                 <td>{{ $reward->created_at->format('d M Y, h:i A') }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
+                                <td colspan="10" class="text-center text-muted py-4">
                                     No reward submissions yet.
                                 </td>
                             </tr>

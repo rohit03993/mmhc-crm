@@ -123,6 +123,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get referrals made by this user (as referrer)
+     */
+    public function referrals()
+    {
+        return $this->hasMany(\App\Modules\Referrals\Models\Referral::class, 'referrer_id');
+    }
+
+    /**
+     * Get referral where this user was referred
+     */
+    public function referredBy()
+    {
+        return $this->hasOne(\App\Modules\Referrals\Models\Referral::class, 'referred_id');
+    }
+
+    /**
      * Scope for active users
      */
     public function scopeActive($query)

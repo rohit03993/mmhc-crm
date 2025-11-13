@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use App\Modules\Services\Models\ServiceRequest;
 use App\Modules\Rewards\Models\CaregiverReward;
 use App\Modules\Rewards\Services\RewardService;
+use App\Modules\Referrals\Services\ReferralService;
 
 class StaffDashboardController extends Controller
 {
@@ -57,7 +58,13 @@ class StaffDashboardController extends Controller
             'amount' => $rewardService->calculateRewardAmount($totalPoints),
         ];
         
-        return view('services::staff.dashboard', compact('assignedServices', 'stats', 'recentRewards', 'rewardSummary'));
+        // Get referral information
+        $referralService = app(ReferralService::class);
+        $referralLink = $referralService->getReferralLink($user);
+        $referralStats = $referralService->getReferralStats($user);
+        $recentReferrals = $referralService->getReferralHistory($user, 5);
+        
+        return view('services::staff.dashboard', compact('assignedServices', 'stats', 'recentRewards', 'rewardSummary', 'referralLink', 'referralStats', 'recentReferrals'));
     }
     
     /**

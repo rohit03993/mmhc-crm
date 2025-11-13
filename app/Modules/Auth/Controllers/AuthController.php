@@ -5,8 +5,10 @@ namespace App\Modules\Auth\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
 use App\Modules\Auth\Services\UserService;
+use App\Modules\Referrals\Services\ReferralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -14,10 +16,12 @@ use Illuminate\Support\Str;
 class AuthController extends Controller
 {
     protected $userService;
+    protected $referralService;
 
-    public function __construct(UserService $userService)
+    public function __construct(UserService $userService, ReferralService $referralService)
     {
         $this->userService = $userService;
+        $this->referralService = $referralService;
     }
 
     /**
@@ -64,13 +68,25 @@ class AuthController extends Controller
     /**
      * Show registration form
      */
-    public function showRegister()
+    public function showRegister(Request $request)
     {
         if (Auth::check()) {
             return redirect()->route('dashboard');
         }
 
-        return view('auth::register-tabbed');
+        // Check if referral code is present
+        $referralCode = $request->get('ref');
+        $referral = null;
+        $referrer = null;
+        
+        if ($referralCode) {
+            $referral = $this->referralService->validateReferralCode($referralCode);
+            if ($referral) {
+                $referrer = $referral->referrer;
+            }
+        }
+
+        return view('auth::register-tabbed', compact('referralCode', 'referrer'));
     }
 
     /**
@@ -102,49 +118,93 @@ class AuthController extends Controller
                 ->withInput();
         }
 
-        $userData = $request->only(['name', 'email', 'phone', 'password', 'role', 'date_of_birth', 'address']);
-        $userData['password'] = Hash::make($userData['password']);
+        // Check if referral code is provided (from query string or form input)
+        $referralCode = $request->get('ref') ?? $request->input('ref');
+        $isReferralRegistration = !empty($referralCode);
         
-        // Generate unique ID based on role
-        $userData['unique_id'] = $this->userService->generateUniqueId($userData['role']);
-
-        $user = User::create($userData);
-
-        // Handle staff-specific data (nurse or caregiver)
-        if (in_array($userData['role'], ['nurse', 'caregiver'])) {
-            // Store additional caregiver information
-            $caregiverData = $request->only(['qualification', 'experience']);
-            
-            // Handle document uploads
-            if ($request->hasFile('documents')) {
-                $documents = [];
-                foreach ($request->file('documents') as $file) {
-                    $filename = time() . '_' . $file->getClientOriginalName();
-                    $file->storeAs('caregiver_documents/' . $user->id, $filename, 'public');
-                    $documents[] = $filename;
-                }
-                $caregiverData['documents'] = $documents;
+        // If referral code is provided, user must register as nurse or caregiver
+        if ($isReferralRegistration) {
+            // Validate that referral code exists and is valid
+            $referral = $this->referralService->validateReferralCode($referralCode);
+            if (!$referral) {
+                return redirect()->back()
+                    ->withErrors(['ref' => 'Invalid or expired referral code.'])
+                    ->withInput();
             }
             
-            // Store staff data in user's meta field or create a separate profile
-            $user->update([
-                'qualification' => $caregiverData['qualification'] ?? null,
-                'experience' => $caregiverData['experience'] ?? null,
-                'documents' => json_encode($caregiverData['documents'] ?? []),
-            ]);
+            // Validate role
+            $validator->after(function ($validator) use ($request) {
+                if (!in_array($request->role, ['nurse', 'caregiver'])) {
+                    $validator->errors()->add('role', 'You can only register as a nurse or caregiver using a referral link.');
+                }
+            });
+            
+            if ($validator->fails()) {
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput()
+                    ->with('referralCode', $referralCode);
+            }
         }
 
-        Auth::login($user);
+        return DB::transaction(function () use ($request, $referralCode, $isReferralRegistration) {
+            $userData = $request->only(['name', 'email', 'phone', 'password', 'role', 'date_of_birth', 'address']);
+            $userData['password'] = Hash::make($userData['password']);
+            
+            // Generate unique ID based on role
+            $userData['unique_id'] = $this->userService->generateUniqueId($userData['role']);
 
-        $roleMessage = match($userData['role']) {
-            'nurse' => 'Nurse registration successful! Your documents are under review.',
-            'caregiver' => 'Caregiver registration successful! Your documents are under review.',
-            'patient' => 'Patient registration successful! Welcome to MMHC CRM.',
-            default => 'Registration successful!'
-        };
+            $user = User::create($userData);
 
-        return redirect()->route('dashboard')
-            ->with('success', $roleMessage);
+            // Handle staff-specific data (nurse or caregiver)
+            if (in_array($userData['role'], ['nurse', 'caregiver'])) {
+                // Store additional caregiver information
+                $caregiverData = $request->only(['qualification', 'experience']);
+                
+                // Handle document uploads
+                if ($request->hasFile('documents')) {
+                    $documents = [];
+                    foreach ($request->file('documents') as $file) {
+                        $filename = time() . '_' . $file->getClientOriginalName();
+                        $file->storeAs('caregiver_documents/' . $user->id, $filename, 'public');
+                        $documents[] = $filename;
+                    }
+                    $caregiverData['documents'] = $documents;
+                }
+                
+                // Store staff data in user's meta field or create a separate profile
+                $user->update([
+                    'qualification' => $caregiverData['qualification'] ?? null,
+                    'experience' => $caregiverData['experience'] ?? null,
+                    'documents' => json_encode($caregiverData['documents'] ?? []),
+                ]);
+            }
+
+            // Process referral if referral code is provided
+            if ($isReferralRegistration && $referralCode) {
+                $referralProcessed = $this->referralService->processReferral($referralCode, $user);
+                if ($referralProcessed) {
+                    // Referral processed successfully - reward points already awarded
+                }
+            }
+
+            Auth::login($user);
+
+            $roleMessage = match($userData['role']) {
+                'nurse' => 'Nurse registration successful! Your documents are under review.',
+                'caregiver' => 'Caregiver registration successful! Your documents are under review.',
+                'patient' => 'Patient registration successful! Welcome to MMHC CRM.',
+                default => 'Registration successful!'
+            };
+
+            // Add referral success message if applicable
+            if ($isReferralRegistration && $referralCode) {
+                $roleMessage .= ' Thank you for joining through referral!';
+            }
+
+            return redirect()->route('dashboard')
+                ->with('success', $roleMessage);
+        });
     }
 
     /**

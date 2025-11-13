@@ -30,17 +30,31 @@
                         </div>
                     @endif
 
+                    @if(isset($referralCode) && $referralCode && $referrer)
+                        <div class="alert alert-info mb-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-gift fa-2x me-3"></i>
+                                <div>
+                                    <h5 class="mb-1">You've been referred by {{ $referrer->name }}!</h5>
+                                    <p class="mb-0">Register as a <strong>Nurse</strong> or <strong>Caregiver</strong> to join the MMHC CRM team. Complete your registration to get started!</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Tab Navigation -->
                     <ul class="nav nav-pills nav-fill mb-4" id="registrationTabs" role="tablist">
+                        @if(!isset($referralCode) || !$referralCode)
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="patient-tab" data-bs-toggle="pill" data-bs-target="#patient-form" type="button" role="tab">
+                                    <i class="fas fa-user-injured me-2 d-none d-sm-inline"></i>
+                                    <span class="d-block d-sm-none">Patient</span>
+                                    <span class="d-none d-sm-block">Patient Registration</span>
+                                </button>
+                            </li>
+                        @endif
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="patient-tab" data-bs-toggle="pill" data-bs-target="#patient-form" type="button" role="tab">
-                                <i class="fas fa-user-injured me-2 d-none d-sm-inline"></i>
-                                <span class="d-block d-sm-none">Patient</span>
-                                <span class="d-none d-sm-block">Patient Registration</span>
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="nurse-tab" data-bs-toggle="pill" data-bs-target="#nurse-form" type="button" role="tab">
+                            <button class="nav-link {{ (isset($referralCode) && $referralCode) ? 'active' : '' }}" id="nurse-tab" data-bs-toggle="pill" data-bs-target="#nurse-form" type="button" role="tab">
                                 <i class="fas fa-user-nurse me-2 d-none d-sm-inline"></i>
                                 <span class="d-block d-sm-none">Nurse</span>
                                 <span class="d-none d-sm-block">Nurse Registration</span>
@@ -58,7 +72,7 @@
                     <!-- Tab Content -->
                     <div class="tab-content" id="registrationTabContent">
                         <!-- Patient Registration Form -->
-                        <div class="tab-pane fade show active" id="patient-form" role="tabpanel">
+                        <div class="tab-pane fade {{ (!isset($referralCode) || !$referralCode) ? 'show active' : '' }}" id="patient-form" role="tabpanel">
                             <div class="row">
                                 <!-- Mobile: Full width, Desktop: Half width -->
                                 <div class="col-12 col-lg-6 mb-4 mb-lg-0">
@@ -200,7 +214,7 @@
                         </div>
 
                         <!-- Nurse Registration Form -->
-                        <div class="tab-pane fade" id="nurse-form" role="tabpanel">
+                        <div class="tab-pane fade {{ (isset($referralCode) && $referralCode) ? 'show active' : '' }}" id="nurse-form" role="tabpanel">
                             <div class="row">
                                 <!-- Mobile: Full width, Desktop: Half width -->
                                 <div class="col-12 col-lg-6 mb-4 mb-lg-0">
@@ -213,11 +227,21 @@
                                             • ₹2000/day (24h) • ₹1200/day (12h) • ₹800/day (8h)<br>
                                             • Licensed professional rates • Priority assignments</small>
                                         </div>
+                                        @if(isset($referralCode) && $referralCode && $referrer)
+                                            <div class="alert alert-success mt-3">
+                                                <small><i class="fas fa-link me-2"></i><strong>Referral Link Active</strong><br>
+                                                Referred by: {{ $referrer->name }}<br>
+                                                Earn rewards when you complete registration!</small>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                                 <div class="col-12 col-lg-6">
-                                    <form method="POST" action="{{ route('auth.register.post') }}" id="nurseForm" enctype="multipart/form-data">
+                                    <form method="POST" action="{{ route('auth.register.post') }}{{ isset($referralCode) && $referralCode ? '?ref=' . $referralCode : '' }}" id="nurseForm" enctype="multipart/form-data">
                                         @csrf
+                                        @if(isset($referralCode) && $referralCode)
+                                            <input type="hidden" name="ref" value="{{ $referralCode }}">
+                                        @endif
                                         <input type="hidden" name="role" value="nurse">
                                         
                                         <div class="mb-3">
@@ -403,11 +427,21 @@
                                             • ₹1500/day (24h) • ₹900/day (12h) • ₹700/day (8h)<br>
                                             • General support rates • Flexible assignments</small>
                                         </div>
+                                        @if(isset($referralCode) && $referralCode && $referrer)
+                                            <div class="alert alert-info mt-3">
+                                                <small><i class="fas fa-link me-2"></i><strong>Referral Link Active</strong><br>
+                                                Referred by: {{ $referrer->name }}<br>
+                                                Earn rewards when you complete registration!</small>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                                 <div class="col-12 col-lg-6">
-                                    <form method="POST" action="{{ route('auth.register.post') }}" id="caregiverForm" enctype="multipart/form-data">
+                                    <form method="POST" action="{{ route('auth.register.post') }}{{ isset($referralCode) && $referralCode ? '?ref=' . $referralCode : '' }}" id="caregiverForm" enctype="multipart/form-data">
                                         @csrf
+                                        @if(isset($referralCode) && $referralCode)
+                                            <input type="hidden" name="ref" value="{{ $referralCode }}">
+                                        @endif
                                         <input type="hidden" name="role" value="caregiver">
                                         
                                         <div class="mb-3">

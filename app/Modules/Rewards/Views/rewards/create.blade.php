@@ -47,6 +47,44 @@
                         </div>
 
                         <div class="mb-3">
+                            <label class="form-label">Patient Age</label>
+                            <input type="number"
+                                   name="patient_age"
+                                   value="{{ old('patient_age') }}"
+                                   min="1"
+                                   max="150"
+                                   class="form-control @error('patient_age') is-invalid @enderror"
+                                   placeholder="Enter patient age"
+                                   required>
+                            @error('patient_age')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Patient Address</label>
+                            <textarea name="patient_address"
+                                      rows="3"
+                                      class="form-control @error('patient_address') is-invalid @enderror"
+                                      placeholder="Enter complete address"
+                                      required>{{ old('patient_address') }}</textarea>
+                            @error('patient_address')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Pincode</label>
+                            <input type="text"
+                                   name="patient_pincode"
+                                   value="{{ old('patient_pincode') }}"
+                                   pattern="[1-9][0-9]{5}"
+                                   maxlength="6"
+                                   inputmode="numeric"
+                                   class="form-control @error('patient_pincode_digits') is-invalid @enderror"
+                                   placeholder="Enter 6-digit pincode"
+                                   required>
+                            <small class="text-muted">6-digit Indian pincode (first digit must be 1-9).</small>
+                            @error('patient_pincode_digits')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label">Hospital Name</label>
                             <input type="text" name="hospital_name" value="{{ old('hospital_name') }}"
                                    class="form-control @error('hospital_name') is-invalid @enderror" required>

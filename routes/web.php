@@ -86,5 +86,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/page-content/plans/{healthcarePlan}/edit', [PageContentController::class, 'editPlan'])->name('page-content.plans.edit');
     Route::put('/page-content/plans/{healthcarePlan}', [PageContentController::class, 'updatePlan'])->name('page-content.plans.update');
     Route::delete('/page-content/plans/{healthcarePlan}', [PageContentController::class, 'deletePlan'])->name('page-content.plans.delete');
+    
+        // Referral Management Routes
+        Route::prefix('referrals')->name('referrals.')->group(function () {
+            Route::get('/', [\App\Modules\Referrals\Controllers\AdminReferralController::class, 'index'])->name('index');
+            Route::get('/staff/{staff}', [\App\Modules\Referrals\Controllers\AdminReferralController::class, 'showStaffReferrals'])->name('staff');
+        });
     });
 });

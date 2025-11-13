@@ -19,6 +19,36 @@
     </style>
 @endsection
 
+@push('scripts')
+<script>
+    function copyReferralLink() {
+        const referralLinkInput = document.getElementById('referralLink');
+        referralLinkInput.select();
+        referralLinkInput.setSelectionRange(0, 99999); // For mobile devices
+        
+        try {
+            document.execCommand('copy');
+            
+            // Show success message
+            const button = event.target.closest('button');
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i>';
+            button.classList.remove('btn-outline-primary');
+            button.classList.add('btn-success');
+            
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-primary');
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+            alert('Failed to copy referral link. Please copy manually.');
+        }
+    }
+</script>
+@endpush
+
 @section('content')
 <div class="container-fluid px-3 px-md-4 py-4">
     <!-- Header Section -->
@@ -148,7 +178,13 @@
                                     <div>
                                         <div class="reward-item-title">{{ $reward->patient_name }}</div>
                                         <div class="text-muted small">
+                                            @if($reward->patient_age)
+                                                Age: {{ $reward->patient_age }} &middot;
+                                            @endif
                                             {{ $reward->hospital_name }} &middot; {{ $reward->patient_phone }}
+                                            @if($reward->patient_pincode)
+                                                &middot; PIN: {{ $reward->patient_pincode }}
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="text-end">
@@ -168,6 +204,109 @@
                                 <i class="fas fa-gift"></i>
                             </div>
                             <p class="text-muted mb-0">No reward entries yet. Add patient details to earn rewards.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referral Section -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-lg-6">
+            <div class="reward-card shadow-sm border-0 h-100">
+                <div class="reward-card-body">
+                    <h5 class="reward-title">
+                        <i class="fas fa-share-alt me-2 text-info"></i>Referral Program
+                    </h5>
+                    <p class="text-muted small mb-3">Share your referral link with nurses and caregivers to earn rewards!</p>
+                    
+                    <!-- Referral Link -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Your Referral Link:</label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="referralLink" 
+                                   value="{{ $referralLink }}" 
+                                   readonly>
+                            <button class="btn btn-outline-primary" 
+                                    type="button" 
+                                    onclick="copyReferralLink()">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            <i class="fas fa-info-circle me-1"></i>Earn 1 point (₹10) for each successful referral
+                        </small>
+                    </div>
+
+                    <!-- Referral Stats -->
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="text-center p-2 bg-light rounded">
+                                <div class="fw-bold text-primary">{{ $referralStats['completed_referrals'] }}</div>
+                                <div class="small text-muted">Completed</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-2 bg-light rounded">
+                                <div class="fw-bold text-success">₹{{ number_format($referralStats['total_reward_amount'], 2) }}</div>
+                                <div class="small text-muted">Earned</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-lg-6">
+            <div class="reward-card shadow-sm border-0 h-100">
+                <div class="reward-card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="reward-title mb-0">
+                            <i class="fas fa-users me-2 text-success"></i>Recent Referrals
+                        </h5>
+                    </div>
+                    @if($recentReferrals->count())
+                        <div class="reward-list">
+                            @foreach($recentReferrals as $referral)
+                                <div class="reward-item">
+                                    <div>
+                                        <div class="reward-item-title">
+                                            @if($referral->referred)
+                                                {{ $referral->referred->name }}
+                                            @else
+                                                Pending Registration
+                                            @endif
+                                        </div>
+                                        <div class="text-muted small">
+                                            Code: {{ $referral->referral_code }} &middot; 
+                                            Status: 
+                                            <span class="badge bg-{{ $referral->status === 'completed' ? 'success' : ($referral->status === 'pending' ? 'warning' : 'secondary') }}">
+                                                {{ ucfirst($referral->status) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        @if($referral->status === 'completed')
+                                            <span class="badge bg-success">
+                                                +{{ $referral->reward_points }} pts
+                                            </span>
+                                        @endif
+                                        <div class="text-muted small">
+                                            {{ $referral->created_at->diffForHumans() }}
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="empty-state text-center py-4">
+                            <div class="empty-state-icon mb-3">
+                                <i class="fas fa-share-alt"></i>
+                            </div>
+                            <p class="text-muted mb-0">No referrals yet. Share your link to earn rewards!</p>
                         </div>
                     @endif
                 </div>
