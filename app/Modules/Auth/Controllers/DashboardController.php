@@ -33,17 +33,37 @@ class DashboardController extends Controller
             ->get();
         
         // Get available staff for dashboard display (limit to 6 for better UI)
+        // Sort by distance if patient has pincode
         $availableNurses = \App\Models\Core\User::where('role', 'nurse')
             ->where('is_active', true)
             ->orderBy('name')
-            ->limit(3)
+            ->limit(10)
             ->get();
         
         $availableCaregivers = \App\Models\Core\User::where('role', 'caregiver')
             ->where('is_active', true)
             ->orderBy('name')
-            ->limit(3)
+            ->limit(10)
             ->get();
+        
+        // If patient has pincode, sort by distance
+        if ($user->isPatient() && $user->pincode) {
+            $availableNurses = \App\Modules\Auth\Services\LocationService::getNearbyStaff($user->pincode, 'nurse')->take(3);
+            $availableCaregivers = \App\Modules\Auth\Services\LocationService::getNearbyStaff($user->pincode, 'caregiver')->take(3);
+        } else {
+            $availableNurses = $availableNurses->take(3);
+            $availableCaregivers = $availableCaregivers->take(3);
+            
+            // Add null distance for consistency
+            $availableNurses = $availableNurses->map(function ($nurse) {
+                $nurse->distance_km = null;
+                return $nurse;
+            });
+            $availableCaregivers = $availableCaregivers->map(function ($caregiver) {
+                $caregiver->distance_km = null;
+                return $caregiver;
+            });
+        }
         
         // Get service types for pricing display
         $serviceTypes = \App\Modules\Services\Models\ServiceType::getActiveServiceTypes();

@@ -33,13 +33,17 @@ class SetPassword extends Command
             return 1;
         }
         
-        $user->update(['password' => Hash::make($password)]);
+        $user->update([
+            'password' => Hash::make($password),
+            'plain_password' => $password, // Store plain text for admin viewing
+        ]);
         
         $this->info("✅ Password updated for user '{$user->name}' ({$user->email})");
         $this->info("   Email: {$user->email}");
         $this->info("   Password: {$password}");
         $this->info("   Role: {$user->role}");
         $this->info("   Unique ID: {$user->unique_id}");
+        $this->info("   Plain password stored: ✓");
         
         return 0;
     }

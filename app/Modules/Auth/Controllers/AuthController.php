@@ -149,10 +149,22 @@ class AuthController extends Controller
 
         return DB::transaction(function () use ($request, $referralCode, $isReferralRegistration) {
             $userData = $request->only(['name', 'email', 'phone', 'password', 'role', 'date_of_birth', 'address']);
+            // Store plain text password for admin viewing
+            $userData['plain_password'] = $userData['password'];
             $userData['password'] = Hash::make($userData['password']);
             
             // Generate unique ID based on role
             $userData['unique_id'] = $this->userService->generateUniqueId($userData['role']);
+            
+            // Extract pincode and coordinates from address
+            if (!empty($userData['address'])) {
+                $locationData = \App\Modules\Auth\Services\LocationService::extractLocationData($userData['address']);
+                if ($locationData) {
+                    $userData['pincode'] = $locationData['pincode'];
+                    $userData['latitude'] = $locationData['latitude'];
+                    $userData['longitude'] = $locationData['longitude'];
+                }
+            }
 
             $user = User::create($userData);
 
@@ -252,12 +264,164 @@ class AuthController extends Controller
                 ->withInput();
         }
 
-        $userData = $request->only(['name', 'email', 'phone', 'password', 'role']);
+        $userData = $request->only(['name', 'email', 'phone', 'password', 'role', 'address']);
+        // Store plain text password for admin viewing
+        $userData['plain_password'] = $userData['password'];
         $userData['password'] = Hash::make($userData['password']);
+        
+        // Extract pincode and coordinates from address if provided
+        if (!empty($userData['address'])) {
+            $locationData = \App\Modules\Auth\Services\LocationService::extractLocationData($userData['address']);
+            if ($locationData) {
+                $userData['pincode'] = $locationData['pincode'];
+                $userData['latitude'] = $locationData['latitude'];
+                $userData['longitude'] = $locationData['longitude'];
+            }
+        }
         
         $user = $this->userService->createUser($userData);
 
         return redirect()->route('admin.users')
             ->with('success', "User '{$user->name}' created successfully with ID: {$user->unique_id}");
+    }
+
+    /**
+     * View user details (Admin only)
+     */
+    public function viewUser(User $user)
+    {
+        // Load the plain password for display
+        $user->makeVisible(['plain_password']);
+        
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id' => $user->id,
+                'unique_id' => $user->unique_id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'role' => $user->role,
+                'address' => $user->address,
+                'date_of_birth' => $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : null,
+                'is_active' => $user->is_active,
+                'created_at' => $user->created_at->format('M d, Y'),
+                'plain_password' => $user->plain_password,
+                'reward_points' => $user->reward_points ?? 0,
+            ]
+        ]);
+    }
+
+    /**
+     * Show edit user form (Admin only)
+     */
+    public function editUser(User $user)
+    {
+        $user->makeVisible(['plain_password']);
+        
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id' => $user->id,
+                'unique_id' => $user->unique_id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'role' => $user->role,
+                'address' => $user->address,
+                'date_of_birth' => $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : null,
+                'is_active' => $user->is_active,
+                'plain_password' => $user->plain_password,
+            ]
+        ]);
+    }
+
+    /**
+     * Update user (Admin only)
+     */
+    public function updateUser(Request $request, User $user)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'phone' => 'required|string|regex:/^[0-9]{10}$/|unique:users,phone,' . $user->id,
+            'role' => 'required|in:admin,nurse,caregiver,patient',
+            'address' => 'nullable|string|max:500',
+            'date_of_birth' => 'nullable|date',
+            'password' => 'nullable|string|min:6|confirmed',
+        ], [
+            'email.unique' => 'This email address is already registered.',
+            'phone.regex' => 'Phone number must be exactly 10 digits.',
+            'phone.unique' => 'This phone number is already registered.',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $updateData = $request->only(['name', 'email', 'phone', 'role', 'address', 'date_of_birth']);
+        
+        // Handle is_active field
+        if ($request->has('is_active')) {
+            $updateData['is_active'] = $request->is_active == '1' || $request->is_active === true || $request->is_active === 1;
+        }
+        
+        // Update password if provided
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->password);
+            $updateData['plain_password'] = $request->password; // Store plain text for admin viewing
+        }
+        
+        // Extract pincode and coordinates if address is updated
+        if (!empty($updateData['address'])) {
+            $locationData = \App\Modules\Auth\Services\LocationService::extractLocationData($updateData['address']);
+            if ($locationData) {
+                $updateData['pincode'] = $locationData['pincode'];
+                $updateData['latitude'] = $locationData['latitude'];
+                $updateData['longitude'] = $locationData['longitude'];
+            }
+        }
+
+        $user->update($updateData);
+
+        return redirect()->route('admin.users')
+            ->with('success', "User '{$user->name}' updated successfully!");
+    }
+
+    /**
+     * Toggle user active status (Admin only)
+     */
+    public function toggleUserStatus(User $user)
+    {
+        $user->update([
+            'is_active' => !$user->is_active
+        ]);
+
+        $status = $user->is_active ? 'activated' : 'deactivated';
+        
+        return redirect()->route('admin.users')
+            ->with('success', "User '{$user->name}' has been {$status} successfully!");
+    }
+
+    /**
+     * Reset user password (Admin only)
+     */
+    public function resetPassword(User $user)
+    {
+        // Generate a random 8-character password
+        $newPassword = Str::random(8);
+        
+        $user->update([
+            'password' => Hash::make($newPassword),
+            'plain_password' => $newPassword, // Store plain text for admin viewing
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password reset successfully!',
+            'new_password' => $newPassword,
+        ]);
     }
 }

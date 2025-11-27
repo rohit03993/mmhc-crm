@@ -29,11 +29,39 @@
                             <i class="fas fa-user-nurse me-2"></i>
                             Available Healthcare Staff
                         </h1>
-                        <p class="page-subtitle-staff">Choose from our qualified nurses and caregivers</p>
+                        <p class="page-subtitle-staff">
+                            @if($patientPincode)
+                                <span class="badge bg-success me-2"><i class="fas fa-map-marker-alt me-1"></i>Showing nearest staff from pincode {{ $patientPincode }}</span>
+                            @else
+                                Choose from our qualified nurses and caregivers
+                                @auth
+                                    @if(auth()->user()->isPatient() && empty(auth()->user()->pincode))
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Add your pincode to see nearest staff automatically
+                                        </small>
+                                    @endif
+                                @endauth
+                            @endif
+                        </p>
                     </div>
-                    <a href="{{ route('services.create') }}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-plus-circle me-2"></i>Request Service
-                    </a>
+                    <div class="d-flex gap-2">
+                        @auth
+                            @if(auth()->user()->isPatient())
+                            <form method="GET" action="{{ route('staff.index') }}" class="d-flex gap-2">
+                                <input type="text" name="pincode" value="{{ $patientPincode }}" 
+                                       placeholder="Enter pincode" maxlength="6" pattern="[0-9]{6}" 
+                                       class="form-control" style="width: 150px;">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-search me-1"></i>Sort by Location
+                                </button>
+                            </form>
+                            @endif
+                        @endauth
+                        <a href="{{ route('services.create') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus-circle me-2"></i>Request Service
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -102,10 +130,28 @@
                                     </div>
                                     <div class="detail-content">
                                         <div class="detail-label">Location</div>
-                                        <div class="detail-value">{{ Str::limit($nurse->address ?? 'Not specified', 35) }}</div>
+                                        <div class="detail-value">
+                                            {{ $nurse->pincode ? ($nurse->pincode . ($nurse->city ? ' - ' . $nurse->city : '')) : Str::limit($nurse->address ?? 'Not specified', 35) }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            
+                            @if(isset($nurse->distance_km) && $nurse->distance_km !== null)
+                            <div class="detail-row">
+                                <div class="detail-item">
+                                    <div class="detail-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                                        <i class="fas fa-route"></i>
+                                    </div>
+                                    <div class="detail-content">
+                                        <div class="detail-label">Distance</div>
+                                        <div class="detail-value" style="color: #10b981; font-weight: 700;">
+                                            {{ number_format($nurse->distance_km, 1) }} km away
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
                         </div>
                         
                         <!-- Pricing Section -->
@@ -212,10 +258,28 @@
                                     </div>
                                     <div class="detail-content">
                                         <div class="detail-label">Location</div>
-                                        <div class="detail-value">{{ Str::limit($caregiver->address ?? 'Not specified', 35) }}</div>
+                                        <div class="detail-value">
+                                            {{ $caregiver->pincode ? ($caregiver->pincode . ($caregiver->city ? ' - ' . $caregiver->city : '')) : Str::limit($caregiver->address ?? 'Not specified', 35) }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            
+                            @if(isset($caregiver->distance_km) && $caregiver->distance_km !== null)
+                            <div class="detail-row">
+                                <div class="detail-item">
+                                    <div class="detail-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                                        <i class="fas fa-route"></i>
+                                    </div>
+                                    <div class="detail-content">
+                                        <div class="detail-label">Distance</div>
+                                        <div class="detail-value" style="color: #10b981; font-weight: 700;">
+                                            {{ number_format($caregiver->distance_km, 1) }} km away
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
                         </div>
                         
                         <!-- Pricing Section -->

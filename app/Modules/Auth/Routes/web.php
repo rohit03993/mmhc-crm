@@ -42,5 +42,10 @@ Route::middleware(['web'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'adminDashboard'])->name('dashboard');
         Route::get('/users', [AuthController::class, 'manageUsers'])->name('users');
         Route::post('/users', [AuthController::class, 'storeUser'])->name('users.store');
+        Route::get('/users/{user}/view', [AuthController::class, 'viewUser'])->name('users.view');
+        Route::get('/users/{user}/edit', [AuthController::class, 'editUser'])->name('users.edit');
+        Route::put('/users/{user}', [AuthController::class, 'updateUser'])->name('users.update');
+        Route::post('/users/{user}/toggle-status', [AuthController::class, 'toggleUserStatus'])->name('users.toggle-status');
+        Route::post('/users/{user}/reset-password', [AuthController::class, 'resetPassword'])->name('users.reset-password');
     });
 });

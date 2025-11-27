@@ -147,6 +147,12 @@
                                                 <span>{{ $nurse->experience }} years exp.</span>
                                             </div>
                                             @endif
+                                            @if(isset($nurse->distance_km) && $nurse->distance_km !== null)
+                                            <div class="staff-detail-item" style="color: #10b981;">
+                                                <i class="fas fa-route"></i>
+                                                <span>{{ number_format($nurse->distance_km, 1) }} km away</span>
+                                            </div>
+                                            @endif
                                         </div>
                                         @if($service_types->count() > 0)
                                         <div class="staff-pricing">
@@ -196,6 +202,12 @@
                                             <div class="staff-detail-item">
                                                 <i class="fas fa-briefcase"></i>
                                                 <span>{{ $caregiver->experience }} years exp.</span>
+                                            </div>
+                                            @endif
+                                            @if(isset($caregiver->distance_km) && $caregiver->distance_km !== null)
+                                            <div class="staff-detail-item" style="color: #10b981;">
+                                                <i class="fas fa-route"></i>
+                                                <span>{{ number_format($caregiver->distance_km, 1) }} km away</span>
                                             </div>
                                             @endif
                                         </div>
