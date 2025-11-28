@@ -111,6 +111,34 @@ class DashboardController extends Controller
     {
         if ($user->isPatient()) {
             $serviceRequests = \App\Modules\Services\Models\ServiceRequest::where('patient_id', $user->id);
+            $allRequests = $serviceRequests->get();
+            
+            // Calculate total spent
+            $totalSpent = $allRequests->sum('prepaid_amount');
+            
+            // Calculate average service duration
+            $avgDuration = $allRequests->where('duration_days', '>', 0)->avg('duration_days');
+            
+            // Get favorite staff (most assigned)
+            $favoriteStaff = $allRequests
+                ->whereNotNull('assigned_staff_id')
+                ->groupBy('assigned_staff_id')
+                ->map->count()
+                ->sortDesc()
+                ->keys()
+                ->first();
+            
+            $favoriteStaffName = null;
+            if ($favoriteStaff) {
+                $staff = \App\Models\Core\User::find($favoriteStaff);
+                $favoriteStaffName = $staff ? $staff->name : null;
+            }
+            
+            // Get upcoming services
+            $upcomingServices = $serviceRequests
+                ->where('start_date', '>=', now()->startOfDay())
+                ->whereIn('status', ['pending', 'assigned'])
+                ->count();
             
             $stats = [
                 'profile_completion' => $this->calculateProfileCompletion($user),
@@ -118,6 +146,10 @@ class DashboardController extends Controller
                 'active_requests' => $serviceRequests->whereIn('status', ['assigned', 'in_progress'])->count(),
                 'completed_requests' => $serviceRequests->where('status', 'completed')->count(),
                 'pending_requests' => $serviceRequests->where('status', 'pending')->count(),
+                'total_spent' => $totalSpent,
+                'average_duration' => round($avgDuration ?? 0, 1),
+                'favorite_staff' => $favoriteStaffName,
+                'upcoming_services' => $upcomingServices,
             ];
         } else {
             $stats = [
@@ -126,6 +158,10 @@ class DashboardController extends Controller
                 'active_requests' => 0,
                 'completed_requests' => 0,
                 'pending_requests' => 0,
+                'total_spent' => 0,
+                'average_duration' => 0,
+                'favorite_staff' => null,
+                'upcoming_services' => 0,
             ];
         }
 
@@ -159,12 +195,90 @@ class DashboardController extends Controller
      */
     protected function getRecentActivity($user)
     {
-        // This will be populated by other modules
-        return [
-            'type' => 'registration',
-            'message' => 'Account created successfully',
-            'time' => $user->created_at->diffForHumans(),
-        ];
+        $activities = collect();
+        
+        if ($user->isPatient()) {
+            // Get recent service requests
+            $serviceRequests = \App\Modules\Services\Models\ServiceRequest::where('patient_id', $user->id)
+                ->with(['serviceType', 'assignedStaff'])
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
+            
+            foreach ($serviceRequests as $request) {
+                // Service created
+                $activities->push([
+                    'type' => 'service_created',
+                    'icon' => 'fa-calendar-plus',
+                    'color' => 'primary',
+                    'message' => 'Service request created: ' . ($request->serviceType->name ?? 'Service'),
+                    'timestamp' => $request->created_at,
+                    'link' => route('services.show', $request->id),
+                ]);
+                
+                // Staff assigned
+                if ($request->assignedStaff && $request->assigned_at) {
+                    $activities->push([
+                        'type' => 'staff_assigned',
+                        'icon' => 'fa-user-check',
+                        'color' => 'success',
+                        'message' => $request->assignedStaff->name . ' assigned to your service',
+                        'timestamp' => $request->assigned_at,
+                        'link' => route('services.show', $request->id),
+                    ]);
+                }
+                
+                // Service started
+                if ($request->started_at) {
+                    $activities->push([
+                        'type' => 'service_started',
+                        'icon' => 'fa-play-circle',
+                        'color' => 'info',
+                        'message' => 'Service started',
+                        'timestamp' => $request->started_at,
+                        'link' => route('services.show', $request->id),
+                    ]);
+                }
+                
+                // Service completed
+                if ($request->completed_at) {
+                    $activities->push([
+                        'type' => 'service_completed',
+                        'icon' => 'fa-check-circle',
+                        'color' => 'success',
+                        'message' => 'Service completed',
+                        'timestamp' => $request->completed_at,
+                        'link' => route('services.show', $request->id),
+                    ]);
+                }
+            }
+            
+            // Account creation
+            $activities->push([
+                'type' => 'registration',
+                'icon' => 'fa-user-plus',
+                'color' => 'primary',
+                'message' => 'Account created successfully',
+                'timestamp' => $user->created_at,
+                'link' => null,
+            ]);
+        } else {
+            // Default activity
+            $activities->push([
+                'type' => 'registration',
+                'icon' => 'fa-user-plus',
+                'color' => 'primary',
+                'message' => 'Account created successfully',
+                'timestamp' => $user->created_at,
+                'link' => null,
+            ]);
+        }
+        
+        // Sort by timestamp (most recent first) and limit to 8
+        return $activities->sortByDesc('timestamp')->take(8)->map(function($activity) {
+            $activity['time'] = $activity['timestamp']->diffForHumans();
+            return $activity;
+        })->values();
     }
 
     /**

@@ -26,22 +26,15 @@
                                     name="document_type" 
                                     required>
                                 <option value="">Select Type</option>
-                                <option value="certificate" {{ old('document_type') == 'certificate' ? 'selected' : '' }}>
-                                    Certificate
-                                </option>
-                                <option value="id_proof" {{ old('document_type') == 'id_proof' ? 'selected' : '' }}>
-                                    ID Proof
-                                </option>
-                                <option value="medical_license" {{ old('document_type') == 'medical_license' ? 'selected' : '' }}>
-                                    Medical License
-                                </option>
-                                <option value="insurance" {{ old('document_type') == 'insurance' ? 'selected' : '' }}>
-                                    Insurance
-                                </option>
-                                <option value="other" {{ old('document_type') == 'other' ? 'selected' : '' }}>
-                                    Other
-                                </option>
+                                @foreach($allowedDocumentTypes as $value => $label)
+                                    <option value="{{ $value }}" {{ old('document_type') == $value ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
                             </select>
+                            @error('document_type')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="col-md-4 mb-3">
@@ -51,8 +44,11 @@
                                    id="document_name" 
                                    name="document_name" 
                                    value="{{ old('document_name') }}" 
-                                   placeholder="e.g., Nursing Certificate"
+                                   placeholder="{{ auth()->user()->isPatient() ? 'e.g., Blood Test Report' : 'e.g., Nursing Certificate' }}"
                                    required>
+                            @error('document_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="col-md-4 mb-3">
@@ -141,7 +137,18 @@
                                         <td>{{ $document->created_at->format('M d, Y') }}</td>
                                         <td>
                                             <div class="btn-group btn-group-sm">
-                                                <a href="{{ route('documents.download', $document) }}" 
+                                                @php
+                                                    $isViewable = in_array($document->mime_type, ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/gif']);
+                                                @endphp
+                                                @if($isViewable)
+                                                    <a href="{{ route('documents.view', $document->id) }}" 
+                                                       class="btn btn-outline-info" 
+                                                       title="View Document"
+                                                       target="_blank">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                @endif
+                                                <a href="{{ route('documents.download', $document->id) }}" 
                                                    class="btn btn-outline-primary" 
                                                    title="Download">
                                                     <i class="fas fa-download"></i>

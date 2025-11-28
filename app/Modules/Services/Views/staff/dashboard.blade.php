@@ -133,30 +133,132 @@
         </div>
     </div>
 
+    <!-- Earnings Statistics -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="modern-card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-rupee-sign me-2"></i>Earnings Overview
+                    </h5>
+                </div>
+                <div class="modern-card-body">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-3">
+                            <div class="earnings-stat-card earnings-approved">
+                                <div class="earnings-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="earnings-content">
+                                    <div class="earnings-label">Total Earnings</div>
+                                    <div class="earnings-value">₹{{ number_format($earningsStats['total_earnings'], 2) }}</div>
+                                    <small class="text-muted">Approved & Paid</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="earnings-stat-card earnings-pending">
+                                <div class="earnings-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="earnings-content">
+                                    <div class="earnings-label">Pending Approval</div>
+                                    <div class="earnings-value">₹{{ number_format($earningsStats['pending_earnings'], 2) }}</div>
+                                    <small class="text-muted">Awaiting Admin</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="earnings-stat-card earnings-upcoming">
+                                <div class="earnings-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div class="earnings-content">
+                                    <div class="earnings-label">Upcoming</div>
+                                    <div class="earnings-value">₹{{ number_format($earningsStats['upcoming_earnings'], 2) }}</div>
+                                    <small class="text-muted">In Progress</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="earnings-stat-card earnings-month">
+                                <div class="earnings-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="earnings-content">
+                                    <div class="earnings-label">This Month</div>
+                                    <div class="earnings-value">₹{{ number_format($earningsStats['earnings_this_month'], 2) }}</div>
+                                    <small class="text-muted">
+                                        @if($earningsStats['earnings_last_month'] > 0)
+                                            {{ $earningsStats['earnings_this_month'] > $earningsStats['earnings_last_month'] ? '↑' : '↓' }} 
+                                            vs Last Month
+                                        @else
+                                            Current Period
+                                        @endif
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="modern-card-body p-3">
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <a href="{{ route('rewards.create') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus-circle me-2"></i>Add Patient Details
+                        </a>
+                        <a href="{{ route('rewards.index') }}" class="btn btn-outline-warning btn-lg">
+                            <i class="fas fa-gift me-2"></i>View All Rewards
+                        </a>
+                        <a href="{{ route('profile.edit') }}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-user-edit me-2"></i>Update Profile
+                        </a>
+                        <a href="{{ route('documents.index') }}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-file-alt me-2"></i>My Documents
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Rewards Summary -->
     <div class="row g-3 mb-4">
         <div class="col-12 col-lg-4">
-            <div class="reward-card shadow-sm border-0 h-100">
-                <div class="reward-card-body">
-                    <h5 class="reward-title">
-                        <i class="fas fa-gift me-2 text-warning"></i>My Reward Wallet
-                    </h5>
-                    <div class="reward-stats d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="reward-points">{{ number_format($rewardSummary['points']) }}</div>
-                            <div class="reward-label text-muted">Points Earned</div>
+            <div class="reward-card-modern h-100">
+                <div class="reward-card-header-modern">
+                    <div class="reward-icon-large">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <h5 class="reward-title-modern mb-0">My Reward Wallet</h5>
+                </div>
+                <div class="reward-card-body-modern">
+                    <div class="reward-stats-modern">
+                        <div class="reward-stat-item">
+                            <div class="reward-stat-value">{{ number_format($rewardSummary['points']) }}</div>
+                            <div class="reward-stat-label">Points Earned</div>
                         </div>
-                        <div class="text-end">
-                            <div class="reward-amount">₹{{ number_format($rewardSummary['amount'], 2) }}</div>
-                            <div class="reward-label text-muted">Reward Value</div>
+                        <div class="reward-stat-divider"></div>
+                        <div class="reward-stat-item">
+                            <div class="reward-stat-value text-success">₹{{ number_format($rewardSummary['amount'], 2) }}</div>
+                            <div class="reward-stat-label">Reward Value</div>
                         </div>
                     </div>
-                    <form method="GET" action="{{ route('rewards.create') }}" class="mt-3">
-                        <button type="submit" class="btn btn-primary w-100">
+                    <div class="reward-action-section">
+                        <a href="{{ route('rewards.create') }}" class="btn btn-warning w-100">
                             <i class="fas fa-plus-circle me-2"></i>Add Patient Details
-                        </button>
-                    </form>
-                    <small class="text-muted d-block mt-2">Earn 1 point (₹10) for each successful submission.</small>
+                        </a>
+                        <small class="text-muted d-block mt-2 text-center">
+                            <i class="fas fa-info-circle me-1"></i>Earn 1 point (₹10) per submission
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -701,7 +803,7 @@
 }
 
 .service-card-header {
-    padding: 1.2rem;
+    padding: 1rem 1.25rem;
     color: white;
     position: relative;
     overflow: hidden;
@@ -734,9 +836,9 @@
 }
 
 .service-type-badge {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
 }
 
 .service-status-badge {
@@ -755,14 +857,14 @@
 }
 
 .service-card-body {
-    padding: 1.5rem;
+    padding: 1rem 1.25rem;
     flex: 1;
     display: flex;
     flex-direction: column;
 }
 
 .service-info-item {
-    margin-bottom: 1.2rem;
+    margin-bottom: 0.9rem;
 }
 
 .info-label {
@@ -908,6 +1010,86 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
+/* Enhanced Reward Card */
+.reward-card-modern {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.reward-card-modern:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+
+.reward-card-header-modern {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    padding: 1.5rem;
+    text-align: center;
+    color: white;
+}
+
+.reward-icon-large {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    margin: 0 auto 1rem;
+}
+
+.reward-title-modern {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+}
+
+.reward-card-body-modern {
+    padding: 1.5rem;
+}
+
+.reward-stats-modern {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 1.5rem 0;
+    margin-bottom: 1rem;
+}
+
+.reward-stat-item {
+    text-align: center;
+    flex: 1;
+}
+
+.reward-stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.reward-stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.reward-stat-divider {
+    width: 1px;
+    height: 50px;
+    background: #dee2e6;
+}
+
+.reward-action-section {
+    margin-top: 1rem;
+}
+
 /* Empty State */
 .empty-state-card {
     background: white;
@@ -1008,6 +1190,88 @@
     }
 }
 
+/* Earnings Statistics Cards */
+.earnings-stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.earnings-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+}
+
+.earnings-approved {
+    border-left-color: #28a745;
+}
+
+.earnings-pending {
+    border-left-color: #ffc107;
+}
+
+.earnings-upcoming {
+    border-left-color: #17a2b8;
+}
+
+.earnings-month {
+    border-left-color: #667eea;
+}
+
+.earnings-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.earnings-approved .earnings-icon {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.earnings-pending .earnings-icon {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+}
+
+.earnings-upcoming .earnings-icon {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.earnings-month .earnings-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.earnings-content {
+    flex: 1;
+}
+
+.earnings-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.earnings-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
 @media (max-width: 576px) {
     .staff-avatar-large {
         width: 50px;
@@ -1025,6 +1289,20 @@
     
     .stat-value {
         font-size: 1.3rem;
+    }
+    
+    .earnings-stat-card {
+        padding: 1rem;
+    }
+    
+    .earnings-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+    
+    .earnings-value {
+        font-size: 1.25rem;
     }
     
     .service-card-header {

@@ -23,7 +23,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="modern-page-header-staff">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
                     <div>
                         <h1 class="page-title-staff">
                             <i class="fas fa-user-nurse me-2"></i>
@@ -49,6 +49,11 @@
                         @auth
                             @if(auth()->user()->isPatient())
                             <form method="GET" action="{{ route('staff.index') }}" class="d-flex gap-2">
+                                <input type="hidden" name="search" value="{{ $search }}">
+                                <input type="hidden" name="experience" value="{{ $experience }}">
+                                <input type="hidden" name="qualification" value="{{ $qualification }}">
+                                <input type="hidden" name="distance" value="{{ $distance }}">
+                                <input type="hidden" name="sort" value="{{ $sort }}">
                                 <input type="text" name="pincode" value="{{ $patientPincode }}" 
                                        placeholder="Enter pincode" maxlength="6" pattern="[0-9]{6}" 
                                        class="form-control" style="width: 150px;">
@@ -63,6 +68,83 @@
                         </a>
                     </div>
                 </div>
+                
+                <!-- Search and Filters Section -->
+                <form method="GET" action="{{ route('staff.index') }}" id="searchFilterForm">
+                    @if($patientPincode)
+                        <input type="hidden" name="pincode" value="{{ $patientPincode }}">
+                    @endif
+                    
+                    <div class="row g-3">
+                        <!-- Search Bar -->
+                        <div class="col-12 col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" name="search" class="form-control" 
+                                       placeholder="Search by name, ID, or qualification..." 
+                                       value="{{ $search }}">
+                            </div>
+                        </div>
+                        
+                        <!-- Experience Filter -->
+                        <div class="col-12 col-md-2">
+                            <select name="experience" class="form-select">
+                                <option value="">All Experience</option>
+                                <option value="1-3" {{ $experience == '1-3' ? 'selected' : '' }}>1-3 years</option>
+                                <option value="3-5" {{ $experience == '3-5' ? 'selected' : '' }}>3-5 years</option>
+                                <option value="5-10" {{ $experience == '5-10' ? 'selected' : '' }}>5-10 years</option>
+                                <option value="10+" {{ $experience == '10+' ? 'selected' : '' }}>10+ years</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Qualification Filter -->
+                        <div class="col-12 col-md-2">
+                            <select name="qualification" class="form-select">
+                                <option value="">All Qualifications</option>
+                                <option value="B.Sc" {{ $qualification == 'B.Sc' ? 'selected' : '' }}>B.Sc Nursing</option>
+                                <option value="M.Sc" {{ $qualification == 'M.Sc' ? 'selected' : '' }}>M.Sc Nursing</option>
+                                <option value="GNM" {{ $qualification == 'GNM' ? 'selected' : '' }}>GNM</option>
+                                <option value="General Care" {{ $qualification == 'General Care' ? 'selected' : '' }}>General Care</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Distance Filter (only if pincode available) -->
+                        @if($patientPincode)
+                        <div class="col-12 col-md-2">
+                            <select name="distance" class="form-select">
+                                <option value="">All Distances</option>
+                                <option value="5" {{ $distance == '5' ? 'selected' : '' }}>Within 5 km</option>
+                                <option value="10" {{ $distance == '10' ? 'selected' : '' }}>Within 10 km</option>
+                                <option value="25" {{ $distance == '25' ? 'selected' : '' }}>Within 25 km</option>
+                                <option value="50" {{ $distance == '50' ? 'selected' : '' }}>Within 50 km</option>
+                                <option value="100" {{ $distance == '100' ? 'selected' : '' }}>Within 100 km</option>
+                            </select>
+                        </div>
+                        @endif
+                        
+                        <!-- Sort Option -->
+                        <div class="col-12 col-md-2">
+                            <select name="sort" class="form-select">
+                                @if($patientPincode)
+                                    <option value="distance" {{ $sort == 'distance' ? 'selected' : '' }}>Sort by Distance</option>
+                                @endif
+                                <option value="name" {{ $sort == 'name' ? 'selected' : '' }}>Sort by Name</option>
+                                <option value="experience" {{ $sort == 'experience' ? 'selected' : '' }}>Sort by Experience</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-12 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i>Apply Filters
+                            </button>
+                            <a href="{{ route('staff.index') }}{{ $patientPincode ? '?pincode=' . $patientPincode : '' }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </a>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -78,7 +160,7 @@
                 <p class="section-subtitle">Professional nurses with medical qualifications</p>
             </div>
             <div class="section-header-count">
-                <span class="count-badge">{{ $nurses->count() }}</span>
+                <span class="count-badge">{{ $nurses->total() }} {{ $nurses->total() == 1 ? 'Nurse' : 'Nurses' }}</span>
             </div>
         </div>
         
@@ -197,6 +279,13 @@
             <p class="empty-text-staff">Currently no nurses are available. Please check back later.</p>
         </div>
         @endif
+        
+        <!-- Nurses Pagination -->
+        @if($nurses->hasPages())
+        <div class="d-flex justify-content-center mt-4">
+            {{ $nurses->appends(request()->query())->links() }}
+        </div>
+        @endif
     </div>
 
     <!-- Caregivers Section -->
@@ -210,7 +299,7 @@
                 <p class="section-subtitle">General support staff for everyday care</p>
             </div>
             <div class="section-header-count">
-                <span class="count-badge">{{ $caregivers->count() }}</span>
+                <span class="count-badge">{{ $caregivers->total() }} {{ $caregivers->total() == 1 ? 'Caregiver' : 'Caregivers' }}</span>
             </div>
         </div>
         
@@ -327,6 +416,13 @@
             </div>
             <h4 class="empty-title-staff">No Caregivers Available</h4>
             <p class="empty-text-staff">Currently no caregivers are available. Please check back later.</p>
+        </div>
+        @endif
+        
+        <!-- Caregivers Pagination -->
+        @if($caregivers->hasPages())
+        <div class="d-flex justify-content-center mt-4">
+            {{ $caregivers->appends(request()->query())->links() }}
         </div>
         @endif
     </div>
@@ -508,21 +604,21 @@
 }
 
 .staff-card-header {
-    padding: 1.5rem;
+    padding: 1rem;
     background: linear-gradient(to bottom, #f8f9fa 0%, white 100%);
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .staff-avatar-modern {
-    width: 70px;
-    height: 70px;
+    width: 55px;
+    height: 55px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     color: white;
     flex-shrink: 0;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
@@ -541,10 +637,10 @@
 }
 
 .staff-name-modern {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: #2c3e50;
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.35rem 0;
 }
 
 .staff-id-badge {
@@ -565,7 +661,7 @@
 }
 
 .staff-card-body {
-    padding: 1.5rem;
+    padding: 1rem;
     flex: 1;
 }
 
@@ -573,8 +669,8 @@
 .staff-details-modern {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
 .detail-row {
@@ -589,15 +685,15 @@
 }
 
 .detail-icon {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 8px;
     background: #f8f9fa;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #6c757d;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     flex-shrink: 0;
 }
 
@@ -624,8 +720,8 @@
 .pricing-section-modern {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border-radius: 12px;
-    padding: 1.25rem;
-    margin-top: 1.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
 }
 
 .pricing-header {
@@ -682,14 +778,14 @@
 
 /* Card Footer */
 .staff-card-footer {
-    padding: 1.25rem 1.5rem;
+    padding: 1rem;
     background: #f8f9fa;
     border-top: 1px solid #e9ecef;
 }
 
 .btn-request-staff {
     width: 100%;
-    padding: 0.75rem 1.5rem;
+    padding: 0.65rem 1rem;
     border-radius: 10px;
     font-weight: 600;
     text-align: center;
@@ -700,7 +796,7 @@
     transition: all 0.3s ease;
     border: none;
     color: white;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 
 .btn-request-nurse {

@@ -58,12 +58,21 @@ class Document extends Model
     public function getDocumentTypeDisplayAttribute()
     {
         return match($this->document_type) {
+            // Staff document types
             'certificate' => 'Certificate',
             'id_proof' => 'ID Proof',
             'medical_license' => 'Medical License',
             'insurance' => 'Insurance',
+            // Patient document types
+            'medical_report' => 'Medical Report',
+            'aadhaar_card' => 'Aadhaar Card',
+            'past_medical_history' => 'Past Medical History',
+            'prescription' => 'Prescription',
+            'lab_report' => 'Lab Report',
+            'insurance_card' => 'Insurance Card',
+            // Common
             'other' => 'Other',
-            default => ucfirst($this->document_type)
+            default => ucfirst(str_replace('_', ' ', $this->document_type))
         };
     }
 

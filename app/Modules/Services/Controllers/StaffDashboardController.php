@@ -37,14 +37,70 @@ class StaffDashboardController extends Controller
         }
         
         // Get statistics
+        $allServices = ServiceRequest::where('assigned_staff_id', $user->id);
+        
         $stats = [
-            'total_assignments' => ServiceRequest::where('assigned_staff_id', $user->id)->count(),
-            'active_assignments' => ServiceRequest::where('assigned_staff_id', $user->id)
-                ->whereIn('status', ['assigned', 'in_progress'])->count(),
-            'completed_assignments' => ServiceRequest::where('assigned_staff_id', $user->id)
-                ->where('status', 'completed')->count(),
-            'pending_assignments' => ServiceRequest::where('assigned_staff_id', $user->id)
-                ->where('status', 'assigned')->count(),
+            'total_assignments' => $allServices->count(),
+            'active_assignments' => $allServices->whereIn('status', ['assigned', 'in_progress'])->count(),
+            'completed_assignments' => $allServices->where('status', 'completed')->count(),
+            'pending_assignments' => $allServices->where('status', 'assigned')->count(),
+        ];
+        
+        // Calculate earnings statistics
+        $allServicesData = ServiceRequest::where('assigned_staff_id', $user->id)
+            ->whereNotNull('total_staff_payout')
+            ->get();
+        
+        // Total earnings (approved by admin)
+        $totalEarnings = $allServicesData
+            ->whereNotNull('admin_approved_at')
+            ->sum('total_staff_payout');
+        
+        // Pending earnings (completed but not approved)
+        $pendingEarnings = $allServicesData
+            ->where('status', 'completed')
+            ->whereNull('admin_approved_at')
+            ->sum('total_staff_payout');
+        
+        // Earnings this month
+        $earningsThisMonth = $allServicesData
+            ->whereNotNull('admin_approved_at')
+            ->filter(function($service) {
+                if (!$service->admin_approved_at) {
+                    return false;
+                }
+                $approvedDate = $service->admin_approved_at;
+                return $approvedDate->month === now()->month && 
+                       $approvedDate->year === now()->year;
+            })
+            ->sum('total_staff_payout');
+        
+        // Earnings last month
+        $earningsLastMonth = $allServicesData
+            ->whereNotNull('admin_approved_at')
+            ->filter(function($service) {
+                if (!$service->admin_approved_at) {
+                    return false;
+                }
+                $approvedDate = $service->admin_approved_at;
+                $lastMonth = now()->subMonth();
+                return $approvedDate->month === $lastMonth->month && 
+                       $approvedDate->year === $lastMonth->year;
+            })
+            ->sum('total_staff_payout');
+        
+        // Upcoming earnings (assigned but not completed)
+        $upcomingEarnings = ServiceRequest::where('assigned_staff_id', $user->id)
+            ->whereIn('status', ['assigned', 'in_progress'])
+            ->whereNotNull('total_staff_payout')
+            ->sum('total_staff_payout');
+        
+        $earningsStats = [
+            'total_earnings' => $totalEarnings,
+            'pending_earnings' => $pendingEarnings,
+            'earnings_this_month' => $earningsThisMonth,
+            'earnings_last_month' => $earningsLastMonth,
+            'upcoming_earnings' => $upcomingEarnings,
         ];
 
         $rewardService = app(RewardService::class);
@@ -64,7 +120,7 @@ class StaffDashboardController extends Controller
         $referralStats = $referralService->getReferralStats($user);
         $recentReferrals = $referralService->getReferralHistory($user, 5);
         
-        return view('services::staff.dashboard', compact('assignedServices', 'stats', 'recentRewards', 'rewardSummary', 'referralLink', 'referralStats', 'recentReferrals'));
+        return view('services::staff.dashboard', compact('assignedServices', 'stats', 'earningsStats', 'recentRewards', 'rewardSummary', 'referralLink', 'referralStats', 'recentReferrals'));
     }
     
     /**

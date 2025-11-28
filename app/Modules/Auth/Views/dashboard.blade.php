@@ -104,6 +104,81 @@
         </div>
     </div>
 
+    <!-- Additional Statistics Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card-modern" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
+                    <i class="fas fa-rupee-sign"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">₹{{ number_format($stats['total_spent']) }}</div>
+                    <div class="stat-label">Total Spent</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card-modern" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ $stats['average_duration'] }}</div>
+                    <div class="stat-label">Avg. Duration (days)</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card-modern" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ $stats['upcoming_services'] }}</div>
+                    <div class="stat-label">Upcoming Services</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card-modern" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ $stats['favorite_staff'] ? Str::limit($stats['favorite_staff'], 10) : 'N/A' }}</div>
+                    <div class="stat-label">Favorite Staff</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="modern-card-body p-3">
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <a href="{{ route('services.create') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus-circle me-2"></i>Book New Service
+                        </a>
+                        <a href="{{ route('staff.index') }}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-users me-2"></i>View All Staff
+                        </a>
+                        <a href="{{ route('services.my-requests') }}" class="btn btn-outline-info btn-lg">
+                            <i class="fas fa-list me-2"></i>My Requests
+                        </a>
+                        <a href="{{ route('documents.index') }}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-file-alt me-2"></i>My Documents
+                        </a>
+                        <a href="{{ route('profile.edit') }}" class="btn btn-outline-success btn-lg">
+                            <i class="fas fa-user-edit me-2"></i>Update Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Available Staff Section -->
     <div class="row mb-4">
         <div class="col-12">
@@ -125,59 +200,61 @@
                         <h6 class="staff-section-title mb-3">
                             <i class="fas fa-user-nurse me-2 text-primary"></i>Licensed Nurses
                         </h6>
-                        <div class="row g-3">
-                            @foreach($available_nurses as $nurse)
-                            <div class="col-12 col-md-6 col-lg-4">
-                                <div class="staff-card">
-                                    <div class="staff-avatar">
-                                        <i class="fas fa-user-nurse"></i>
-                                    </div>
-                                    <div class="staff-info">
-                                        <h6 class="staff-name">{{ $nurse->name }}</h6>
-                                        <div class="staff-details">
-                                            @if($nurse->qualification)
-                                            <div class="staff-detail-item">
-                                                <i class="fas fa-graduation-cap"></i>
-                                                <span>{{ $nurse->qualification }}</span>
+                        <div class="staff-carousel-container">
+                            <div class="staff-carousel">
+                                @foreach($available_nurses as $nurse)
+                                <div class="staff-card-carousel">
+                                    <div class="staff-card">
+                                        <div class="staff-avatar">
+                                            <i class="fas fa-user-nurse"></i>
+                                        </div>
+                                        <div class="staff-info">
+                                            <h6 class="staff-name">{{ $nurse->name }}</h6>
+                                            <div class="staff-details">
+                                                @if($nurse->qualification)
+                                                <div class="staff-detail-item">
+                                                    <i class="fas fa-graduation-cap"></i>
+                                                    <span>{{ $nurse->qualification }}</span>
+                                                </div>
+                                                @endif
+                                                @if($nurse->experience)
+                                                <div class="staff-detail-item">
+                                                    <i class="fas fa-briefcase"></i>
+                                                    <span>{{ $nurse->experience }} years exp.</span>
+                                                </div>
+                                                @endif
+                                                @if(isset($nurse->distance_km) && $nurse->distance_km !== null)
+                                                <div class="staff-detail-item" style="color: #10b981;">
+                                                    <i class="fas fa-route"></i>
+                                                    <span>
+                                                        @if($nurse->distance_km == 0 || $nurse->distance_km < 0.1)
+                                                            Near By
+                                                        @else
+                                                            {{ number_format($nurse->distance_km, 1) }} km away
+                                                        @endif
+                                                    </span>
+                                                </div>
+                                                @endif
                                             </div>
-                                            @endif
-                                            @if($nurse->experience)
-                                            <div class="staff-detail-item">
-                                                <i class="fas fa-briefcase"></i>
-                                                <span>{{ $nurse->experience }} years exp.</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($nurse->distance_km) && $nurse->distance_km !== null)
-                                            <div class="staff-detail-item" style="color: #10b981;">
-                                                <i class="fas fa-route"></i>
-                                                <span>
-                                                    @if($nurse->distance_km == 0 || $nurse->distance_km < 0.1)
-                                                        Near By
-                                                    @else
-                                                        {{ number_format($nurse->distance_km, 1) }} km away
-                                                    @endif
-                                                </span>
+                                            @if($service_types->count() > 0)
+                                            <div class="staff-pricing">
+                                                <small class="text-muted">Starting from</small>
+                                                <div class="staff-price">
+                                                    ₹{{ number_format($service_types->first()->patient_charge) }}/day
+                                                </div>
                                             </div>
                                             @endif
                                         </div>
-                                        @if($service_types->count() > 0)
-                                        <div class="staff-pricing">
-                                            <small class="text-muted">Starting from</small>
-                                            <div class="staff-price">
-                                                ₹{{ number_format($service_types->first()->patient_charge) }}/day
-                                            </div>
+                                        <div class="staff-action">
+                                            <a href="{{ route('services.create') }}?staff_type=nurse&staff_id={{ $nurse->id }}" 
+                                               class="btn btn-primary btn-sm w-100">
+                                                <i class="fas fa-calendar-check me-1"></i>Request Service
+                                            </a>
                                         </div>
-                                        @endif
-                                    </div>
-                                    <div class="staff-action">
-                                        <a href="{{ route('services.create') }}?staff_type=nurse&staff_id={{ $nurse->id }}" 
-                                           class="btn btn-primary btn-sm w-100">
-                                            <i class="fas fa-calendar-check me-1"></i>Request Service
-                                        </a>
                                     </div>
                                 </div>
+                                @endforeach
                             </div>
-                            @endforeach
                         </div>
                     </div>
                     @endif
@@ -188,59 +265,61 @@
                         <h6 class="staff-section-title mb-3">
                             <i class="fas fa-user-md me-2 text-success"></i>Caregivers
                         </h6>
-                        <div class="row g-3">
-                            @foreach($available_caregivers as $caregiver)
-                            <div class="col-12 col-md-6 col-lg-4">
-                                <div class="staff-card">
-                                    <div class="staff-avatar caregiver">
-                                        <i class="fas fa-user-md"></i>
-                                    </div>
-                                    <div class="staff-info">
-                                        <h6 class="staff-name">{{ $caregiver->name }}</h6>
-                                        <div class="staff-details">
-                                            @if($caregiver->qualification)
-                                            <div class="staff-detail-item">
-                                                <i class="fas fa-graduation-cap"></i>
-                                                <span>{{ $caregiver->qualification }}</span>
+                        <div class="staff-carousel-container">
+                            <div class="staff-carousel">
+                                @foreach($available_caregivers as $caregiver)
+                                <div class="staff-card-carousel">
+                                    <div class="staff-card">
+                                        <div class="staff-avatar caregiver">
+                                            <i class="fas fa-user-md"></i>
+                                        </div>
+                                        <div class="staff-info">
+                                            <h6 class="staff-name">{{ $caregiver->name }}</h6>
+                                            <div class="staff-details">
+                                                @if($caregiver->qualification)
+                                                <div class="staff-detail-item">
+                                                    <i class="fas fa-graduation-cap"></i>
+                                                    <span>{{ $caregiver->qualification }}</span>
+                                                </div>
+                                                @endif
+                                                @if($caregiver->experience)
+                                                <div class="staff-detail-item">
+                                                    <i class="fas fa-briefcase"></i>
+                                                    <span>{{ $caregiver->experience }} years exp.</span>
+                                                </div>
+                                                @endif
+                                                @if(isset($caregiver->distance_km) && $caregiver->distance_km !== null)
+                                                <div class="staff-detail-item" style="color: #10b981;">
+                                                    <i class="fas fa-route"></i>
+                                                    <span>
+                                                        @if($caregiver->distance_km == 0 || $caregiver->distance_km < 0.1)
+                                                            Near By
+                                                        @else
+                                                            {{ number_format($caregiver->distance_km, 1) }} km away
+                                                        @endif
+                                                    </span>
+                                                </div>
+                                                @endif
                                             </div>
-                                            @endif
-                                            @if($caregiver->experience)
-                                            <div class="staff-detail-item">
-                                                <i class="fas fa-briefcase"></i>
-                                                <span>{{ $caregiver->experience }} years exp.</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($caregiver->distance_km) && $caregiver->distance_km !== null)
-                                            <div class="staff-detail-item" style="color: #10b981;">
-                                                <i class="fas fa-route"></i>
-                                                <span>
-                                                    @if($caregiver->distance_km == 0 || $caregiver->distance_km < 0.1)
-                                                        Near By
-                                                    @else
-                                                        {{ number_format($caregiver->distance_km, 1) }} km away
-                                                    @endif
-                                                </span>
+                                            @if($service_types->count() > 0)
+                                            <div class="staff-pricing">
+                                                <small class="text-muted">Starting from</small>
+                                                <div class="staff-price">
+                                                    ₹{{ number_format($service_types->first()->patient_charge) }}/day
+                                                </div>
                                             </div>
                                             @endif
                                         </div>
-                                        @if($service_types->count() > 0)
-                                        <div class="staff-pricing">
-                                            <small class="text-muted">Starting from</small>
-                                            <div class="staff-price">
-                                                ₹{{ number_format($service_types->first()->patient_charge) }}/day
-                                            </div>
+                                        <div class="staff-action">
+                                            <a href="{{ route('services.create') }}?staff_type=caregiver&staff_id={{ $caregiver->id }}" 
+                                               class="btn btn-success btn-sm w-100">
+                                                <i class="fas fa-calendar-check me-1"></i>Request Service
+                                            </a>
                                         </div>
-                                        @endif
-                                    </div>
-                                    <div class="staff-action">
-                                        <a href="{{ route('services.create') }}?staff_type=caregiver&staff_id={{ $caregiver->id }}" 
-                                           class="btn btn-success btn-sm w-100">
-                                            <i class="fas fa-calendar-check me-1"></i>Request Service
-                                        </a>
                                     </div>
                                 </div>
+                                @endforeach
                             </div>
-                            @endforeach
                         </div>
                     </div>
                     @endif
@@ -390,7 +469,7 @@
 
             <!-- Profile Completion -->
             @if($stats['profile_completion'] < 100)
-            <div class="modern-card">
+            <div class="modern-card mb-4">
                 <div class="modern-card-header bg-info text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-user-check me-2"></i>Complete Your Profile
@@ -411,6 +490,49 @@
                 </div>
             </div>
             @endif
+
+            <!-- Recent Activity Feed -->
+            <div class="modern-card">
+                <div class="modern-card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Recent Activity
+                    </h5>
+                </div>
+                <div class="modern-card-body">
+                    @if(isset($recent_activity) && count($recent_activity) > 0)
+                        <div class="activity-feed">
+                            @foreach($recent_activity as $activity)
+                            <div class="activity-item">
+                                <div class="activity-icon bg-{{ $activity['color'] ?? 'primary' }}">
+                                    <i class="fas {{ $activity['icon'] ?? 'fa-circle' }}"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-message">
+                                        @if($activity['link'])
+                                            <a href="{{ $activity['link'] }}" class="activity-link">
+                                                {{ $activity['message'] }}
+                                            </a>
+                                        @else
+                                            {{ $activity['message'] }}
+                                        @endif
+                                    </div>
+                                    <div class="activity-time">
+                                        <i class="fas fa-clock me-1"></i>{{ $activity['time'] }}
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="empty-state py-3">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <p class="empty-state-text mb-0">No recent activity</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -834,6 +956,74 @@
     border-bottom: 2px solid #e9ecef;
 }
 
+/* Horizontal Scrolling Carousel */
+.staff-carousel-container {
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Hide scrollbar but keep functionality */
+.staff-carousel-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.staff-carousel-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.staff-carousel-container::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+}
+
+.staff-carousel-container::-webkit-scrollbar-thumb:hover {
+    background: #764ba2;
+}
+
+/* For Firefox */
+.staff-carousel-container {
+    scrollbar-width: thin;
+    scrollbar-color: #667eea #f1f1f1;
+}
+
+.staff-carousel {
+    display: flex;
+    gap: 1rem;
+    padding: 0.5rem 0.25rem;
+}
+
+.staff-card-carousel {
+    flex: 0 0 auto;
+    width: 85vw; /* Mobile: 1 card per screen (85% of viewport) */
+    min-width: 280px;
+    max-width: 320px;
+}
+
+/* Tablet: Show 2 cards at a time */
+@media (min-width: 576px) {
+    .staff-card-carousel {
+        width: calc(50vw - 2rem); /* 2 cards visible */
+        min-width: 280px;
+        max-width: 350px;
+    }
+}
+
+/* Desktop: Show 3 cards at a time */
+@media (min-width: 992px) {
+    .staff-card-carousel {
+        width: calc(33.333vw - 2rem); /* 3 cards visible */
+        min-width: 300px;
+        max-width: 380px;
+    }
+}
+
 .staff-card {
     background: white;
     border-radius: 16px;
@@ -922,6 +1112,76 @@
     margin-top: 1rem;
 }
 
+/* Activity Feed Styles */
+.activity-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.activity-item {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.activity-item:hover {
+    background: #f8f9fa;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-message {
+    font-size: 0.9rem;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+    line-height: 1.4;
+}
+
+.activity-link {
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.activity-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+.activity-time {
+    font-size: 0.75rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+}
+
+.activity-time i {
+    font-size: 0.7rem;
+}
+
+/* Quick Actions Bar */
+.modern-card .btn-lg {
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+}
+
 @media (max-width: 768px) {
     .staff-card {
         margin-bottom: 1rem;
@@ -931,6 +1191,21 @@
         width: 60px;
         height: 60px;
         font-size: 1.5rem;
+    }
+
+    .modern-card .btn-lg {
+        font-size: 0.9rem;
+        padding: 0.6rem 1.2rem;
+    }
+
+    .activity-item {
+        padding: 0.5rem;
+    }
+
+    .activity-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 0.85rem;
     }
 }
 </style>

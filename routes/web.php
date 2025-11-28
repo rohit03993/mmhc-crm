@@ -60,7 +60,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [DocumentController::class, 'index'])->name('index');
         Route::post('/upload', [DocumentController::class, 'upload'])->name('upload');
         Route::delete('/{document}', [DocumentController::class, 'delete'])->name('delete');
-        Route::get('/download/{document}', [DocumentController::class, 'download'])->name('download');
+        Route::get('/view/{id}', [DocumentController::class, 'view'])->name('view');
+        Route::get('/download/{id}', [DocumentController::class, 'download'])->name('download');
     });
     
     // Admin Routes for Profile Management
