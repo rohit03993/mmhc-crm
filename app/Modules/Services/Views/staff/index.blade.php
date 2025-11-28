@@ -146,7 +146,11 @@
                                     <div class="detail-content">
                                         <div class="detail-label">Distance</div>
                                         <div class="detail-value" style="color: #10b981; font-weight: 700;">
-                                            {{ number_format($nurse->distance_km, 1) }} km away
+                                            @if($nurse->distance_km == 0 || $nurse->distance_km < 0.1)
+                                                Near By
+                                            @else
+                                                {{ number_format($nurse->distance_km, 1) }} km away
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -274,7 +278,11 @@
                                     <div class="detail-content">
                                         <div class="detail-label">Distance</div>
                                         <div class="detail-value" style="color: #10b981; font-weight: 700;">
-                                            {{ number_format($caregiver->distance_km, 1) }} km away
+                                            @if($caregiver->distance_km == 0 || $caregiver->distance_km < 0.1)
+                                                Near By
+                                            @else
+                                                {{ number_format($caregiver->distance_km, 1) }} km away
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

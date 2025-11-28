@@ -150,7 +150,13 @@
                                             @if(isset($nurse->distance_km) && $nurse->distance_km !== null)
                                             <div class="staff-detail-item" style="color: #10b981;">
                                                 <i class="fas fa-route"></i>
-                                                <span>{{ number_format($nurse->distance_km, 1) }} km away</span>
+                                                <span>
+                                                    @if($nurse->distance_km == 0 || $nurse->distance_km < 0.1)
+                                                        Near By
+                                                    @else
+                                                        {{ number_format($nurse->distance_km, 1) }} km away
+                                                    @endif
+                                                </span>
                                             </div>
                                             @endif
                                         </div>
@@ -207,7 +213,13 @@
                                             @if(isset($caregiver->distance_km) && $caregiver->distance_km !== null)
                                             <div class="staff-detail-item" style="color: #10b981;">
                                                 <i class="fas fa-route"></i>
-                                                <span>{{ number_format($caregiver->distance_km, 1) }} km away</span>
+                                                <span>
+                                                    @if($caregiver->distance_km == 0 || $caregiver->distance_km < 0.1)
+                                                        Near By
+                                                    @else
+                                                        {{ number_format($caregiver->distance_km, 1) }} km away
+                                                    @endif
+                                                </span>
                                             </div>
                                             @endif
                                         </div>
