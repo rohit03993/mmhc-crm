@@ -86,7 +86,7 @@ class UserService
     /**
      * Search users
      */
-    public function searchUsers(string $query, string $role = null)
+    public function searchUsers(string $query, ?string $role = null)
     {
         $users = User::query();
 
@@ -116,5 +116,72 @@ class UserService
             'admins' => User::role('admin')->count(),
             'staff' => User::whereIn('role', ['caregiver', 'nurse'])->count(),
         ];
+    }
+
+    /**
+     * Delete all users except admins
+     * 
+     * @return int Number of users deleted
+     */
+    public function deleteAllNonAdminUsers(): int
+    {
+        return User::where('role', '!=', 'admin')->delete();
+    }
+
+    /**
+     * Normalize Indian phone number
+     * Accepts 10-digit number and adds +91 prefix
+     * Also handles numbers that already have +91 or 91 prefix
+     * 
+     * @param string $phone
+     * @return string Normalized phone number in format +91XXXXXXXXXX
+     */
+    public function normalizePhone(string $phone): string
+    {
+        // If already in correct format, return as is
+        if (strpos($phone, '+91') === 0 && strlen($phone) === 13) {
+            return $phone;
+        }
+        
+        // Remove all non-digit characters
+        $digits = preg_replace('/\D/', '', $phone);
+        
+        // If it starts with 91 and has 12 digits, remove the 91 prefix
+        if (strlen($digits) === 12 && substr($digits, 0, 2) === '91') {
+            $digits = substr($digits, 2);
+        }
+        
+        // If it's 10 digits, add +91 prefix
+        if (strlen($digits) === 10) {
+            return '+91' . $digits;
+        }
+        
+        // If somehow we have invalid length, try to extract last 10 digits
+        if (strlen($digits) > 10) {
+            $digits = substr($digits, -10);
+            return '+91' . $digits;
+        }
+        
+        // Return with +91 prefix (will handle edge cases)
+        return '+91' . $digits;
+    }
+
+    /**
+     * Extract 10-digit phone number from normalized format
+     * 
+     * @param string $phone Normalized phone (e.g., +91XXXXXXXXXX)
+     * @return string 10-digit phone number
+     */
+    public function extractPhoneDigits(string $phone): string
+    {
+        $digits = preg_replace('/\D/', '', $phone);
+        
+        // Remove 91 prefix if present
+        if (strlen($digits) === 12 && substr($digits, 0, 2) === '91') {
+            return substr($digits, 2);
+        }
+        
+        // Return last 10 digits
+        return substr($digits, -10);
     }
 }

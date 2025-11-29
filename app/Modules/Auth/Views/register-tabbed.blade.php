@@ -120,9 +120,7 @@
                                         <div class="mb-3">
                                             <label for="patient_phone" class="form-label">Phone Number</label>
                                             <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-phone"></i>
-                                                </span>
+                                                <span class="input-group-text">+91</span>
                                                 <input type="tel" 
                                                        class="form-control @error('phone') is-invalid @enderror" 
                                                        id="patient_phone" 
@@ -130,10 +128,10 @@
                                                        value="{{ old('phone') }}" 
                                                        pattern="[0-9]{10}"
                                                        maxlength="10"
-                                                       placeholder="Enter 10-digit phone number"
+                                                       placeholder="9876543210"
                                                        required>
                                             </div>
-                                            <div class="form-text">Enter exactly 10 digits (e.g., 9876543210)</div>
+                                            <div class="form-text">Enter 10-digit Indian mobile number (e.g., 9876543210)</div>
                                             @error('phone')
                                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                                             @enderror
@@ -165,6 +163,28 @@
                                                           rows="3" 
                                                           placeholder="Enter your full address">{{ old('address') }}</textarea>
                                             </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="patient_pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-map-pin"></i>
+                                                </span>
+                                                <input type="text" 
+                                                       class="form-control @error('pincode') is-invalid @enderror" 
+                                                       id="patient_pincode" 
+                                                       name="pincode" 
+                                                       value="{{ old('pincode') }}" 
+                                                       pattern="[1-9][0-9]{5}"
+                                                       maxlength="6"
+                                                       placeholder="Enter 6-digit pincode"
+                                                       required>
+                                            </div>
+                                            <div class="form-text">Enter your 6-digit Indian pincode (e.g., 462001)</div>
+                                            @error('pincode')
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            @enderror
                                         </div>
 
                                         <div class="mb-3">
@@ -277,9 +297,7 @@
                                         <div class="mb-3">
                                             <label for="nurse_phone" class="form-label">Phone Number</label>
                                             <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-phone"></i>
-                                                </span>
+                                                <span class="input-group-text">+91</span>
                                                 <input type="tel" 
                                                        class="form-control @error('phone') is-invalid @enderror" 
                                                        id="nurse_phone" 
@@ -287,10 +305,10 @@
                                                        value="{{ old('phone') }}" 
                                                        pattern="[0-9]{10}"
                                                        maxlength="10"
-                                                       placeholder="Enter 10-digit phone number"
+                                                       placeholder="9876543210"
                                                        required>
                                             </div>
-                                            <div class="form-text">Enter exactly 10 digits (e.g., 9876543210)</div>
+                                            <div class="form-text">Enter 10-digit Indian mobile number (e.g., 9876543210)</div>
                                             @error('phone')
                                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                                             @enderror
@@ -356,6 +374,28 @@
                                                           rows="3" 
                                                           placeholder="Enter your full address">{{ old('address') }}</textarea>
                                             </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="nurse_pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-map-pin"></i>
+                                                </span>
+                                                <input type="text" 
+                                                       class="form-control @error('pincode') is-invalid @enderror" 
+                                                       id="nurse_pincode" 
+                                                       name="pincode" 
+                                                       value="{{ old('pincode') }}" 
+                                                       pattern="[1-9][0-9]{5}"
+                                                       maxlength="6"
+                                                       placeholder="Enter 6-digit pincode"
+                                                       required>
+                                            </div>
+                                            <div class="form-text">Enter your 6-digit Indian pincode (e.g., 462001)</div>
+                                            @error('pincode')
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            @enderror
                                         </div>
 
                                         <div class="mb-3">
@@ -477,9 +517,7 @@
                                         <div class="mb-3">
                                             <label for="caregiver_phone" class="form-label">Phone Number</label>
                                             <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-phone"></i>
-                                                </span>
+                                                <span class="input-group-text">+91</span>
                                                 <input type="tel" 
                                                        class="form-control @error('phone') is-invalid @enderror" 
                                                        id="caregiver_phone" 
@@ -487,10 +525,10 @@
                                                        value="{{ old('phone') }}" 
                                                        pattern="[0-9]{10}"
                                                        maxlength="10"
-                                                       placeholder="Enter 10-digit phone number"
+                                                       placeholder="9876543210"
                                                        required>
                                             </div>
-                                            <div class="form-text">Enter exactly 10 digits (e.g., 9876543210)</div>
+                                            <div class="form-text">Enter 10-digit Indian mobile number (e.g., 9876543210)</div>
                                             @error('phone')
                                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                                             @enderror
@@ -553,6 +591,28 @@
                                                           rows="3" 
                                                           placeholder="Enter your full address">{{ old('address') }}</textarea>
                                             </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="caregiver_pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-map-pin"></i>
+                                                </span>
+                                                <input type="text" 
+                                                       class="form-control @error('pincode') is-invalid @enderror" 
+                                                       id="caregiver_pincode" 
+                                                       name="pincode" 
+                                                       value="{{ old('pincode') }}" 
+                                                       pattern="[1-9][0-9]{5}"
+                                                       maxlength="6"
+                                                       placeholder="Enter 6-digit pincode"
+                                                       required>
+                                            </div>
+                                            <div class="form-text">Enter your 6-digit Indian pincode (e.g., 462001)</div>
+                                            @error('pincode')
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            @enderror
                                         </div>
 
                                         <div class="mb-3">

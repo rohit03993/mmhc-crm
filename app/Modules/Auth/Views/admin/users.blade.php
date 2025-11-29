@@ -40,11 +40,15 @@
     <!-- Users List -->
     <div class="col-12">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-users me-2"></i>
                     All Users
                 </h5>
+                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteNonAdminModal">
+                    <i class="fas fa-trash-alt me-2"></i>
+                    Delete All Non-Admin Users
+                </button>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -164,7 +168,22 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="phone" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control" id="phone" name="phone" required>
+                            <div class="input-group">
+                                <span class="input-group-text">+91</span>
+                                <input type="tel" class="form-control" id="phone" name="phone" pattern="[0-9]{10}" maxlength="10" placeholder="9876543210" required>
+                            </div>
+                            <small class="form-text text-muted">Enter 10-digit Indian mobile number</small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="pincode" name="pincode" pattern="[1-9][0-9]{5}" maxlength="6" placeholder="462001" required>
+                            <small class="form-text text-muted">Enter 6-digit Indian pincode</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="2" placeholder="Enter full address"></textarea>
                         </div>
                     </div>
                     <div class="row">
@@ -210,6 +229,47 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Non-Admin Users Confirmation Modal -->
+<div class="modal fade" id="deleteNonAdminModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Delete All Non-Admin Users
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone!
+                </div>
+                <p>You are about to delete <strong>all non-admin users</strong> from the system.</p>
+                <p class="mb-0">This will permanently delete:</p>
+                <ul>
+                    <li>All nurses</li>
+                    <li>All caregivers</li>
+                    <li>All patients</li>
+                </ul>
+                <p class="mt-3 mb-0"><strong>Admin users will remain protected and will not be deleted.</strong></p>
+                <p class="text-muted mt-2">Are you absolutely sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <form method="POST" action="{{ route('admin.users.delete-non-admin') }}" id="deleteNonAdminForm">
+                    @csrf
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>Yes, Delete All Non-Admin Users
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -306,9 +366,13 @@ function viewUser(userId) {
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-3">
                             <strong>Address:</strong><br>
                             ${user.address || 'Not provided'}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Pincode:</strong><br>
+                            ${user.pincode || 'Not provided'}
                         </div>
                     </div>
                     <div class="row">
@@ -386,14 +450,25 @@ function editUser(userId) {
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="edit_phone" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control" id="edit_phone" name="phone" value="${user.phone}" required>
+                            <div class="input-group">
+                                <span class="input-group-text">+91</span>
+                                <input type="tel" class="form-control" id="edit_phone" name="phone" value="${user.phone}" pattern="[0-9]{10}" maxlength="10" placeholder="9876543210" required>
+                            </div>
+                            <small class="form-text text-muted">Enter 10-digit Indian mobile number</small>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
+                            <label for="edit_pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit_pincode" name="pincode" value="${user.pincode || ''}" pattern="[1-9][0-9]{5}" maxlength="6" placeholder="462001" required>
+                            <small class="form-text text-muted">Enter 6-digit Indian pincode</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <label for="edit_date_of_birth" class="form-label">Date of Birth</label>
                             <input type="date" class="form-control" id="edit_date_of_birth" name="date_of_birth" value="${user.date_of_birth || ''}">
                         </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="edit_is_active" class="form-label">Status</label>
                             <select class="form-select" id="edit_is_active" name="is_active">
@@ -401,9 +476,7 @@ function editUser(userId) {
                                 <option value="0" ${!user.is_active ? 'selected' : ''}>Inactive</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label for="edit_address" class="form-label">Address</label>
                             <textarea class="form-control" id="edit_address" name="address" rows="2">${user.address || ''}</textarea>
                         </div>

@@ -94,10 +94,25 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
+        // Normalize phone number for validation
+        $phoneDigits = preg_replace('/\D/', '', $request->input('phone', ''));
+        $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
+        
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'phone' => 'required|string|regex:/^[0-9]{10}$/|unique:users',
+            'phone' => [
+                'required',
+                'string',
+                'regex:/^[0-9]{10}$/',
+                function ($attribute, $value, $fail) use ($normalizedPhone) {
+                    // Check uniqueness with normalized phone format
+                    if (User::where('phone', $normalizedPhone)->exists()) {
+                        $fail('This phone number is already registered.');
+                    }
+                },
+            ],
+            'pincode' => 'required|string|regex:/^[1-9][0-9]{5}$/',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:nurse,caregiver,patient',
             'date_of_birth' => 'nullable|date',
@@ -109,7 +124,8 @@ class AuthController extends Controller
         ], [
             'email.unique' => 'This email address is already registered.',
             'phone.regex' => 'Phone number must be exactly 10 digits.',
-            'phone.unique' => 'This phone number is already registered.',
+            'pincode.required' => 'Pincode is required.',
+            'pincode.regex' => 'Pincode must be a valid 6-digit Indian pincode.',
         ]);
 
         if ($validator->fails()) {
@@ -147,8 +163,12 @@ class AuthController extends Controller
             }
         }
 
-        return DB::transaction(function () use ($request, $referralCode, $isReferralRegistration) {
-            $userData = $request->only(['name', 'email', 'phone', 'password', 'role', 'date_of_birth', 'address']);
+        return DB::transaction(function () use ($request, $referralCode, $isReferralRegistration, $normalizedPhone) {
+            $userData = $request->only(['name', 'email', 'password', 'role', 'date_of_birth', 'address', 'pincode']);
+            
+            // Normalize and store phone number
+            $userData['phone'] = $normalizedPhone;
+            
             // Store plain text password for admin viewing
             $userData['plain_password'] = $userData['password'];
             $userData['password'] = Hash::make($userData['password']);
@@ -156,14 +176,18 @@ class AuthController extends Controller
             // Generate unique ID based on role
             $userData['unique_id'] = $this->userService->generateUniqueId($userData['role']);
             
-            // Extract pincode and coordinates from address
-            if (!empty($userData['address'])) {
-                $locationData = \App\Modules\Auth\Services\LocationService::extractLocationData($userData['address']);
-                if ($locationData) {
-                    $userData['pincode'] = $locationData['pincode'];
-                    $userData['latitude'] = $locationData['latitude'];
-                    $userData['longitude'] = $locationData['longitude'];
-                }
+            // Get pincode coordinates from pincode database
+            $pincode = $request->input('pincode');
+            $pincodeData = \App\Models\Pincode::findByPincode($pincode);
+            if ($pincodeData) {
+                $userData['pincode'] = $pincode;
+                $userData['latitude'] = $pincodeData->latitude ? (float) $pincodeData->latitude : null;
+                $userData['longitude'] = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
+            } else {
+                // Pincode exists but coordinates not found - still store pincode
+                $userData['pincode'] = $pincode;
+                $userData['latitude'] = null;
+                $userData['longitude'] = null;
             }
 
             $user = User::create($userData);
@@ -246,16 +270,33 @@ class AuthController extends Controller
      */
     public function storeUser(Request $request)
     {
+        // Normalize phone number for validation
+        $phoneDigits = preg_replace('/\D/', '', $request->input('phone', ''));
+        $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
+        
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'phone' => 'required|string|regex:/^[0-9]{10}$/|unique:users',
+            'phone' => [
+                'required',
+                'string',
+                'regex:/^[0-9]{10}$/',
+                function ($attribute, $value, $fail) use ($normalizedPhone) {
+                    // Check uniqueness with normalized phone format
+                    if (User::where('phone', $normalizedPhone)->exists()) {
+                        $fail('This phone number is already registered.');
+                    }
+                },
+            ],
+            'pincode' => 'required|string|regex:/^[1-9][0-9]{5}$/',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:admin,nurse,caregiver,patient',
+            'address' => 'nullable|string|max:500',
         ], [
             'email.unique' => 'This email address is already registered.',
             'phone.regex' => 'Phone number must be exactly 10 digits.',
-            'phone.unique' => 'This phone number is already registered.',
+            'pincode.required' => 'Pincode is required.',
+            'pincode.regex' => 'Pincode must be a valid 6-digit Indian pincode.',
         ]);
 
         if ($validator->fails()) {
@@ -264,19 +305,27 @@ class AuthController extends Controller
                 ->withInput();
         }
 
-        $userData = $request->only(['name', 'email', 'phone', 'password', 'role', 'address']);
+        $userData = $request->only(['name', 'email', 'password', 'role', 'address', 'pincode']);
+        
+        // Normalize and store phone number
+        $userData['phone'] = $normalizedPhone;
+        
         // Store plain text password for admin viewing
         $userData['plain_password'] = $userData['password'];
         $userData['password'] = Hash::make($userData['password']);
         
-        // Extract pincode and coordinates from address if provided
-        if (!empty($userData['address'])) {
-            $locationData = \App\Modules\Auth\Services\LocationService::extractLocationData($userData['address']);
-            if ($locationData) {
-                $userData['pincode'] = $locationData['pincode'];
-                $userData['latitude'] = $locationData['latitude'];
-                $userData['longitude'] = $locationData['longitude'];
-            }
+        // Get pincode coordinates from pincode database
+        $pincode = $request->input('pincode');
+        $pincodeData = \App\Models\Pincode::findByPincode($pincode);
+        if ($pincodeData) {
+            $userData['pincode'] = $pincode;
+            $userData['latitude'] = $pincodeData->latitude ? (float) $pincodeData->latitude : null;
+            $userData['longitude'] = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
+        } else {
+            // Pincode exists but coordinates not found - still store pincode
+            $userData['pincode'] = $pincode;
+            $userData['latitude'] = null;
+            $userData['longitude'] = null;
         }
         
         $user = $this->userService->createUser($userData);
@@ -293,6 +342,9 @@ class AuthController extends Controller
         // Load the plain password for display
         $user->makeVisible(['plain_password']);
         
+        // Extract 10-digit phone for display
+        $phoneDisplay = $this->userService->extractPhoneDigits($user->phone);
+        
         return response()->json([
             'success' => true,
             'user' => [
@@ -300,9 +352,10 @@ class AuthController extends Controller
                 'unique_id' => $user->unique_id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'phone' => $user->phone,
+                'phone' => $phoneDisplay,
                 'role' => $user->role,
                 'address' => $user->address,
+                'pincode' => $user->pincode,
                 'date_of_birth' => $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : null,
                 'is_active' => $user->is_active,
                 'created_at' => $user->created_at->format('M d, Y'),
@@ -319,6 +372,9 @@ class AuthController extends Controller
     {
         $user->makeVisible(['plain_password']);
         
+        // Extract 10-digit phone for display
+        $phoneDisplay = $this->userService->extractPhoneDigits($user->phone);
+        
         return response()->json([
             'success' => true,
             'user' => [
@@ -326,9 +382,10 @@ class AuthController extends Controller
                 'unique_id' => $user->unique_id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'phone' => $user->phone,
+                'phone' => $phoneDisplay,
                 'role' => $user->role,
                 'address' => $user->address,
+                'pincode' => $user->pincode,
                 'date_of_birth' => $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : null,
                 'is_active' => $user->is_active,
                 'plain_password' => $user->plain_password,
@@ -341,10 +398,25 @@ class AuthController extends Controller
      */
     public function updateUser(Request $request, User $user)
     {
+        // Normalize phone number for validation
+        $phoneDigits = preg_replace('/\D/', '', $request->input('phone', ''));
+        $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
+        
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'phone' => 'required|string|regex:/^[0-9]{10}$/|unique:users,phone,' . $user->id,
+            'phone' => [
+                'required',
+                'string',
+                'regex:/^[0-9]{10}$/',
+                function ($attribute, $value, $fail) use ($normalizedPhone, $user) {
+                    // Check uniqueness with normalized phone format (excluding current user)
+                    if (User::where('phone', $normalizedPhone)->where('id', '!=', $user->id)->exists()) {
+                        $fail('This phone number is already registered.');
+                    }
+                },
+            ],
+            'pincode' => 'required|string|regex:/^[1-9][0-9]{5}$/',
             'role' => 'required|in:admin,nurse,caregiver,patient',
             'address' => 'nullable|string|max:500',
             'date_of_birth' => 'nullable|date',
@@ -352,7 +424,8 @@ class AuthController extends Controller
         ], [
             'email.unique' => 'This email address is already registered.',
             'phone.regex' => 'Phone number must be exactly 10 digits.',
-            'phone.unique' => 'This phone number is already registered.',
+            'pincode.required' => 'Pincode is required.',
+            'pincode.regex' => 'Pincode must be a valid 6-digit Indian pincode.',
         ]);
 
         if ($validator->fails()) {
@@ -361,7 +434,10 @@ class AuthController extends Controller
                 ->withInput();
         }
 
-        $updateData = $request->only(['name', 'email', 'phone', 'role', 'address', 'date_of_birth']);
+        $updateData = $request->only(['name', 'email', 'role', 'address', 'date_of_birth', 'pincode']);
+        
+        // Normalize and store phone number
+        $updateData['phone'] = $normalizedPhone;
         
         // Handle is_active field
         if ($request->has('is_active')) {
@@ -374,14 +450,18 @@ class AuthController extends Controller
             $updateData['plain_password'] = $request->password; // Store plain text for admin viewing
         }
         
-        // Extract pincode and coordinates if address is updated
-        if (!empty($updateData['address'])) {
-            $locationData = \App\Modules\Auth\Services\LocationService::extractLocationData($updateData['address']);
-            if ($locationData) {
-                $updateData['pincode'] = $locationData['pincode'];
-                $updateData['latitude'] = $locationData['latitude'];
-                $updateData['longitude'] = $locationData['longitude'];
-            }
+        // Get pincode coordinates from pincode database
+        $pincode = $request->input('pincode');
+        $pincodeData = \App\Models\Pincode::findByPincode($pincode);
+        if ($pincodeData) {
+            $updateData['pincode'] = $pincode;
+            $updateData['latitude'] = $pincodeData->latitude ? (float) $pincodeData->latitude : null;
+            $updateData['longitude'] = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
+        } else {
+            // Pincode exists but coordinates not found - still store pincode
+            $updateData['pincode'] = $pincode;
+            $updateData['latitude'] = null;
+            $updateData['longitude'] = null;
         }
 
         $user->update($updateData);
@@ -423,5 +503,24 @@ class AuthController extends Controller
             'message' => 'Password reset successfully!',
             'new_password' => $newPassword,
         ]);
+    }
+
+    /**
+     * Delete all non-admin users (Admin only)
+     */
+    public function deleteAllNonAdminUsers()
+    {
+        $nonAdminCount = User::where('role', '!=', 'admin')->count();
+        $adminCount = User::where('role', 'admin')->count();
+        
+        if ($nonAdminCount === 0) {
+            return redirect()->route('admin.users')
+                ->with('error', 'No non-admin users found to delete.');
+        }
+        
+        $deleted = $this->userService->deleteAllNonAdminUsers();
+        
+        return redirect()->route('admin.users')
+            ->with('success', "Successfully deleted {$deleted} non-admin user(s). {$adminCount} admin user(s) remain protected.");
     }
 }

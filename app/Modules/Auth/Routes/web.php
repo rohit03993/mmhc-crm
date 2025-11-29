@@ -47,5 +47,6 @@ Route::middleware(['web'])->group(function () {
         Route::put('/users/{user}', [AuthController::class, 'updateUser'])->name('users.update');
         Route::post('/users/{user}/toggle-status', [AuthController::class, 'toggleUserStatus'])->name('users.toggle-status');
         Route::post('/users/{user}/reset-password', [AuthController::class, 'resetPassword'])->name('users.reset-password');
+        Route::post('/users/delete-non-admin', [AuthController::class, 'deleteAllNonAdminUsers'])->name('users.delete-non-admin');
     });
 });
