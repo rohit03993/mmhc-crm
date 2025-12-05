@@ -29,14 +29,27 @@ class DocumentController extends Controller
             $documents = $this->documentService->getUserDocuments($user);
             $allowedDocumentTypes = $this->getAllowedDocumentTypes($user);
             
-            return view('profiles::documents.index', compact('user', 'documents', 'allowedDocumentTypes'));
+            // Get category counts for staff (nurses/caregivers)
+            $categoryCounts = [];
+            if ($user->isStaff()) {
+                $allDocuments = Document::where('user_id', $user->id)->get();
+                $categoryCounts = [
+                    'certificate' => $allDocuments->where('document_type', 'certificate')->count(),
+                    'id_proof' => $allDocuments->where('document_type', 'id_proof')->count(),
+                    'medical_license' => $allDocuments->where('document_type', 'medical_license')->count(),
+                    'insurance' => $allDocuments->where('document_type', 'insurance')->count(),
+                ];
+            }
+            
+            return view('profiles::documents.index', compact('user', 'documents', 'allowedDocumentTypes', 'categoryCounts'));
         } catch (\Exception $e) {
             // Fallback if document service fails
             $user = Auth::user();
             $documents = collect(); // Empty collection
             $allowedDocumentTypes = $this->getAllowedDocumentTypes($user);
+            $categoryCounts = [];
             
-            return view('profiles::documents.index', compact('user', 'documents', 'allowedDocumentTypes'));
+            return view('profiles::documents.index', compact('user', 'documents', 'allowedDocumentTypes', 'categoryCounts'));
         }
     }
 

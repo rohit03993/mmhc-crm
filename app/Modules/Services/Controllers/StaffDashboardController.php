@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Modules\Services\Models\ServiceRequest;
+use App\Modules\Services\Models\DailyService;
 use App\Modules\Rewards\Models\CaregiverReward;
 use App\Modules\Rewards\Services\RewardService;
 use App\Modules\Referrals\Services\ReferralService;
+use Illuminate\Support\Facades\Validator;
 
 class StaffDashboardController extends Controller
 {
@@ -21,14 +23,24 @@ class StaffDashboardController extends Controller
     {
         $user = Auth::user();
         
-        // Get assigned services for this staff member
+        // Get assigned services for this staff member (including pending_approval)
         $assignedServices = ServiceRequest::where('assigned_staff_id', $user->id)
+            ->whereIn('status', ['pending_approval', 'assigned', 'in_progress', 'completed'])
             ->with(['patient', 'serviceType', 'assignedStaff'])
+            ->orderByRaw("CASE WHEN status = 'pending_approval' THEN 0 ELSE 1 END")
             ->orderBy('start_date', 'desc')
             ->paginate(10);
         
         // Calculate missing payouts for services
         foreach ($assignedServices as $service) {
+            // Ensure relationships are loaded
+            if (!$service->relationLoaded('assignedStaff')) {
+                $service->load('assignedStaff');
+            }
+            if (!$service->relationLoaded('serviceType')) {
+                $service->load('serviceType');
+            }
+            
             if (!$service->total_staff_payout && $service->assignedStaff && $service->serviceType) {
                 $dailyStaffPayout = $user->isNurse() ? $service->serviceType->nurse_payout : $service->serviceType->caregiver_payout;
                 $totalStaffPayout = $service->duration_days * $dailyStaffPayout;
@@ -133,10 +145,22 @@ class StaffDashboardController extends Controller
             abort(403, 'You are not assigned to this service.');
         }
         
+        // Ensure relationships are loaded
+        $serviceRequest->load(['assignedStaff', 'serviceType']);
+        
         // If total_staff_payout is not calculated, calculate it now
-        if (!$serviceRequest->total_staff_payout && $serviceRequest->assigned_staff_id && $serviceRequest->serviceType) {
+        if (!$serviceRequest->total_staff_payout && $serviceRequest->assigned_staff_id) {
             $staff = $serviceRequest->assignedStaff;
             $serviceType = $serviceRequest->serviceType;
+            
+            // Null checks before accessing properties
+            if (!$staff) {
+                abort(404, 'Assigned staff not found.');
+            }
+            if (!$serviceType) {
+                abort(404, 'Service type not found.');
+            }
+            
             $dailyStaffPayout = $staff->isNurse() ? $serviceType->nurse_payout : $serviceType->caregiver_payout;
             $totalStaffPayout = $serviceRequest->duration_days * $dailyStaffPayout;
             
@@ -259,10 +283,22 @@ class StaffDashboardController extends Controller
         try {
             DB::beginTransaction();
 
+            // Ensure relationships are loaded
+            $serviceRequest->load(['assignedStaff', 'serviceType']);
+
             // Ensure payout is calculated before completing
-            if (!$serviceRequest->total_staff_payout && $serviceRequest->assignedStaff && $serviceRequest->serviceType) {
+            if (!$serviceRequest->total_staff_payout) {
                 $staff = $serviceRequest->assignedStaff;
                 $serviceType = $serviceRequest->serviceType;
+                
+                // Null checks before accessing properties
+                if (!$staff) {
+                    throw new \Exception("Assigned staff not found for service request #{$serviceRequest->id}");
+                }
+                if (!$serviceType) {
+                    throw new \Exception("Service type not found for service request #{$serviceRequest->id}");
+                }
+                
                 $dailyStaffPayout = $staff->isNurse() ? $serviceType->nurse_payout : $serviceType->caregiver_payout;
                 $totalStaffPayout = $serviceRequest->duration_days * $dailyStaffPayout;
                 
@@ -311,6 +347,119 @@ class StaffDashboardController extends Controller
                 'success' => false,
                 'message' => 'Failed to complete service. Please try again.'
             ], 500);
+        }
+    }
+
+    /**
+     * Staff: Accept booking request (One-Way Booking)
+     */
+    public function acceptBooking(Request $request, ServiceRequest $serviceRequest)
+    {
+        $user = Auth::user();
+
+        // Verify this booking is assigned to this staff member
+        if ($serviceRequest->assigned_staff_id !== $user->id) {
+            abort(403, 'This booking is not assigned to you.');
+        }
+
+        // Verify status is pending_approval
+        if ($serviceRequest->status !== 'pending_approval') {
+            return redirect()->back()
+                ->with('error', 'This booking cannot be accepted. Current status: ' . $serviceRequest->status);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Update service request status
+            $serviceRequest->update([
+                'status' => 'assigned',
+                'staff_approved_at' => now(),
+            ]);
+
+            // Update daily services status from 'pending' to 'scheduled'
+            DailyService::where('service_request_id', $serviceRequest->id)
+                ->where('status', 'pending')
+                ->update(['status' => 'scheduled']);
+
+            DB::commit();
+
+            return redirect()->route('staff.dashboard')
+                ->with('success', 'Booking accepted successfully! You can now view the service details.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Staff booking acceptance failed: ' . $e->getMessage(), [
+                'service_request_id' => $serviceRequest->id,
+                'staff_id' => $user->id,
+                'error' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Failed to accept booking. Please try again.');
+        }
+    }
+
+    /**
+     * Staff: Reject booking request (One-Way Booking)
+     */
+    public function rejectBooking(Request $request, ServiceRequest $serviceRequest)
+    {
+        $user = Auth::user();
+
+        // Verify this booking is assigned to this staff member
+        if ($serviceRequest->assigned_staff_id !== $user->id) {
+            abort(403, 'This booking is not assigned to you.');
+        }
+
+        // Verify status is pending_approval
+        if ($serviceRequest->status !== 'pending_approval') {
+            return redirect()->back()
+                ->with('error', 'This booking cannot be rejected. Current status: ' . $serviceRequest->status);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'rejection_reason' => 'required|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Update service request status
+            $serviceRequest->update([
+                'status' => 'pending', // Back to pending for admin to reassign
+                'assigned_staff_id' => null, // Remove assignment
+                'assigned_at' => null,
+                'staff_rejected_at' => now(),
+                'staff_rejection_reason' => $request->rejection_reason,
+            ]);
+
+            // Delete pending daily services
+            DailyService::where('service_request_id', $serviceRequest->id)
+                ->where('status', 'pending')
+                ->delete();
+
+            DB::commit();
+
+            return redirect()->route('staff.dashboard')
+                ->with('success', 'Booking rejected. The patient will be notified and admin can assign another staff member.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Staff booking rejection failed: ' . $e->getMessage(), [
+                'service_request_id' => $serviceRequest->id,
+                'staff_id' => $user->id,
+                'error' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Failed to reject booking. Please try again.');
         }
     }
 }

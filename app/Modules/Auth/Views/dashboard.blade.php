@@ -20,161 +20,116 @@
 @endsection
 
 @section('content')
-<div class="container-fluid px-3 px-md-4 py-4">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="patient-header-card mb-3">
-                <div class="row align-items-center g-3">
-                    <div class="col-12 col-md-8">
-                        <div class="d-flex align-items-center">
-                            <div class="patient-avatar-large me-3">
-                                <i class="fas fa-user-injured fa-2x"></i>
+<!-- Mobile App View -->
+<div class="mobile-app-container">
+    <!-- App Header (Mobile Only) -->
+    <div class="app-header-mobile d-md-none">
+        <div class="app-header-content">
+            <div class="app-header-left">
+                <div class="app-user-avatar">
+                    <i class="fas fa-user-injured"></i>
                             </div>
-                            <div>
-                                <h2 class="patient-name mb-1">Welcome back, {{ $user->name }}!</h2>
-                                <p class="patient-subtitle mb-0">
-                                    <span class="badge badge-patient">Patient</span>
-                                    <span class="text-muted ms-2">ID: {{ $user->unique_id }}</span>
-                                    <span class="profile-badge ms-2">{{ $stats['profile_completion'] }}% Profile Complete</span>
-                                </p>
+                <div class="app-user-info">
+                    <div class="app-user-name">{{ Str::limit($user->name, 15) }}</div>
+                    <div class="app-user-id">{{ $user->unique_id }}</div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-12 col-md-4 text-md-end">
-                        <div class="d-flex flex-column flex-md-row gap-2">
-                            <a href="{{ route('services.create') }}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-plus-circle me-1"></i>New Request
-                            </a>
-                            <a href="{{ route('profile.edit') }}" class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-user-edit me-1"></i>Profile
-                            </a>
-                        </div>
-                    </div>
-                </div>
+            <div class="app-header-right">
+                <a href="{{ route('profile.edit') }}" class="app-header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Statistics Cards - Mobile Optimized -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
-            <div class="stat-card-modern stat-primary">
-                <div class="stat-icon">
-                    <i class="fas fa-clipboard-list"></i>
+    <!-- Main Content Area -->
+    <div class="app-content">
+        <!-- Prominent Pincode Search (One-Way Booking) -->
+        @if($user->isPatient())
+        <div class="app-pincode-search-section">
+            <div class="app-pincode-card">
+                <div class="app-pincode-header">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <h3>Find Healthcare Staff Near You</h3>
                 </div>
-                <div class="stat-content">
-                    <div class="stat-value">{{ $stats['total_requests'] }}</div>
-                    <div class="stat-label">Total Requests</div>
+                <form method="GET" action="{{ route('staff.index') }}" class="app-pincode-form-main">
+                    <div class="app-pincode-input-group">
+                        <input type="text" 
+                               name="pincode" 
+                               value="{{ $user->pincode }}" 
+                               placeholder="Enter your 6-digit pincode" 
+                               maxlength="6" 
+                               pattern="[0-9]{6}"
+                               class="app-pincode-input"
+                               required>
+                        <button type="submit" class="app-pincode-btn">
+                            <i class="fas fa-search"></i>
+                            <span>Find Staff</span>
+                        </button>
                 </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card-modern stat-info">
-                <div class="stat-icon">
-                    <i class="fas fa-play-circle"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value">{{ $stats['active_requests'] }}</div>
-                    <div class="stat-label">Active Services</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card-modern stat-success">
-                <div class="stat-icon">
+                    @if($user->pincode)
+                    <div class="app-pincode-saved">
                     <i class="fas fa-check-circle"></i>
+                        <span>Using saved pincode: <strong>{{ $user->pincode }}</strong></span>
+                        <a href="{{ route('profile.edit') }}" class="app-pincode-change">Change</a>
                 </div>
-                <div class="stat-content">
-                    <div class="stat-value">{{ $stats['completed_requests'] }}</div>
-                    <div class="stat-label">Completed</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card-modern stat-warning">
-                <div class="stat-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value">{{ $stats['pending_requests'] }}</div>
-                    <div class="stat-label">Pending</div>
+                    @endif
+                </form>
                 </div>
             </div>
+        @endif
+
+        <!-- Welcome Section (Mobile App Style) -->
+        <div class="app-welcome-section">
+            <div class="app-welcome-card">
+                <div class="app-welcome-content">
+                    <h1 class="app-welcome-title">Welcome back!</h1>
+                    <p class="app-welcome-subtitle">{{ $user->name }}</p>
+                    <div class="app-profile-badge">
+                        <i class="fas fa-check-circle me-1"></i>
+                        {{ $stats['profile_completion'] }}% Profile Complete
         </div>
+                </div>
+                </div>
+            </div>
+
+        <!-- Statistics Cards - App Style Grid -->
+        <div class="app-stats-section">
+            <div class="app-stats-grid">
+                <!-- Stat Card 1 -->
+                <div class="app-stat-card stat-primary">
+                    <div class="app-stat-icon">
+                        <i class="fas fa-clipboard-list"></i>
+        </div>
+                    <div class="app-stat-value">{{ $stats['total_requests'] }}</div>
+                    <div class="app-stat-label">Total</div>
     </div>
 
-    <!-- Additional Statistics Row -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
-            <div class="stat-card-modern" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
-                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
-                    <i class="fas fa-rupee-sign"></i>
+                <!-- Stat Card 2 -->
+                <div class="app-stat-card stat-active">
+                    <div class="app-stat-icon">
+                        <i class="fas fa-play-circle"></i>
                 </div>
-                <div class="stat-content">
-                    <div class="stat-value">₹{{ number_format($stats['total_spent']) }}</div>
-                    <div class="stat-label">Total Spent</div>
+                    <div class="app-stat-value">{{ $stats['active_requests'] }}</div>
+                    <div class="app-stat-label">Active</div>
                 </div>
+                
+                <!-- Stat Card 3 -->
+                <div class="app-stat-card stat-success">
+                    <div class="app-stat-icon">
+                        <i class="fas fa-check-circle"></i>
             </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card-modern" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
-                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
-                    <i class="fas fa-calendar-alt"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value">{{ $stats['average_duration'] }}</div>
-                    <div class="stat-label">Avg. Duration (days)</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card-modern" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
-                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
-                    <i class="fas fa-calendar-check"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value">{{ $stats['upcoming_services'] }}</div>
-                    <div class="stat-label">Upcoming Services</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card-modern" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
-                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
-                    <i class="fas fa-heart"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value">{{ $stats['favorite_staff'] ? Str::limit($stats['favorite_staff'], 10) : 'N/A' }}</div>
-                    <div class="stat-label">Favorite Staff</div>
-                </div>
-            </div>
-        </div>
+                    <div class="app-stat-value">{{ $stats['completed_requests'] }}</div>
+                    <div class="app-stat-label">Done</div>
     </div>
 
-    <!-- Quick Actions Bar -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="modern-card">
-                <div class="modern-card-body p-3">
-                    <div class="d-flex flex-wrap gap-2 justify-content-center">
-                        <a href="{{ route('services.create') }}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-plus-circle me-2"></i>Book New Service
-                        </a>
-                        <a href="{{ route('staff.index') }}" class="btn btn-outline-primary btn-lg">
-                            <i class="fas fa-users me-2"></i>View All Staff
-                        </a>
-                        <a href="{{ route('services.my-requests') }}" class="btn btn-outline-info btn-lg">
-                            <i class="fas fa-list me-2"></i>My Requests
-                        </a>
-                        <a href="{{ route('documents.index') }}" class="btn btn-outline-secondary btn-lg">
-                            <i class="fas fa-file-alt me-2"></i>My Documents
-                        </a>
-                        <a href="{{ route('profile.edit') }}" class="btn btn-outline-success btn-lg">
-                            <i class="fas fa-user-edit me-2"></i>Update Profile
-                        </a>
+                <!-- Stat Card 4 -->
+                <div class="app-stat-card stat-warning">
+                    <div class="app-stat-icon">
+                        <i class="fas fa-clock"></i>
                     </div>
-                </div>
+                    <div class="app-stat-value">{{ $stats['pending_requests'] }}</div>
+                    <div class="app-stat-label">Pending</div>
             </div>
         </div>
     </div>
@@ -246,9 +201,9 @@
                                             @endif
                                         </div>
                                         <div class="staff-action">
-                                            <a href="{{ route('services.create') }}?staff_type=nurse&staff_id={{ $nurse->id }}" 
+                                            <a href="{{ route('book.staff', $nurse) }}" 
                                                class="btn btn-primary btn-sm w-100">
-                                                <i class="fas fa-calendar-check me-1"></i>Request Service
+                                                <i class="fas fa-calendar-check me-1"></i>Book Now
                                             </a>
                                         </div>
                                     </div>
@@ -311,9 +266,9 @@
                                             @endif
                                         </div>
                                         <div class="staff-action">
-                                            <a href="{{ route('services.create') }}?staff_type=caregiver&staff_id={{ $caregiver->id }}" 
+                                            <a href="{{ route('book.staff', $caregiver) }}" 
                                                class="btn btn-success btn-sm w-100">
-                                                <i class="fas fa-calendar-check me-1"></i>Request Service
+                                                <i class="fas fa-calendar-check me-1"></i>Book Now
                                             </a>
                                         </div>
                                     </div>
@@ -338,208 +293,675 @@
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="row g-4">
-        <!-- Recent Service Requests -->
-        <div class="col-12 col-lg-8">
-            <div class="modern-card">
-                <div class="modern-card-header bg-primary text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="fas fa-list me-2"></i>Recent Service Requests
-                        </h5>
-                        <a href="{{ route('services.my-requests') }}" class="btn btn-light btn-sm">
-                            View All <i class="fas fa-arrow-right ms-1"></i>
+        <!-- Service Requests Section - App Style -->
+        <div class="app-section">
+            <div class="app-section-header">
+                <h2 class="app-section-title">My Requests</h2>
+                <a href="{{ route('services.my-requests') }}" class="app-section-link">
+                    View All <i class="fas fa-chevron-right"></i>
                         </a>
                     </div>
-                </div>
-                <div class="modern-card-body">
                     @if(isset($recent_requests) && $recent_requests->count() > 0)
-                        <div class="service-requests-list">
+                <div class="app-requests-list">
                             @foreach($recent_requests as $request)
-                            <div class="service-request-item">
-                                <div class="service-request-icon status-{{ $request->status }}">
+                    <a href="{{ route('services.show', $request) }}" class="app-request-card">
+                        <div class="app-request-header status-{{ $request->status }}">
+                            <div class="app-request-status-icon">
                                     <i class="fas fa-{{ $request->status === 'pending' ? 'clock' : ($request->status === 'assigned' ? 'user-check' : ($request->status === 'in_progress' ? 'play-circle' : 'check-circle')) }}"></i>
                                 </div>
-                                <div class="service-request-content">
-                                    <div class="service-request-header">
-                                        <div class="service-request-title">{{ $request->serviceType->name }}</div>
-                                        <span class="badge badge-status-{{ $request->status }}">
+                            <div class="app-request-info">
+                                <h3 class="app-request-title">{{ $request->serviceType->name }}</h3>
+                                <p class="app-request-date">{{ $request->start_date->format('M d') }} - {{ $request->end_date->format('M d, Y') }}</p>
+                            </div>
+                            <span class="app-request-badge status-{{ $request->status }}">
                                             {{ ucfirst(str_replace('_', ' ', $request->status)) }}
                                         </span>
                                     </div>
-                                    <div class="service-request-details">
-                                        <div class="detail-item">
-                                            <i class="fas fa-calendar-alt me-1"></i>
-                                            <span>{{ $request->start_date->format('M d') }} - {{ $request->end_date->format('M d, Y') }}</span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <i class="fas fa-rupee-sign me-1"></i>
+                        <div class="app-request-body">
+                            <div class="app-request-detail">
+                                <i class="fas fa-rupee-sign"></i>
                                             <span>₹{{ number_format($request->total_amount) }}</span>
                                         </div>
                                         @if($request->assignedStaff)
-                                        <div class="detail-item">
-                                            <i class="fas fa-user-{{ $request->assignedStaff->isNurse() ? 'nurse' : 'md' }} me-1"></i>
-                                            <span>{{ $request->assignedStaff->name }}</span>
+                            <div class="app-request-detail">
+                                <i class="fas fa-user-{{ $request->assignedStaff->isNurse() ? 'nurse' : 'md' }}"></i>
+                                <span>{{ Str::limit($request->assignedStaff->name, 25) }}</span>
                                         </div>
                                         @endif
                                     </div>
-                                </div>
-                                <div class="service-request-actions">
-                                    <a href="{{ route('services.show', $request) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i>
                                     </a>
-                                </div>
-                            </div>
                             @endforeach
                         </div>
+                
+                <!-- Pagination -->
+                @if($recent_requests->hasPages())
+                <div class="app-pagination">
+                    {{ $recent_requests->links('pagination::bootstrap-4') }}
+                </div>
+                @endif
                     @else
-                        <div class="empty-state">
-                            <div class="empty-state-icon">
+                <div class="app-empty-state">
+                    <div class="app-empty-icon">
                                 <i class="fas fa-clipboard-list"></i>
                             </div>
-                            <h5 class="empty-state-title">No Service Requests Yet</h5>
-                            <p class="empty-state-text">Get started by requesting your first healthcare service.</p>
-                            <a href="{{ route('services.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus-circle me-2"></i>Request Service
-                            </a>
+                    <h3 class="app-empty-title">No Requests Yet</h3>
+                    <p class="app-empty-text">Start by requesting your first healthcare service</p>
                         </div>
                     @endif
-                </div>
-            </div>
         </div>
 
-        <!-- Quick Actions & Profile -->
-        <div class="col-12 col-lg-4">
-            <!-- Quick Actions -->
-            <div class="modern-card mb-4">
-                <div class="modern-card-header bg-success text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-bolt me-2"></i>Quick Actions
-                    </h5>
-                </div>
-                <div class="modern-card-body">
-                    <div class="quick-actions-list">
-                        <a href="{{ route('services.create') }}" class="quick-action-item">
-                            <div class="quick-action-icon-small bg-primary">
-                                <i class="fas fa-plus-circle"></i>
+        <!-- Available Staff Section - App Style -->
+        @if($available_nurses->count() > 0 || $available_caregivers->count() > 0)
+        <div class="app-section">
+            <div class="app-section-header">
+                <h2 class="app-section-title">Available Staff</h2>
+                <a href="{{ route('staff.index') }}" class="app-section-link">
+                    View All <i class="fas fa-chevron-right"></i>
+                </a>
                             </div>
-                            <div class="quick-action-text">
-                                <div class="quick-action-title">Request Service</div>
-                                <div class="quick-action-subtitle">Book healthcare service</div>
+            <div class="app-staff-carousel">
+                @foreach($available_nurses->take(3) as $nurse)
+                <a href="{{ route('book.staff', $nurse) }}" class="app-staff-card">
+                    <div class="app-staff-avatar">
+                        <i class="fas fa-user-nurse"></i>
                             </div>
-                            <i class="fas fa-chevron-right quick-action-arrow"></i>
-                        </a>
-                        
-                        <a href="{{ route('services.my-requests') }}" class="quick-action-item">
-                            <div class="quick-action-icon-small bg-info">
-                                <i class="fas fa-list"></i>
-                            </div>
-                            <div class="quick-action-text">
-                                <div class="quick-action-title">My Requests</div>
-                                <div class="quick-action-subtitle">View all requests</div>
-                            </div>
-                            <i class="fas fa-chevron-right quick-action-arrow"></i>
-                        </a>
-                        
-                        <a href="{{ route('plans.index') }}" class="quick-action-item">
-                            <div class="quick-action-icon-small bg-warning">
-                                <i class="fas fa-clipboard-list"></i>
-                            </div>
-                            <div class="quick-action-text">
-                                <div class="quick-action-title">Healthcare Plans</div>
-                                <div class="quick-action-subtitle">Browse plans</div>
-                            </div>
-                            <i class="fas fa-chevron-right quick-action-arrow"></i>
-                        </a>
-                        
-                        <a href="{{ route('profile.edit') }}" class="quick-action-item">
-                            <div class="quick-action-icon-small bg-secondary">
-                                <i class="fas fa-user-edit"></i>
-                            </div>
-                            <div class="quick-action-text">
-                                <div class="quick-action-title">Update Profile</div>
-                                <div class="quick-action-subtitle">{{ $stats['profile_completion'] }}% complete</div>
-                            </div>
-                            <i class="fas fa-chevron-right quick-action-arrow"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Profile Completion -->
-            @if($stats['profile_completion'] < 100)
-            <div class="modern-card mb-4">
-                <div class="modern-card-header bg-info text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-user-check me-2"></i>Complete Your Profile
-                    </h5>
-                </div>
-                <div class="modern-card-body">
-                    <div class="profile-progress">
-                        <div class="progress-bar-wrapper">
-                            <div class="progress-bar-fill" style="width: {{ $stats['profile_completion'] }}%"></div>
-                        </div>
-                        <div class="progress-text">
-                            <span>{{ $stats['profile_completion'] }}% Complete</span>
-                            <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-primary">
-                                Complete Now
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
-
-            <!-- Recent Activity Feed -->
-            <div class="modern-card">
-                <div class="modern-card-header bg-gradient-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-history me-2"></i>Recent Activity
-                    </h5>
-                </div>
-                <div class="modern-card-body">
-                    @if(isset($recent_activity) && count($recent_activity) > 0)
-                        <div class="activity-feed">
-                            @foreach($recent_activity as $activity)
-                            <div class="activity-item">
-                                <div class="activity-icon bg-{{ $activity['color'] ?? 'primary' }}">
-                                    <i class="fas {{ $activity['icon'] ?? 'fa-circle' }}"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-message">
-                                        @if($activity['link'])
-                                            <a href="{{ $activity['link'] }}" class="activity-link">
-                                                {{ $activity['message'] }}
-                                            </a>
-                                        @else
-                                            {{ $activity['message'] }}
-                                        @endif
-                                    </div>
-                                    <div class="activity-time">
-                                        <i class="fas fa-clock me-1"></i>{{ $activity['time'] }}
-                                    </div>
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="empty-state py-3">
-                            <div class="empty-state-icon">
-                                <i class="fas fa-history"></i>
-                            </div>
-                            <p class="empty-state-text mb-0">No recent activity</p>
-                        </div>
+                    <h4 class="app-staff-name">{{ Str::limit($nurse->name, 15) }}</h4>
+                    @if(isset($nurse->distance_km) && $nurse->distance_km !== null)
+                    <p class="app-staff-distance">
+                        <i class="fas fa-route"></i>
+                        @if($nurse->distance_km == 0 || $nurse->distance_km < 0.1)
+                            Near By
+                        @else
+                            {{ number_format($nurse->distance_km, 1) }} km
+                        @endif
+                    </p>
                     @endif
-                </div>
+                </a>
+                @endforeach
+                @foreach($available_caregivers->take(3) as $caregiver)
+                <a href="{{ route('book.staff', $caregiver) }}" class="app-staff-card">
+                    <div class="app-staff-avatar caregiver">
+                        <i class="fas fa-user-md"></i>
+                            </div>
+                    <h4 class="app-staff-name">{{ Str::limit($caregiver->name, 15) }}</h4>
+                    @if(isset($caregiver->distance_km) && $caregiver->distance_km !== null)
+                    <p class="app-staff-distance">
+                        <i class="fas fa-route"></i>
+                        @if($caregiver->distance_km == 0 || $caregiver->distance_km < 0.1)
+                            Near By
+                        @else
+                            {{ number_format($caregiver->distance_km, 1) }} km
+                        @endif
+                    </p>
+                    @endif
+                </a>
+                @endforeach
+                            </div>
+                            </div>
+        @endif
             </div>
-        </div>
-    </div>
+
+    <!-- Floating Action Button (FAB) - Mobile Only -->
+    <a href="{{ route('staff.index') }}" class="app-fab d-md-none">
+        <i class="fas fa-users"></i>
+    </a>
+
+    <!-- Bottom Navigation Bar (Mobile Only) -->
+    <nav class="app-bottom-nav d-md-none">
+        <a href="{{ route('dashboard') }}" class="app-nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="{{ route('services.my-requests') }}" class="app-nav-item">
+            <i class="fas fa-list"></i>
+            <span>Requests</span>
+        </a>
+        <a href="{{ route('staff.index') }}" class="app-nav-item">
+            <i class="fas fa-users"></i>
+            <span>Staff</span>
+        </a>
+        <a href="{{ route('profile.index') }}" class="app-nav-item">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </nav>
 </div>
 
-<!-- Comprehensive Mobile-First Styling -->
+<!-- Mobile App Styling -->
 <style>
-/* Header Styles */
+/* Mobile App Container */
+.mobile-app-container {
+    position: relative;
+    min-height: 100vh;
+    background: #f5f7fa;
+    padding-bottom: 80px !important; /* Space for bottom nav - Always visible */
+}
+
+/* App Header (Mobile Only) */
+.app-header-mobile {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 12px 16px;
+    padding-top: max(12px, env(safe-area-inset-top));
+}
+
+.app-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.app-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-user-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.app-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.app-user-name {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.app-user-id {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.app-header-right {
+    display: flex;
+    gap: 12px;
+}
+
+.app-header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    font-size: 1.2rem;
+}
+
+/* App Content */
+.app-content {
+    padding: 16px;
+    padding-bottom: 90px !important; /* Space for bottom nav - Always visible */
+}
+
+/* Welcome Section */
+.app-welcome-section {
+    margin-bottom: 20px;
+}
+
+.app-welcome-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 24px;
+    color: white;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+}
+
+.app-welcome-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.app-welcome-subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 12px;
+}
+
+.app-profile-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255,255,255,0.2);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    backdrop-filter: blur(10px);
+}
+
+/* Stats Section */
+.app-stats-section {
+    margin-bottom: 24px;
+}
+
+.app-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.app-stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px 8px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease;
+}
+
+.app-stat-card:active {
+    transform: scale(0.95);
+}
+
+.app-stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-size: 1rem;
+    color: white;
+}
+
+.app-stat-card.stat-primary .app-stat-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.app-stat-card.stat-active .app-stat-icon {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.app-stat-card.stat-success .app-stat-icon {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.app-stat-card.stat-warning .app-stat-icon {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.app-stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.app-stat-label {
+    font-size: 0.7rem;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* App Section */
+.app-section {
+    margin-bottom: 24px;
+}
+
+.app-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 0 4px;
+}
+
+.app-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.app-section-link {
+    font-size: 0.85rem;
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Service Requests List */
+.app-requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.app-request-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: block;
+}
+
+.app-request-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.app-request-header {
+    padding: 16px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-request-header.status-pending {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.app-request-header.status-assigned {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.app-request-header.status-in_progress {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.app-request-header.status-completed {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.app-request-status-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.app-request-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.app-request-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.app-request-date {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.app-request-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.25);
+    border: 1px solid rgba(255,255,255,0.3);
+    white-space: nowrap;
+}
+
+.app-request-body {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.app-request-detail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.app-request-detail i {
+    width: 18px;
+    color: #667eea;
+    text-align: center;
+}
+
+/* Staff Carousel */
+.app-staff-carousel {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+}
+
+.app-staff-carousel::-webkit-scrollbar {
+    display: none;
+}
+
+.app-staff-card {
+    flex: 0 0 auto;
+    width: 140px;
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    text-decoration: none;
+    color: inherit;
+    scroll-snap-align: start;
+    transition: transform 0.2s ease;
+}
+
+.app-staff-card:active {
+    transform: scale(0.95);
+}
+
+.app-staff-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin: 0 auto 12px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.app-staff-avatar.caregiver {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+}
+
+.app-staff-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+}
+
+.app-staff-distance {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+/* Empty State */
+.app-empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    background: white;
+    border-radius: 16px;
+}
+
+.app-empty-icon {
+    font-size: 3rem;
+    color: #dee2e6;
+    margin-bottom: 16px;
+}
+
+.app-empty-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.app-empty-text {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Pagination */
+.app-pagination {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Floating Action Button */
+.app-fab {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    z-index: 999;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.app-fab:active {
+    transform: scale(0.9);
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+}
+
+/* Bottom Navigation */
+.app-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 0;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.app-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    color: #6c757d;
+    padding: 8px 16px;
+    transition: color 0.2s ease;
+    flex: 1;
+}
+
+.app-nav-item i {
+    font-size: 1.2rem;
+}
+
+.app-nav-item span {
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.app-nav-item.active {
+    color: #667eea;
+}
+
+.app-nav-item.active i {
+    color: #667eea;
+}
+
+/* Desktop View - Hide Mobile Elements */
+@media (min-width: 768px) {
+    .mobile-app-container {
+        padding-bottom: 0;
+    }
+    
+    .app-content {
+        padding: 24px;
+        padding-bottom: 24px;
+    }
+    
+    .app-stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+    
+    .app-requests-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    
+    .app-staff-carousel {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        overflow: visible;
+    }
+    
+    .app-staff-card {
+        width: 100%;
+    }
+}
+
+/* Header Styles (Desktop) */
 .patient-header-card {
     background: white;
     border-radius: 16px;
@@ -673,28 +1095,97 @@
     padding: 1.5rem;
 }
 
-/* Service Requests List */
-.service-requests-list {
+/* Mobile-First Service Request Cards */
+.service-request-card-mobile {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
 }
 
-.service-request-item {
+.service-request-card-mobile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.card-header-mobile {
+    padding: 0.75rem 1rem;
+    color: white;
+    font-weight: 600;
+}
+
+.card-header-mobile.status-pending {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.card-header-mobile.status-assigned {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.card-header-mobile.status-in_progress {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card-header-mobile.status-completed {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.service-status-icon {
+    font-size: 1.2rem;
+}
+
+.badge-status-mobile {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.card-body-mobile {
+    padding: 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title-mobile {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+}
+
+.card-details-mobile {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.detail-row {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    border-left: 4px solid transparent;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #6c757d;
 }
 
-.service-request-item:hover {
-    background: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    transform: translateX(5px);
+.detail-row i {
+    width: 18px;
+    color: #667eea;
+    text-align: center;
+}
+
+.card-footer-mobile {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e9ecef;
 }
 
 .service-request-icon {
@@ -804,107 +1295,105 @@
     margin-bottom: 1.5rem;
 }
 
-/* Quick Actions List */
-.quick-actions-list {
+/* Mobile-First Quick Action Cards */
+.quick-action-card {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-}
-
-.quick-action-item {
-    display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.75rem;
+    justify-content: center;
+    padding: 1rem 0.5rem;
     background: #f8f9fa;
     border-radius: 12px;
     text-decoration: none;
     color: #2c3e50;
     transition: all 0.3s ease;
+    border: 2px solid transparent;
+    min-height: 100px;
 }
 
-.quick-action-item:hover {
+.quick-action-card:hover {
     background: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+    border-color: #667eea;
     color: #2c3e50;
+    text-decoration: none;
 }
 
-.quick-action-icon-small {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+.quick-action-icon-mobile {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1rem;
-    flex-shrink: 0;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
-.quick-action-text {
-    flex: 1;
-}
-
-.quick-action-title {
-    font-size: 0.95rem;
+.quick-action-title-mobile {
+    font-size: 0.85rem;
     font-weight: 600;
-    margin-bottom: 0.2rem;
+    text-align: center;
+    margin: 0;
+    line-height: 1.2;
 }
 
-.quick-action-subtitle {
-    font-size: 0.8rem;
-    color: #6c757d;
-}
-
-.quick-action-arrow {
-    color: #95a5a6;
-}
-
-/* Profile Progress */
-.profile-progress {
+/* Mobile Profile Progress */
+.profile-progress-mobile {
     padding: 0.5rem 0;
 }
 
-.progress-bar-wrapper {
-    height: 10px;
+.progress-bar-wrapper-mobile {
+    height: 12px;
     background: #e9ecef;
     border-radius: 10px;
     overflow: hidden;
     margin-bottom: 0.75rem;
 }
 
-.progress-bar-fill {
+.progress-bar-fill-mobile {
     height: 100%;
     background: var(--success-gradient);
     border-radius: 10px;
     transition: width 0.3s ease;
 }
 
-.progress-text {
+.progress-text-mobile {
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 0.85rem;
     color: #6c757d;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
-/* Mobile Responsiveness */
+/* Mobile-First Responsive Design */
 @media (max-width: 768px) {
     .container-fluid {
-        padding: 1rem;
+        padding: 0.75rem;
     }
     
     .patient-header-card {
         padding: 1rem;
+        border-radius: 12px;
     }
     
     .patient-name {
-        font-size: 1.3rem;
+        font-size: 1.25rem;
+    }
+    
+    .patient-subtitle {
+        font-size: 0.8rem;
     }
     
     .stat-card-modern {
         padding: 1rem;
+        flex-direction: row;
+        gap: 0.75rem;
     }
     
     .stat-value {
@@ -917,29 +1406,98 @@
         font-size: 1.2rem;
     }
     
-    .service-request-item {
-        flex-direction: column;
-        align-items: flex-start;
+    .stat-label {
+        font-size: 0.75rem;
     }
     
-    .service-request-actions {
-        width: 100%;
-        justify-content: flex-end;
+    .modern-card-body {
+        padding: 1rem;
     }
     
-    .service-request-details {
-        flex-direction: column;
-        gap: 0.5rem;
+    .quick-action-card {
+        min-height: 90px;
+        padding: 0.75rem 0.25rem;
+    }
+    
+    .quick-action-icon-mobile {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+    }
+    
+    .quick-action-title-mobile {
+        font-size: 0.75rem;
+    }
+    
+    .card-body-mobile {
+        padding: 0.75rem;
+    }
+    
+    .card-title-mobile {
+        font-size: 0.9rem;
+    }
+    
+    .detail-row {
+        font-size: 0.8rem;
     }
 }
 
 @media (max-width: 576px) {
+    .container-fluid {
+        padding: 0.5rem;
+    }
+    
     .patient-name {
         font-size: 1.1rem;
     }
     
     .stat-value {
         font-size: 1.3rem;
+    }
+    
+    .stat-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+    
+    .stat-card-modern {
+        padding: 0.75rem;
+    }
+    
+    .modern-card-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .modern-card-header h5 {
+        font-size: 0.95rem;
+    }
+    
+    .service-request-card-mobile {
+        border-radius: 10px;
+    }
+    
+    .card-header-mobile {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .card-body-mobile {
+        padding: 0.75rem;
+    }
+    
+    .quick-action-card {
+        min-height: 80px;
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .quick-action-icon-mobile {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+    
+    .quick-action-title-mobile {
+        font-size: 0.7rem;
     }
 }
 
@@ -1112,68 +1670,73 @@
     margin-top: 1rem;
 }
 
-/* Activity Feed Styles */
-.activity-feed {
+/* Mobile Activity Feed */
+.activity-feed-mobile {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
-.activity-item {
+.activity-item-mobile {
     display: flex;
-    gap: 1rem;
+    gap: 0.75rem;
     padding: 0.75rem;
-    border-radius: 8px;
-    transition: background 0.2s ease;
-}
-
-.activity-item:hover {
     background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.2s ease;
 }
 
-.activity-icon {
-    width: 40px;
-    height: 40px;
+.activity-item-mobile:hover {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.activity-icon-mobile {
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     flex-shrink: 0;
 }
 
-.activity-content {
+.activity-content-mobile {
     flex: 1;
+    min-width: 0;
 }
 
-.activity-message {
-    font-size: 0.9rem;
+.activity-message-mobile {
+    font-size: 0.85rem;
     color: #2c3e50;
     margin-bottom: 0.25rem;
     line-height: 1.4;
+    word-wrap: break-word;
 }
 
-.activity-link {
+.activity-link-mobile {
     color: #667eea;
     text-decoration: none;
     transition: color 0.2s ease;
 }
 
-.activity-link:hover {
+.activity-link-mobile:hover {
     color: #764ba2;
     text-decoration: underline;
 }
 
-.activity-time {
-    font-size: 0.75rem;
+.activity-time-mobile {
+    font-size: 0.7rem;
     color: #6c757d;
     display: flex;
     align-items: center;
+    gap: 0.25rem;
 }
 
-.activity-time i {
-    font-size: 0.7rem;
+.activity-time-mobile i {
+    font-size: 0.65rem;
 }
 
 /* Quick Actions Bar */

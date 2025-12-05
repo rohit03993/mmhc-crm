@@ -15,11 +15,17 @@ return new class extends Migration
         $driver = Schema::getConnection()->getDriverName();
         
         if ($driver === 'mysql') {
-            // For MySQL: Drop unique constraint on referral_code
-            DB::statement('ALTER TABLE referrals DROP INDEX referrals_referral_code_unique');
+            // For MySQL: Drop unique constraint on referral_code if it exists
+            $indexExists = DB::select("SHOW INDEX FROM referrals WHERE Key_name = 'referrals_referral_code_unique'");
+            if (count($indexExists) > 0) {
+                DB::statement('ALTER TABLE referrals DROP INDEX referrals_referral_code_unique');
+            }
             
-            // Add unique constraint on referrer_id + referred_id
-            DB::statement('ALTER TABLE referrals ADD UNIQUE KEY referrer_referred_unique (referrer_id, referred_id)');
+            // Add unique constraint on referrer_id + referred_id (only if it doesn't exist)
+            $uniqueExists = DB::select("SHOW INDEX FROM referrals WHERE Key_name = 'referrer_referred_unique'");
+            if (count($uniqueExists) === 0) {
+                DB::statement('ALTER TABLE referrals ADD UNIQUE KEY referrer_referred_unique (referrer_id, referred_id)');
+            }
         } elseif ($driver === 'sqlite') {
             // For SQLite: Need to recreate the table
             // This is more complex, so we'll just modify the index
@@ -29,11 +35,19 @@ return new class extends Migration
         } else {
             // For other databases, use schema builder
             Schema::table('referrals', function (Blueprint $table) {
-                // Drop unique constraint on referral_code
-                $table->dropUnique(['referral_code']);
+                // Drop unique constraint on referral_code if it exists
+                try {
+                    $table->dropUnique(['referral_code']);
+                } catch (\Exception $e) {
+                    // Index doesn't exist, ignore
+                }
                 
                 // Add unique constraint on referrer_id + referred_id
-                $table->unique(['referrer_id', 'referred_id'], 'referrer_referred_unique');
+                try {
+                    $table->unique(['referrer_id', 'referred_id'], 'referrer_referred_unique');
+                } catch (\Exception $e) {
+                    // Constraint already exists, ignore
+                }
             });
         }
     }

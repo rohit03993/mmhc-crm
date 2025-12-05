@@ -24,7 +24,7 @@ class StaffController extends Controller
         $qualification = $request->get('qualification');
         $distance = $request->get('distance');
         $sort = $request->get('sort', 'distance'); // distance, name, experience
-        $perPage = 12;
+        $perPage = 10; // Max 10 per page for mobile-friendly display
         
         $patient = auth()->user();
         
@@ -129,7 +129,8 @@ class StaffController extends Controller
         } else {
             // No pincode - use query builder with pagination
             $query = User::where('role', $role)
-                ->where('is_active', true);
+                ->where('is_active', true)
+                ->with('profile');
             
             // Apply search
             if ($search) {

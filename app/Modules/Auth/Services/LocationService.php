@@ -139,12 +139,13 @@ class LocationService
             return $query->orderBy('name')->get();
         }
         
-        // Get all active staff
+        // Get all active staff with profile
         $query = \App\Models\Core\User::whereIn('role', ['nurse', 'caregiver'])
             ->where('is_active', true)
             ->whereNotNull('pincode')
             ->whereNotNull('latitude')
-            ->whereNotNull('longitude');
+            ->whereNotNull('longitude')
+            ->with('profile');
         
         if ($staffRole) {
             $query->where('role', $staffRole);

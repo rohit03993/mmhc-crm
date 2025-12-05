@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-light top-navbar">
+<nav class="navbar navbar-expand-lg navbar-light top-navbar d-none d-md-flex">
     <div class="container-fluid">
         <a class="navbar-brand" href="{{ route('dashboard') }}">
             <img src="{{ asset('images/med-logo.png') }}" alt="MeD Miracle Health Care" class="brand-logo brand-logo--nav">

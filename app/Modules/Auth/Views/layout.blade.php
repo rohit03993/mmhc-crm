@@ -55,6 +55,33 @@
         .main-content {
             background-color: #f1f5f9;
         }
+        
+        /* Mobile App Background */
+        @media (max-width: 767px) {
+            .main-content {
+                background-color: transparent;
+                padding: 0;
+            }
+            
+            .container-fluid {
+                padding-left: 0;
+                padding-right: 0;
+            }
+            
+            .row {
+                margin-left: 0;
+                margin-right: 0;
+            }
+            
+            /* Ensure bottom nav is always visible */
+            .app-bottom-nav {
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: fixed !important;
+                bottom: 0 !important;
+            }
+        }
 
         .card {
             border: none;
@@ -164,8 +191,8 @@
     <div class="container-fluid">
         <div class="row">
             @if(auth()->check())
-                <!-- Sidebar -->
-                <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <!-- Sidebar - Hidden on Mobile -->
+                <nav class="col-md-3 col-lg-2 d-none d-md-block sidebar collapse">
                     <div class="position-sticky pt-3">
                         <div class="text-center mb-4">
                             <div class="brand-logo-card">
@@ -205,9 +232,9 @@
                             </li>
                             
                             <li class="nav-item">
-                                <a class="nav-link text-white" href="{{ route('services.index') }}">
-                                    <i class="fas fa-user-md me-2"></i>
-                                    Request Service
+                                <a class="nav-link text-white" href="{{ route('staff.index') }}">
+                                    <i class="fas fa-users me-2"></i>
+                                    Find Staff
                                 </a>
                             </li>
                             
@@ -317,8 +344,9 @@
                 </nav>
 
                 <!-- Main content -->
-                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-0 px-md-4 main-content">
+                    <!-- Desktop Header - Hidden on Mobile -->
+                    <div class="d-none d-md-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <h1 class="h2">@yield('page-title', 'Dashboard')</h1>
                         <div class="btn-toolbar mb-2 mb-md-0">
                             <div class="btn-group me-2">
@@ -328,19 +356,36 @@
                         </div>
                     </div>
 
+                    <!-- Alerts - Mobile App Style -->
                     @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <div class="alert alert-success alert-dismissible fade show app-alert" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
                             {{ session('success') }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
 
                     @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <div class="alert alert-danger alert-dismissible fade show app-alert" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
                             {{ session('error') }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
+                    
+                    <style>
+                        .app-alert {
+                            margin: 16px;
+                            border-radius: 12px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                        }
+                        
+                        @media (min-width: 768px) {
+                            .app-alert {
+                                margin: 0 0 16px 0;
+                            }
+                        }
+                    </style>
 
                     @yield('content')
                 </main>

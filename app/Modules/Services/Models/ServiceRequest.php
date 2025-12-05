@@ -22,7 +22,7 @@ class ServiceRequest extends Model
         'total_staff_payout',
         'prepaid_amount',
         'payment_status',
-        'status', // 'pending', 'assigned', 'in_progress', 'completed', 'cancelled'
+        'status', // 'pending', 'pending_approval', 'assigned', 'in_progress', 'completed', 'cancelled'
         'notes',
         'special_requirements',
         'location',
@@ -30,6 +30,9 @@ class ServiceRequest extends Model
         'contact_phone',
         'assigned_staff_id',
         'assigned_at',
+        'staff_approved_at',
+        'staff_rejected_at',
+        'staff_rejection_reason',
         'started_at',
         'completed_at',
         'admin_approved_at',
@@ -41,6 +44,8 @@ class ServiceRequest extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'assigned_at' => 'datetime',
+        'staff_approved_at' => 'datetime',
+        'staff_rejected_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'admin_approved_at' => 'datetime',

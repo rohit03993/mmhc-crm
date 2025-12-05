@@ -25,14 +25,13 @@ class DashboardController extends Controller
             return redirect()->route('admin.dashboard');
         }
         
-        // For patients, show regular dashboard with service requests
+        // For patients, show regular dashboard with service requests (paginated - max 10 per page)
         $serviceRequests = \App\Modules\Services\Models\ServiceRequest::where('patient_id', $user->id)
             ->with(['serviceType', 'assignedStaff'])
             ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
+            ->paginate(10);
         
-        // Get available staff for dashboard display (limit to 6 for better UI)
+        // Get available staff for dashboard display (limit to 3 for mobile-friendly display)
         // Sort by distance if patient has pincode
         $availableNurses = \App\Models\Core\User::where('role', 'nurse')
             ->where('is_active', true)
@@ -72,7 +71,7 @@ class DashboardController extends Controller
             'user' => $user,
             'stats' => $this->getUserStats($user),
             'recent_activity' => $this->getRecentActivity($user),
-            'recent_requests' => $serviceRequests,
+            'recent_requests' => $serviceRequests, // Paginated collection (max 10 per page)
             'available_nurses' => $availableNurses,
             'available_caregivers' => $availableCaregivers,
             'service_types' => $serviceTypes,
@@ -120,13 +119,17 @@ class DashboardController extends Controller
             $avgDuration = $allRequests->where('duration_days', '>', 0)->avg('duration_days');
             
             // Get favorite staff (most assigned)
-            $favoriteStaff = $allRequests
+            $favoriteStaff = null;
+            $staffCounts = $allRequests
                 ->whereNotNull('assigned_staff_id')
                 ->groupBy('assigned_staff_id')
-                ->map->count()
-                ->sortDesc()
-                ->keys()
-                ->first();
+                ->map(function ($group) {
+                    return $group->count();
+                });
+            
+            if ($staffCounts->isNotEmpty()) {
+                $favoriteStaff = $staffCounts->sortDesc()->keys()->first();
+            }
             
             $favoriteStaffName = null;
             if ($favoriteStaff) {

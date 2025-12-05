@@ -30,15 +30,29 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{serviceRequest}', [\App\Modules\Services\Controllers\ServiceController::class, 'show'])->name('show');
     });
     
-    // Staff Routes
+    // Direct Booking Routes (One-Way Booking System)
+    Route::prefix('book')->name('book.')->group(function () {
+        Route::get('/{staff}', [\App\Modules\Services\Controllers\ServiceController::class, 'bookStaff'])->name('staff');
+        Route::post('/{staff}', [\App\Modules\Services\Controllers\ServiceController::class, 'storeDirectBooking'])->name('store');
+    });
+    
+    // Staff Listing - Only for Patients
     Route::prefix('staff')->name('staff.')->group(function () {
-        Route::get('/', [\App\Modules\Services\Controllers\StaffController::class, 'index'])->name('index');
-        Route::get('/dashboard', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/service/{serviceRequest}', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'show'])->name('service-details');
+        Route::get('/', [\App\Modules\Services\Controllers\StaffController::class, 'index'])->middleware('role:patient')->name('index');
         
-        // Service action routes
-        Route::post('/service/{serviceRequest}/start', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'startService'])->name('service.start');
-        Route::post('/service/{serviceRequest}/complete', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'completeService'])->name('service.complete');
+        // Staff Dashboard Routes - Only for Nurses and Caregivers
+        Route::middleware('role:nurse,caregiver')->group(function () {
+            Route::get('/dashboard', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'index'])->name('dashboard');
+            Route::get('/service/{serviceRequest}', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'show'])->name('service-details');
+            
+            // Service action routes
+            Route::post('/service/{serviceRequest}/start', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'startService'])->name('service.start');
+            Route::post('/service/{serviceRequest}/complete', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'completeService'])->name('service.complete');
+            
+            // Staff booking acceptance/rejection (One-Way Booking)
+            Route::post('/booking/{serviceRequest}/accept', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'acceptBooking'])->name('booking.accept');
+            Route::post('/booking/{serviceRequest}/reject', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'rejectBooking'])->name('booking.reject');
+        });
     });
 });
 

@@ -27,7 +27,7 @@ return new class extends Migration
             $table->index('referred_id');
             $table->index('status');
             $table->index(['referrer_id', 'status']);
-            $table->index('referral_code');
+            // Note: referral_code index is already created on line 16 with ->index()
             
             // Unique constraint: A user can only be referred once by the same referrer
             $table->unique(['referrer_id', 'referred_id'], 'referrer_referred_unique');

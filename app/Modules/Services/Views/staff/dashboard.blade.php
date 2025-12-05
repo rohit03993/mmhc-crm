@@ -50,10 +50,32 @@
 @endpush
 
 @section('content')
-<div class="container-fluid px-3 px-md-4 py-4">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
+<!-- Mobile App View for Staff Dashboard -->
+<div class="mobile-app-container">
+    <!-- App Header (Mobile Only) -->
+    <div class="app-header-mobile d-md-none">
+        <div class="app-header-content">
+            <div class="app-header-left">
+                <div class="app-user-avatar staff-{{ auth()->user()->isNurse() ? 'nurse' : 'caregiver' }}">
+                    <i class="fas fa-user-{{ auth()->user()->isNurse() ? 'nurse' : 'md' }}"></i>
+                </div>
+                <div class="app-user-info">
+                    <div class="app-user-name">{{ Str::limit(auth()->user()->name, 15) }}</div>
+                    <div class="app-user-id">{{ auth()->user()->unique_id }}</div>
+                </div>
+            </div>
+            <div class="app-header-right">
+                <a href="{{ route('profile.edit') }}" class="app-header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="app-content">
+        <!-- Desktop Header -->
+        <div class="d-none d-md-block mb-4">
             <div class="staff-header-card mb-3">
                 <div class="row align-items-center g-3">
                     <div class="col-12 col-md-8">
@@ -83,7 +105,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- Statistics Cards - Mobile Optimized -->
     <div class="row g-3 mb-4">
@@ -133,70 +154,75 @@
         </div>
     </div>
 
-    <!-- Earnings Statistics -->
-    <div class="row g-3 mb-4">
+    <!-- Earnings Statistics - Redesigned -->
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="modern-card">
-                <div class="modern-card-header bg-gradient-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-rupee-sign me-2"></i>Earnings Overview
-                    </h5>
+            <div class="earnings-section-header mb-3">
+                <h4 class="earnings-section-title">
+                    <i class="fas fa-wallet me-2"></i>Earnings Overview
+                </h4>
+                <p class="earnings-section-subtitle">Track your earnings and payments</p>
+            </div>
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
+                    <div class="earnings-card-modern earnings-card-approved">
+                        <div class="earnings-card-icon-wrapper">
+                            <div class="earnings-card-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        <div class="earnings-card-content">
+                            <div class="earnings-card-label">Total Earnings</div>
+                            <div class="earnings-card-value">₹{{ number_format($earningsStats['total_earnings'], 2) }}</div>
+                            <div class="earnings-card-badge">Approved & Paid</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modern-card-body">
-                    <div class="row g-3">
-                        <div class="col-6 col-md-3">
-                            <div class="earnings-stat-card earnings-approved">
-                                <div class="earnings-icon">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                                <div class="earnings-content">
-                                    <div class="earnings-label">Total Earnings</div>
-                                    <div class="earnings-value">₹{{ number_format($earningsStats['total_earnings'], 2) }}</div>
-                                    <small class="text-muted">Approved & Paid</small>
-                                </div>
+                <div class="col-6 col-md-3">
+                    <div class="earnings-card-modern earnings-card-pending">
+                        <div class="earnings-card-icon-wrapper">
+                            <div class="earnings-card-icon">
+                                <i class="fas fa-clock"></i>
                             </div>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <div class="earnings-stat-card earnings-pending">
-                                <div class="earnings-icon">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <div class="earnings-content">
-                                    <div class="earnings-label">Pending Approval</div>
-                                    <div class="earnings-value">₹{{ number_format($earningsStats['pending_earnings'], 2) }}</div>
-                                    <small class="text-muted">Awaiting Admin</small>
-                                </div>
+                        <div class="earnings-card-content">
+                            <div class="earnings-card-label">Pending Approval</div>
+                            <div class="earnings-card-value">₹{{ number_format($earningsStats['pending_earnings'], 2) }}</div>
+                            <div class="earnings-card-badge">Awaiting Admin</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="earnings-card-modern earnings-card-upcoming">
+                        <div class="earnings-card-icon-wrapper">
+                            <div class="earnings-card-icon">
+                                <i class="fas fa-calendar-check"></i>
                             </div>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <div class="earnings-stat-card earnings-upcoming">
-                                <div class="earnings-icon">
-                                    <i class="fas fa-calendar-check"></i>
-                                </div>
-                                <div class="earnings-content">
-                                    <div class="earnings-label">Upcoming</div>
-                                    <div class="earnings-value">₹{{ number_format($earningsStats['upcoming_earnings'], 2) }}</div>
-                                    <small class="text-muted">In Progress</small>
-                                </div>
+                        <div class="earnings-card-content">
+                            <div class="earnings-card-label">Upcoming</div>
+                            <div class="earnings-card-value">₹{{ number_format($earningsStats['upcoming_earnings'], 2) }}</div>
+                            <div class="earnings-card-badge">In Progress</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="earnings-card-modern earnings-card-month">
+                        <div class="earnings-card-icon-wrapper">
+                            <div class="earnings-card-icon">
+                                <i class="fas fa-calendar-alt"></i>
                             </div>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <div class="earnings-stat-card earnings-month">
-                                <div class="earnings-icon">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </div>
-                                <div class="earnings-content">
-                                    <div class="earnings-label">This Month</div>
-                                    <div class="earnings-value">₹{{ number_format($earningsStats['earnings_this_month'], 2) }}</div>
-                                    <small class="text-muted">
-                                        @if($earningsStats['earnings_last_month'] > 0)
-                                            {{ $earningsStats['earnings_this_month'] > $earningsStats['earnings_last_month'] ? '↑' : '↓' }} 
-                                            vs Last Month
-                                        @else
-                                            Current Period
-                                        @endif
-                                    </small>
-                                </div>
+                        <div class="earnings-card-content">
+                            <div class="earnings-card-label">This Month</div>
+                            <div class="earnings-card-value">₹{{ number_format($earningsStats['earnings_this_month'], 2) }}</div>
+                            <div class="earnings-card-badge">
+                                @if($earningsStats['earnings_last_month'] > 0)
+                                    {{ $earningsStats['earnings_this_month'] > $earningsStats['earnings_last_month'] ? '↑' : '↓' }} 
+                                    vs Last Month
+                                @else
+                                    Current Period
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -438,11 +464,15 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <div class="service-type-badge">
-                                    <i class="fas fa-{{ $service->status === 'assigned' ? 'user-check' : ($service->status === 'in_progress' ? 'play-circle' : ($service->status === 'completed' ? 'check-circle' : 'clock')) }} me-2"></i>
+                                    <i class="fas fa-{{ $service->status === 'pending_approval' ? 'bell' : ($service->status === 'assigned' ? 'user-check' : ($service->status === 'in_progress' ? 'play-circle' : ($service->status === 'completed' ? 'check-circle' : 'clock'))) }} me-2"></i>
                                     {{ $service->serviceType->name }}
                                 </div>
                                 <div class="service-status-badge status-{{ $service->status }}">
-                                    {{ ucfirst(str_replace('_', ' ', $service->status)) }}
+                                    @if($service->status === 'pending_approval')
+                                        <i class="fas fa-exclamation-circle me-1"></i>Action Required
+                                    @else
+                                        {{ ucfirst(str_replace('_', ' ', $service->status)) }}
+                                    @endif
                                 </div>
                             </div>
                             <div class="service-date">
@@ -504,6 +534,17 @@
                                         ₹{{ number_format($service->total_staff_payout ?? 0) }}
                                     </span>
                                 </div>
+                            @elseif($service->status === 'pending_approval')
+                                <div class="earnings-main">
+                                    <span class="earnings-label">Potential Earnings</span>
+                                    <span class="earnings-amount earnings-pending-approval">
+                                        ₹{{ number_format($service->total_staff_payout ?? ($service->serviceType->patient_charge * $service->duration_days)) }}
+                                    </span>
+                                </div>
+                                <div class="alert alert-warning mb-2 p-2" style="font-size: 0.85rem; border-radius: 8px;">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <strong>New Booking Request!</strong> Please accept or reject this booking.
+                                </div>
                             @else
                                 <div class="earnings-main">
                                     <span class="earnings-label">Projected Earnings</span>
@@ -525,13 +566,17 @@
                                 </div>
                                 <div class="breakdown-item">
                                     <span>Status:</span>
-                                    <strong class="text-{{ $service->status === 'completed' && $service->isApprovedByAdmin() ? 'success' : ($service->status === 'completed' && !$service->isApprovedByAdmin() ? 'warning' : ($service->status === 'in_progress' ? 'warning' : 'muted')) }}">
-                                        @if($service->status === 'completed' && $service->isApprovedByAdmin())
+                                    <strong class="text-{{ $service->status === 'pending_approval' ? 'warning' : ($service->status === 'completed' && $service->isApprovedByAdmin() ? 'success' : ($service->status === 'completed' && !$service->isApprovedByAdmin() ? 'warning' : ($service->status === 'in_progress' ? 'warning' : 'muted'))) }}">
+                                        @if($service->status === 'pending_approval')
+                                            <i class="fas fa-bell me-1"></i>Action Required
+                                        @elseif($service->status === 'completed' && $service->isApprovedByAdmin())
                                             Approved
                                         @elseif($service->status === 'completed' && !$service->isApprovedByAdmin())
                                             Pending Approval
                                         @elseif($service->status === 'in_progress')
                                             In Progress
+                                        @elseif($service->status === 'assigned')
+                                            Ready to Start
                                         @else
                                             Not Started
                                         @endif
@@ -542,6 +587,54 @@
 
                         <!-- Action Buttons -->
                         <div class="service-actions">
+                            @if($service->status === 'pending_approval')
+                            <!-- Accept/Reject Booking (One-Way Booking) - Prominent Display -->
+                            <div class="pending-approval-actions">
+                                <div class="pending-approval-header">
+                                    <i class="fas fa-bell text-warning me-2"></i>
+                                    <strong>New Booking Request</strong>
+                                </div>
+                                <div class="d-flex flex-column gap-2 mt-3">
+                                    <form method="POST" action="{{ route('staff.booking.accept', $service) }}" class="w-100">
+                                        @csrf
+                                        <button type="submit" class="btn btn-action-success w-100" onclick="return confirm('Accept this booking? You will be assigned to provide service from {{ $service->start_date->format('M d, Y') }} to {{ $service->end_date->format('M d, Y') }}.')">
+                                            <i class="fas fa-check-circle me-2"></i>Accept Booking
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-action-danger w-100" onclick="showRejectModal({{ $service->id }})">
+                                        <i class="fas fa-times-circle me-2"></i>Reject Booking
+                                    </button>
+                                </div>
+                                
+                                <!-- Reject Modal - Enhanced -->
+                                <div id="rejectModal{{ $service->id }}" style="display: none;" class="reject-modal-container mt-3">
+                                    <div class="reject-modal-header">
+                                        <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                                        <strong>Reject Booking Request</strong>
+                                    </div>
+                                    <form method="POST" action="{{ route('staff.booking.reject', $service) }}" class="mt-3">
+                                        @csrf
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">Please provide a reason for rejecting this booking:</label>
+                                            <textarea name="rejection_reason" 
+                                                      class="form-control" 
+                                                      rows="4" 
+                                                      required 
+                                                      placeholder="Example: Already committed to another service, Personal reasons, Date conflicts, etc."></textarea>
+                                            <small class="text-muted">This helps us improve our service and find alternative staff for the patient.</small>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-danger flex-fill">
+                                                <i class="fas fa-times me-1"></i>Confirm Rejection
+                                            </button>
+                                            <button type="button" class="btn btn-secondary" onclick="hideRejectModal({{ $service->id }})">
+                                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            @else
                             <a href="{{ route('staff.service-details', $service) }}" 
                                class="btn btn-action-primary">
                                 <i class="fas fa-eye me-2"></i>View Details
@@ -554,6 +647,7 @@
                             <button class="btn btn-action-warning" onclick="completeService({{ $service->id }})">
                                 <i class="fas fa-check me-2"></i>Mark Complete
                             </button>
+                            @endif
                             @endif
                         </div>
                     </div>
@@ -584,10 +678,147 @@
             </div>
         </div>
     @endif
+    </div>
+
+    <!-- Bottom Navigation Bar (Mobile Only) - Using Shared Component -->
+    @include('auth::components.bottom-nav')
 </div>
 
 <!-- Comprehensive Mobile-First Styling -->
 <style>
+/* Mobile App Container */
+.mobile-app-container {
+    position: relative;
+    min-height: 100vh;
+    background: #f5f7fa;
+    padding-bottom: 140px !important;
+    margin-top: 0;
+}
+
+/* Ensure all text is visible - Force dark colors on white backgrounds */
+.mobile-app-container * {
+    color: inherit;
+}
+
+.mobile-app-container .text-muted {
+    color: #6c757d !important;
+    opacity: 1 !important;
+}
+
+.mobile-app-container .text-white {
+    color: #ffffff !important;
+}
+
+.mobile-app-container .text-dark {
+    color: #212529 !important;
+}
+
+@media (max-width: 767px) {
+    .mobile-app-container {
+        padding-bottom: 160px !important;
+    }
+}
+
+/* App Content */
+.app-content {
+    position: relative;
+    padding: 16px;
+    padding-bottom: 20px;
+}
+
+@media (max-width: 767px) {
+    .app-content {
+        padding-bottom: 40px;
+    }
+}
+
+/* App Header Mobile */
+.app-header-mobile {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+    padding: 12px 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.app-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.app-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.app-user-avatar.staff-nurse {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.app-user-avatar.staff-caregiver {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.app-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.app-user-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #212529 !important;
+    line-height: 1.2;
+}
+
+.app-user-id {
+    font-size: 0.75rem;
+    color: #495057 !important;
+    line-height: 1.2;
+    font-weight: 500;
+}
+
+.app-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #667eea;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.app-header-icon:hover,
+.app-header-icon:active {
+    background: #e9ecef;
+    transform: scale(1.05);
+}
+
 /* Staff Header Card */
 .staff-header-card {
     background: white;
@@ -681,16 +912,17 @@
 .stat-value {
     font-size: 1.8rem;
     font-weight: 700;
-    color: #2c3e50;
+    color: #212529 !important;
     line-height: 1;
     margin-bottom: 0.3rem;
 }
 
 .stat-label {
     font-size: 0.85rem;
-    color: #6c757d;
+    color: #495057 !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-weight: 600;
 }
 
 /* Rewards Card */
@@ -777,13 +1009,18 @@
 .section-title {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #2c3e50;
+    color: #212529 !important;
     margin: 0;
+}
+
+.section-title i {
+    color: #667eea !important;
 }
 
 .section-subtitle {
     font-size: 0.9rem;
     margin: 0.3rem 0 0 0;
+    color: #495057 !important;
 }
 
 .service-card-modern {
@@ -835,10 +1072,81 @@
     background: var(--warning-gradient);
 }
 
+.service-status-pending_approval {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    animation: pulse-warning 2s infinite;
+}
+
+@keyframes pulse-warning {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+    }
+}
+
+/* Pending Approval Actions - Enhanced UI */
+.pending-approval-actions {
+    background: linear-gradient(135deg, #fff7ed 0%, #fffbeb 100%);
+    border: 2px solid #fbbf24;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+}
+
+.pending-approval-header {
+    display: flex;
+    align-items: center;
+    color: #92400e;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #fde68a;
+}
+
+.reject-modal-container {
+    background: #fef2f2;
+    border: 2px solid #fecaca;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.reject-modal-header {
+    display: flex;
+    align-items: center;
+    color: #991b1b;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #fecaca;
+}
+
+.btn-action-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-action-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    color: white;
+}
+
 .service-type-badge {
     font-size: 0.95rem;
     font-weight: 600;
     margin-bottom: 0.4rem;
+    color: #ffffff !important;
+}
+
+.service-type-badge i {
+    color: #ffffff !important;
 }
 
 .service-status-badge {
@@ -849,11 +1157,14 @@
     font-weight: 600;
     background: rgba(255,255,255,0.25);
     backdrop-filter: blur(10px);
+    color: #ffffff !important;
 }
 
 .service-date {
     font-size: 0.85rem;
-    opacity: 0.9;
+    opacity: 1 !important;
+    color: #ffffff !important;
+    font-weight: 500;
 }
 
 .service-card-body {
@@ -869,22 +1180,24 @@
 
 .info-label {
     font-size: 0.75rem;
-    color: #6c757d;
+    color: #495057 !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 0.3rem;
+    font-weight: 600;
 }
 
 .info-value {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #2c3e50;
+    color: #212529 !important;
     margin-bottom: 0.2rem;
 }
 
 .info-subtext {
     font-size: 0.85rem;
-    color: #6c757d;
+    color: #495057 !important;
+    font-weight: 500;
 }
 
 .service-info-item-compact {
@@ -895,14 +1208,15 @@
 
 .info-label-small {
     font-size: 0.7rem;
-    color: #6c757d;
+    color: #495057 !important;
     margin-bottom: 0.2rem;
+    font-weight: 600;
 }
 
 .info-value-small {
     font-size: 0.95rem;
     font-weight: 700;
-    color: #2c3e50;
+    color: #212529 !important;
 }
 
 .service-date-range {
@@ -911,8 +1225,13 @@
     border-radius: 8px;
     margin-bottom: 1rem;
     font-size: 0.9rem;
-    color: #495057;
+    color: #212529 !important;
     text-align: center;
+    font-weight: 500;
+}
+
+.service-date-range i {
+    color: #667eea !important;
 }
 
 .service-earnings {
@@ -967,7 +1286,17 @@
     display: flex;
     justify-content: space-between;
     font-size: 0.85rem;
-    color: #495057;
+    color: #212529 !important;
+    font-weight: 500;
+}
+
+.breakdown-item span {
+    color: #495057 !important;
+}
+
+.breakdown-item strong {
+    color: #212529 !important;
+    font-weight: 700;
 }
 
 .service-actions {
@@ -1116,25 +1445,36 @@
 .empty-state-title {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #2c3e50;
+    color: #212529 !important;
     margin-bottom: 0.8rem;
 }
 
 .empty-state-text {
-    color: #6c757d;
+    color: #495057 !important;
     margin-bottom: 1.5rem;
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
+    font-weight: 500;
 }
 
 .empty-state-tip {
     background: #e7f3ff;
     padding: 1rem;
     border-radius: 8px;
-    color: #495057;
+    color: #212529 !important;
     max-width: 500px;
     margin: 0 auto;
+    font-weight: 500;
+}
+
+.empty-state-tip i {
+    color: #667eea !important;
+}
+
+.empty-state-tip strong {
+    color: #212529 !important;
+    font-weight: 700;
 }
 
 /* Mobile Responsiveness */
@@ -1190,66 +1530,199 @@
     }
 }
 
-/* Earnings Statistics Cards */
-.earnings-stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.25rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+/* Earnings Section Header */
+.earnings-section-header {
+    padding: 0 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.earnings-section-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #212529 !important;
+    margin: 0 0 0.25rem 0;
     display: flex;
     align-items: center;
-    gap: 1rem;
+}
+
+.earnings-section-title i {
+    color: #667eea !important;
+    font-size: 1.3rem;
+}
+
+.earnings-section-subtitle {
+    font-size: 0.9rem;
+    color: #6c757d !important;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Modern Earnings Cards - Redesigned */
+.earnings-card-modern {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem 1.25rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     transition: all 0.3s ease;
-    border-left: 4px solid transparent;
+    border: 2px solid transparent;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
 }
 
-.earnings-stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+.earnings-card-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent 0%, currentColor 50%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-.earnings-approved {
-    border-left-color: #28a745;
+.earnings-card-modern:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: currentColor;
 }
 
-.earnings-pending {
-    border-left-color: #ffc107;
+.earnings-card-modern:hover::before {
+    opacity: 1;
 }
 
-.earnings-upcoming {
-    border-left-color: #17a2b8;
+.earnings-card-icon-wrapper {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
 }
 
-.earnings-month {
-    border-left-color: #667eea;
-}
-
-.earnings-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
+.earnings-card-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     color: white;
-    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-.earnings-approved .earnings-icon {
+.earnings-card-approved {
+    color: #28a745;
+}
+
+.earnings-card-approved .earnings-card-icon {
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
 }
 
-.earnings-pending .earnings-icon {
+.earnings-card-pending {
+    color: #ffc107;
+}
+
+.earnings-card-pending .earnings-card-icon {
     background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
 }
 
-.earnings-upcoming .earnings-icon {
+.earnings-card-upcoming {
+    color: #17a2b8;
+}
+
+.earnings-card-upcoming .earnings-card-icon {
     background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
 }
 
-.earnings-month .earnings-icon {
+.earnings-card-month {
+    color: #667eea;
+}
+
+.earnings-card-month .earnings-card-icon {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.earnings-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.earnings-card-label {
+    font-size: 0.8rem;
+    color: #6c757d !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 0.75rem;
+    line-height: 1.2;
+}
+
+.earnings-card-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #212529 !important;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.earnings-card-badge {
+    font-size: 0.75rem;
+    color: #6c757d !important;
+    font-weight: 500;
+    padding: 0.35rem 0.75rem;
+    background: #f8f9fa;
+    border-radius: 20px;
+    display: inline-block;
+    width: fit-content;
+    margin-top: auto;
+}
+
+@media (max-width: 576px) {
+    .earnings-card-modern {
+        padding: 1.25rem 1rem;
+    }
+    
+    .earnings-card-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+    }
+    
+    .earnings-card-value {
+        font-size: 1.4rem;
+    }
+    
+    .earnings-card-label {
+        font-size: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .earnings-section-title {
+        font-size: 1.2rem;
+    }
+}
+
+/* Modern Card Header - Ensure text visibility */
+.modern-card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.modern-card-header.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.modern-card-header.bg-gradient-primary.text-white h5 {
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+.modern-card-header.bg-gradient-primary.text-white i {
+    color: #ffffff !important;
 }
 
 .earnings-content {
@@ -1258,7 +1731,7 @@
 
 .earnings-label {
     font-size: 0.85rem;
-    color: #6c757d;
+    color: #495057 !important;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1268,8 +1741,13 @@
 .earnings-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #2c3e50;
+    color: #212529 !important;
     margin-bottom: 0.25rem;
+}
+
+.earnings-stat-card small {
+    color: #6c757d !important;
+    font-weight: 500;
 }
 
 @media (max-width: 576px) {
@@ -1316,6 +1794,27 @@
 </style>
 
 <script>
+function showRejectModal(serviceId) {
+    const modal = document.getElementById('rejectModal' + serviceId);
+    if (modal) {
+        modal.style.display = 'block';
+        // Scroll to modal
+        modal.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+function hideRejectModal(serviceId) {
+    const modal = document.getElementById('rejectModal' + serviceId);
+    if (modal) {
+        modal.style.display = 'none';
+        // Clear form
+        const form = modal.querySelector('form');
+        if (form) {
+            form.reset();
+        }
+    }
+}
+
 function startService(serviceId) {
     if (confirm('Are you sure you want to start this service?')) {
         // AJAX request to start service will be implemented
@@ -1365,5 +1864,7 @@ function completeService(serviceId) {
         });
     }
 }
+
+// Mobile menu toggle is handled by the shared bottom-nav component
 </script>
 @endsection

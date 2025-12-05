@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Modules\Services\Models\ServiceType;
 use App\Modules\Services\Models\ServiceRequest;
 use App\Modules\Services\Models\DailyService;
+use App\Modules\Services\Services\StaffAvailabilityService;
 use App\Models\Core\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class ServiceController extends Controller
 {
@@ -26,26 +28,55 @@ class ServiceController extends Controller
     }
 
     /**
-     * Show service request form
+     * Direct booking with staff pre-selected (One-Way Booking)
      */
-    public function create(Request $request)
+    public function bookStaff(User $staff)
     {
+        // Verify staff is active and valid
+        if (!$staff->isStaff() || !$staff->is_active) {
+            return redirect()->route('staff.index')
+                ->with('error', 'Selected staff member is not available.');
+        }
+
         $serviceTypes = ServiceType::getActiveServiceTypes();
         $user = Auth::user();
         
-        // Get selected staff info from URL parameters (when coming from Available Staff page)
-        $selectedStaff = null;
-        $selectedStaffType = $request->get('staff_type'); // 'nurse' or 'caregiver'
+        // Load staff profile for availability check
+        $staff->load('profile');
+        
+        return view('services::services.book-staff', compact('serviceTypes', 'user', 'staff'));
+    }
+
+    /**
+     * Show service request form (Legacy - Redirected to One-Way Booking)
+     * 
+     * NEW FLOW: Patients must select staff first, then book
+     * This route now redirects to staff listing or direct booking
+     */
+    public function create(Request $request)
+    {
+        $user = Auth::user();
+        
+        // If staff_id is provided, redirect to new direct booking route
         $selectedStaffId = $request->get('staff_id');
+        $selectedStaffType = $request->get('staff_type');
         
         if ($selectedStaffId && $selectedStaffType) {
-            $selectedStaff = User::where('id', $selectedStaffId)
+            $staff = User::where('id', $selectedStaffId)
                 ->where('role', $selectedStaffType)
                 ->where('is_active', true)
                 ->first();
+            
+            if ($staff) {
+                // Redirect to new direct booking route
+                return redirect()->route('book.staff', $staff)
+                    ->with('info', 'Please select a service type and complete your booking.');
+            }
         }
         
-        return view('services::services.create', compact('serviceTypes', 'user', 'selectedStaff', 'selectedStaffType'));
+        // No staff selected - redirect to staff listing (new one-way booking flow)
+        return redirect()->route('staff.index')
+            ->with('info', 'Please select a healthcare staff member first to book a service. This is our new streamlined booking process!');
     }
 
     /**
@@ -93,6 +124,13 @@ class ServiceController extends Controller
 
         $serviceType = ServiceType::findOrFail($request->service_type_id);
         
+        // Additional null check after validation (defensive programming)
+        if (!$serviceType) {
+            return redirect()->back()
+                ->withErrors(['service_type_id' => 'Selected service type not found.'])
+                ->withInput();
+        }
+        
         // Calculate end date
         $startDate = \Carbon\Carbon::parse($request->start_date);
         $endDate = $startDate->copy()->addDays($request->duration_days - 1);
@@ -136,6 +174,129 @@ class ServiceController extends Controller
 
         return redirect()->route('services.my-requests')
             ->with('success', 'Service request submitted successfully! Our team will contact you soon.');
+    }
+
+    /**
+     * Store direct booking with staff pre-assigned (One-Way Booking)
+     */
+    public function storeDirectBooking(Request $request, User $staff)
+    {
+        // Verify staff is active and valid
+        if (!$staff->isStaff() || !$staff->is_active) {
+            return redirect()->route('staff.index')
+                ->with('error', 'Selected staff member is not available.');
+        }
+
+        // Get service type
+        $serviceType = ServiceType::find($request->service_type_id);
+        if (!$serviceType) {
+            return redirect()->back()
+                ->with('error', 'Selected service type not found.')
+                ->withInput();
+        }
+
+        $isSingleVisit = $serviceType->duration_hours == 1;
+
+        // Validation rules
+        $rules = [
+            'service_type_id' => 'required|exists:service_types,id',
+            'start_date' => 'required|date|after_or_equal:today',
+            'duration_days' => $isSingleVisit ? 'required|integer|min:1|max:1' : 'required|integer|min:1',
+            'location' => 'required|string|max:500',
+            'contact_person' => 'required|string|max:255',
+            'contact_phone' => 'required|string|regex:/^[0-9]{10}$/',
+            'notes' => 'nullable|string|max:1000',
+            'special_requirements' => 'nullable|string|max:1000',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, [
+            'duration_days.min' => 'Duration must be at least 1 day.',
+            'duration_days.max' => 'Single visit service is for 1 day only.',
+            'contact_phone.regex' => 'Contact phone must be exactly 10 digits.',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        // Calculate dates
+        $startDate = Carbon::parse($request->start_date);
+        $endDate = $startDate->copy()->addDays($request->duration_days - 1);
+
+        // Check staff availability
+        $availabilityCheck = StaffAvailabilityService::checkAvailability($staff, $startDate, $endDate);
+
+        if (!$availabilityCheck['available']) {
+            // Get alternative staff
+            $patient = Auth::user();
+            $alternatives = StaffAvailabilityService::getAlternativeStaff(
+                $staff->role,
+                $startDate,
+                $endDate,
+                $patient->pincode,
+                5
+            );
+
+            return redirect()->back()
+                ->with('error', $availabilityCheck['reason'])
+                ->with('alternatives', $alternatives)
+                ->with('alternative_message', 'Here are some alternative staff members available for your dates:')
+                ->withInput();
+        }
+
+        // Calculate amounts
+        $totalAmount = $serviceType->patient_charge * $request->duration_days;
+        $dailyStaffPayout = $staff->isNurse() ? $serviceType->nurse_payout : $serviceType->caregiver_payout;
+        $totalStaffPayout = $request->duration_days * $dailyStaffPayout;
+
+        try {
+            DB::beginTransaction();
+
+            // Create service request with staff pre-assigned
+            $serviceRequest = ServiceRequest::create([
+                'patient_id' => Auth::id(),
+                'service_type_id' => $request->service_type_id,
+                'preferred_staff_type' => $staff->role,
+                'preferred_staff_id' => $staff->id,
+                'assigned_staff_id' => $staff->id, // Direct assignment
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'duration_days' => $request->duration_days,
+                'total_amount' => $totalAmount,
+                'total_staff_payout' => $totalStaffPayout,
+                'prepaid_amount' => 0.00,
+                'payment_status' => 'pending',
+                'status' => 'pending_approval', // Staff needs to accept
+                'assigned_at' => now(),
+                'notes' => $request->notes,
+                'special_requirements' => $request->special_requirements,
+                'location' => $request->location,
+                'contact_person' => $request->contact_person,
+                'contact_phone' => $request->contact_phone,
+            ]);
+
+            // Create daily service records
+            $this->createDailyServiceRecords($serviceRequest);
+
+            DB::commit();
+
+            return redirect()->route('services.my-requests')
+                ->with('success', 'Booking created successfully! The staff member will be notified and can accept your booking request.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Direct booking failed: ' . $e->getMessage(), [
+                'staff_id' => $staff->id,
+                'patient_id' => Auth::id(),
+                'error' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Failed to create booking. Please try again.')
+                ->withInput();
+        }
     }
 
     /**
@@ -255,9 +416,18 @@ class ServiceController extends Controller
                 ->with('error', 'Staff member is already assigned to another service during this period. Please select a different staff member or adjust the service dates.');
         }
 
+        // Load service type to ensure it exists before calculating payout
+        $serviceRequest->load('serviceType');
+        $serviceType = $serviceRequest->serviceType;
+        
+        if (!$serviceType) {
+            return redirect()->back()
+                ->with('error', 'Service type not found. Please contact support.');
+        }
+
         // Removed prepayment requirement - admin can assign staff without payment barrier
 
-        // Calculate staff payout based on staff type and service type (serviceType already loaded above)
+        // Calculate staff payout based on staff type and service type
         $dailyStaffPayout = $staff->isNurse() ? $serviceType->nurse_payout : $serviceType->caregiver_payout;
         $totalStaffPayout = $serviceRequest->duration_days * $dailyStaffPayout;
 
@@ -362,10 +532,27 @@ class ServiceController extends Controller
      */
     protected function createDailyServiceRecords(ServiceRequest $serviceRequest)
     {
+        // Only create daily services if status is 'assigned' or 'pending_approval'
+        // For 'pending_approval', create them but mark as 'pending' status
+        if (!in_array($serviceRequest->status, ['assigned', 'pending_approval', 'in_progress'])) {
+            return; // Don't create daily services for pending/cancelled requests
+        }
+
+        // Ensure relationships are loaded
+        $serviceRequest->load(['serviceType', 'assignedStaff']);
+        
         $startDate = $serviceRequest->start_date;
         $endDate = $serviceRequest->end_date;
         $serviceType = $serviceRequest->serviceType;
         $staff = $serviceRequest->assignedStaff;
+
+        // Null checks before accessing properties
+        if (!$serviceType) {
+            throw new \Exception("Service type not found for service request #{$serviceRequest->id}");
+        }
+        if (!$staff) {
+            throw new \Exception("Assigned staff not found for service request #{$serviceRequest->id}");
+        }
 
         // Determine payout based on staff type
         $staffPayout = $staff->isNurse() ? $serviceType->nurse_payout : $serviceType->caregiver_payout;
@@ -401,6 +588,12 @@ class ServiceController extends Controller
                     break;
             }
 
+            // Set status based on service request status
+            $dailyStatus = 'scheduled';
+            if ($serviceRequest->status === 'pending_approval') {
+                $dailyStatus = 'pending'; // Wait for staff approval
+            }
+
             DailyService::create([
                 'service_request_id' => $serviceRequest->id,
                 'staff_id' => $staff->id,
@@ -410,7 +603,7 @@ class ServiceController extends Controller
                 'patient_charge' => $serviceType->patient_charge,
                 'staff_payout' => $staffPayout,
                 'platform_profit' => $serviceType->patient_charge - $staffPayout,
-                'status' => 'scheduled',
+                'status' => $dailyStatus,
             ]);
         }
     }

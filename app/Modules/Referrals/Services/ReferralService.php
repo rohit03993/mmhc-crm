@@ -87,6 +87,7 @@ class ReferralService
     public function validateReferralCode(string $referralCode): ?Referral
     {
         $referral = Referral::where('referral_code', $referralCode)
+            ->with('referrer') // Eager load referrer relationship
             ->first();
         
         if (!$referral) {
