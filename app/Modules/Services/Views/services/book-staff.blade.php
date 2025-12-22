@@ -35,6 +35,19 @@
             <p class="text-muted">Complete your booking with {{ $staff->name }}</p>
         </div>
 
+        <!-- Subscription Status Alert -->
+        @if(isset($hasActiveSubscription) && $hasActiveSubscription && $activeSubscription)
+        <div class="app-subscription-alert">
+            <div class="subscription-alert-content">
+                <i class="fas fa-gift"></i>
+                <div>
+                    <strong>You have an active subscription!</strong>
+                    <p>All services will be FREE. Your subscription: <strong>{{ $activeSubscription->plan->name }}</strong></p>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <!-- Selected Staff Card (Prominent) -->
         <div class="app-selected-staff-card">
             <div class="app-selected-staff-header">
@@ -194,7 +207,14 @@
                                         </div>
                                         <div class="app-info-item price">
                                             <i class="fas fa-rupee-sign"></i>
-                                            <span>₹{{ number_format($serviceType->patient_charge) }}/day</span>
+                                            <span class="service-price">
+                                                @if(isset($hasActiveSubscription) && $hasActiveSubscription)
+                                                    <span class="text-success fw-bold">FREE</span>
+                                                    <small class="text-muted text-decoration-line-through ms-1">₹{{ number_format($serviceType->patient_charge) }}/day</small>
+                                                @else
+                                                    ₹{{ number_format($serviceType->patient_charge) }}/day
+                                                @endif
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -1365,6 +1385,39 @@
         flex: 0 0 calc(50% - 6px);
     }
 }
+
+/* Subscription Alert */
+.app-subscription-alert {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.subscription-alert-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: white;
+}
+
+.subscription-alert-content i {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.subscription-alert-content strong {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+
+.subscription-alert-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.95;
+}
 </style>
 
 <script>
@@ -1386,11 +1439,21 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (selectedService && duration > 0) {
             const pricePerDay = parseFloat(selectedService.dataset.price) || 0;
-            const total = pricePerDay * duration;
-            
-            serviceRateSpan.textContent = `₹${pricePerDay.toLocaleString('en-IN')}/day`;
+            const hasSubscription = {{ isset($hasActiveSubscription) && $hasActiveSubscription ? 'true' : 'false' }};
+            const displayPrice = hasSubscription ? 0 : pricePerDay;
+            const total = displayPrice * duration;
+
+            if (hasSubscription) {
+                serviceRateSpan.innerHTML = '<span class="text-success fw-bold">FREE</span> <small class="text-muted text-decoration-line-through">₹' + pricePerDay.toLocaleString('en-IN') + '/day</small>';
+            } else {
+                serviceRateSpan.textContent = `₹${pricePerDay.toLocaleString('en-IN')}/day`;
+            }
             durationDisplaySpan.textContent = `${duration} ${duration === 1 ? 'day' : 'days'}`;
-            totalAmountSpan.textContent = `₹${total.toLocaleString('en-IN')}`;
+            if (hasSubscription) {
+                totalAmountSpan.innerHTML = '<span class="text-success fw-bold">FREE</span>';
+            } else {
+                totalAmountSpan.textContent = `₹${total.toLocaleString('en-IN')}`;
+            }
             updateProgress(2);
         } else {
             serviceRateSpan.textContent = '₹0/day';

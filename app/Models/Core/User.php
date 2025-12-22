@@ -144,6 +144,33 @@ class User extends Authenticatable
     }
 
     /**
+     * Get user's subscriptions
+     */
+    public function subscriptions()
+    {
+        return $this->hasMany(\App\Modules\Plans\Models\Subscription::class);
+    }
+
+    /**
+     * Get active subscription
+     */
+    public function activeSubscription()
+    {
+        return $this->hasOne(\App\Modules\Plans\Models\Subscription::class)
+            ->where('status', 'active')
+            ->where('end_date', '>', now())
+            ->latest();
+    }
+
+    /**
+     * Check if user has active subscription
+     */
+    public function hasActiveSubscription()
+    {
+        return $this->activeSubscription()->exists();
+    }
+
+    /**
      * Scope for active users
      */
     public function scopeActive($query)

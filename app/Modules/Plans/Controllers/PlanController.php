@@ -22,7 +22,12 @@ class PlanController extends Controller
      */
     public function index()
     {
-        $plans = Plan::active()->ordered()->get();
+        try {
+            $plans = Plan::active()->ordered()->get();
+        } catch (\Exception $e) {
+            // If plans table doesn't exist or error, return empty collection
+            $plans = collect([]);
+        }
         
         return view('plans::plans.index', compact('plans'));
     }

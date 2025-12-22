@@ -16,6 +16,9 @@ class Plan extends Model
         'name',
         'description',
         'price',
+        'monthly_price',
+        'members_included',
+        'payment_options',
         'currency',
         'duration_days',
         'features',
@@ -29,6 +32,8 @@ class Plan extends Model
      */
     protected $casts = [
         'price' => 'decimal:2',
+        'monthly_price' => 'decimal:2',
+        'payment_options' => 'array',
         'features' => 'array',
         'is_active' => 'boolean',
         'is_popular' => 'boolean',

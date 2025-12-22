@@ -67,6 +67,11 @@ class DashboardController extends Controller
         // Get service types for pricing display
         $serviceTypes = \App\Modules\Services\Models\ServiceType::getActiveServiceTypes();
         
+        // Get subscription information
+        $subscriptionService = app(\App\Modules\Plans\Services\SubscriptionService::class);
+        $activeSubscription = $subscriptionService->getActiveSubscription($user);
+        $hasActiveSubscription = $subscriptionService->hasActiveSubscription($user);
+        
         $data = [
             'user' => $user,
             'stats' => $this->getUserStats($user),
@@ -75,6 +80,8 @@ class DashboardController extends Controller
             'available_nurses' => $availableNurses,
             'available_caregivers' => $availableCaregivers,
             'service_types' => $serviceTypes,
+            'active_subscription' => $activeSubscription,
+            'has_active_subscription' => $hasActiveSubscription,
         ];
 
         return view('auth::dashboard', $data);

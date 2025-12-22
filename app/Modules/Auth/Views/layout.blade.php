@@ -315,10 +315,9 @@
                                 </li>
                                 
                                 <li class="nav-item">
-                                    <a class="nav-link text-white {{ request()->routeIs('admin.subscriptions*') ? 'active' : '' }}" href="#">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.subscriptions*') ? 'active' : '' }}" href="{{ route('admin.subscriptions') }}">
                                         <i class="fas fa-list-alt me-2"></i>
                                         Manage Subscriptions
-                                        <small class="d-block text-white-50" style="font-size: 0.7rem;">Coming Soon</small>
                                     </a>
                                 </li>
                                 

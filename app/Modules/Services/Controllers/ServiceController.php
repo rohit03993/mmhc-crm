@@ -44,7 +44,12 @@ class ServiceController extends Controller
         // Load staff profile for availability check
         $staff->load('profile');
         
-        return view('services::services.book-staff', compact('serviceTypes', 'user', 'staff'));
+        // Check if user has active subscription
+        $subscriptionService = app(\App\Modules\Plans\Services\SubscriptionService::class);
+        $hasActiveSubscription = $subscriptionService->hasActiveSubscription($user);
+        $activeSubscription = $subscriptionService->getActiveSubscription($user);
+        
+        return view('services::services.book-staff', compact('serviceTypes', 'user', 'staff', 'hasActiveSubscription', 'activeSubscription'));
     }
 
     /**
@@ -135,8 +140,13 @@ class ServiceController extends Controller
         $startDate = \Carbon\Carbon::parse($request->start_date);
         $endDate = $startDate->copy()->addDays($request->duration_days - 1);
         
-        // Calculate total amount
-        $totalAmount = $serviceType->patient_charge * $request->duration_days;
+        // Check if patient has active subscription
+        $patient = Auth::user();
+        $subscriptionService = app(\App\Modules\Plans\Services\SubscriptionService::class);
+        $hasActiveSubscription = $subscriptionService->hasActiveSubscription($patient);
+        
+        // Calculate total amount (free for subscribers)
+        $totalAmount = $hasActiveSubscription ? 0.00 : ($serviceType->patient_charge * $request->duration_days);
 
         // Validate preferred_staff_id matches preferred_staff_type if provided
         $preferredStaffId = null;
@@ -162,8 +172,8 @@ class ServiceController extends Controller
             'duration_days' => $request->duration_days,
             'total_amount' => $totalAmount,
             'total_staff_payout' => null, // Will be calculated when staff is assigned
-            'prepaid_amount' => 0.00, // No prepayment required initially
-            'payment_status' => 'pending',
+            'prepaid_amount' => $hasActiveSubscription ? 0.00 : 0.00, // Free for subscribers
+            'payment_status' => $hasActiveSubscription ? 'paid' : 'pending', // Mark as paid if subscribed
             'status' => 'pending',
             'notes' => $request->notes,
             'special_requirements' => $request->special_requirements,
@@ -172,8 +182,12 @@ class ServiceController extends Controller
             'contact_phone' => $request->contact_phone,
         ]);
 
+        $successMessage = $hasActiveSubscription 
+            ? 'Service request submitted successfully! This service is FREE as you have an active subscription. Our team will contact you soon.'
+            : 'Service request submitted successfully! Our team will contact you soon.';
+
         return redirect()->route('services.my-requests')
-            ->with('success', 'Service request submitted successfully! Our team will contact you soon.');
+            ->with('success', $successMessage);
     }
 
     /**
@@ -246,8 +260,13 @@ class ServiceController extends Controller
                 ->withInput();
         }
 
+        // Check if patient has active subscription
+        $patient = Auth::user();
+        $subscriptionService = app(\App\Modules\Plans\Services\SubscriptionService::class);
+        $hasActiveSubscription = $subscriptionService->hasActiveSubscription($patient);
+        
         // Calculate amounts
-        $totalAmount = $serviceType->patient_charge * $request->duration_days;
+        $totalAmount = $hasActiveSubscription ? 0.00 : ($serviceType->patient_charge * $request->duration_days);
         $dailyStaffPayout = $staff->isNurse() ? $serviceType->nurse_payout : $serviceType->caregiver_payout;
         $totalStaffPayout = $request->duration_days * $dailyStaffPayout;
 
@@ -266,11 +285,11 @@ class ServiceController extends Controller
                 'duration_days' => $request->duration_days,
                 'total_amount' => $totalAmount,
                 'total_staff_payout' => $totalStaffPayout,
-                'prepaid_amount' => 0.00,
-                'payment_status' => 'pending',
+                'prepaid_amount' => $hasActiveSubscription ? 0.00 : 0.00, // Free for subscribers
+                'payment_status' => $hasActiveSubscription ? 'paid' : 'pending', // Mark as paid if subscribed
                 'status' => 'pending_approval', // Staff needs to accept
                 'assigned_at' => now(),
-                'notes' => $request->notes,
+                'notes' => $request->notes . ($hasActiveSubscription ? ' [FREE - Covered by Subscription]' : ''),
                 'special_requirements' => $request->special_requirements,
                 'location' => $request->location,
                 'contact_person' => $request->contact_person,
@@ -282,8 +301,12 @@ class ServiceController extends Controller
 
             DB::commit();
 
+            $successMessage = $hasActiveSubscription 
+                ? 'Booking created successfully! This service is FREE as you have an active subscription. The staff member will be notified.'
+                : 'Booking created successfully! The staff member will be notified and can accept your booking request.';
+
             return redirect()->route('services.my-requests')
-                ->with('success', 'Booking created successfully! The staff member will be notified and can accept your booking request.');
+                ->with('success', $successMessage);
 
         } catch (\Exception $e) {
             DB::rollBack();

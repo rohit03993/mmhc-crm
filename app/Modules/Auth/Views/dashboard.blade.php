@@ -88,10 +88,76 @@
                     <div class="app-profile-badge">
                         <i class="fas fa-check-circle me-1"></i>
                         {{ $stats['profile_completion'] }}% Profile Complete
-        </div>
-                </div>
+                    </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Subscription Status Banner (For Patients) -->
+        @if($user->isPatient())
+        <div class="app-subscription-banner">
+            @if(isset($has_active_subscription) && $has_active_subscription && $active_subscription)
+            <div class="subscription-status-card active">
+                <div class="subscription-status-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="subscription-status-content">
+                    <h6 class="subscription-status-title">✅ Active Subscription</h6>
+                    <p class="subscription-status-text">
+                        <strong>{{ $active_subscription->plan->name }}</strong> - 
+                        Expires {{ $active_subscription->end_date->format('M d, Y') }}
+                        ({{ $active_subscription->days_remaining }} days remaining)
+                    </p>
+                    <small class="subscription-status-note">
+                        <i class="fas fa-gift me-1"></i>All services are FREE while subscribed!
+                    </small>
+                </div>
+                <a href="{{ route('subscriptions.index') }}" class="subscription-status-action">
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            @else
+            <div class="subscription-status-card inactive">
+                <div class="subscription-status-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="subscription-status-content">
+                    <h6 class="subscription-status-title">No Active Subscription</h6>
+                    <p class="subscription-status-text">
+                        Subscribe to a plan and get FREE healthcare services!
+                    </p>
+                    <small class="subscription-status-note">
+                        Starting from ₹999/month with 10 years total care coverage
+                    </small>
+                </div>
+                <a href="{{ route('plans.index') }}" class="subscription-status-action btn-subscribe">
+                    <i class="fas fa-arrow-right me-1"></i>View Plans
+                </a>
+            </div>
+            @endif
+        </div>
+        
+        <!-- Subscribe Now Prominent Card -->
+        @if(!isset($has_active_subscription) || !$has_active_subscription)
+        <div class="app-subscribe-card">
+            <div class="subscribe-card-content">
+                <div class="subscribe-icon">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <div class="subscribe-text">
+                    <h5 class="subscribe-title">Get FREE Healthcare Services!</h5>
+                    <p class="subscribe-description">
+                        Subscribe to our healthcare plans and enjoy FREE services for 10 years. 
+                        Starting from just ₹999/month.
+                    </p>
+                </div>
+                <a href="{{ route('plans.index') }}" class="subscribe-btn">
+                    <i class="fas fa-arrow-right me-2"></i>Browse Plans
+                </a>
+            </div>
+        </div>
+        @endif
+        @endif
 
         <!-- Statistics Cards - App Style Grid -->
         <div class="app-stats-section">
@@ -1769,6 +1835,214 @@
         width: 35px;
         height: 35px;
         font-size: 0.85rem;
+    }
+}
+
+/* Subscription Status Banner */
+.app-subscription-banner {
+    margin-bottom: 20px;
+}
+
+.subscription-status-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-left: 4px solid;
+    transition: transform 0.2s ease;
+}
+
+.subscription-status-card:active {
+    transform: scale(0.98);
+}
+
+.subscription-status-card.active {
+    border-left-color: #28a745;
+    background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+}
+
+.subscription-status-card.inactive {
+    border-left-color: #ffc107;
+    background: linear-gradient(135deg, #fffbf0 0%, #ffffff 100%);
+}
+
+.subscription-status-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.subscription-status-card.active .subscription-status-icon {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.subscription-status-card.inactive .subscription-status-icon {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    color: white;
+}
+
+.subscription-status-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.subscription-status-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 6px;
+}
+
+.subscription-status-text {
+    font-size: 0.9rem;
+    color: #495057;
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.subscription-status-note {
+    font-size: 0.8rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.subscription-status-action {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #667eea;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    z-index: 10;
+}
+
+.subscription-status-action.btn-subscribe {
+    padding: 8px 16px;
+    width: auto;
+    height: auto;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.subscription-status-action:hover {
+    background: #764ba2;
+    transform: scale(1.05);
+    color: white;
+    text-decoration: none;
+}
+
+/* Subscribe Now Prominent Card */
+.app-subscribe-card {
+    margin-bottom: 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+}
+
+.subscribe-card-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: white;
+}
+
+.subscribe-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    flex-shrink: 0;
+    backdrop-filter: blur(10px);
+}
+
+.subscribe-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.subscribe-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: white;
+}
+
+.subscribe-description {
+    font-size: 0.9rem;
+    opacity: 0.95;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.subscribe-btn {
+    background: white;
+    color: #667eea;
+    padding: 12px 24px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    white-space: nowrap;
+    cursor: pointer;
+    position: relative;
+    z-index: 10;
+}
+
+.subscribe-btn:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    color: #667eea;
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .subscribe-card-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .subscribe-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .subscription-status-card {
+        flex-wrap: wrap;
+    }
+    
+    .subscription-status-action {
+        width: 100%;
+        border-radius: 12px;
+        margin-top: 12px;
     }
 }
 </style>

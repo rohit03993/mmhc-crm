@@ -13,9 +13,20 @@ class Subscription extends Model
     protected $fillable = [
         'user_id',
         'plan_id',
+        'payment_frequency',
         'status',
         'start_date',
         'end_date',
+        'care_benefits_years',
+        'payable_years',
+        'total_amount',
+        'paid_amount',
+        'payment_status',
+        'payment_screenshot',
+        'transaction_id',
+        'payment_notes',
+        'payment_verified_by',
+        'payment_verified_at',
         'auto_renew',
         'notes',
         'approved_by',
@@ -28,8 +39,11 @@ class Subscription extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'total_amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
         'auto_renew' => 'boolean',
         'approved_at' => 'datetime',
+        'payment_verified_at' => 'datetime',
     ];
 
     /**
@@ -54,6 +68,14 @@ class Subscription extends Model
     public function approvedBy()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Get the user that verified the payment.
+     */
+    public function paymentVerifiedBy()
+    {
+        return $this->belongsTo(User::class, 'payment_verified_by');
     }
 
     /**
@@ -112,47 +134,7 @@ class Subscription extends Model
         return $this->end_date < now();
     }
 
-    /**
-     * Get days remaining
-     */
-    public function getDaysRemainingAttribute()
-    {
-        if ($this->end_date < now()) {
-            return 0;
-        }
-        
-        return now()->diffInDays($this->end_date);
-    }
 
-    /**
-     * Get subscription status display
-     */
-    public function getStatusDisplayAttribute()
-    {
-        return match($this->status) {
-            'pending' => 'Pending Approval',
-            'active' => 'Active',
-            'expired' => 'Expired',
-            'cancelled' => 'Cancelled',
-            'rejected' => 'Rejected',
-            default => ucfirst($this->status)
-        };
-    }
-
-    /**
-     * Get status badge color
-     */
-    public function getStatusColorAttribute()
-    {
-        return match($this->status) {
-            'pending' => 'warning',
-            'active' => 'success',
-            'expired' => 'danger',
-            'cancelled' => 'secondary',
-            'rejected' => 'danger',
-            default => 'secondary'
-        };
-    }
 
     /**
      * Get total amount paid for this subscription
