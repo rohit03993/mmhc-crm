@@ -248,7 +248,7 @@
                         @if($plan->is_popular)
                             <!-- Popular Badge -->
                             <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                                <span class="bg-{{ $plan->color_theme }}-500 text-white px-4 py-1 rounded-full text-xs font-semibold shadow-lg">
+                                <span class="bg-{{ $plan->color_theme ?? 'blue' }}-500 text-white px-4 py-1 rounded-full text-xs font-semibold shadow-lg">
                                     @if($plan->popular_label)
                                         {{ $plan->popular_label }}
                                     @else
@@ -259,8 +259,8 @@
                         @endif
                         
                         <div class="text-center">
-                            <div class="w-16 h-16 bg-{{ $plan->color_theme }}-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <i class="fas {{ $plan->icon_class }} text-{{ $plan->color_theme }}-600 text-2xl"></i>
+                            <div class="w-16 h-16 bg-{{ $plan->color_theme ?? 'blue' }}-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <i class="fas {{ $plan->icon_class ?? 'fa-heartbeat' }} text-{{ $plan->color_theme ?? 'blue' }}-600 text-2xl"></i>
                             </div>
                             <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ $plan->name }}</h3>
                             <p class="text-gray-600 mb-6">{{ $plan->description }}</p>
@@ -280,8 +280,8 @@
                             </ul>
                             
                             <a href="{{ $plan->button_link ?: route('auth.register') }}?role=patient&plan={{ strtolower(str_replace(' ', '_', $plan->name)) }}" 
-                               class="w-full bg-{{ $plan->color_theme }}-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-{{ $plan->color_theme }}-700 transition">
-                                {{ $plan->button_text }}
+                               class="w-full bg-{{ $plan->color_theme ?? 'blue' }}-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-{{ $plan->color_theme ?? 'blue' }}-700 transition">
+                                {{ $plan->button_text ?? 'Get Started' }}
                             </a>
                         </div>
                     </div>

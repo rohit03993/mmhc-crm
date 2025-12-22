@@ -4,6 +4,9 @@
 <div class="container-fluid px-3 py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="page-title">Subscription Management</h4>
+        <a href="{{ route('admin.plans') }}" class="btn btn-primary">
+            <i class="fas fa-cog me-2"></i>Manage Plans
+        </a>
     </div>
 
     <!-- Statistics Cards -->

@@ -88,10 +88,10 @@
                     <div class="app-profile-badge">
                         <i class="fas fa-check-circle me-1"></i>
                         {{ $stats['profile_completion'] }}% Profile Complete
-                    </div>
-                </div>
+        </div>
             </div>
         </div>
+    </div>
 
         <!-- Subscription Status Banner (For Patients) -->
         @if($user->isPatient())
@@ -120,7 +120,7 @@
             <div class="subscription-status-card inactive">
                 <div class="subscription-status-icon">
                     <i class="fas fa-info-circle"></i>
-                </div>
+        </div>
                 <div class="subscription-status-content">
                     <h6 class="subscription-status-title">No Active Subscription</h6>
                     <p class="subscription-status-text">
@@ -133,9 +133,9 @@
                 <a href="{{ route('plans.index') }}" class="subscription-status-action btn-subscribe">
                     <i class="fas fa-arrow-right me-1"></i>View Plans
                 </a>
-            </div>
+                </div>
             @endif
-        </div>
+            </div>
         
         <!-- Subscribe Now Prominent Card -->
         @if(!isset($has_active_subscription) || !$has_active_subscription)
@@ -143,7 +143,7 @@
             <div class="subscribe-card-content">
                 <div class="subscribe-icon">
                     <i class="fas fa-heartbeat"></i>
-                </div>
+        </div>
                 <div class="subscribe-text">
                     <h5 class="subscribe-title">Get FREE Healthcare Services!</h5>
                     <p class="subscribe-description">
@@ -154,8 +154,8 @@
                 <a href="{{ route('plans.index') }}" class="subscribe-btn">
                     <i class="fas fa-arrow-right me-2"></i>Browse Plans
                 </a>
+                </div>
             </div>
-        </div>
         @endif
         @endif
 
@@ -169,7 +169,7 @@
         </div>
                     <div class="app-stat-value">{{ $stats['total_requests'] }}</div>
                     <div class="app-stat-label">Total</div>
-    </div>
+                </div>
 
                 <!-- Stat Card 2 -->
                 <div class="app-stat-card stat-active">
@@ -178,13 +178,13 @@
                 </div>
                     <div class="app-stat-value">{{ $stats['active_requests'] }}</div>
                     <div class="app-stat-label">Active</div>
-                </div>
+            </div>
                 
                 <!-- Stat Card 3 -->
                 <div class="app-stat-card stat-success">
                     <div class="app-stat-icon">
                         <i class="fas fa-check-circle"></i>
-            </div>
+        </div>
                     <div class="app-stat-value">{{ $stats['completed_requests'] }}</div>
                     <div class="app-stat-label">Done</div>
     </div>

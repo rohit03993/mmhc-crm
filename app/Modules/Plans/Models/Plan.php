@@ -22,6 +22,11 @@ class Plan extends Model
         'currency',
         'duration_days',
         'features',
+        'icon_class',
+        'color_theme',
+        'popular_label',
+        'button_text',
+        'button_link',
         'is_active',
         'is_popular',
         'sort_order',
@@ -73,30 +78,31 @@ class Plan extends Model
     }
 
     /**
-     * Get formatted price
+     * Get formatted price for display
      */
     public function getFormattedPriceAttribute()
     {
-        return $this->currency . ' ' . number_format($this->price, 2);
+        // Use monthly_price if available, otherwise use price
+        $price = $this->monthly_price ?? $this->price;
+        return '₹' . number_format($price, 0);
     }
 
     /**
-     * Get duration in human readable format
+     * Get duration in readable format
      */
     public function getDurationTextAttribute()
     {
-        if ($this->duration_days == 1) {
-            return '1 Day';
-        } elseif ($this->duration_days < 30) {
-            return $this->duration_days . ' Days';
-        } elseif ($this->duration_days == 30) {
-            return '1 Month';
-        } elseif ($this->duration_days < 365) {
-            return floor($this->duration_days / 30) . ' Months';
+        if ($this->duration_days >= 365) {
+            $years = round($this->duration_days / 365, 1);
+            return $years == 1 ? '/year' : "/{$years} years";
+        } elseif ($this->duration_days >= 30) {
+            $months = round($this->duration_days / 30);
+            return $months == 1 ? '/month' : "/{$months} months";
         } else {
-            return floor($this->duration_days / 365) . ' Year(s)';
+            return $this->duration_days == 1 ? '/day' : "/{$this->duration_days} days";
         }
     }
+
 
     /**
      * Get active subscriptions count

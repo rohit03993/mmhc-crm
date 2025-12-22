@@ -322,6 +322,13 @@
                                 </li>
                                 
                                 <li class="nav-item">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.plans*') ? 'active' : '' }}" href="{{ route('admin.plans') }}">
+                                        <i class="fas fa-tags me-2"></i>
+                                        Manage Plans
+                                    </a>
+                                </li>
+                                
+                                <li class="nav-item">
                                     <a class="nav-link text-white {{ request()->routeIs('admin.service-requests*') ? 'active' : '' }}" href="{{ route('admin.service-requests') }}">
                                         <i class="fas fa-user-md me-2"></i>
                                         Service Requests

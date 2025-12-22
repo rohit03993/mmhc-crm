@@ -8,14 +8,16 @@ use App\Http\Controllers\Admin\PageContentController;
 Route::get('/', function () {
     // Get page content for dynamic rendering
     $pageContent = \App\Models\PageContent::getAllSections();
-    $healthcarePlans = \App\Models\HealthcarePlan::getActivePlans();
+    // Use new Plan model for subscription plans
+    $healthcarePlans = \App\Modules\Plans\Models\Plan::active()->ordered()->get();
     return view('welcome', compact('pageContent', 'healthcarePlans'));
 });
 
 // Landing page route (always accessible)
 Route::get('/landing', function () {
     $pageContent = \App\Models\PageContent::getAllSections();
-    $healthcarePlans = \App\Models\HealthcarePlan::getActivePlans();
+    // Use new Plan model for subscription plans
+    $healthcarePlans = \App\Modules\Plans\Models\Plan::active()->ordered()->get();
     return view('welcome', compact('pageContent', 'healthcarePlans'));
 })->name('landing');
 
