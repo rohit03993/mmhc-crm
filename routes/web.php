@@ -117,22 +117,30 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/service-requests/{serviceRequest}/assign', [\App\Modules\Services\Controllers\ServiceController::class, 'assign'])->name('service-requests.assign.post');
         Route::post('/service-requests/{serviceRequest}/approve-payment', [\App\Modules\Services\Controllers\ServiceController::class, 'approvePayment'])->name('service-requests.approve-payment');
         
-    // Page Content Management Routes
-    Route::get('/page-content', [PageContentController::class, 'index'])->name('page-content.index');
-    Route::get('/page-content/{id}/edit', [PageContentController::class, 'edit'])->name('page-content.edit');
-    Route::put('/page-content/{id}', [PageContentController::class, 'update'])->name('page-content.update');
-    
-    // Healthcare Plans Management Routes (integrated with page content)
-    Route::get('/page-content/plans/create', [PageContentController::class, 'createPlan'])->name('page-content.plans.create');
-    Route::post('/page-content/plans', [PageContentController::class, 'storePlan'])->name('page-content.plans.store');
-    Route::get('/page-content/plans/{healthcarePlan}/edit', [PageContentController::class, 'editPlan'])->name('page-content.plans.edit');
-    Route::put('/page-content/plans/{healthcarePlan}', [PageContentController::class, 'updatePlan'])->name('page-content.plans.update');
-    Route::delete('/page-content/plans/{healthcarePlan}', [PageContentController::class, 'deletePlan'])->name('page-content.plans.delete');
-    
+        // Page Content Management Routes
+        Route::get('/page-content', [PageContentController::class, 'index'])->name('page-content.index');
+        Route::get('/page-content/{id}/edit', [PageContentController::class, 'edit'])->name('page-content.edit');
+        Route::put('/page-content/{id}', [PageContentController::class, 'update'])->name('page-content.update');
+        
+        // Healthcare Plans Management Routes (integrated with page content)
+        Route::get('/page-content/plans/create', [PageContentController::class, 'createPlan'])->name('page-content.plans.create');
+        Route::post('/page-content/plans', [PageContentController::class, 'storePlan'])->name('page-content.plans.store');
+        Route::get('/page-content/plans/{healthcarePlan}/edit', [PageContentController::class, 'editPlan'])->name('page-content.plans.edit');
+        Route::put('/page-content/plans/{healthcarePlan}', [PageContentController::class, 'updatePlan'])->name('page-content.plans.update');
+        Route::delete('/page-content/plans/{healthcarePlan}', [PageContentController::class, 'deletePlan'])->name('page-content.plans.delete');
+        
         // Referral Management Routes
         Route::prefix('referrals')->name('referrals.')->group(function () {
             Route::get('/', [\App\Modules\Referrals\Controllers\AdminReferralController::class, 'index'])->name('index');
             Route::get('/staff/{staff}', [\App\Modules\Referrals\Controllers\AdminReferralController::class, 'showStaffReferrals'])->name('staff');
         });
+        
+        // Plans Management Routes
+        Route::get('/plans', [\App\Modules\Plans\Controllers\PlanController::class, 'adminIndex'])->name('plans');
+        Route::get('/plans/create', [\App\Modules\Plans\Controllers\PlanController::class, 'create'])->name('plans.create');
+        Route::post('/plans', [\App\Modules\Plans\Controllers\PlanController::class, 'store'])->name('plans.store');
+        Route::get('/plans/{plan}/edit', [\App\Modules\Plans\Controllers\PlanController::class, 'edit'])->name('plans.edit');
+        Route::put('/plans/{plan}', [\App\Modules\Plans\Controllers\PlanController::class, 'update'])->name('plans.update');
+        Route::delete('/plans/{plan}', [\App\Modules\Plans\Controllers\PlanController::class, 'destroy'])->name('plans.destroy');
     });
 });

@@ -44,39 +44,55 @@
 
     <!-- Main Content Area -->
     <div class="app-content">
-        <!-- Prominent Pincode Search (One-Way Booking) -->
+        <!-- Modern Pincode Search Section -->
         @if($user->isPatient())
-        <div class="app-pincode-search-section">
-            <div class="app-pincode-card">
-                <div class="app-pincode-header">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <h3>Find Healthcare Staff Near You</h3>
+        <div class="modern-search-section">
+            <div class="modern-search-card">
+                <div class="search-card-header">
+                    <div class="search-icon-wrapper">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="search-header-text">
+                        <h3 class="search-title">Find Healthcare Staff Near You</h3>
+                        <p class="search-subtitle">Enter your location to discover nearby nurses and caregivers</p>
+                    </div>
                 </div>
-                <form method="GET" action="{{ route('staff.index') }}" class="app-pincode-form-main">
-                    <div class="app-pincode-input-group">
-                        <input type="text" 
-                               name="pincode" 
-                               value="{{ $user->pincode }}" 
-                               placeholder="Enter your 6-digit pincode" 
-                               maxlength="6" 
-                               pattern="[0-9]{6}"
-                               class="app-pincode-input"
-                               required>
-                        <button type="submit" class="app-pincode-btn">
-                            <i class="fas fa-search"></i>
-                            <span>Find Staff</span>
-                        </button>
-                </div>
+                
+                <form method="GET" action="{{ route('staff.index') }}" class="modern-search-form">
+                    <div class="search-input-wrapper">
+                        <div class="search-input-container">
+                            <i class="fas fa-location-dot search-input-icon"></i>
+                            <input type="text" 
+                                   name="pincode" 
+                                   id="pincode-input"
+                                   value="{{ $user->pincode }}" 
+                                   placeholder="Enter 6-digit pincode" 
+                                   maxlength="6" 
+                                   pattern="[0-9]{6}"
+                                   class="modern-search-input"
+                                   required>
+                            <button type="submit" class="modern-search-btn">
+                                <i class="fas fa-search"></i>
+                                <span class="btn-text">Search</span>
+                            </button>
+                        </div>
+                    </div>
+                    
                     @if($user->pincode)
-                    <div class="app-pincode-saved">
-                    <i class="fas fa-check-circle"></i>
-                        <span>Using saved pincode: <strong>{{ $user->pincode }}</strong></span>
-                        <a href="{{ route('profile.edit') }}" class="app-pincode-change">Change</a>
-                </div>
+                    <div class="saved-pincode-info">
+                        <div class="saved-pincode-content">
+                            <i class="fas fa-check-circle saved-icon"></i>
+                            <span class="saved-text">Using saved location: <strong>{{ $user->pincode }}</strong></span>
+                        </div>
+                        <a href="{{ route('profile.edit') }}" class="change-pincode-link">
+                            <i class="fas fa-edit"></i>
+                            <span>Change</span>
+                        </a>
+                    </div>
                     @endif
                 </form>
-                </div>
             </div>
+        </div>
         @endif
 
         <!-- Welcome Section (Mobile App Style) -->
@@ -2043,6 +2059,312 @@
         width: 100%;
         border-radius: 12px;
         margin-top: 12px;
+    }
+}
+
+/* Modern Search Section */
+.modern-search-section {
+    margin-bottom: 24px;
+}
+
+.modern-search-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-search-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+}
+
+.search-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.search-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.search-header-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.search-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 6px 0;
+    line-height: 1.3;
+}
+
+.search-subtitle {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.modern-search-form {
+    position: relative;
+    z-index: 1;
+}
+
+.search-input-wrapper {
+    margin-bottom: 12px;
+}
+
+.search-input-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    border-radius: 14px;
+    padding: 4px 4px 4px 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.search-input-container:focus-within {
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.search-input-icon {
+    color: #667eea;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.modern-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #2c3e50;
+    padding: 14px 0;
+    background: transparent;
+    min-width: 0;
+}
+
+.modern-search-input::placeholder {
+    color: #adb5bd;
+    font-weight: 400;
+}
+
+.modern-search-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.modern-search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.modern-search-btn:active {
+    transform: translateY(0);
+}
+
+.modern-search-btn i {
+    font-size: 1rem;
+}
+
+.saved-pincode-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    margin-top: 12px;
+}
+
+.saved-pincode-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.saved-icon {
+    color: #28a745;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    background: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.saved-text {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.saved-text strong {
+    font-weight: 700;
+    color: white;
+}
+
+.change-pincode-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: white;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.change-pincode-link:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.change-pincode-link i {
+    font-size: 0.8rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .modern-search-card {
+        padding: 20px;
+        border-radius: 16px;
+    }
+    
+    .search-card-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+    }
+    
+    .search-icon-wrapper {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+    }
+    
+    .search-title {
+        font-size: 1.25rem;
+    }
+    
+    .search-subtitle {
+        font-size: 0.85rem;
+    }
+    
+    .search-input-container {
+        flex-direction: column;
+        padding: 12px;
+        gap: 8px;
+    }
+    
+    .search-input-icon {
+        display: none;
+    }
+    
+    .modern-search-input {
+        width: 100%;
+        padding: 12px;
+        text-align: center;
+        font-size: 1.1rem;
+        letter-spacing: 2px;
+    }
+    
+    .modern-search-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 14px;
+    }
+    
+    .saved-pincode-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .change-pincode-link {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .modern-search-card {
+        padding: 16px;
+    }
+    
+    .search-title {
+        font-size: 1.1rem;
+    }
+    
+    .search-subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .search-icon-wrapper {
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
     }
 }
 </style>

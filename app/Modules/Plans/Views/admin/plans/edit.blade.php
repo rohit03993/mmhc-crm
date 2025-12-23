@@ -13,7 +13,7 @@
 
     <div class="row">
         <div class="col-12 col-lg-8">
-            <form action="{{ route('admin.plans.update', $plan) }}" method="POST">
+            <form action="{{ route('admin.plans.update', $plan) }}" method="POST" onsubmit="preparePaymentOptions()">
                 @csrf
                 @method('PUT')
                 
@@ -125,6 +125,113 @@
                 </div>
 
                 <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">Payment Options</h5>
+                        <small class="text-white-50">Configure pricing for different payment frequencies</small>
+                    </div>
+                    <div class="card-body">
+                        <div id="payment-options-container">
+                            @php
+                                $paymentFrequencies = ['monthly', 'half_yearly', 'annually', 'full_payment'];
+                                $oldPaymentOptions = old('payment_options', $plan->payment_options ?? []);
+                            @endphp
+                            
+                            @foreach($paymentFrequencies as $frequency)
+                                @php
+                                    $option = $oldPaymentOptions[$frequency] ?? [
+                                        'price' => '',
+                                        'label' => ucfirst(str_replace('_', ' ', $frequency)),
+                                        'description' => '',
+                                        'payable_years' => '',
+                                        'care_benefits_years' => ''
+                                    ];
+                                @endphp
+                                
+                                <div class="payment-option-card border rounded p-3 mb-3" data-frequency="{{ $frequency }}">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="mb-0 text-capitalize">{{ str_replace('_', ' ', $frequency) }}</h6>
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input payment-option-enabled" 
+                                                   id="enable_{{ $frequency }}" 
+                                                   name="payment_options_enabled[{{ $frequency }}]"
+                                                   value="1" 
+                                                   {{ isset($oldPaymentOptions[$frequency]) && !empty($oldPaymentOptions[$frequency]['price']) ? 'checked' : '' }}
+                                                   onchange="togglePaymentOption('{{ $frequency }}')">
+                                            <label class="form-check-label" for="enable_{{ $frequency }}">Enable</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="payment-option-fields">
+                                        <input type="hidden" name="payment_options[{{ $frequency }}][frequency]" value="{{ $frequency }}">
+                                        
+                                        <div class="row mb-2">
+                                            <div class="col-md-6">
+                                                <label class="form-label small">Price (₹) *</label>
+                                                <input type="number" 
+                                                       name="payment_options[{{ $frequency }}][price]" 
+                                                       class="form-control form-control-sm" 
+                                                       step="0.01" 
+                                                       min="0" 
+                                                       value="{{ $option['price'] ?? '' }}"
+                                                       placeholder="0.00">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small">Label *</label>
+                                                <input type="text" 
+                                                       name="payment_options[{{ $frequency }}][label]" 
+                                                       class="form-control form-control-sm" 
+                                                       value="{{ $option['label'] ?? ucfirst(str_replace('_', ' ', $frequency)) }}"
+                                                       placeholder="e.g., Monthly, Half Yearly">
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-2">
+                                            <label class="form-label small">Description</label>
+                                            <input type="text" 
+                                                   name="payment_options[{{ $frequency }}][description]" 
+                                                   class="form-control form-control-sm" 
+                                                   value="{{ $option['description'] ?? '' }}"
+                                                   placeholder="e.g., Pay monthly, 7-year payable, 3 years extra care benefits">
+                                        </div>
+                                        
+                                        @if(in_array($frequency, ['half_yearly', 'annually', 'full_payment']))
+                                            <div class="row mb-2">
+                                                <div class="col-md-6">
+                                                    <label class="form-label small">Payable Years</label>
+                                                    <input type="number" 
+                                                           name="payment_options[{{ $frequency }}][payable_years]" 
+                                                           class="form-control form-control-sm" 
+                                                           step="0.1" 
+                                                           min="0" 
+                                                           value="{{ $option['payable_years'] ?? '' }}"
+                                                           placeholder="e.g., 7">
+                                                    <small class="text-muted">Years customer needs to pay</small>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label small">Care Benefits Years</label>
+                                                    <input type="number" 
+                                                           name="payment_options[{{ $frequency }}][care_benefits_years]" 
+                                                           class="form-control form-control-sm" 
+                                                           step="0.1" 
+                                                           min="0" 
+                                                           value="{{ $option['care_benefits_years'] ?? '' }}"
+                                                           placeholder="e.g., 3">
+                                                    <small class="text-muted">Extra years of free care</small>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Monthly option only requires price, label, and description. Other options also include payable years and care benefits years.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
                     <div class="card-header bg-success text-white">
                         <h5 class="mb-0">Features *</h5>
                     </div>
@@ -192,6 +299,70 @@ function addFeature() {
     `;
     featuresList.appendChild(newFeature);
 }
+
+function togglePaymentOption(frequency) {
+    const card = document.querySelector(`[data-frequency="${frequency}"]`);
+    const fields = card.querySelector('.payment-option-fields');
+    const checkbox = card.querySelector('.payment-option-enabled');
+    
+    if (checkbox.checked) {
+        fields.style.opacity = '1';
+        fields.querySelectorAll('input').forEach(input => {
+            input.disabled = false;
+            if (input.name.includes('[price]') || input.name.includes('[label]')) {
+                input.required = true;
+            }
+        });
+    } else {
+        fields.style.opacity = '0.5';
+        fields.querySelectorAll('input').forEach(input => {
+            input.disabled = true;
+            input.required = false;
+            if (!input.type || input.type === 'hidden') return;
+            input.value = '';
+        });
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.payment-option-enabled').forEach(checkbox => {
+        const frequency = checkbox.id.replace('enable_', '');
+        togglePaymentOption(frequency);
+    });
+});
+
+// Prepare payment options before form submission
+function preparePaymentOptions() {
+    document.querySelectorAll('.payment-option-enabled').forEach(checkbox => {
+        if (!checkbox.checked) {
+            const frequency = checkbox.id.replace('enable_', '');
+            const card = document.querySelector(`[data-frequency="${frequency}"]`);
+            const fields = card.querySelectorAll('.payment-option-fields input');
+            fields.forEach(input => {
+                if (input.type !== 'hidden') {
+                    input.disabled = true;
+                    input.value = '';
+                }
+            });
+        }
+    });
+}
 </script>
+
+<style>
+.payment-option-card {
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.payment-option-card:hover {
+    background-color: #e9ecef;
+}
+
+.payment-option-fields {
+    transition: opacity 0.3s ease;
+}
+</style>
 @endsection
 

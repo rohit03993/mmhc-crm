@@ -52,10 +52,10 @@
 
                 @if($plan->payment_options)
                 <div class="payment-options-preview mt-3">
-                    <small class="text-muted d-block mb-2">Payment Options:</small>
+                    <small class="text-muted d-block mb-2"><strong>Payment Options:</strong></small>
                     <div class="d-flex flex-wrap gap-2">
                         @foreach($plan->payment_options as $frequency => $option)
-                        <span class="badge badge-info">
+                        <span class="payment-option-badge">
                             {{ ucfirst(str_replace('_', ' ', $frequency)) }}: ₹{{ number_format($option['price'] ?? 0, 0) }}
                         </span>
                         @endforeach
@@ -137,6 +137,22 @@
     padding: 12px;
     background: #f8f9fa;
     border-radius: 8px;
+}
+
+.payment-option-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    background-color: #0dcaf0;
+    color: #000;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #0dcaf0;
+}
+
+.payment-option-badge:hover {
+    background-color: #0aa2c0;
+    border-color: #0aa2c0;
 }
 
 .plan-card-footer {

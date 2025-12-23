@@ -85,6 +85,12 @@ class PlanController extends Controller
             'is_active' => 'boolean',
             'is_popular' => 'boolean',
             'sort_order' => 'integer|min:0',
+            'payment_options' => 'nullable|array',
+            'payment_options.*.price' => 'required_with:payment_options.*|numeric|min:0',
+            'payment_options.*.label' => 'required_with:payment_options.*|string|max:100',
+            'payment_options.*.description' => 'nullable|string|max:255',
+            'payment_options.*.payable_years' => 'nullable|numeric|min:0',
+            'payment_options.*.care_benefits_years' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -93,7 +99,10 @@ class PlanController extends Controller
                 ->withInput();
         }
 
-        $plan = $this->planService->createPlan($request->all());
+        $data = $request->all();
+        $data['payment_options'] = $this->processPaymentOptions($request);
+
+        $plan = $this->planService->createPlan($data);
 
         return redirect()->route('admin.plans')
             ->with('success', "Plan '{$plan->name}' created successfully!");
@@ -130,6 +139,12 @@ class PlanController extends Controller
             'is_active' => 'boolean',
             'is_popular' => 'boolean',
             'sort_order' => 'integer|min:0',
+            'payment_options' => 'nullable|array',
+            'payment_options.*.price' => 'required_with:payment_options.*|numeric|min:0',
+            'payment_options.*.label' => 'required_with:payment_options.*|string|max:100',
+            'payment_options.*.description' => 'nullable|string|max:255',
+            'payment_options.*.payable_years' => 'nullable|numeric|min:0',
+            'payment_options.*.care_benefits_years' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -138,7 +153,10 @@ class PlanController extends Controller
                 ->withInput();
         }
 
-        $this->planService->updatePlan($plan, $request->all());
+        $data = $request->all();
+        $data['payment_options'] = $this->processPaymentOptions($request);
+
+        $this->planService->updatePlan($plan, $data);
 
         return redirect()->route('admin.plans')
             ->with('success', "Plan '{$plan->name}' updated successfully!");
@@ -160,5 +178,41 @@ class PlanController extends Controller
 
         return redirect()->route('admin.plans')
             ->with('success', "Plan '{$planName}' deleted successfully!");
+    }
+
+    /**
+     * Process payment options from request
+     * Only includes enabled payment options
+     */
+    private function processPaymentOptions(Request $request): ?array
+    {
+        $enabledOptions = $request->input('payment_options_enabled', []);
+        $paymentOptions = $request->input('payment_options', []);
+        $processedOptions = [];
+
+        foreach ($enabledOptions as $frequency => $enabled) {
+            if ($enabled && isset($paymentOptions[$frequency])) {
+                $option = $paymentOptions[$frequency];
+                
+                // Build the option data
+                $processedOptions[$frequency] = [
+                    'price' => (float) ($option['price'] ?? 0),
+                    'label' => $option['label'] ?? ucfirst(str_replace('_', ' ', $frequency)),
+                    'description' => $option['description'] ?? '',
+                ];
+
+                // Add years data for non-monthly options
+                if ($frequency !== 'monthly') {
+                    $processedOptions[$frequency]['payable_years'] = isset($option['payable_years']) && $option['payable_years'] !== '' 
+                        ? (float) $option['payable_years'] 
+                        : null;
+                    $processedOptions[$frequency]['care_benefits_years'] = isset($option['care_benefits_years']) && $option['care_benefits_years'] !== '' 
+                        ? (float) $option['care_benefits_years'] 
+                        : null;
+                }
+            }
+        }
+
+        return !empty($processedOptions) ? $processedOptions : null;
     }
 }
