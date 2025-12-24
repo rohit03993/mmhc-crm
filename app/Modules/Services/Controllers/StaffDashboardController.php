@@ -58,81 +58,112 @@ class StaffDashboardController extends Controller
             'pending_assignments' => $allServices->where('status', 'assigned')->count(),
         ];
         
-        // Calculate earnings statistics
+        // ============================================
+        // CALCULATE EARNINGS FROM 4 SOURCES
+        // ============================================
+        
+        // 1. SERVICE REQUEST EARNINGS (from assigned services)
         $allServicesData = ServiceRequest::where('assigned_staff_id', $user->id)
             ->whereNotNull('total_staff_payout')
             ->get();
         
-        // Total earnings (approved by admin)
-        $totalEarnings = $allServicesData
-            ->whereNotNull('admin_approved_at')
-            ->sum('total_staff_payout');
-        
-        // Pending earnings (completed but not approved)
-        $pendingEarnings = $allServicesData
-            ->where('status', 'completed')
-            ->whereNull('admin_approved_at')
-            ->sum('total_staff_payout');
-        
-        // Earnings this month
-        $earningsThisMonth = $allServicesData
-            ->whereNotNull('admin_approved_at')
-            ->filter(function($service) {
-                if (!$service->admin_approved_at) {
-                    return false;
-                }
-                $approvedDate = $service->admin_approved_at;
-                return $approvedDate->month === now()->month && 
-                       $approvedDate->year === now()->year;
-            })
-            ->sum('total_staff_payout');
-        
-        // Earnings last month
-        $earningsLastMonth = $allServicesData
-            ->whereNotNull('admin_approved_at')
-            ->filter(function($service) {
-                if (!$service->admin_approved_at) {
-                    return false;
-                }
-                $approvedDate = $service->admin_approved_at;
-                $lastMonth = now()->subMonth();
-                return $approvedDate->month === $lastMonth->month && 
-                       $approvedDate->year === $lastMonth->year;
-            })
-            ->sum('total_staff_payout');
-        
-        // Upcoming earnings (assigned but not completed)
-        $upcomingEarnings = ServiceRequest::where('assigned_staff_id', $user->id)
-            ->whereIn('status', ['assigned', 'in_progress'])
-            ->whereNotNull('total_staff_payout')
-            ->sum('total_staff_payout');
-        
-        $earningsStats = [
-            'total_earnings' => $totalEarnings,
-            'pending_earnings' => $pendingEarnings,
-            'earnings_this_month' => $earningsThisMonth,
-            'earnings_last_month' => $earningsLastMonth,
-            'upcoming_earnings' => $upcomingEarnings,
+        $serviceRequestEarnings = [
+            'total_approved' => $allServicesData->whereNotNull('admin_approved_at')->sum('total_staff_payout'),
+            'pending_approval' => $allServicesData->where('status', 'completed')->whereNull('admin_approved_at')->sum('total_staff_payout'),
+            'upcoming' => ServiceRequest::where('assigned_staff_id', $user->id)
+                ->whereIn('status', ['assigned', 'in_progress'])
+                ->whereNotNull('total_staff_payout')
+                ->sum('total_staff_payout'),
+            'this_month' => $allServicesData->whereNotNull('admin_approved_at')
+                ->filter(function($service) {
+                    if (!$service->admin_approved_at) return false;
+                    $approvedDate = $service->admin_approved_at;
+                    return $approvedDate->month === now()->month && $approvedDate->year === now()->year;
+                })
+                ->sum('total_staff_payout'),
+            'total_count' => $allServicesData->whereNotNull('admin_approved_at')->count(),
         ];
-
+        
+        // 2. PATIENT REWARD EARNINGS (from submitting patient details)
         $rewardService = app(RewardService::class);
         $totalPoints = $user->reward_points ?? 0;
-        $recentRewards = CaregiverReward::where('user_id', $user->id)
-            ->latest()
-            ->limit(5)
-            ->get();
-        $rewardSummary = [
-            'points' => $totalPoints,
-            'amount' => $rewardService->calculateRewardAmount($totalPoints),
+        $patientRewardEarnings = [
+            'total_points' => $totalPoints,
+            'total_amount' => $rewardService->calculateRewardAmount($totalPoints),
+            'total_submissions' => CaregiverReward::where('user_id', $user->id)->count(),
+            'this_month' => CaregiverReward::where('user_id', $user->id)
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->sum('reward_amount'),
         ];
         
-        // Get referral information
+        // 3. STAFF REFERRAL EARNINGS (from referring other staff)
+        $referralService = app(ReferralService::class);
+        $referralStats = $referralService->getReferralStats($user);
+        $staffReferralEarnings = [
+            'total_referrals' => $referralStats['completed_referrals'],
+            'total_points' => $referralStats['total_reward_points'],
+            'total_amount' => $referralStats['total_reward_amount'],
+            'this_month' => \App\Modules\Referrals\Models\Referral::where('referrer_id', $user->id)
+                ->where('status', 'completed')
+                ->whereMonth('completed_at', now()->month)
+                ->whereYear('completed_at', now()->year)
+                ->sum('reward_amount'),
+        ];
+        
+        // 4. SUBSCRIPTION REFERRAL EARNINGS (from referring patients to subscribe)
+        $subscriptionReferralStats = \App\Modules\Plans\Models\Subscription::where('referrer_id', $user->id)
+            ->selectRaw('COUNT(*) as total_referrals')
+            ->selectRaw('SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_referrals')
+            ->selectRaw('SUM(referral_commission_amount) as total_commission')
+            ->selectRaw('SUM(CASE WHEN MONTH(created_at) = ? AND YEAR(created_at) = ? THEN referral_commission_amount ELSE 0 END) as this_month_commission', [now()->month, now()->year])
+            ->first();
+        
+        $subscriptionReferralEarnings = [
+            'total_referrals' => $subscriptionReferralStats->total_referrals ?? 0,
+            'active_referrals' => $subscriptionReferralStats->active_referrals ?? 0,
+            'total_commission' => $subscriptionReferralStats->total_commission ?? 0.00,
+            'this_month' => $subscriptionReferralStats->this_month_commission ?? 0.00,
+        ];
+        
+        // TOTAL OVERALL EARNINGS (sum of all 4 sources)
+        $totalOverallEarnings = 
+            $serviceRequestEarnings['total_approved'] + 
+            $patientRewardEarnings['total_amount'] + 
+            $staffReferralEarnings['total_amount'] + 
+            $subscriptionReferralEarnings['total_commission'];
+        
+        // Legacy earnings stats (for backward compatibility)
+        $earningsStats = [
+            'total_earnings' => $serviceRequestEarnings['total_approved'],
+            'pending_earnings' => $serviceRequestEarnings['pending_approval'],
+            'earnings_this_month' => $serviceRequestEarnings['this_month'],
+            'earnings_last_month' => 0, // Can be calculated if needed
+            'upcoming_earnings' => $serviceRequestEarnings['upcoming'],
+        ];
+
+        // Get recent data for display
+        $recentRewards = CaregiverReward::where('user_id', $user->id)->latest()->limit(5)->get();
         $referralService = app(ReferralService::class);
         $referralLink = $referralService->getReferralLink($user);
-        $referralStats = $referralService->getReferralStats($user);
         $recentReferrals = $referralService->getReferralHistory($user, 5);
+        $subscriptionReferralLink = route('plans.index', ['ref' => $user->id]);
         
-        return view('services::staff.dashboard', compact('assignedServices', 'stats', 'earningsStats', 'recentRewards', 'rewardSummary', 'referralLink', 'referralStats', 'recentReferrals'));
+        return view('services::staff.dashboard', compact(
+            'assignedServices', 
+            'stats', 
+            'earningsStats',
+            'serviceRequestEarnings',
+            'patientRewardEarnings',
+            'staffReferralEarnings',
+            'subscriptionReferralEarnings',
+            'totalOverallEarnings',
+            'recentRewards', 
+            'referralLink', 
+            'referralStats', 
+            'recentReferrals', 
+            'subscriptionReferralLink'
+        ));
     }
     
     /**
@@ -461,5 +492,75 @@ class StaffDashboardController extends Controller
             return redirect()->back()
                 ->with('error', 'Failed to reject booking. Please try again.');
         }
+    }
+    
+    /**
+     * Show patient rewards page (for submitting patient details)
+     */
+    public function rewards()
+    {
+        $user = Auth::user();
+        $rewardService = app(RewardService::class);
+        
+        $rewards = CaregiverReward::where('user_id', $user->id)
+            ->latest()
+            ->paginate(20);
+        
+        $totalPoints = $user->reward_points ?? 0;
+        $totalAmount = $rewardService->calculateRewardAmount($totalPoints);
+        
+        $stats = [
+            'total_submissions' => CaregiverReward::where('user_id', $user->id)->count(),
+            'total_points' => $totalPoints,
+            'total_amount' => $totalAmount,
+            'this_month' => CaregiverReward::where('user_id', $user->id)
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->sum('reward_amount'),
+        ];
+        
+        return view('services::staff.rewards.index', compact('rewards', 'stats', 'user'));
+    }
+    
+    /**
+     * Show staff referral program page
+     */
+    public function staffReferrals()
+    {
+        $user = Auth::user();
+        $referralService = app(ReferralService::class);
+        
+        $referralLink = $referralService->getReferralLink($user);
+        $referralStats = $referralService->getReferralStats($user);
+        $referrals = \App\Modules\Referrals\Models\Referral::where('referrer_id', $user->id)
+            ->with('referred')
+            ->latest()
+            ->paginate(20);
+        
+        return view('services::staff.staff-referrals.index', compact('referralLink', 'referralStats', 'referrals', 'user'));
+    }
+    
+    /**
+     * Show subscription referral program page
+     */
+    public function subscriptionReferrals()
+    {
+        $user = Auth::user();
+        
+        $subscriptionReferralLink = route('plans.index', ['ref' => $user->id]);
+        
+        $subscriptions = \App\Modules\Plans\Models\Subscription::where('referrer_id', $user->id)
+            ->with(['user', 'plan'])
+            ->latest()
+            ->paginate(20);
+        
+        $stats = \App\Modules\Plans\Models\Subscription::where('referrer_id', $user->id)
+            ->selectRaw('COUNT(*) as total_referrals')
+            ->selectRaw('SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_referrals')
+            ->selectRaw('SUM(referral_commission_amount) as total_commission')
+            ->selectRaw('SUM(CASE WHEN MONTH(created_at) = ? AND YEAR(created_at) = ? THEN referral_commission_amount ELSE 0 END) as this_month_commission', [now()->month, now()->year])
+            ->first();
+        
+        return view('services::staff.subscription-referrals.index', compact('subscriptionReferralLink', 'subscriptions', 'stats', 'user'));
     }
 }

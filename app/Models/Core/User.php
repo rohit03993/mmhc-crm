@@ -32,6 +32,8 @@ class User extends Authenticatable
         'is_active',
         'email_verified_at',
         'reward_points',
+        'upi_id',
+        'qr_code_path',
     ];
 
     /**
@@ -192,5 +194,13 @@ class User extends Authenticatable
     public function getRewardAmountAttribute(): float
     {
         return (float) ($this->reward_points ?? 0) * \App\Modules\Rewards\Services\RewardService::POINT_VALUE;
+    }
+
+    /**
+     * Get staff payments received
+     */
+    public function staffPayments()
+    {
+        return $this->hasMany(\App\Modules\Payments\Models\StaffPayment::class, 'staff_id');
     }
 }

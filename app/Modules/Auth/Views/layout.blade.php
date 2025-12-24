@@ -209,6 +209,7 @@
                                 </a>
                             </li>
                             
+                            @if(!auth()->user()->isAdmin())
                             <li class="nav-item">
                                 <a class="nav-link text-white {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.index') }}">
                                     <i class="fas fa-user me-2"></i>
@@ -222,6 +223,7 @@
                                     Documents
                                 </a>
                             </li>
+                            @endif
                             
                             @if(auth()->user()->isPatient())
                             <li class="nav-item">
@@ -248,13 +250,56 @@
                             
                             @if(auth()->user()->isStaff())
                             <li class="nav-item">
-                                <a class="nav-link text-white" href="{{ route('staff.dashboard') }}">
+                                <a class="nav-link text-white {{ request()->routeIs('staff.dashboard') ? 'active' : '' }}" href="{{ route('staff.dashboard') }}">
+                                    <i class="fas fa-tachometer-alt me-2"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('staff.assignments*') ? 'active' : '' }}" href="{{ route('staff.dashboard') }}#assignments">
                                     <i class="fas fa-tasks me-2"></i>
                                     My Assignments
                                 </a>
                             </li>
                             
                             <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('staff.rewards.*') ? 'active' : '' }}" href="{{ route('staff.rewards.index') }}">
+                                    <i class="fas fa-gift me-2"></i>
+                                    Patient Rewards
+                                </a>
+                            </li>
+                            
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('staff.staff-referrals.*') ? 'active' : '' }}" href="{{ route('staff.staff-referrals.index') }}">
+                                    <i class="fas fa-user-friends me-2"></i>
+                                    Staff Referrals
+                                </a>
+                            </li>
+                            
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('staff.subscription-referrals.*') ? 'active' : '' }}" href="{{ route('staff.subscription-referrals.index') }}">
+                                    <i class="fas fa-credit-card me-2"></i>
+                                    Subscription Referrals
+                                </a>
+                            </li>
+                            
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('staff.payments.*') ? 'active' : '' }}" href="{{ route('staff.payments.settings') }}">
+                                    <i class="fas fa-wallet me-2"></i>
+                                    Payment Settings
+                                </a>
+                            </li>
+                            
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('staff.payments.history') ? 'active' : '' }}" href="{{ route('staff.payments.history') }}">
+                                    <i class="fas fa-history me-2"></i>
+                                    Payment History
+                                </a>
+                            </li>
+                            
+                            <!-- Legacy route for backward compatibility -->
+                            <li class="nav-item d-none">
                                 <a class="nav-link text-white {{ request()->routeIs('rewards.*') ? 'active' : '' }}" href="{{ route('rewards.index') }}">
                                     <i class="fas fa-gift me-2"></i>
                                     Rewards & Points
@@ -303,14 +348,7 @@
                                 <li class="nav-item">
                                     <a class="nav-link text-white {{ request()->routeIs('admin.rewards.*') ? 'active' : '' }}" href="{{ route('admin.rewards.index') }}">
                                         <i class="fas fa-star me-2"></i>
-                                        Reward Submissions
-                                    </a>
-                                </li>
-                                
-                                <li class="nav-item">
-                                    <a class="nav-link text-white {{ request()->routeIs('admin.page-content*') ? 'active' : '' }}" href="{{ route('admin.page-content.index') }}">
-                                        <i class="fas fa-edit me-2"></i>
-                                        Edit Landing Page
+                                        Reward Submissions (Patient Details)
                                     </a>
                                 </li>
                                 
@@ -329,9 +367,16 @@
                                 </li>
                                 
                                 <li class="nav-item">
-                                    <a class="nav-link text-white {{ request()->routeIs('admin.service-requests*') ? 'active' : '' }}" href="{{ route('admin.service-requests') }}">
-                                        <i class="fas fa-user-md me-2"></i>
-                                        Service Requests
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.subscription-settings*') ? 'active' : '' }}" href="{{ route('admin.subscription-settings') }}">
+                                        <i class="fas fa-cog me-2"></i>
+                                        Subscription Settings
+                                    </a>
+                                </li>
+                                
+                                <li class="nav-item">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" href="{{ route('admin.payments.index') }}">
+                                        <i class="fas fa-money-bill-wave me-2"></i>
+                                        Staff Payments
                                     </a>
                                 </li>
                             @endif

@@ -75,6 +75,16 @@
                             </div>
                         </div>
                         @endif
+                        
+                        @if($subscription->referrer)
+                        <div class="referrer-info mt-3">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-user-md me-2"></i>
+                                <strong>Referred by:</strong> {{ $subscription->referrer->name }} 
+                                <span class="badge bg-success ms-2">{{ $subscription->referrer->isNurse() ? 'Nurse' : 'Caregiver' }}</span>
+                            </div>
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Dates -->
@@ -114,11 +124,34 @@
                         </h5>
                         
                         <div class="payment-instructions">
+                            <!-- Payment Breakdown -->
+                            <div class="payment-breakdown mb-3">
+                                <h6 class="mb-3"><i class="fas fa-calculator text-primary me-2"></i>Payment Breakdown</h6>
+                                <div class="breakdown-item">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Base Amount:</span>
+                                        <strong>₹{{ number_format($subscription->base_amount ?? $subscription->total_amount, 2) }}</strong>
+                                    </div>
+                                </div>
+                                <div class="breakdown-item">
+                                    <div class="d-flex justify-content-between">
+                                        <span>GST ({{ number_format($subscription->gst_rate ?? 18, 2) }}%):</span>
+                                        <strong>₹{{ number_format($subscription->gst_amount ?? 0, 2) }}</strong>
+                                    </div>
+                                </div>
+                                <div class="breakdown-item total-amount">
+                                    <div class="d-flex justify-content-between">
+                                        <span><strong>Total Amount:</strong></span>
+                                        <strong class="text-primary" style="font-size: 1.2em;">₹{{ number_format($subscription->total_amount, 2) }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="alert alert-info">
                                 <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Payment Instructions</h6>
                                 <ol class="mb-0 ps-3">
-                                    <li>Scan the QR code or copy the UPI ID below</li>
-                                    <li>Make payment of <strong>₹{{ number_format($subscription->total_amount, 0) }}</strong></li>
+                                    <li>Click on UPI ID below to open your payment app OR scan the QR code</li>
+                                    <li>Make payment of <strong>₹{{ number_format($subscription->total_amount, 2) }}</strong></li>
                                     <li>Upload payment screenshot OR enter transaction ID</li>
                                     <li>Admin will verify payment and activate your subscription</li>
                                 </ol>
@@ -131,23 +164,38 @@
                                         <div class="payment-method-card">
                                             <h6 class="mb-3"><i class="fas fa-qrcode me-2"></i>Scan QR Code</h6>
                                             <div class="qr-code-placeholder">
-                                                <i class="fas fa-qrcode fa-5x text-muted"></i>
-                                                <p class="text-muted small mt-2">QR Code will be displayed here</p>
+                                                @if(config('subscription.qr_code'))
+                                                    <img src="{{ asset('storage/' . config('subscription.qr_code')) }}" 
+                                                         alt="Payment QR Code" 
+                                                         class="img-fluid"
+                                                         style="max-width: 100%; height: auto; border-radius: 8px;">
+                                                @else
+                                                    <i class="fas fa-qrcode fa-5x text-muted"></i>
+                                                    <p class="text-muted small mt-2">QR Code not configured. Please contact admin.</p>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-12 col-md-6">
                                         <div class="payment-method-card">
-                                            <h6 class="mb-3"><i class="fas fa-copy me-2"></i>UPI ID</h6>
+                                            <h6 class="mb-3"><i class="fas fa-mobile-alt me-2"></i>UPI Payment</h6>
                                             <div class="upi-id-box">
                                                 <input type="text" 
                                                        id="upiId" 
-                                                       value="mmhc@paytm" 
+                                                       value="{{ config('subscription.upi_id', 'mmhc@paytm') }}" 
                                                        readonly 
                                                        class="form-control">
-                                                <button class="btn btn-primary w-100 mt-2" onclick="copyUPIId()">
-                                                    <i class="fas fa-copy me-2"></i>Copy UPI ID
-                                                </button>
+                                                <div class="d-flex gap-2 mt-2">
+                                                    <button type="button" class="btn btn-primary flex-fill" onclick="openUPI()">
+                                                        <i class="fas fa-external-link-alt me-2"></i>Pay with UPI
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-primary" onclick="copyUPIId()">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
+                                                <small class="text-muted d-block mt-2 text-center">
+                                                    Opens PhonePe, Paytm, or Google Pay
+                                                </small>
                                             </div>
                                         </div>
                                     </div>
@@ -408,6 +456,28 @@
     border-radius: 8px;
 }
 
+.payment-breakdown {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.breakdown-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.breakdown-item:last-child {
+    border-bottom: none;
+}
+
+.breakdown-item.total-amount {
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 2px solid #007bff;
+}
+
 @media (max-width: 768px) {
     .subscription-detail-card {
         padding: 16px;
@@ -421,24 +491,64 @@
 </style>
 
 <script>
+// UPI Deep Linking - Opens payment apps automatically
+function openUPI() {
+    const upiId = document.getElementById('upiId').value;
+    const amount = {{ $subscription->total_amount }};
+    const merchantName = '{{ config("subscription.upi_merchant_name", "MMHC") }}';
+    
+    // UPI deep link format: upi://pay?pa=UPI_ID&pn=MERCHANT&am=AMOUNT&cu=INR
+    const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(merchantName)}&am=${amount.toFixed(2)}&cu=INR`;
+    
+    // Try to open UPI app
+    window.location.href = upiLink;
+    
+    // Fallback: If UPI app doesn't open, show copy option
+    setTimeout(() => {
+        // If still on page after 1 second, UPI app might not be installed
+        // Show message to copy UPI ID manually
+        if (document.hasFocus()) {
+            copyUPIId();
+            alert('UPI app not found. UPI ID copied to clipboard. Please paste it in your payment app.');
+        }
+    }, 1000);
+}
+
 function copyUPIId() {
     const upiId = document.getElementById('upiId');
     upiId.select();
     upiId.setSelectionRange(0, 99999);
-    document.execCommand('copy');
     
-    // Show feedback
-    const btn = event.target.closest('button');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
-    btn.classList.add('btn-success');
-    btn.classList.remove('btn-primary');
-    
-    setTimeout(() => {
-        btn.innerHTML = originalText;
-        btn.classList.remove('btn-success');
-        btn.classList.add('btn-primary');
-    }, 2000);
+    // Use modern clipboard API if available
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(upiId.value).then(() => {
+            showCopyFeedback();
+        });
+    } else {
+        // Fallback for older browsers
+        document.execCommand('copy');
+        showCopyFeedback();
+    }
+}
+
+function showCopyFeedback() {
+    const btn = event?.target?.closest('button') || document.querySelector('button[onclick*="copyUPIId"]');
+    if (btn) {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-primary', 'btn-primary');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('btn-success');
+            if (btn.classList.contains('btn-outline-primary')) {
+                btn.classList.add('btn-outline-primary');
+            } else {
+                btn.classList.add('btn-primary');
+            }
+        }, 2000);
+    }
 }
 
 function switchTab(tab) {

@@ -16,12 +16,16 @@ class Referral extends Model
         'reward_points',
         'reward_amount',
         'completed_at',
+        'payment_processed',
+        'payment_processed_at',
     ];
 
     protected $casts = [
         'completed_at' => 'datetime',
+        'payment_processed_at' => 'datetime',
         'reward_points' => 'integer',
         'reward_amount' => 'decimal:2',
+        'payment_processed' => 'boolean',
     ];
 
     /**

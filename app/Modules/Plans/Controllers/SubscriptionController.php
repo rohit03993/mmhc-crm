@@ -40,6 +40,9 @@ class SubscriptionController extends Controller
             abort(403);
         }
         
+        // Load referrer relationship if exists
+        $subscription->load('referrer');
+        
         return view('plans::subscriptions.show', compact('subscription'));
     }
 
@@ -53,6 +56,7 @@ class SubscriptionController extends Controller
             'payment_frequency' => 'required|in:monthly,half_yearly,annually,full_payment',
             'auto_renew' => 'boolean',
             'notes' => 'nullable|string|max:500',
+            'referrer_id' => 'nullable|exists:users,id',
         ]);
 
         if ($validator->fails()) {
@@ -70,8 +74,22 @@ class SubscriptionController extends Controller
                 ->with('error', 'You already have an active subscription!');
         }
 
+        // Get referrer from request or query parameter (for referral links)
+        $referrerId = $request->referrer_id ?? $request->query('ref');
+        
+        // Validate referrer is a staff member (nurse or caregiver)
+        if ($referrerId) {
+            $referrer = \App\Models\Core\User::find($referrerId);
+            if (!$referrer || (!$referrer->isNurse() && !$referrer->isCaregiver())) {
+                $referrerId = null; // Invalid referrer, ignore it
+            }
+        }
+
         try {
-            $subscription = $this->subscriptionService->createSubscription($user, $plan, $request->all());
+            $data = $request->all();
+            $data['referrer_id'] = $referrerId;
+            
+            $subscription = $this->subscriptionService->createSubscription($user, $plan, $data);
 
             return redirect()->route('subscriptions.show', $subscription)
                 ->with('success', 'Subscription created successfully! Please complete the payment.');

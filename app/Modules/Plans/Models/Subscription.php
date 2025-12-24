@@ -13,12 +13,16 @@ class Subscription extends Model
     protected $fillable = [
         'user_id',
         'plan_id',
+        'referrer_id',
         'payment_frequency',
         'status',
         'start_date',
         'end_date',
         'care_benefits_years',
         'payable_years',
+        'base_amount',
+        'gst_amount',
+        'gst_rate',
         'total_amount',
         'paid_amount',
         'payment_status',
@@ -27,6 +31,10 @@ class Subscription extends Model
         'payment_notes',
         'payment_verified_by',
         'payment_verified_at',
+        'referral_commission_amount',
+        'referral_commission_rate',
+        'referral_payment_processed',
+        'referral_payment_processed_at',
         'auto_renew',
         'notes',
         'approved_by',
@@ -39,8 +47,15 @@ class Subscription extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'base_amount' => 'decimal:2',
+        'gst_amount' => 'decimal:2',
+        'gst_rate' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
+        'referral_commission_amount' => 'decimal:2',
+        'referral_commission_rate' => 'decimal:2',
+        'referral_payment_processed' => 'boolean',
+        'referral_payment_processed_at' => 'datetime',
         'auto_renew' => 'boolean',
         'approved_at' => 'datetime',
         'payment_verified_at' => 'datetime',
@@ -76,6 +91,14 @@ class Subscription extends Model
     public function paymentVerifiedBy()
     {
         return $this->belongsTo(User::class, 'payment_verified_by');
+    }
+
+    /**
+     * Get the staff member who referred this subscription.
+     */
+    public function referrer()
+    {
+        return $this->belongsTo(User::class, 'referrer_id');
     }
 
     /**

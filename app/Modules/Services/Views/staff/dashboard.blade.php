@@ -46,6 +46,39 @@
             alert('Failed to copy referral link. Please copy manually.');
         }
     }
+    
+    function copySubscriptionReferralLink() {
+        const referralLinkInput = document.getElementById('subscriptionReferralLink');
+        referralLinkInput.select();
+        referralLinkInput.setSelectionRange(0, 99999);
+        
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(referralLinkInput.value).then(() => {
+                    showCopySuccess(event.target.closest('button'), 'btn-outline-success');
+                });
+            } else {
+                document.execCommand('copy');
+                showCopySuccess(event.target.closest('button'), 'btn-outline-success');
+            }
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+            alert('Failed to copy subscription referral link. Please copy manually.');
+        }
+    }
+    
+    function showCopySuccess(button, originalClass) {
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.classList.remove(originalClass);
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.classList.remove('btn-success');
+            button.classList.add(originalClass);
+        }, 2000);
+    }
 </script>
 @endpush
 
@@ -154,295 +187,229 @@
         </div>
     </div>
 
-    <!-- Earnings Statistics - Redesigned -->
+    <!-- Total Overall Earnings - Top Banner -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="earnings-section-header mb-3">
-                <h4 class="earnings-section-title">
-                    <i class="fas fa-wallet me-2"></i>Earnings Overview
-                </h4>
-                <p class="earnings-section-subtitle">Track your earnings and payments</p>
-            </div>
-            <div class="row g-3">
-                <div class="col-6 col-md-3">
-                    <div class="earnings-card-modern earnings-card-approved">
-                        <div class="earnings-card-icon-wrapper">
-                            <div class="earnings-card-icon">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                        </div>
-                        <div class="earnings-card-content">
-                            <div class="earnings-card-label">Total Earnings</div>
-                            <div class="earnings-card-value">₹{{ number_format($earningsStats['total_earnings'], 2) }}</div>
-                            <div class="earnings-card-badge">Approved & Paid</div>
-                        </div>
+            <div class="total-earnings-banner">
+                <div class="total-earnings-content">
+                    <div class="total-earnings-icon">
+                        <i class="fas fa-wallet"></i>
                     </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="earnings-card-modern earnings-card-pending">
-                        <div class="earnings-card-icon-wrapper">
-                            <div class="earnings-card-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                        </div>
-                        <div class="earnings-card-content">
-                            <div class="earnings-card-label">Pending Approval</div>
-                            <div class="earnings-card-value">₹{{ number_format($earningsStats['pending_earnings'], 2) }}</div>
-                            <div class="earnings-card-badge">Awaiting Admin</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="earnings-card-modern earnings-card-upcoming">
-                        <div class="earnings-card-icon-wrapper">
-                            <div class="earnings-card-icon">
-                                <i class="fas fa-calendar-check"></i>
-                            </div>
-                        </div>
-                        <div class="earnings-card-content">
-                            <div class="earnings-card-label">Upcoming</div>
-                            <div class="earnings-card-value">₹{{ number_format($earningsStats['upcoming_earnings'], 2) }}</div>
-                            <div class="earnings-card-badge">In Progress</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="earnings-card-modern earnings-card-month">
-                        <div class="earnings-card-icon-wrapper">
-                            <div class="earnings-card-icon">
-                                <i class="fas fa-calendar-alt"></i>
-                            </div>
-                        </div>
-                        <div class="earnings-card-content">
-                            <div class="earnings-card-label">This Month</div>
-                            <div class="earnings-card-value">₹{{ number_format($earningsStats['earnings_this_month'], 2) }}</div>
-                            <div class="earnings-card-badge">
-                                @if($earningsStats['earnings_last_month'] > 0)
-                                    {{ $earningsStats['earnings_this_month'] > $earningsStats['earnings_last_month'] ? '↑' : '↓' }} 
-                                    vs Last Month
-                                @else
-                                    Current Period
-                                @endif
-                            </div>
-                        </div>
+                    <div class="total-earnings-text">
+                        <div class="total-earnings-label">Total Overall Earnings</div>
+                        <div class="total-earnings-value">₹{{ number_format($totalOverallEarnings, 2) }}</div>
+                        <div class="total-earnings-subtitle">From all income sources combined</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Actions Bar -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="modern-card">
-                <div class="modern-card-body p-3">
-                    <div class="d-flex flex-wrap gap-2 justify-content-center">
-                        <a href="{{ route('rewards.create') }}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-plus-circle me-2"></i>Add Patient Details
-                        </a>
-                        <a href="{{ route('rewards.index') }}" class="btn btn-outline-warning btn-lg">
-                            <i class="fas fa-gift me-2"></i>View All Rewards
-                        </a>
-                        <a href="{{ route('profile.edit') }}" class="btn btn-outline-primary btn-lg">
-                            <i class="fas fa-user-edit me-2"></i>Update Profile
-                        </a>
-                        <a href="{{ route('documents.index') }}" class="btn btn-outline-secondary btn-lg">
-                            <i class="fas fa-file-alt me-2"></i>My Documents
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Rewards Summary -->
+    <!-- Four Earnings Sources - Card Layout -->
     <div class="row g-3 mb-4">
-        <div class="col-12 col-lg-4">
-            <div class="reward-card-modern h-100">
-                <div class="reward-card-header-modern">
-                    <div class="reward-icon-large">
+        <!-- 1. Service Request Earnings -->
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="earnings-source-card earnings-service">
+                <div class="earnings-source-header">
+                    <div class="earnings-source-icon">
+                        <i class="fas fa-briefcase-medical"></i>
+                    </div>
+                    <h6 class="earnings-source-title">Service Requests</h6>
+                </div>
+                <div class="earnings-source-body">
+                    <div class="earnings-source-main">
+                        <div class="earnings-source-amount">₹{{ number_format($serviceRequestEarnings['total_approved'], 2) }}</div>
+                        <div class="earnings-source-label">Approved & Paid</div>
+                    </div>
+                    <div class="earnings-source-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Pending:</span>
+                            <span class="detail-value">₹{{ number_format($serviceRequestEarnings['pending_approval'], 2) }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Upcoming:</span>
+                            <span class="detail-value">₹{{ number_format($serviceRequestEarnings['upcoming'], 2) }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">This Month:</span>
+                            <span class="detail-value text-success">₹{{ number_format($serviceRequestEarnings['this_month'], 2) }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Total Services:</span>
+                            <span class="detail-value">{{ $serviceRequestEarnings['total_count'] }}</span>
+                        </div>
+                    </div>
+                    <a href="#assignments" class="btn btn-sm btn-outline-primary w-100 mt-2">
+                        <i class="fas fa-eye me-1"></i>View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Patient Reward Earnings -->
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="earnings-source-card earnings-reward">
+                <div class="earnings-source-header">
+                    <div class="earnings-source-icon">
                         <i class="fas fa-gift"></i>
                     </div>
-                    <h5 class="reward-title-modern mb-0">My Reward Wallet</h5>
+                    <h6 class="earnings-source-title">Patient Rewards</h6>
                 </div>
-                <div class="reward-card-body-modern">
-                    <div class="reward-stats-modern">
-                        <div class="reward-stat-item">
-                            <div class="reward-stat-value">{{ number_format($rewardSummary['points']) }}</div>
-                            <div class="reward-stat-label">Points Earned</div>
+                <div class="earnings-source-body">
+                    <div class="earnings-source-main">
+                        <div class="earnings-source-amount">₹{{ number_format($patientRewardEarnings['total_amount'], 2) }}</div>
+                        <div class="earnings-source-label">{{ number_format($patientRewardEarnings['total_points']) }} Points</div>
+                    </div>
+                    <div class="earnings-source-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Submissions:</span>
+                            <span class="detail-value">{{ $patientRewardEarnings['total_submissions'] }}</span>
                         </div>
-                        <div class="reward-stat-divider"></div>
-                        <div class="reward-stat-item">
-                            <div class="reward-stat-value text-success">₹{{ number_format($rewardSummary['amount'], 2) }}</div>
-                            <div class="reward-stat-label">Reward Value</div>
+                        <div class="detail-item">
+                            <span class="detail-label">Points:</span>
+                            <span class="detail-value">{{ number_format($patientRewardEarnings['total_points']) }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">This Month:</span>
+                            <span class="detail-value text-success">₹{{ number_format($patientRewardEarnings['this_month'], 2) }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Rate:</span>
+                            <span class="detail-value">1 pt = ₹10</span>
                         </div>
                     </div>
-                    <div class="reward-action-section">
-                        <a href="{{ route('rewards.create') }}" class="btn btn-warning w-100">
-                            <i class="fas fa-plus-circle me-2"></i>Add Patient Details
-                        </a>
-                        <small class="text-muted d-block mt-2 text-center">
-                            <i class="fas fa-info-circle me-1"></i>Earn 1 point (₹10) per submission
-                        </small>
-                    </div>
+                    <a href="{{ route('staff.rewards.index') }}" class="btn btn-sm btn-outline-warning w-100 mt-2">
+                        <i class="fas fa-eye me-1"></i>View Details
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-lg-8">
-            <div class="reward-card shadow-sm border-0 h-100">
-                <div class="reward-card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="reward-title mb-0">
-                            <i class="fas fa-list me-2 text-primary"></i>Recent Reward Entries
-                        </h5>
-                        <a href="{{ route('rewards.index') }}" class="btn btn-outline-secondary btn-sm">
-                            View All
-                        </a>
+
+        <!-- 3. Staff Referral Earnings -->
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="earnings-source-card earnings-staff-ref">
+                <div class="earnings-source-header">
+                    <div class="earnings-source-icon">
+                        <i class="fas fa-user-friends"></i>
                     </div>
-                    @if($recentRewards->count())
-                        <div class="reward-list">
-                            @foreach($recentRewards as $reward)
-                                <div class="reward-item">
-                                    <div>
-                                        <div class="reward-item-title">{{ $reward->patient_name }}</div>
-                                        <div class="text-muted small">
-                                            @if($reward->patient_age)
-                                                Age: {{ $reward->patient_age }} &middot;
-                                            @endif
-                                            {{ $reward->hospital_name }} &middot; {{ $reward->patient_phone }}
-                                            @if($reward->patient_pincode)
-                                                &middot; PIN: {{ $reward->patient_pincode }}
-                                            @endif
-                                        </div>
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="badge bg-success">
-                                            +{{ $reward->reward_points }} pts
-                                        </span>
-                                        <div class="text-muted small">
-                                            {{ $reward->created_at->diffForHumans() }}
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
+                    <h6 class="earnings-source-title">Staff Referrals</h6>
+                </div>
+                <div class="earnings-source-body">
+                    <div class="earnings-source-main">
+                        <div class="earnings-source-amount">₹{{ number_format($staffReferralEarnings['total_amount'], 2) }}</div>
+                        <div class="earnings-source-label">{{ $staffReferralEarnings['total_referrals'] }} Referrals</div>
+                    </div>
+                    <div class="earnings-source-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Completed:</span>
+                            <span class="detail-value">{{ $staffReferralEarnings['total_referrals'] }}</span>
                         </div>
-                    @else
-                        <div class="empty-state text-center py-4">
-                            <div class="empty-state-icon mb-3">
-                                <i class="fas fa-gift"></i>
-                            </div>
-                            <p class="text-muted mb-0">No reward entries yet. Add patient details to earn rewards.</p>
+                        <div class="detail-item">
+                            <span class="detail-label">Points:</span>
+                            <span class="detail-value">{{ $staffReferralEarnings['total_points'] }}</span>
                         </div>
-                    @endif
+                        <div class="detail-item">
+                            <span class="detail-label">This Month:</span>
+                            <span class="detail-value text-success">₹{{ number_format($staffReferralEarnings['this_month'], 2) }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Rate:</span>
+                            <span class="detail-value">1 ref = ₹10</span>
+                        </div>
+                    </div>
+                    <a href="{{ route('staff.staff-referrals.index') }}" class="btn btn-sm btn-outline-info w-100 mt-2">
+                        <i class="fas fa-eye me-1"></i>View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Subscription Referral Earnings -->
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="earnings-source-card earnings-sub-ref">
+                <div class="earnings-source-header">
+                    <div class="earnings-source-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <h6 class="earnings-source-title">Subscription Referrals</h6>
+                </div>
+                <div class="earnings-source-body">
+                    <div class="earnings-source-main">
+                        <div class="earnings-source-amount">₹{{ number_format($subscriptionReferralEarnings['total_commission'], 2) }}</div>
+                        <div class="earnings-source-label">{{ $subscriptionReferralEarnings['total_referrals'] }} Subscriptions</div>
+                    </div>
+                    <div class="earnings-source-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Total:</span>
+                            <span class="detail-value">{{ $subscriptionReferralEarnings['total_referrals'] }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Active:</span>
+                            <span class="detail-value text-success">{{ $subscriptionReferralEarnings['active_referrals'] }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">This Month:</span>
+                            <span class="detail-value text-success">₹{{ number_format($subscriptionReferralEarnings['this_month'], 2) }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Commission:</span>
+                            <span class="detail-value">{{ config('subscription.referral_commission_rate', 5) }}%</span>
+                        </div>
+                    </div>
+                    <a href="{{ route('staff.subscription-referrals.index') }}" class="btn btn-sm btn-outline-success w-100 mt-2">
+                        <i class="fas fa-eye me-1"></i>View Details
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Referral Section -->
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-lg-6">
-            <div class="reward-card shadow-sm border-0 h-100">
-                <div class="reward-card-body">
-                    <h5 class="reward-title">
-                        <i class="fas fa-share-alt me-2 text-info"></i>Referral Program
-                    </h5>
-                    <p class="text-muted small mb-3">Share your referral link with nurses and caregivers to earn rewards!</p>
-                    
-                    <!-- Referral Link -->
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Your Referral Link:</label>
-                        <div class="input-group">
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="referralLink" 
-                                   value="{{ $referralLink }}" 
-                                   readonly>
-                            <button class="btn btn-outline-primary" 
-                                    type="button" 
-                                    onclick="copyReferralLink()">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                        </div>
-                        <small class="text-muted d-block mt-1">
-                            <i class="fas fa-info-circle me-1"></i>Earn 1 point (₹10) for each successful referral
-                        </small>
-                    </div>
 
-                    <!-- Referral Stats -->
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <div class="text-center p-2 bg-light rounded">
-                                <div class="fw-bold text-primary">{{ $referralStats['completed_referrals'] }}</div>
-                                <div class="small text-muted">Completed</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-center p-2 bg-light rounded">
-                                <div class="fw-bold text-success">₹{{ number_format($referralStats['total_reward_amount'], 2) }}</div>
-                                <div class="small text-muted">Earned</div>
-                            </div>
-                        </div>
-                    </div>
+    <!-- Quick Links to Detailed Sections -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+            <a href="{{ route('staff.rewards.index') }}" class="quick-link-card">
+                <div class="quick-link-icon bg-warning">
+                    <i class="fas fa-gift"></i>
                 </div>
-            </div>
+                <div class="quick-link-content">
+                    <h6>Patient Rewards</h6>
+                    <p class="mb-0">Submit patient details & earn points</p>
+                    <small class="text-muted">{{ $patientRewardEarnings['total_submissions'] }} submissions</small>
+                </div>
+                <i class="fas fa-chevron-right quick-link-arrow"></i>
+            </a>
         </div>
-        
-        <div class="col-12 col-lg-6">
-            <div class="reward-card shadow-sm border-0 h-100">
-                <div class="reward-card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="reward-title mb-0">
-                            <i class="fas fa-users me-2 text-success"></i>Recent Referrals
-                        </h5>
-                    </div>
-                    @if($recentReferrals->count())
-                        <div class="reward-list">
-                            @foreach($recentReferrals as $referral)
-                                <div class="reward-item">
-                                    <div>
-                                        <div class="reward-item-title">
-                                            @if($referral->referred)
-                                                {{ $referral->referred->name }}
-                                            @else
-                                                Pending Registration
-                                            @endif
-                                        </div>
-                                        <div class="text-muted small">
-                                            Code: {{ $referral->referral_code }} &middot; 
-                                            Status: 
-                                            <span class="badge bg-{{ $referral->status === 'completed' ? 'success' : ($referral->status === 'pending' ? 'warning' : 'secondary') }}">
-                                                {{ ucfirst($referral->status) }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="text-end">
-                                        @if($referral->status === 'completed')
-                                            <span class="badge bg-success">
-                                                +{{ $referral->reward_points }} pts
-                                            </span>
-                                        @endif
-                                        <div class="text-muted small">
-                                            {{ $referral->created_at->diffForHumans() }}
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="empty-state text-center py-4">
-                            <div class="empty-state-icon mb-3">
-                                <i class="fas fa-share-alt"></i>
-                            </div>
-                            <p class="text-muted mb-0">No referrals yet. Share your link to earn rewards!</p>
-                        </div>
-                    @endif
+        <div class="col-12 col-md-4">
+            <a href="{{ route('staff.staff-referrals.index') }}" class="quick-link-card">
+                <div class="quick-link-icon bg-info">
+                    <i class="fas fa-user-friends"></i>
                 </div>
-            </div>
+                <div class="quick-link-content">
+                    <h6>Staff Referrals</h6>
+                    <p class="mb-0">Refer nurses & caregivers</p>
+                    <small class="text-muted">{{ $staffReferralEarnings['total_referrals'] }} referrals</small>
+                </div>
+                <i class="fas fa-chevron-right quick-link-arrow"></i>
+            </a>
+        </div>
+        <div class="col-12 col-md-4">
+            <a href="{{ route('staff.subscription-referrals.index') }}" class="quick-link-card">
+                <div class="quick-link-icon bg-success">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="quick-link-content">
+                    <h6>Subscription Referrals</h6>
+                    <p class="mb-0">Refer patients to subscribe</p>
+                    <small class="text-muted">{{ $subscriptionReferralEarnings['total_referrals'] }} subscriptions</small>
+                </div>
+                <i class="fas fa-chevron-right quick-link-arrow"></i>
+            </a>
         </div>
     </div>
 
     <!-- Assigned Services Section -->
+    <div id="assignments">
     <div class="row">
         <div class="col-12">
             <div class="services-section-header mb-3">
@@ -1750,6 +1717,285 @@
     font-weight: 500;
 }
 
+/* Total Earnings Banner */
+.total-earnings-banner {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+    color: white;
+    margin-bottom: 1.5rem;
+}
+
+.total-earnings-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.total-earnings-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.total-earnings-text {
+    flex: 1;
+}
+
+.total-earnings-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.total-earnings-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+}
+
+.total-earnings-subtitle {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+/* Earnings Source Cards */
+.earnings-source-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid transparent;
+}
+
+.earnings-source-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.earnings-source-header {
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.earnings-source-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.earnings-source-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #212529;
+}
+
+.earnings-source-body {
+    padding: 1.25rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.earnings-source-main {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.earnings-source-amount {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+}
+
+.earnings-source-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.earnings-source-details {
+    flex: 1;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.detail-value {
+    color: #212529;
+    font-weight: 600;
+}
+
+/* Color Themes for Each Card */
+.earnings-service .earnings-source-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.earnings-service {
+    border-top: 4px solid #667eea;
+}
+
+.earnings-reward .earnings-source-icon {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.earnings-reward {
+    border-top: 4px solid #f5576c;
+}
+
+.earnings-staff-ref .earnings-source-icon {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.earnings-staff-ref {
+    border-top: 4px solid #4facfe;
+}
+
+.earnings-sub-ref .earnings-source-icon {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+    .earnings-sub-ref {
+        border-top: 4px solid #43e97b;
+    }
+
+    /* Quick Link Cards */
+    .quick-link-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: white;
+        border-radius: 16px;
+        padding: 1.25rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .quick-link-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-color: #667eea;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .quick-link-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .quick-link-content {
+        flex: 1;
+    }
+
+    .quick-link-content h6 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #212529;
+    }
+
+    .quick-link-content p {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+
+    .quick-link-content small {
+        font-size: 0.75rem;
+    }
+
+    .quick-link-arrow {
+        color: #6c757d;
+        font-size: 1.25rem;
+        transition: transform 0.3s ease;
+    }
+
+    .quick-link-card:hover .quick-link-arrow {
+        transform: translateX(5px);
+    }
+
+@media (max-width: 768px) {
+    .total-earnings-banner {
+        padding: 1.5rem;
+    }
+    
+    .total-earnings-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .total-earnings-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+    
+    .total-earnings-value {
+        font-size: 2rem;
+    }
+    
+    .earnings-source-card {
+        margin-bottom: 1rem;
+    }
+    
+    .earnings-source-amount {
+        font-size: 1.5rem;
+    }
+}
+
 @media (max-width: 576px) {
     .staff-avatar-large {
         width: 50px;
@@ -1772,6 +2018,27 @@
     .earnings-stat-card {
         padding: 1rem;
     }
+    
+    .total-earnings-banner {
+        padding: 1.25rem;
+    }
+    
+    .total-earnings-value {
+        font-size: 1.75rem;
+    }
+    
+    .earnings-source-header {
+        padding: 1rem;
+    }
+    
+    .earnings-source-body {
+        padding: 1rem;
+    }
+    
+    .earnings-source-amount {
+        font-size: 1.35rem;
+    }
+}
     
     .earnings-icon {
         width: 40px;

@@ -289,12 +289,15 @@ class ServiceController extends Controller
                 'payment_status' => $hasActiveSubscription ? 'paid' : 'pending', // Mark as paid if subscribed
                 'status' => 'pending_approval', // Staff needs to accept
                 'assigned_at' => now(),
-                'notes' => $request->notes . ($hasActiveSubscription ? ' [FREE - Covered by Subscription]' : ''),
-                'special_requirements' => $request->special_requirements,
+                'notes' => ($request->notes ?? '') . ($hasActiveSubscription ? ' [FREE - Covered by Subscription]' : ''),
+                'special_requirements' => $request->special_requirements ?? null,
                 'location' => $request->location,
                 'contact_person' => $request->contact_person,
                 'contact_phone' => $request->contact_phone,
             ]);
+
+            // Refresh to ensure relationships can be loaded
+            $serviceRequest->refresh();
 
             // Create daily service records
             $this->createDailyServiceRecords($serviceRequest);
@@ -310,14 +313,25 @@ class ServiceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Direct booking failed: ' . $e->getMessage(), [
+            
+            // Log detailed error for debugging
+            Log::error('Direct booking failed', [
                 'staff_id' => $staff->id,
                 'patient_id' => Auth::id(),
-                'error' => $e->getTraceAsString()
+                'service_type_id' => $request->service_type_id ?? null,
+                'error_message' => $e->getMessage(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'error_trace' => $e->getTraceAsString()
             ]);
 
+            // Show more helpful error message in development, generic in production
+            $errorMessage = config('app.debug') 
+                ? 'Failed to create booking: ' . $e->getMessage()
+                : 'Failed to create booking. Please try again. If the problem persists, contact support.';
+
             return redirect()->back()
-                ->with('error', 'Failed to create booking. Please try again.')
+                ->with('error', $errorMessage)
                 ->withInput();
         }
     }
@@ -612,10 +626,8 @@ class ServiceController extends Controller
             }
 
             // Set status based on service request status
-            $dailyStatus = 'scheduled';
-            if ($serviceRequest->status === 'pending_approval') {
-                $dailyStatus = 'pending'; // Wait for staff approval
-            }
+            // Note: daily_services status enum only allows: scheduled, in_progress, completed, cancelled
+            $dailyStatus = 'scheduled'; // Use 'scheduled' for pending_approval requests
 
             DailyService::create([
                 'service_request_id' => $serviceRequest->id,

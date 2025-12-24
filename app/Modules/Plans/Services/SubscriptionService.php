@@ -37,20 +37,49 @@ class SubscriptionService
             $endDate = $startDate->copy()->addYears($totalYears);
         }
 
-        $totalAmount = $selectedOption['price'] ?? $plan->monthly_price ?? $plan->price;
+        // Base amount (before GST)
+        $baseAmount = $selectedOption['price'] ?? $plan->monthly_price ?? $plan->price;
+        
+        // Calculate GST (18% on base amount)
+        $gstRate = (float) config('subscription.gst_rate', 18.00);
+        $gstAmount = ($baseAmount * $gstRate) / 100;
+        
+        // Total amount (base + GST)
+        $totalAmount = $baseAmount + $gstAmount;
+        
+        // Get referral commission rate (default 5%, editable by admin)
+        $commissionRate = (float) config('subscription.referral_commission_rate', 5.00);
+        $referrerId = $data['referrer_id'] ?? null;
+        $commissionAmount = 0.00;
+        
+        // Calculate commission if referrer exists
+        if ($referrerId) {
+            $referrer = \App\Models\Core\User::find($referrerId);
+            if ($referrer && ($referrer->isNurse() || $referrer->isCaregiver())) {
+                $commissionAmount = ($baseAmount * $commissionRate) / 100;
+            } else {
+                $referrerId = null; // Invalid referrer
+            }
+        }
 
         return Subscription::create([
             'user_id' => $user->id,
             'plan_id' => $plan->id,
+            'referrer_id' => $referrerId,
             'payment_frequency' => $paymentFrequency,
             'status' => 'pending',
             'start_date' => $startDate,
             'end_date' => $endDate,
             'care_benefits_years' => $careBenefitsYears,
             'payable_years' => $payableYears,
+            'base_amount' => $baseAmount,
+            'gst_amount' => $gstAmount,
+            'gst_rate' => $gstRate,
             'total_amount' => $totalAmount,
             'paid_amount' => 0.00,
             'payment_status' => 'pending',
+            'referral_commission_amount' => $commissionAmount,
+            'referral_commission_rate' => $commissionRate,
             'auto_renew' => $data['auto_renew'] ?? false,
             'notes' => $data['notes'] ?? null,
         ]);

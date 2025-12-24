@@ -38,6 +38,8 @@ class ServiceRequest extends Model
         'admin_approved_at',
         'approved_by',
         'payment_processed_at',
+        'staff_payment_processed',
+        'staff_payment_processed_at',
     ];
 
     protected $casts = [
@@ -50,6 +52,8 @@ class ServiceRequest extends Model
         'completed_at' => 'datetime',
         'admin_approved_at' => 'datetime',
         'payment_processed_at' => 'datetime',
+        'staff_payment_processed_at' => 'datetime',
+        'staff_payment_processed' => 'boolean',
         'total_amount' => 'decimal:2',
         'total_staff_payout' => 'decimal:2',
         'prepaid_amount' => 'decimal:2',

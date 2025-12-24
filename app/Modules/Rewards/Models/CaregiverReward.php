@@ -18,6 +18,8 @@ class CaregiverReward extends Model
         'treatment_details',
         'reward_points',
         'reward_amount',
+        'payment_processed',
+        'payment_processed_at',
     ];
 
     public function user(): BelongsTo

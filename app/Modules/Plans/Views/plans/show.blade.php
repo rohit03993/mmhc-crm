@@ -66,6 +66,9 @@
                             <form action="{{ route('subscriptions.subscribe') }}" method="POST" id="subscribeForm">
                                 @csrf
                                 <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                                @if(request()->has('ref'))
+                                <input type="hidden" name="referrer_id" value="{{ request()->query('ref') }}">
+                                @endif
                                 
                                 <div class="payment-options-grid">
                                     @if(isset($plan->payment_options))

@@ -54,6 +54,18 @@ Route::middleware(['auth'])->group(function () {
             // Staff booking acceptance/rejection (One-Way Booking)
             Route::post('/booking/{serviceRequest}/accept', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'acceptBooking'])->name('booking.accept');
             Route::post('/booking/{serviceRequest}/reject', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'rejectBooking'])->name('booking.reject');
+            
+            // Staff Earnings & Referral Routes (these will be under staff.* prefix from parent)
+            Route::get('/rewards', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'rewards'])->name('rewards.index');
+            Route::get('/staff-referrals', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'staffReferrals'])->name('staff-referrals.index');
+            Route::get('/subscription-referrals', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'subscriptionReferrals'])->name('subscription-referrals.index');
+            
+            // Staff Payment Routes
+            Route::prefix('payments')->name('payments.')->group(function () {
+                Route::get('/settings', [\App\Modules\Payments\Controllers\StaffPaymentController::class, 'settings'])->name('settings');
+                Route::post('/settings', [\App\Modules\Payments\Controllers\StaffPaymentController::class, 'updateSettings'])->name('settings.update');
+                Route::get('/history', [\App\Modules\Payments\Controllers\StaffPaymentController::class, 'history'])->name('history');
+            });
         });
     });
 });
@@ -142,5 +154,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/plans/{plan}/edit', [\App\Modules\Plans\Controllers\PlanController::class, 'edit'])->name('plans.edit');
         Route::put('/plans/{plan}', [\App\Modules\Plans\Controllers\PlanController::class, 'update'])->name('plans.update');
         Route::delete('/plans/{plan}', [\App\Modules\Plans\Controllers\PlanController::class, 'destroy'])->name('plans.destroy');
+        
+        // Subscription Settings Routes
+        Route::get('/subscription-settings', [\App\Modules\Plans\Controllers\SubscriptionSettingsController::class, 'index'])->name('subscription-settings');
+        Route::put('/subscription-settings', [\App\Modules\Plans\Controllers\SubscriptionSettingsController::class, 'update'])->name('subscription-settings.update');
+        
+        // Staff Payment Management Routes
+        Route::prefix('payments')->name('payments.')->group(function () {
+            Route::get('/', [\App\Modules\Payments\Controllers\AdminPaymentController::class, 'index'])->name('index');
+            Route::get('/staff/{staff}/form', [\App\Modules\Payments\Controllers\AdminPaymentController::class, 'showPaymentForm'])->name('form');
+            Route::post('/staff/{staff}/process', [\App\Modules\Payments\Controllers\AdminPaymentController::class, 'processPayment'])->name('process');
+        });
     });
 });
