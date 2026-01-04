@@ -57,12 +57,80 @@
                     
                     @auth
                         @if(auth()->user()->isPatient())
-                            @if(auth()->user()->hasActiveSubscription())
-                            <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                You already have an active subscription. You can subscribe to a new plan after your current subscription expires.
+                            @php
+                                $activeSubscription = auth()->user()->activeSubscription;
+                            @endphp
+                            @if($activeSubscription)
+                            <div class="alert alert-info mb-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>Current Subscription:</strong> {{ $activeSubscription->plan->name }}
+                                        <br>
+                                        <small>Expires: {{ $activeSubscription->end_date->format('M d, Y') }} ({{ $activeSubscription->days_remaining }} days remaining)</small>
+                                    </div>
+                                    <a href="{{ route('subscriptions.show', $activeSubscription) }}" class="btn btn-sm btn-outline-primary">
+                                        View Details
+                                    </a>
+                                </div>
                             </div>
-                            @else
+                            <div class="alert alert-warning mb-3">
+                                <i class="fas fa-sync-alt me-2"></i>
+                                <strong>Upgrade/Downgrade Available:</strong> You can upgrade or downgrade your plan. Prorated refund will be applied for remaining days.
+                            </div>
+                            @endif
+                            
+                            @if($activeSubscription)
+                            <form action="{{ route('subscriptions.subscribe') }}" method="POST" id="subscribeForm">
+                                @csrf
+                                <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                                <input type="hidden" name="upgrade" value="1">
+                                @if(request()->has('ref'))
+                                <input type="hidden" name="referrer_id" value="{{ request()->query('ref') }}">
+                                @endif
+                                
+                                <div class="payment-options-grid">
+                                    @if(isset($plan->payment_options))
+                                        @foreach($plan->payment_options as $frequency => $option)
+                                        <label class="payment-option-card">
+                                            <input type="radio" name="payment_frequency" value="{{ $frequency }}" 
+                                                   {{ $loop->first ? 'checked' : '' }} required>
+                                            <div class="payment-option-content">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <div>
+                                                        <strong class="option-label">{{ $option['label'] ?? ucfirst(str_replace('_', ' ', $frequency)) }}</strong>
+                                                        <p class="option-description small mb-0">{{ $option['description'] ?? '' }}</p>
+                                                    </div>
+                                                    <span class="option-price">₹{{ number_format($option['price'] ?? 0, 0) }}</span>
+                                                </div>
+                                                @if(isset($option['payable_years']) && isset($option['care_benefits_years']))
+                                                <div class="option-benefits">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-calendar me-1"></i>
+                                                        {{ $option['payable_years'] }} years payable + {{ $option['care_benefits_years'] }} years extra = {{ $option['payable_years'] + $option['care_benefits_years'] }} years total
+                                                    </small>
+                                                </div>
+                                                @endif
+                                            </div>
+                                        </label>
+                                        @endforeach
+                                    @endif
+                                </div>
+
+                                <div class="form-group mt-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="auto_renew" id="auto_renew" value="1">
+                                        <label class="form-check-label" for="auto_renew">
+                                            Auto-renew subscription
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-lg w-100 mt-4">
+                                    <i class="fas fa-sync-alt me-2"></i>Upgrade/Downgrade Plan
+                                </button>
+                            </form>
+                            @elseif(!$activeSubscription)
                             <form action="{{ route('subscriptions.subscribe') }}" method="POST" id="subscribeForm">
                                 @csrf
                                 <input type="hidden" name="plan_id" value="{{ $plan->id }}">

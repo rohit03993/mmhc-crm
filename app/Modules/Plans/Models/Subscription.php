@@ -178,4 +178,45 @@ class Subscription extends Model
                     ->orderBy('created_at', 'desc')
                     ->first();
     }
+
+    /**
+     * Get days remaining in subscription
+     */
+    public function getDaysRemainingAttribute()
+    {
+        if (!$this->end_date) {
+            return 0;
+        }
+        
+        $days = now()->diffInDays($this->end_date, false);
+        return max(0, $days);
+    }
+
+    /**
+     * Get status color for badges
+     */
+    public function getStatusColorAttribute()
+    {
+        return match($this->status) {
+            'active' => 'success',
+            'pending' => 'warning',
+            'expired' => 'danger',
+            'cancelled' => 'secondary',
+            default => 'secondary',
+        };
+    }
+
+    /**
+     * Get human-readable status display
+     */
+    public function getStatusDisplayAttribute()
+    {
+        return match($this->status) {
+            'active' => 'Active',
+            'pending' => 'Pending',
+            'expired' => 'Expired',
+            'cancelled' => 'Cancelled',
+            default => ucfirst($this->status ?? 'Unknown'),
+        };
+    }
 }

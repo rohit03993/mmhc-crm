@@ -98,14 +98,21 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{plan}', [\App\Modules\Plans\Controllers\PlanController::class, 'show'])->name('show');
     });
     
+    // MANUALLY REGISTER SUBSCRIPTIONS ROUTES TO ENSURE THEY WORK
     Route::prefix('subscriptions')->name('subscriptions.')->group(function () {
         Route::get('/', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'index'])->name('index');
         Route::post('/subscribe', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'subscribe'])->name('subscribe');
-        Route::get('/{subscription}', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'show'])->name('show');
+        Route::get('/payment-screenshot/{id}', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'viewPaymentScreenshot'])->name('payment-screenshot')->where('id', '[0-9]+');
+        Route::get('/{subscription}/payment-confirmation', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'showPaymentConfirmation'])->name('payment-confirmation');
         Route::post('/{subscription}/submit-payment', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'submitPayment'])->name('submit-payment');
+        Route::delete('/{subscription}', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'destroy'])->name('destroy');
         Route::post('/{subscription}/cancel', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'cancel'])->name('cancel');
         Route::post('/{subscription}/renew', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'renew'])->name('renew');
+        Route::get('/{subscriptionId}', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'show'])->name('show');
     });
+    
+    // Note: Other subscription routes are loaded from app/Modules/Plans/Routes/web.php
+    // The routes above are manually registered to ensure they work
     
     // Admin subscription management
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {

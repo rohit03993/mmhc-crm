@@ -19,10 +19,6 @@
     </div>
 
     <!-- Active Subscription Banner -->
-    @php
-        $activeSubscription = $subscriptions->where('status', 'active')->where('end_date', '>', now())->first();
-    @endphp
-    
     @if($activeSubscription)
     <div class="alert alert-success mb-4">
         <div class="d-flex align-items-center">
@@ -30,7 +26,7 @@
             <div class="flex-grow-1">
                 <h6 class="mb-1">Active Subscription</h6>
                 <p class="mb-0">
-                    <strong>{{ $activeSubscription->plan->name }}</strong> - 
+                    <strong>{{ $activeSubscription->plan->name ?? 'Unknown Plan' }}</strong> - 
                     Expires on {{ $activeSubscription->end_date->format('M d, Y') }}
                     ({{ $activeSubscription->days_remaining }} days remaining)
                 </p>
@@ -40,6 +36,53 @@
             </div>
         </div>
     </div>
+    
+    <!-- Upgrade/Downgrade Section -->
+    @if(isset($availablePlans) && $availablePlans->count() > 0)
+    <div class="upgrade-section mb-4">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-sync-alt me-2"></i>Upgrade or Downgrade Your Plan
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    You can change your subscription plan anytime. Prorated refund will be applied for remaining days on your current plan.
+                </p>
+                <div class="row g-3">
+                    @foreach($availablePlans as $plan)
+                        @if(!$activeSubscription || !$activeSubscription->plan || $activeSubscription->plan->id != $plan->id)
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="plan-card-upgrade h-100">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0">{{ $plan->name }}</h6>
+                                    @if($plan->is_popular)
+                                    <span class="badge bg-warning text-dark">Popular</span>
+                                    @endif
+                                </div>
+                                @if($plan->monthly_price)
+                                <p class="text-muted small mb-2">
+                                    Starting from ₹{{ number_format($plan->monthly_price, 0) }}/month
+                                </p>
+                                @endif
+                                <a href="{{ route('plans.show', $plan->id) }}?upgrade=1&current_subscription={{ $activeSubscription ? $activeSubscription->id : '' }}" 
+                                   class="btn btn-sm btn-outline-primary w-100">
+                                    @php
+                                        $isDowngrade = $activeSubscription && $activeSubscription->plan && ($activeSubscription->plan->price ?? 0) > ($plan->price ?? 0);
+                                    @endphp
+                                    <i class="fas fa-arrow-{{ $isDowngrade ? 'down' : 'up' }} me-1"></i>
+                                    {{ $isDowngrade ? 'Downgrade' : 'Upgrade' }} to {{ $plan->name }}
+                                </a>
+                            </div>
+                        </div>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
     @else
     <div class="alert alert-info mb-4">
         <div class="d-flex align-items-center">
@@ -54,16 +97,21 @@
 
     <!-- Subscriptions List -->
     <div class="row g-3">
-        @forelse($subscriptions as $subscription)
+        @php
+            $subscriptionsToShow = isset($filteredSubscriptions) ? $filteredSubscriptions : $subscriptions;
+        @endphp
+        @forelse($subscriptionsToShow as $subscription)
         <div class="col-12">
             <div class="subscription-card status-{{ $subscription->status }}">
                 <div class="subscription-header">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h5 class="subscription-plan-name mb-1">{{ $subscription->plan->name }}</h5>
+                            <h5 class="subscription-plan-name mb-1">{{ $subscription->plan->name ?? 'Unknown Plan' }}</h5>
+                            @if($subscription->plan)
                             <p class="subscription-members text-muted small mb-0">
                                 <i class="fas fa-users me-1"></i> {{ $subscription->plan->members_included }}
                             </p>
+                            @endif
                         </div>
                         <span class="subscription-badge badge-{{ $subscription->status_color }}">
                             {{ $subscription->status_display }}
@@ -126,12 +174,53 @@
                             </div>
                         </div>
                     </div>
+
+                    @if($subscription->payment_screenshot || $subscription->transaction_id)
+                    <div class="payment-proof-section mt-3 pt-3 border-top">
+                        <h6 class="mb-2">
+                            <i class="fas fa-receipt me-2"></i>Payment Details
+                        </h6>
+                        @if($subscription->payment_screenshot)
+                        <div class="payment-proof-item mb-2">
+                            <strong class="d-block mb-2">
+                                <i class="fas fa-image me-2"></i>Payment Screenshot:
+                            </strong>
+                            <a href="{{ route('subscriptions.payment-screenshot', ['id' => $subscription->id]) }}" 
+                               target="_blank" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i>View Screenshot
+                            </a>
+                        </div>
+                        @endif
+                        @if($subscription->transaction_id)
+                        <div class="payment-proof-item mb-2">
+                            <strong class="d-block mb-1">
+                                <i class="fas fa-receipt me-2"></i>Transaction ID:
+                            </strong>
+                            <code>{{ $subscription->transaction_id }}</code>
+                        </div>
+                        @endif
+                        @if($subscription->payment_notes)
+                        <div class="payment-proof-item">
+                            <strong class="d-block mb-1">
+                                <i class="fas fa-sticky-note me-2"></i>Notes:
+                            </strong>
+                            <p class="mb-0 small">{{ $subscription->payment_notes }}</p>
+                        </div>
+                        @endif
+                    </div>
+                    @endif
                 </div>
 
                 <div class="subscription-actions">
-                    <a href="{{ route('subscriptions.show', $subscription) }}" class="btn btn-outline-primary btn-sm">
+                    <a href="{{ route('subscriptions.show', $subscription->id) }}" class="btn btn-outline-primary btn-sm">
                         <i class="fas fa-eye me-1"></i>View Details
                     </a>
+                    @if(in_array($subscription->status, ['pending', 'cancelled']))
+                    <button class="btn btn-outline-danger btn-sm" onclick="deleteSubscription({{ $subscription->id }})">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                    @endif
                     @if($subscription->status === 'active' && $subscription->end_date > now())
                     <button class="btn btn-outline-danger btn-sm" onclick="cancelSubscription({{ $subscription->id }})">
                         <i class="fas fa-times me-1"></i>Cancel
@@ -227,12 +316,50 @@
     flex-wrap: wrap;
 }
 
+.payment-proof-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.payment-proof-item {
+    margin-bottom: 8px;
+}
+
+.payment-proof-item:last-child {
+    margin-bottom: 0;
+}
+
 .empty-state-card {
     background: #fff;
     border-radius: 16px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     padding: 60px 20px;
     text-align: center;
+}
+
+.upgrade-section .card {
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.upgrade-section .card-header {
+    border-radius: 16px 16px 0 0 !important;
+}
+
+.plan-card-upgrade {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.3s ease;
+}
+
+.plan-card-upgrade:hover {
+    background: #fff;
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {
@@ -248,12 +375,53 @@
 </style>
 
 <script>
+function deleteSubscription(id) {
+    if (confirm('Are you sure you want to delete this subscription? This action cannot be undone.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url("subscriptions") }}/' + id;
+        form.style.display = 'none';
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
+        
+        // Add method spoofing for DELETE
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'DELETE';
+        form.appendChild(methodInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
 function cancelSubscription(id) {
     if (confirm('Are you sure you want to cancel this subscription?')) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `/subscriptions/${id}/cancel`;
-        form.innerHTML = '@csrf';
+        form.action = '{{ route("subscriptions.cancel", ":id") }}'.replace(':id', id);
+        form.style.display = 'none';
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
+        
+        // Add method spoofing for POST
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'POST';
+        form.appendChild(methodInput);
+        
         document.body.appendChild(form);
         form.submit();
     }
@@ -263,8 +431,23 @@ function renewSubscription(id) {
     if (confirm('Do you want to renew this subscription?')) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `/subscriptions/${id}/renew`;
-        form.innerHTML = '@csrf';
+        form.action = '{{ route("subscriptions.renew", ":id") }}'.replace(':id', id);
+        form.style.display = 'none';
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
+        
+        // Add method spoofing for POST
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'POST';
+        form.appendChild(methodInput);
+        
         document.body.appendChild(form);
         form.submit();
     }

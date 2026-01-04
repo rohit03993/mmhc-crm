@@ -143,6 +143,98 @@ class SubscriptionService
     }
 
     /**
+     * Upgrade or downgrade subscription
+     * Calculates prorated amount based on remaining days
+     */
+    public function upgradeDowngradeSubscription(Subscription $currentSubscription, Plan $newPlan, array $data = []): Subscription
+    {
+        $paymentFrequency = $data['payment_frequency'] ?? 'monthly';
+        $paymentOptions = $newPlan->payment_options ?? [];
+        $selectedOption = $paymentOptions[$paymentFrequency] ?? null;
+
+        if (!$selectedOption) {
+            throw new \Exception("Invalid payment frequency: {$paymentFrequency}");
+        }
+
+        // Calculate remaining days in current subscription
+        $remainingDays = max(0, now()->diffInDays($currentSubscription->end_date, false));
+        $totalDays = $currentSubscription->start_date->diffInDays($currentSubscription->end_date);
+        $usedDays = $totalDays - $remainingDays;
+        
+        // Calculate prorated refund for current subscription (if downgrade)
+        $currentDailyRate = $currentSubscription->total_amount / max(1, $totalDays);
+        $refundAmount = $remainingDays * $currentDailyRate;
+        
+        // New subscription amount
+        $newBaseAmount = $selectedOption['price'] ?? $newPlan->monthly_price ?? $newPlan->price;
+        $gstRate = (float) config('subscription.gst_rate', 18.00);
+        $newGstAmount = ($newBaseAmount * $gstRate) / 100;
+        $newTotalAmount = $newBaseAmount + $newGstAmount;
+        
+        // Calculate amount to pay (new amount - refund)
+        $amountToPay = max(0, $newTotalAmount - $refundAmount);
+        
+        // Calculate new end date
+        $payableYears = $selectedOption['payable_years'] ?? 0;
+        $careBenefitsYears = $selectedOption['care_benefits_years'] ?? 0;
+        $totalYears = $payableYears + $careBenefitsYears;
+        
+        $startDate = now();
+        $endDate = $totalYears > 0 
+            ? $startDate->copy()->addYears($totalYears) 
+            : $startDate->copy()->addDays(30);
+        
+        // Cancel current subscription
+        $currentSubscription->update([
+            'status' => 'cancelled',
+            'notes' => ($currentSubscription->notes ? $currentSubscription->notes . "\n\n" : '') . 
+                      "Cancelled due to upgrade/downgrade on " . now()->format('Y-m-d H:i:s') . 
+                      ". Prorated refund: ₹" . number_format($refundAmount, 2),
+        ]);
+        
+        // Get referral commission
+        $commissionRate = (float) config('subscription.referral_commission_rate', 5.00);
+        $referrerId = $currentSubscription->referrer_id ?? $data['referrer_id'] ?? null;
+        $commissionAmount = 0.00;
+        
+        if ($referrerId) {
+            $referrer = \App\Models\Core\User::find($referrerId);
+            if ($referrer && ($referrer->isNurse() || $referrer->isCaregiver())) {
+                $commissionAmount = ($newBaseAmount * $commissionRate) / 100;
+            } else {
+                $referrerId = null;
+            }
+        }
+        
+        // Create new subscription
+        return Subscription::create([
+            'user_id' => $currentSubscription->user_id,
+            'plan_id' => $newPlan->id,
+            'referrer_id' => $referrerId,
+            'payment_frequency' => $paymentFrequency,
+            'status' => 'pending',
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'care_benefits_years' => $careBenefitsYears,
+            'payable_years' => $payableYears,
+            'base_amount' => $newBaseAmount,
+            'gst_amount' => $newGstAmount,
+            'gst_rate' => $gstRate,
+            'total_amount' => $newTotalAmount,
+            'paid_amount' => 0.00,
+            'payment_status' => 'pending',
+            'referral_commission_amount' => $commissionAmount,
+            'referral_commission_rate' => $commissionRate,
+            'auto_renew' => $data['auto_renew'] ?? false,
+            'notes' => ($data['notes'] ?? '') . 
+                      "\nUpgraded from: {$currentSubscription->plan->name} (Subscription #{$currentSubscription->id})" .
+                      "\nProrated refund applied: ₹" . number_format($refundAmount, 2) .
+                      "\nAmount to pay: ₹" . number_format($amountToPay, 2),
+            'previous_subscription_id' => $currentSubscription->id,
+        ]);
+    }
+
+    /**
      * Get user's subscriptions
      */
     public function getUserSubscriptions(User $user)

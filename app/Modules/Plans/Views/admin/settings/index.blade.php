@@ -91,33 +91,6 @@
                             @enderror
                         </div>
                         
-                        <!-- QR Code Upload -->
-                        <div class="mb-4">
-                            <label for="qr_code" class="form-label">
-                                <i class="fas fa-qrcode me-2 text-danger"></i>Payment QR Code
-                            </label>
-                            @if($qrCode)
-                            <div class="mb-2">
-                                <img src="{{ asset('storage/' . $qrCode) }}" 
-                                     alt="Current QR Code" 
-                                     class="img-thumbnail"
-                                     style="max-width: 200px; height: auto;">
-                                <p class="text-muted small mt-1">Current QR Code</p>
-                            </div>
-                            @endif
-                            <input type="file" 
-                                   class="form-control @error('qr_code') is-invalid @enderror" 
-                                   id="qr_code" 
-                                   name="qr_code" 
-                                   accept="image/jpeg,image/png,image/jpg"
-                                   onchange="previewQRCode(this)">
-                            <small class="text-muted">Upload QR code image for payment (JPG, PNG, Max 2MB)</small>
-                            <div id="qrCodePreview" class="mt-2"></div>
-                            @error('qr_code')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Save Settings
@@ -132,25 +105,5 @@
         </div>
     </div>
 </div>
-
-<script>
-function previewQRCode(input) {
-    const preview = document.getElementById('qrCodePreview');
-    preview.innerHTML = '';
-    
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.className = 'img-thumbnail';
-            img.style.maxWidth = '200px';
-            img.style.height = 'auto';
-            preview.appendChild(img);
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-</script>
 @endsection
 

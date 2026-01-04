@@ -116,12 +116,19 @@
                         @endif
                     </div>
 
-                    <!-- Payment Section -->
-                    @if($subscription->payment_status !== 'paid' && $subscription->status === 'pending')
+                    <!-- Payment Section - Show when payment is pending or failed -->
+                    @if($subscription->payment_status !== 'paid' && in_array($subscription->payment_status, ['pending', 'failed']) && $subscription->status === 'pending')
                     <div class="detail-section payment-section">
                         <h5 class="section-title">
                             <i class="fas fa-credit-card text-primary me-2"></i>Complete Payment
                         </h5>
+                        
+                        @if($subscription->payment_status === 'failed')
+                        <div class="alert alert-danger mb-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Payment Rejected:</strong> Your previous payment was rejected. Please make payment again.
+                        </div>
+                        @endif
                         
                         <div class="payment-instructions">
                             <!-- Payment Breakdown -->
@@ -150,128 +157,59 @@
                             <div class="alert alert-info">
                                 <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Payment Instructions</h6>
                                 <ol class="mb-0 ps-3">
-                                    <li>Click on UPI ID below to open your payment app OR scan the QR code</li>
-                                    <li>Make payment of <strong>₹{{ number_format($subscription->total_amount, 2) }}</strong></li>
-                                    <li>Upload payment screenshot OR enter transaction ID</li>
+                                    <li>Click on "Pay ₹{{ number_format($subscription->total_amount, 2) }}" button below to open your payment app</li>
+                                    <li>Make payment of <strong>₹{{ number_format($subscription->total_amount, 2) }}</strong> (amount will be pre-filled)</li>
+                                    <li>After payment, you will be redirected to upload payment screenshot</li>
                                     <li>Admin will verify payment and activate your subscription</li>
                                 </ol>
                             </div>
 
-                            <!-- QR Code and UPI ID -->
+                            <!-- UPI Payment Button -->
                             <div class="payment-methods">
-                                <div class="row g-3">
-                                    <div class="col-12 col-md-6">
-                                        <div class="payment-method-card">
-                                            <h6 class="mb-3"><i class="fas fa-qrcode me-2"></i>Scan QR Code</h6>
-                                            <div class="qr-code-placeholder">
-                                                @if(config('subscription.qr_code'))
-                                                    <img src="{{ asset('storage/' . config('subscription.qr_code')) }}" 
-                                                         alt="Payment QR Code" 
-                                                         class="img-fluid"
-                                                         style="max-width: 100%; height: auto; border-radius: 8px;">
-                                                @else
-                                                    <i class="fas fa-qrcode fa-5x text-muted"></i>
-                                                    <p class="text-muted small mt-2">QR Code not configured. Please contact admin.</p>
-                                                @endif
-                                            </div>
+                                <div class="payment-method-card text-center">
+                                    <h6 class="mb-3"><i class="fas fa-mobile-alt me-2"></i>UPI Payment</h6>
+                                    <div class="upi-id-box">
+                                        <div class="mb-3">
+                                            <small class="text-muted d-block mb-2">UPI ID:</small>
+                                            <input type="text" 
+                                                   id="upiId" 
+                                                   value="{{ config('subscription.upi_id', 'mmhc@paytm') }}" 
+                                                   readonly 
+                                                   class="form-control text-center">
                                         </div>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <div class="payment-method-card">
-                                            <h6 class="mb-3"><i class="fas fa-mobile-alt me-2"></i>UPI Payment</h6>
-                                            <div class="upi-id-box">
-                                                <input type="text" 
-                                                       id="upiId" 
-                                                       value="{{ config('subscription.upi_id', 'mmhc@paytm') }}" 
-                                                       readonly 
-                                                       class="form-control">
-                                                <div class="d-flex gap-2 mt-2">
-                                                    <button type="button" class="btn btn-primary flex-fill" onclick="openUPI()">
-                                                        <i class="fas fa-external-link-alt me-2"></i>Pay with UPI
-                                                    </button>
-                                                    <button type="button" class="btn btn-outline-primary" onclick="copyUPIId()">
-                                                        <i class="fas fa-copy"></i>
-                                                    </button>
-                                                </div>
-                                                <small class="text-muted d-block mt-2 text-center">
-                                                    Opens PhonePe, Paytm, or Google Pay
-                                                </small>
-                                            </div>
-                                        </div>
+                                        <button type="button" 
+                                                class="btn btn-primary btn-lg w-100" 
+                                                onclick="openUPI()">
+                                            <i class="fas fa-external-link-alt me-2"></i>Pay ₹{{ number_format($subscription->total_amount, 2) }}
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-outline-primary btn-sm w-100 mt-2" 
+                                                onclick="copyUPIId()">
+                                            <i class="fas fa-copy me-2"></i>Copy UPI ID
+                                        </button>
+                                        <small class="text-muted d-block mt-2">
+                                            Opens PhonePe, Paytm, or Google Pay automatically
+                                        </small>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    @endif
 
-                            <!-- Payment Submission Form -->
-                            <div class="payment-submission mt-4">
-                                <form action="{{ route('subscriptions.submit-payment', $subscription) }}" 
-                                      method="POST" 
-                                      enctype="multipart/form-data"
-                                      id="paymentForm">
-                                    @csrf
-                                    
-                                    <div class="payment-options-tabs">
-                                        <button type="button" 
-                                                class="tab-btn active" 
-                                                data-tab="screenshot"
-                                                onclick="switchTab('screenshot')">
-                                            <i class="fas fa-image me-2"></i>Upload Screenshot
-                                        </button>
-                                        <button type="button" 
-                                                class="tab-btn" 
-                                                data-tab="transaction"
-                                                onclick="switchTab('transaction')">
-                                            <i class="fas fa-receipt me-2"></i>Enter Transaction ID
-                                        </button>
-                                    </div>
-
-                                    <!-- Screenshot Upload Tab -->
-                                    <div id="screenshotTab" class="tab-content active">
-                                        <div class="form-group mt-3">
-                                            <label for="payment_screenshot" class="form-label">
-                                                <i class="fas fa-upload me-2"></i>Upload Payment Screenshot
-                                            </label>
-                                            <input type="file" 
-                                                   name="payment_screenshot" 
-                                                   id="payment_screenshot" 
-                                                   class="form-control"
-                                                   accept="image/*"
-                                                   onchange="previewImage(this)">
-                                            <small class="text-muted">Upload screenshot of your payment (JPG, PNG, Max 5MB)</small>
-                                            <div id="imagePreview" class="mt-2"></div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Transaction ID Tab -->
-                                    <div id="transactionTab" class="tab-content">
-                                        <div class="form-group mt-3">
-                                            <label for="transaction_id" class="form-label">
-                                                <i class="fas fa-receipt me-2"></i>Transaction ID / UPI Reference Number
-                                            </label>
-                                            <input type="text" 
-                                                   name="transaction_id" 
-                                                   id="transaction_id" 
-                                                   class="form-control"
-                                                   placeholder="Enter transaction ID or UPI reference number">
-                                            <small class="text-muted">Enter the transaction ID from your payment app</small>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group mt-3">
-                                        <label for="payment_notes" class="form-label">
-                                            <i class="fas fa-sticky-note me-2"></i>Additional Notes (Optional)
-                                        </label>
-                                        <textarea name="payment_notes" 
-                                                  id="payment_notes" 
-                                                  class="form-control" 
-                                                  rows="3"
-                                                  placeholder="Any additional information about your payment..."></textarea>
-                                    </div>
-
-                                    <button type="submit" class="btn btn-primary btn-lg w-100 mt-4">
-                                        <i class="fas fa-paper-plane me-2"></i>Submit Payment Proof
-                                    </button>
-                                </form>
+                    <!-- Payment Submitted Message -->
+                    @if($subscription->payment_status === 'partially_paid' && $subscription->status === 'pending')
+                    <div class="detail-section payment-section">
+                        <h5 class="section-title">
+                            <i class="fas fa-clock text-warning me-2"></i>Payment Submitted
+                        </h5>
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Payment screenshot submitted!</strong> Your payment is under review. Admin will verify and activate your subscription within 24 hours.
+                            <div class="mt-3">
+                                <a href="{{ route('subscriptions.payment-confirmation', $subscription) }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>View Payment Confirmation
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -286,7 +224,7 @@
                         @if($subscription->payment_screenshot)
                         <div class="payment-proof-item">
                             <strong><i class="fas fa-image me-2"></i>Payment Screenshot:</strong>
-                            <a href="{{ asset('storage/' . $subscription->payment_screenshot) }}" 
+                            <a href="{{ route('subscriptions.payment-screenshot', ['id' => $subscription->id]) }}" 
                                target="_blank" 
                                class="btn btn-sm btn-outline-primary ms-2">
                                 <i class="fas fa-eye me-1"></i>View Screenshot
@@ -392,62 +330,11 @@
     border: 1px solid #e9ecef;
 }
 
-.qr-code-placeholder {
-    text-align: center;
-    padding: 40px 20px;
-    background: #f8f9fa;
-    border-radius: 12px;
-    border: 2px dashed #dee2e6;
-}
-
 .upi-id-box input {
     font-family: monospace;
     font-size: 16px;
     font-weight: 600;
     text-align: center;
-}
-
-.payment-options-tabs {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 0;
-}
-
-.tab-btn {
-    flex: 1;
-    padding: 12px;
-    border: 2px solid #e9ecef;
-    background: white;
-    border-radius: 8px 8px 0 0;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.tab-btn.active {
-    background: #667eea;
-    color: white;
-    border-color: #667eea;
-}
-
-.tab-content {
-    display: none;
-    background: white;
-    padding: 20px;
-    border: 2px solid #e9ecef;
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-}
-
-.tab-content.active {
-    display: block;
-}
-
-#imagePreview img {
-    max-width: 100%;
-    max-height: 300px;
-    border-radius: 8px;
-    border: 2px solid #e9ecef;
 }
 
 .payment-proof-item {
@@ -491,27 +378,28 @@
 </style>
 
 <script>
-// UPI Deep Linking - Opens payment apps automatically
+// UPI Deep Linking - Opens payment apps automatically and redirects to confirmation page
 function openUPI() {
     const upiId = document.getElementById('upiId').value;
     const amount = {{ $subscription->total_amount }};
     const merchantName = '{{ config("subscription.upi_merchant_name", "MMHC") }}';
+    const confirmationUrl = '{{ route("subscriptions.payment-confirmation", $subscription) }}?from_upi=1';
     
     // UPI deep link format: upi://pay?pa=UPI_ID&pn=MERCHANT&am=AMOUNT&cu=INR
-    const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(merchantName)}&am=${amount.toFixed(2)}&cu=INR`;
+    const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(merchantName)}&am=${amount.toFixed(2)}&cu=INR&tn=MMHC Subscription Payment`;
+    
+    // Store flag to show popup when user returns
+    sessionStorage.setItem('showPaymentPopup', 'true');
     
     // Try to open UPI app
     window.location.href = upiLink;
     
-    // Fallback: If UPI app doesn't open, show copy option
+    // Fallback: Redirect to confirmation page after delay (if UPI app doesn't open)
     setTimeout(() => {
-        // If still on page after 1 second, UPI app might not be installed
-        // Show message to copy UPI ID manually
         if (document.hasFocus()) {
-            copyUPIId();
-            alert('UPI app not found. UPI ID copied to clipboard. Please paste it in your payment app.');
+            window.location.href = confirmationUrl;
         }
-    }, 1000);
+    }, 1500);
 }
 
 function copyUPIId() {
@@ -535,76 +423,17 @@ function showCopyFeedback() {
     const btn = event?.target?.closest('button') || document.querySelector('button[onclick*="copyUPIId"]');
     if (btn) {
         const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
         btn.classList.add('btn-success');
-        btn.classList.remove('btn-outline-primary', 'btn-primary');
+        btn.classList.remove('btn-outline-primary');
         
         setTimeout(() => {
             btn.innerHTML = originalText;
             btn.classList.remove('btn-success');
-            if (btn.classList.contains('btn-outline-primary')) {
-                btn.classList.add('btn-outline-primary');
-            } else {
-                btn.classList.add('btn-primary');
-            }
+            btn.classList.add('btn-outline-primary');
         }, 2000);
     }
 }
-
-function switchTab(tab) {
-    // Hide all tabs
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Show selected tab
-    document.getElementById(tab + 'Tab').classList.add('active');
-    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-    
-    // Clear form inputs when switching
-    if (tab === 'screenshot') {
-        document.getElementById('transaction_id').value = '';
-    } else {
-        document.getElementById('payment_screenshot').value = '';
-        document.getElementById('imagePreview').innerHTML = '';
-    }
-}
-
-function previewImage(input) {
-    const preview = document.getElementById('imagePreview');
-    preview.innerHTML = '';
-    
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            preview.appendChild(img);
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-// Form validation
-document.getElementById('paymentForm').addEventListener('submit', function(e) {
-    const screenshotTab = document.getElementById('screenshotTab').classList.contains('active');
-    const transactionTab = document.getElementById('transactionTab').classList.contains('active');
-    
-    if (screenshotTab && !document.getElementById('payment_screenshot').files.length) {
-        e.preventDefault();
-        alert('Please upload a payment screenshot');
-        return false;
-    }
-    
-    if (transactionTab && !document.getElementById('transaction_id').value.trim()) {
-        e.preventDefault();
-        alert('Please enter transaction ID');
-        return false;
-    }
-});
 </script>
 @endsection
 

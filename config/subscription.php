@@ -10,7 +10,7 @@ return [
     | Default: 18.00 (18%)
     |
     */
-    'gst_rate' => env('SUBSCRIPTION_GST_RATE', 18.00),
+    'gst_rate' => env('SUBSCRIPTION_GST_RATE', 18),
 
     /*
     |--------------------------------------------------------------------------
@@ -23,7 +23,7 @@ return [
     | This can be edited by admin in the admin panel
     |
     */
-    'referral_commission_rate' => env('SUBSCRIPTION_REFERRAL_COMMISSION_RATE', 5.00),
+    'referral_commission_rate' => env('SUBSCRIPTION_REFERRAL_COMMISSION_RATE', 5),
 
     /*
     |--------------------------------------------------------------------------
@@ -33,17 +33,7 @@ return [
     | UPI ID for manual payments
     |
     */
-    'upi_id' => env('SUBSCRIPTION_UPI_ID', 'mmhc@paytm'),
+    'upi_id' => env('SUBSCRIPTION_UPI_ID', 'rohit03993@icici'),
     'upi_merchant_name' => env('SUBSCRIPTION_UPI_MERCHANT_NAME', 'MMHC'),
-    
-    /*
-    |--------------------------------------------------------------------------
-    | QR Code
-    |--------------------------------------------------------------------------
-    |
-    | QR code image path for payment (stored in storage/app/public)
-    |
-    */
-    'qr_code' => env('SUBSCRIPTION_QR_CODE', null),
 ];
 

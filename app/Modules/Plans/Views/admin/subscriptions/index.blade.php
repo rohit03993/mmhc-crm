@@ -121,7 +121,7 @@
                         <i class="fas fa-receipt me-2"></i>Payment Proof:
                     </strong>
                     @if($subscription->payment_screenshot)
-                    <a href="{{ asset('storage/' . $subscription->payment_screenshot) }}" 
+                    <a href="{{ route('subscriptions.payment-screenshot', $subscription->id) }}" 
                        target="_blank" 
                        class="btn btn-sm btn-outline-primary me-2">
                         <i class="fas fa-image me-1"></i>View Screenshot
@@ -133,29 +133,6 @@
                 </div>
                 @endif
 
-                <!-- Subscription Actions -->
-                @if($subscription->status === 'pending')
-                <div class="subscription-status-actions mt-3">
-                    <form action="{{ route('admin.subscriptions.approve', $subscription) }}" 
-                          method="POST" 
-                          class="d-inline me-2">
-                        @csrf
-                        <button type="submit" class="btn btn-success btn-sm">
-                            <i class="fas fa-check me-1"></i>Approve Subscription
-                        </button>
-                    </form>
-                    <form action="{{ route('admin.subscriptions.reject', $subscription) }}" 
-                          method="POST" 
-                          class="d-inline"
-                          onsubmit="return confirm('Are you sure you want to reject this subscription?');">
-                        @csrf
-                        <button type="submit" class="btn btn-danger btn-sm">
-                            <i class="fas fa-times me-1"></i>Reject Subscription
-                        </button>
-                    </form>
-                </div>
-                @endif
-
                 <!-- Payment Verification Actions -->
                 @if($subscription->payment_status !== 'paid' && ($subscription->payment_screenshot || $subscription->transaction_id))
                 <div class="payment-actions mt-3">
@@ -164,7 +141,7 @@
                           class="d-inline me-2">
                         @csrf
                         <button type="submit" class="btn btn-success btn-sm">
-                            <i class="fas fa-check-circle me-1"></i>Verify Payment
+                            <i class="fas fa-check-circle me-1"></i>Verify Payment & Activate Subscription
                         </button>
                     </form>
                     <button type="button" 

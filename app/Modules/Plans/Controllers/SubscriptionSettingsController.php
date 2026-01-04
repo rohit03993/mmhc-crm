@@ -18,9 +18,8 @@ class SubscriptionSettingsController extends Controller
         $commissionRate = config('subscription.referral_commission_rate', 5.00);
         $upiId = config('subscription.upi_id', 'mmhc@paytm');
         $merchantName = config('subscription.upi_merchant_name', 'MMHC');
-        $qrCode = config('subscription.qr_code', null);
         
-        return view('plans::admin.settings.index', compact('gstRate', 'commissionRate', 'upiId', 'merchantName', 'qrCode'));
+        return view('plans::admin.settings.index', compact('gstRate', 'commissionRate', 'upiId', 'merchantName'));
     }
 
     /**
@@ -33,7 +32,6 @@ class SubscriptionSettingsController extends Controller
             'referral_commission_rate' => 'required|numeric|min:0|max:100',
             'upi_id' => 'required|string|max:255',
             'upi_merchant_name' => 'required|string|max:255',
-            'qr_code' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // 2MB max
         ]);
 
         if ($validator->fails()) {
@@ -43,15 +41,6 @@ class SubscriptionSettingsController extends Controller
         }
 
         try {
-            // Handle QR code upload
-            $qrCodePath = config('subscription.qr_code', null);
-            if ($request->hasFile('qr_code')) {
-                $qrCodeFile = $request->file('qr_code');
-                $filename = 'subscription-qr-code.' . $qrCodeFile->getClientOriginalExtension();
-                $qrCodeFile->storeAs('public', $filename);
-                $qrCodePath = $filename;
-            }
-            
             // Read current config file
             $configPath = config_path('subscription.php');
             $configContent = File::get($configPath);
@@ -84,25 +73,12 @@ class SubscriptionSettingsController extends Controller
                 $configContent
             );
             
-            // Update QR code path if uploaded
-            if ($qrCodePath) {
-                $qrCodeValue = "'{$qrCodePath}'";
-                // Check if qr_code line exists, if not add it
-                if (strpos($configContent, "'qr_code' =>") === false) {
-                    // Add before closing bracket
-                    $configContent = preg_replace(
-                        "/('upi_merchant_name' => env\('SUBSCRIPTION_UPI_MERCHANT_NAME', '[^']+'\),)/",
-                        "$1\n    'qr_code' => env('SUBSCRIPTION_QR_CODE', {$qrCodeValue}),",
-                        $configContent
-                    );
-                } else {
-                    $configContent = preg_replace(
-                        "/'qr_code' => env\('SUBSCRIPTION_QR_CODE', [^)]+\)/",
-                        "'qr_code' => env('SUBSCRIPTION_QR_CODE', {$qrCodeValue})",
-                        $configContent
-                    );
-                }
-            }
+            // Remove QR code line if it exists
+            $configContent = preg_replace(
+                "/\s*'qr_code' => env\('SUBSCRIPTION_QR_CODE', [^)]+\),?\s*\n?/",
+                "",
+                $configContent
+            );
             
             // Write updated config
             File::put($configPath, $configContent);

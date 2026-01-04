@@ -101,15 +101,20 @@
                         <strong class="d-block mb-2">
                             <i class="fas fa-image me-2"></i>Payment Screenshot:
                         </strong>
-                        <a href="{{ asset('storage/' . $subscription->payment_screenshot) }}" 
+                        <a href="{{ route('subscriptions.payment-screenshot', $subscription->id) }}" 
                            target="_blank" 
                            class="btn btn-outline-primary">
                             <i class="fas fa-eye me-1"></i>View Screenshot
                         </a>
-                        <img src="{{ asset('storage/' . $subscription->payment_screenshot) }}" 
+                        <img src="{{ route('subscriptions.payment-screenshot', $subscription->id) }}" 
                              alt="Payment Screenshot" 
                              class="img-fluid mt-3 rounded"
-                             style="max-height: 400px;">
+                             style="max-height: 400px;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div style="display:none;" class="alert alert-warning mt-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Screenshot not found. Please check file path: {{ $subscription->payment_screenshot }}
+                        </div>
                     </div>
                     @endif
 
@@ -133,6 +138,10 @@
 
                     @if($subscription->payment_status !== 'paid' && ($subscription->payment_screenshot || $subscription->transaction_id))
                     <div class="payment-verification-actions mt-4 pt-3 border-top">
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Workflow:</strong> Click "Verify Payment" to approve payment and automatically activate the subscription.
+                        </div>
                         <h6 class="mb-3">Payment Verification</h6>
                         <form action="{{ route('admin.subscriptions.verify-payment', $subscription) }}" 
                               method="POST" 
@@ -161,35 +170,15 @@
             </div>
             @endif
 
-            <!-- Subscription Actions Card -->
+            <!-- Subscription Status Card -->
+            @if($subscription->status !== 'pending')
             <div class="card mb-4">
                 <div class="card-header bg-secondary text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-cog me-2"></i>Subscription Actions
+                        <i class="fas fa-info-circle me-2"></i>Subscription Status
                     </h5>
                 </div>
                 <div class="card-body">
-                    @if($subscription->status === 'pending')
-                    <div class="subscription-actions">
-                        <form action="{{ route('admin.subscriptions.approve', $subscription) }}" 
-                              method="POST" 
-                              class="d-inline me-2">
-                            @csrf
-                            <button type="submit" class="btn btn-success btn-lg">
-                                <i class="fas fa-check me-2"></i>Approve Subscription
-                            </button>
-                        </form>
-                        <form action="{{ route('admin.subscriptions.reject', $subscription) }}" 
-                              method="POST" 
-                              class="d-inline"
-                              onsubmit="return confirm('Are you sure you want to reject this subscription?');">
-                            @csrf
-                            <button type="submit" class="btn btn-danger btn-lg">
-                                <i class="fas fa-times me-2"></i>Reject Subscription
-                            </button>
-                        </form>
-                    </div>
-                    @else
                     <div class="alert alert-info mb-0">
                         <i class="fas fa-info-circle me-2"></i>
                         Subscription status is <strong>{{ $subscription->status_display }}</strong>. 
@@ -198,9 +187,9 @@
                         on {{ $subscription->approved_at->format('M d, Y h:i A') }}
                         @endif
                     </div>
-                    @endif
                 </div>
             </div>
+            @endif
         </div>
 
         <!-- Sidebar -->
