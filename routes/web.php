@@ -125,11 +125,15 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // Admin Routes for Profile Management
-    Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [\App\Modules\Auth\Controllers\DashboardController::class, 'adminDashboard'])->name('dashboard');
         Route::get('/pending-payments', [\App\Modules\Auth\Controllers\DashboardController::class, 'pendingPayments'])->name('pending-payments');
         Route::get('/profiles', [ProfileController::class, 'adminIndex'])->name('profiles');
         Route::get('/profiles/{user}', [ProfileController::class, 'adminView'])->name('profiles.view');
+        
+        // System Reset Routes (Danger Zone)
+        Route::get('/system/reset', [\App\Modules\Auth\Controllers\SystemController::class, 'showResetPage'])->name('system.reset');
+        Route::post('/system/reset', [\App\Modules\Auth\Controllers\SystemController::class, 'resetSystem'])->name('system.reset');
         
         // Service Management Routes
         Route::get('/service-requests', [\App\Modules\Services\Controllers\ServiceController::class, 'adminIndex'])->name('service-requests');

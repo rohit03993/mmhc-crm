@@ -406,6 +406,15 @@
                                         Staff Payments
                                     </a>
                                 </li>
+                                
+                                <!-- Danger Zone - System Reset -->
+                                <li class="nav-item mt-4 pt-3 border-top border-danger">
+                                    <a class="nav-link text-danger {{ request()->routeIs('admin.system.reset') ? 'active' : '' }}" href="{{ route('admin.system.reset') }}">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Reset System Data
+                                    </a>
+                                    <small class="text-danger-50 ms-4 d-block" style="font-size: 0.7rem;">⚠️ Danger Zone</small>
+                                </li>
                             @endif
                             
                             <li class="nav-item mt-3">
