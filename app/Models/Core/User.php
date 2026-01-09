@@ -26,6 +26,7 @@ class User extends Authenticatable
         'pincode',
         'latitude',
         'longitude',
+        'location', // Spatial POINT column
         'date_of_birth',
         'qualification',
         'experience',
@@ -56,6 +57,7 @@ class User extends Authenticatable
         'is_active' => 'boolean',
         'documents' => 'array',
         'reward_points' => 'integer',
+        'location' => 'array', // Spatial POINT column
     ];
 
     /**

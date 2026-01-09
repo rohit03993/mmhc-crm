@@ -60,6 +60,7 @@ class LocationService
 
     /**
      * Set location data for user based on address
+     * Also updates spatial POINT column for optimized queries
      * 
      * @param \App\Models\Core\User $user
      * @param string|null $address
@@ -74,12 +75,40 @@ class LocationService
         $locationData = self::extractLocationData($address);
         
         if ($locationData) {
-            $user->update([
+            $updateData = [
                 'pincode' => $locationData['pincode'],
                 'latitude' => $locationData['latitude'],
                 'longitude' => $locationData['longitude'],
-            ]);
+            ];
+
+            // Update spatial POINT column
+            // Use sentinel POINT(0 0) if coordinates missing (required for NOT NULL constraint)
+            if ($locationData['latitude'] && $locationData['longitude']) {
+                $updateData['location'] = \DB::raw("ST_GeomFromText('POINT({$locationData['longitude']} {$locationData['latitude']})', 4326)");
+            } else {
+                // Use sentinel value POINT(0 0) for missing coordinates (required for NOT NULL constraint)
+                $updateData['location'] = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
+            }
+
+            $user->update($updateData);
         }
+    }
+
+    /**
+     * Update spatial POINT column from latitude/longitude
+     * 
+     * @param float|null $latitude
+     * @param float|null $longitude
+     * @return \Illuminate\Database\Query\Expression|null
+     */
+    public static function createSpatialPoint(?float $latitude, ?float $longitude)
+    {
+        if ($latitude === null || $longitude === null) {
+            return null;
+        }
+
+        // MySQL POINT format: POINT(longitude latitude) with SRID 4326 (WGS84)
+        return \DB::raw("ST_GeomFromText('POINT({$longitude} {$latitude})', 4326)");
     }
 
     /**
@@ -116,6 +145,7 @@ class LocationService
 
     /**
      * Get staff members sorted by distance from patient pincode
+     * Uses spatial indexes for optimized database-level distance calculations
      * 
      * @param string $patientPincode
      * @param string|null $staffRole 'nurse', 'caregiver', or null for both
@@ -138,42 +168,50 @@ class LocationService
             
             return $query->orderBy('name')->get();
         }
-        
-        // Get all active staff with profile
+
+        // Create POINT for patient location using parameterized query (longitude, latitude order for MySQL)
+        $longitude = (float) $patientCoords['longitude'];
+        $latitude = (float) $patientCoords['latitude'];
+
+        // Build query with spatial distance calculation
+        // Filter out sentinel POINT(0 0) values (users without coordinates)
         $query = \App\Models\Core\User::whereIn('role', ['nurse', 'caregiver'])
             ->where('is_active', true)
-            ->whereNotNull('pincode')
-            ->whereNotNull('latitude')
+            ->whereNotNull('latitude') // Ensure coordinates exist
             ->whereNotNull('longitude')
+            ->whereRaw("location != ST_GeomFromText('POINT(0 0)', 4326)") // Exclude sentinel value
             ->with('profile');
-        
+
         if ($staffRole) {
             $query->where('role', $staffRole);
         }
-        
-        $staff = $query->get();
-        
-        // Calculate distance for each staff member
-        $staffWithDistance = $staff->map(function ($member) use ($patientCoords, $maxDistanceKm) {
-            $distance = Pincode::haversineDistance(
-                $patientCoords['latitude'],
-                $patientCoords['longitude'],
-                (float) $member->latitude,
-                (float) $member->longitude
-            );
-            
-            $member->distance_km = $distance;
-            
-            return $member;
-        })->filter(function ($member) use ($maxDistanceKm) {
-            // Filter by max distance if specified
-            if ($maxDistanceKm !== null) {
-                return $member->distance_km <= $maxDistanceKm;
-            }
-            return true;
-        })->sortBy('distance_km'); // Sort by distance (nearest first)
-        
-        return $staffWithDistance->values(); // Re-index array
+
+        // Calculate distance using ST_Distance_Sphere (returns meters, convert to km)
+        // ST_Distance_Sphere is more accurate than ST_Distance for geographic coordinates
+        // Using parameterized query to prevent SQL injection
+        $query->selectRaw("
+            users.*,
+            ST_Distance_Sphere(
+                location,
+                ST_GeomFromText(?, 4326)
+            ) / 1000 as distance_km
+        ", ["POINT({$longitude} {$latitude})"]);
+
+        // Filter by max distance if specified (in meters for ST_Distance_Sphere)
+        if ($maxDistanceKm !== null) {
+            $maxDistanceMeters = $maxDistanceKm * 1000;
+            $query->whereRaw("
+                ST_Distance_Sphere(
+                    location,
+                    ST_GeomFromText(?, 4326)
+                ) <= ?
+            ", ["POINT({$longitude} {$latitude})", $maxDistanceMeters]);
+        }
+
+        // Order by distance (nearest first)
+        $query->orderByRaw('distance_km ASC');
+
+        return $query->get();
     }
 }
 

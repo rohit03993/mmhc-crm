@@ -181,13 +181,25 @@ class AuthController extends Controller
             $pincodeData = \App\Models\Pincode::findByPincode($pincode);
             if ($pincodeData) {
                 $userData['pincode'] = $pincode;
-                $userData['latitude'] = $pincodeData->latitude ? (float) $pincodeData->latitude : null;
-                $userData['longitude'] = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
+                $latitude = $pincodeData->latitude ? (float) $pincodeData->latitude : null;
+                $longitude = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
+                $userData['latitude'] = $latitude;
+                $userData['longitude'] = $longitude;
+                
+                // Set spatial POINT column for optimized queries
+                // Use sentinel POINT(0 0) if coordinates missing (required for NOT NULL constraint)
+                if ($latitude && $longitude) {
+                    $userData['location'] = \App\Modules\Auth\Services\LocationService::createSpatialPoint($latitude, $longitude);
+                } else {
+                    $userData['location'] = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
+                }
             } else {
                 // Pincode exists but coordinates not found - still store pincode
                 $userData['pincode'] = $pincode;
                 $userData['latitude'] = null;
                 $userData['longitude'] = null;
+                // Use sentinel POINT(0 0) for missing coordinates (required for NOT NULL constraint)
+                $userData['location'] = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
             }
 
             $user = User::create($userData);
@@ -319,13 +331,25 @@ class AuthController extends Controller
         $pincodeData = \App\Models\Pincode::findByPincode($pincode);
         if ($pincodeData) {
             $userData['pincode'] = $pincode;
-            $userData['latitude'] = $pincodeData->latitude ? (float) $pincodeData->latitude : null;
-            $userData['longitude'] = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
+            $latitude = $pincodeData->latitude ? (float) $pincodeData->latitude : null;
+            $longitude = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
+            $userData['latitude'] = $latitude;
+            $userData['longitude'] = $longitude;
+            
+            // Set spatial POINT column for optimized queries
+            // Use sentinel POINT(0 0) if coordinates missing (required for NOT NULL constraint)
+            if ($latitude && $longitude) {
+                $userData['location'] = \App\Modules\Auth\Services\LocationService::createSpatialPoint($latitude, $longitude);
+            } else {
+                $userData['location'] = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
+            }
         } else {
             // Pincode exists but coordinates not found - still store pincode
             $userData['pincode'] = $pincode;
             $userData['latitude'] = null;
             $userData['longitude'] = null;
+            // Use sentinel POINT(0 0) for missing coordinates (required for NOT NULL constraint)
+            $userData['location'] = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
         }
         
         $user = $this->userService->createUser($userData);
@@ -456,13 +480,25 @@ class AuthController extends Controller
         $pincodeData = \App\Models\Pincode::findByPincode($pincode);
         if ($pincodeData) {
             $updateData['pincode'] = $pincode;
-            $updateData['latitude'] = $pincodeData->latitude ? (float) $pincodeData->latitude : null;
-            $updateData['longitude'] = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
+            $latitude = $pincodeData->latitude ? (float) $pincodeData->latitude : null;
+            $longitude = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
+            $updateData['latitude'] = $latitude;
+            $updateData['longitude'] = $longitude;
+            
+            // Set spatial POINT column for optimized queries
+            // Use sentinel POINT(0 0) if coordinates missing (required for NOT NULL constraint)
+            if ($latitude && $longitude) {
+                $updateData['location'] = \App\Modules\Auth\Services\LocationService::createSpatialPoint($latitude, $longitude);
+            } else {
+                $updateData['location'] = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
+            }
         } else {
             // Pincode exists but coordinates not found - still store pincode
             $updateData['pincode'] = $pincode;
             $updateData['latitude'] = null;
             $updateData['longitude'] = null;
+            // Use sentinel POINT(0 0) for missing coordinates (required for NOT NULL constraint)
+            $updateData['location'] = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
         }
 
         $user->update($updateData);
