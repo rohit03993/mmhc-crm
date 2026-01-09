@@ -73,23 +73,11 @@
                     <div class="payment-method-card text-center">
                         <h6 class="mb-3"><i class="fas fa-mobile-alt me-2"></i>Make Payment</h6>
                         <div class="upi-id-box">
-                            <div class="mb-3">
-                                <small class="text-muted d-block mb-2">UPI ID:</small>
-                                <input type="text" 
-                                       id="upiId" 
-                                       value="{{ config('subscription.upi_id', 'mmhc@paytm') }}" 
-                                       readonly 
-                                       class="form-control text-center">
-                            </div>
+                            <input type="hidden" id="upiId" value="{{ config('subscription.upi_id', 'mmhc@paytm') }}">
                             <button type="button" 
                                     class="btn btn-primary btn-lg w-100" 
                                     onclick="openUPI()">
                                 <i class="fas fa-external-link-alt me-2"></i>Pay ₹{{ number_format($subscription->total_amount, 2) }}
-                            </button>
-                            <button type="button" 
-                                    class="btn btn-outline-primary btn-sm w-100 mt-2" 
-                                    onclick="copyUPIId()">
-                                <i class="fas fa-copy me-2"></i>Copy UPI ID
                             </button>
                             <small class="text-muted d-block mt-2">
                                 Opens PhonePe, Paytm, or Google Pay automatically
@@ -470,25 +458,7 @@ function openUPI() {
     }, 1500);
 }
 
-function copyUPIId() {
-    const upiId = document.getElementById('upiId');
-    upiId.select();
-    upiId.setSelectionRange(0, 99999);
-    
-    // Use modern clipboard API if available
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(upiId.value).then(() => {
-            showCopyFeedback();
-        });
-    } else {
-        // Fallback for older browsers
-        document.execCommand('copy');
-        showCopyFeedback();
-    }
-}
-
-function showCopyFeedback() {
-    const btn = event?.target?.closest('button') || document.querySelector('button[onclick*="copyUPIId"]');
+// Removed copyUPIId and showCopyFeedback functions - UPI ID is now hidden for security
     if (btn) {
         const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';

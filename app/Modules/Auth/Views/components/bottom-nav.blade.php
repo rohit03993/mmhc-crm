@@ -93,27 +93,31 @@
 </div>
 
 <style>
-/* Bottom Navigation - Always Visible */
+/* Bottom Navigation - Mobile Only */
 .app-bottom-nav {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    background: white !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: white;
     border-top: 1px solid #e9ecef;
-    display: flex !important;
     justify-content: space-around;
     align-items: center;
-    padding: 10px 0 !important;
-    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
-    z-index: 9999 !important;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1) !important;
+    padding: 10px 0;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    z-index: 9999;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     max-width: 100vw;
     overflow-x: hidden;
-    margin: 0 !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    margin: 0;
+}
+
+/* Hide on desktop (md and up) */
+@media (min-width: 768px) {
+    .app-bottom-nav {
+        display: none !important;
+    }
 }
 
 .app-nav-item {
@@ -307,7 +311,7 @@
     margin: 8px 20px;
 }
 
-/* Ensure bottom nav is always on top */
+/* Show on mobile only */
 @media (max-width: 767px) {
     body {
         padding-bottom: 0 !important;
@@ -321,6 +325,15 @@
     
     body.menu-open {
         overflow: hidden;
+    }
+}
+
+/* Explicitly hide on desktop (md and above) */
+@media (min-width: 768px) {
+    .app-bottom-nav {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
     }
 }
 </style>

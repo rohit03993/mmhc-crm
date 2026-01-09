@@ -169,23 +169,11 @@
                                 <div class="payment-method-card text-center">
                                     <h6 class="mb-3"><i class="fas fa-mobile-alt me-2"></i>UPI Payment</h6>
                                     <div class="upi-id-box">
-                                        <div class="mb-3">
-                                            <small class="text-muted d-block mb-2">UPI ID:</small>
-                                            <input type="text" 
-                                                   id="upiId" 
-                                                   value="{{ config('subscription.upi_id', 'mmhc@paytm') }}" 
-                                                   readonly 
-                                                   class="form-control text-center">
-                                        </div>
+                                        <input type="hidden" id="upiId" value="{{ config('subscription.upi_id', 'mmhc@paytm') }}">
                                         <button type="button" 
                                                 class="btn btn-primary btn-lg w-100" 
                                                 onclick="openUPI()">
                                             <i class="fas fa-external-link-alt me-2"></i>Pay ₹{{ number_format($subscription->total_amount, 2) }}
-                                        </button>
-                                        <button type="button" 
-                                                class="btn btn-outline-primary btn-sm w-100 mt-2" 
-                                                onclick="copyUPIId()">
-                                            <i class="fas fa-copy me-2"></i>Copy UPI ID
                                         </button>
                                         <small class="text-muted d-block mt-2">
                                             Opens PhonePe, Paytm, or Google Pay automatically
@@ -402,8 +390,7 @@ function openUPI() {
     }, 1500);
 }
 
-function copyUPIId() {
-    const upiId = document.getElementById('upiId');
+// Removed copyUPIId function - UPI ID is now hidden for security
     upiId.select();
     upiId.setSelectionRange(0, 99999);
     

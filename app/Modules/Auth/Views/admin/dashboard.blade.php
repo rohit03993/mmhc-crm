@@ -105,6 +105,190 @@
         </div>
     </div>
 
+    <!-- Financial Overview -->
+    @if(isset($stats['financial']))
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="modern-card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Financial Overview
+                    </h5>
+                </div>
+                <div class="modern-card-body">
+                    <div class="row g-3">
+                        <!-- Total Revenue -->
+                        <div class="col-6 col-md-3">
+                            <div class="stat-mini-card stat-success-mini clickable-card" 
+                                 data-bs-toggle="tooltip" 
+                                 data-bs-placement="top" 
+                                 title="Total money received from all subscriptions and service requests (all time)">
+                                <div class="stat-mini-value">₹{{ number_format($stats['financial']['total_revenue'], 0) }}</div>
+                                <div class="stat-mini-label">Total Revenue</div>
+                                <div class="stat-mini-sublabel">All subscriptions + services</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Net Profit -->
+                        <div class="col-6 col-md-3">
+                            <div class="stat-mini-card {{ $stats['financial']['net_profit'] >= 0 ? 'stat-success-mini' : 'stat-danger-mini' }} clickable-card"
+                                 data-bs-toggle="tooltip" 
+                                 data-bs-placement="top" 
+                                 title="Total Revenue minus Total Staff Payouts (Company profit)">
+                                <div class="stat-mini-value">₹{{ number_format($stats['financial']['net_profit'], 0) }}</div>
+                                <div class="stat-mini-label">Net Profit</div>
+                                <div class="stat-mini-sublabel">Revenue - Staff Payouts</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pending Staff Payments -->
+                        <div class="col-6 col-md-3">
+                            <a href="{{ route('admin.payments.index') }}" class="text-decoration-none">
+                                <div class="stat-mini-card stat-danger-mini clickable-card-hover"
+                                     data-bs-toggle="tooltip" 
+                                     data-bs-placement="top" 
+                                     title="Click to view: Money owed TO STAFF (nurses/caregivers) for services, rewards, and referrals">
+                                    <div class="stat-mini-value">₹{{ number_format($stats['financial']['pending_staff_payments'] ?? 0, 0) }}</div>
+                                    <div class="stat-mini-label">Pending Staff Payments</div>
+                                    <div class="stat-mini-sublabel">
+                                        @if(($stats['financial']['staff_with_pending_payments'] ?? 0) > 0)
+                                            {{ $stats['financial']['staff_with_pending_payments'] }} staff members
+                                        @else
+                                            To nurses/caregivers
+                                        @endif
+                                        <i class="fas fa-arrow-right ms-1"></i>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        
+                        <!-- Pending Payments -->
+                        <div class="col-6 col-md-3">
+                            <a href="{{ route('admin.pending-payments') }}" class="text-decoration-none">
+                                <div class="stat-mini-card stat-warning-mini clickable-card-hover"
+                                     data-bs-toggle="tooltip" 
+                                     data-bs-placement="top" 
+                                     title="Click to view: Money owed TO COMPANY by patients (subscriptions & services not fully paid)">
+                                    <div class="stat-mini-value">₹{{ number_format($stats['financial']['total_pending_payments'], 0) }}</div>
+                                    <div class="stat-mini-label">Pending Payments</div>
+                                    <div class="stat-mini-sublabel">
+                                        @if(($stats['financial']['pending_subscriptions_count'] ?? 0) > 0 || ($stats['financial']['pending_service_requests_count'] ?? 0) > 0)
+                                            {{ ($stats['financial']['pending_subscriptions_count'] ?? 0) + ($stats['financial']['pending_service_requests_count'] ?? 0) }} items
+                                        @else
+                                            From patients
+                                        @endif
+                                        <i class="fas fa-arrow-right ms-1"></i>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Detailed Breakdown -->
+                    <hr class="my-3">
+                    <!-- Financial Definitions -->
+                    <div class="alert alert-info mb-3">
+                        <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i><strong>Financial Metrics Explained:</strong></h6>
+                        <div class="row g-2 small">
+                            <div class="col-12 col-md-6">
+                                <i class="fas fa-rupee-sign me-1"></i><strong>Total Revenue:</strong> All money received from subscriptions (paid) + services (paid/completed). This is money the COMPANY has received.
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <i class="fas fa-chart-line me-1"></i><strong>Net Profit:</strong> Total Revenue minus Total Staff Payouts. This is the COMPANY's profit after paying staff.
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <i class="fas fa-users me-1"></i><strong>Pending Staff Payments:</strong> Money OWED TO STAFF (nurses/caregivers) by the company. This includes:
+                                <ul class="mb-0 mt-1 ps-3">
+                                    <li>Service request payments (completed & approved)</li>
+                                    <li>Patient reward earnings</li>
+                                    <li>Staff referral bonuses</li>
+                                    <li>Subscription referral commissions</li>
+                                </ul>
+                                <small class="text-info"><i class="fas fa-info-circle me-1"></i>Click the card to view and process payments</small>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <i class="fas fa-clock me-1"></i><strong>Pending Payments (From Patients):</strong> Money OWED TO COMPANY by patients/customers. This includes:
+                                <ul class="mb-0 mt-1 ps-3">
+                                    <li>Subscription payments not yet verified</li>
+                                    <li>Service payments not fully paid</li>
+                                </ul>
+                                <small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>This is money patients owe, not staff payouts</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <h6 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Revenue Breakdown</h6>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="financial-breakdown-item">
+                                <div class="breakdown-label">
+                                    <i class="fas fa-crown me-1"></i>Subscription Revenue
+                                </div>
+                                <div class="breakdown-value">₹{{ number_format($stats['financial']['total_subscription_revenue'], 2) }}</div>
+                                <div class="breakdown-detail">
+                                    From {{ $stats['financial']['active_subscriptions_count'] }} active subscriptions
+                                </div>
+                                <div class="breakdown-hint">
+                                    <small class="text-muted">Money received from patient subscription payments</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="financial-breakdown-item">
+                                <div class="breakdown-label">
+                                    <i class="fas fa-clipboard-list me-1"></i>Service Revenue
+                                </div>
+                                <div class="breakdown-value">₹{{ number_format($stats['financial']['total_service_revenue'], 2) }}</div>
+                                <div class="breakdown-detail">
+                                    From completed service requests
+                                </div>
+                                <div class="breakdown-hint">
+                                    <small class="text-muted">Money received from patients for healthcare services</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="financial-breakdown-item" style="border-left-color: #dc3545;">
+                                <div class="breakdown-label">
+                                    <i class="fas fa-money-bill-wave me-1"></i>Staff Payouts
+                                </div>
+                                <div class="breakdown-value text-danger">₹{{ number_format($stats['financial']['total_staff_payouts'], 2) }}</div>
+                                <div class="breakdown-detail">
+                                    Total paid to nurses/caregivers
+                                </div>
+                                <div class="breakdown-hint">
+                                    <small class="text-muted">Money paid TO staff (reduces profit)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Monthly Recurring Revenue -->
+                    @if($stats['financial']['monthly_recurring_revenue'] > 0)
+                    <hr class="my-3">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="financial-mrr-card">
+                                <div class="mrr-icon">
+                                    <i class="fas fa-sync-alt"></i>
+                                </div>
+                                <div class="mrr-content">
+                                    <div class="mrr-label">Monthly Recurring Revenue (MRR)</div>
+                                    <div class="mrr-value">₹{{ number_format($stats['financial']['monthly_recurring_revenue'], 2) }}/month</div>
+                                    <div class="mrr-detail">Recurring revenue from active subscriptions</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Service Requests Stats -->
     <div class="row g-3 mb-4">
         <div class="col-12">
@@ -117,28 +301,58 @@
                 <div class="modern-card-body">
                     <div class="row g-3">
                         <div class="col-6 col-md-3">
-                            <div class="stat-mini-card">
-                                <div class="stat-mini-value">{{ $stats['total_service_requests'] }}</div>
-                                <div class="stat-mini-label">Total Requests</div>
-                            </div>
+                            <a href="{{ route('admin.service-requests') }}" class="text-decoration-none">
+                                <div class="stat-mini-card clickable-card-hover"
+                                     data-bs-toggle="tooltip" 
+                                     data-bs-placement="top" 
+                                     title="Click to view all service requests">
+                                    <div class="stat-mini-value">{{ $stats['total_service_requests'] }}</div>
+                                    <div class="stat-mini-label">Total Requests</div>
+                                    <div class="stat-mini-sublabel">Click to view <i class="fas fa-arrow-right ms-1"></i></div>
+                                </div>
+                            </a>
                         </div>
                         <div class="col-6 col-md-3">
-                            <div class="stat-mini-card stat-warning-mini">
-                                <div class="stat-mini-value">{{ $stats['pending_service_requests'] }}</div>
-                                <div class="stat-mini-label">Pending</div>
-                            </div>
+                            <a href="{{ route('admin.service-requests') }}?status=pending" class="text-decoration-none">
+                                <div class="stat-mini-card stat-warning-mini clickable-card-hover"
+                                     data-bs-toggle="tooltip" 
+                                     data-bs-placement="top" 
+                                     title="Click to view pending service requests">
+                                    <div class="stat-mini-value">{{ $stats['pending_service_requests'] }}</div>
+                                    <div class="stat-mini-label">Pending</div>
+                                    @if($stats['pending_service_requests'] > 0)
+                                    <div class="stat-mini-sublabel">Click to view <i class="fas fa-arrow-right ms-1"></i></div>
+                                    @endif
+                                </div>
+                            </a>
                         </div>
                         <div class="col-6 col-md-3">
-                            <div class="stat-mini-card stat-info-mini">
-                                <div class="stat-mini-value">{{ $stats['in_progress_services'] }}</div>
-                                <div class="stat-mini-label">In Progress</div>
-                            </div>
+                            <a href="{{ route('admin.service-requests') }}?status=in_progress" class="text-decoration-none">
+                                <div class="stat-mini-card stat-info-mini clickable-card-hover"
+                                     data-bs-toggle="tooltip" 
+                                     data-bs-placement="top" 
+                                     title="Click to view in-progress service requests">
+                                    <div class="stat-mini-value">{{ $stats['in_progress_services'] }}</div>
+                                    <div class="stat-mini-label">In Progress</div>
+                                    @if($stats['in_progress_services'] > 0)
+                                    <div class="stat-mini-sublabel">Click to view <i class="fas fa-arrow-right ms-1"></i></div>
+                                    @endif
+                                </div>
+                            </a>
                         </div>
                         <div class="col-6 col-md-3">
-                            <div class="stat-mini-card stat-success-mini">
-                                <div class="stat-mini-value">{{ $stats['pending_approvals'] }}</div>
-                                <div class="stat-mini-label">Need Approval</div>
-                            </div>
+                            <a href="{{ route('admin.service-requests') }}?filter=completed" class="text-decoration-none">
+                                <div class="stat-mini-card stat-success-mini clickable-card-hover"
+                                     data-bs-toggle="tooltip" 
+                                     data-bs-placement="top" 
+                                     title="Click to view completed service requests needing approval">
+                                    <div class="stat-mini-value">{{ $stats['pending_approvals'] }}</div>
+                                    <div class="stat-mini-label">Need Approval</div>
+                                    @if($stats['pending_approvals'] > 0)
+                                    <div class="stat-mini-sublabel">Click to view <i class="fas fa-arrow-right ms-1"></i></div>
+                                    @endif
+                                </div>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -434,6 +648,123 @@
     font-weight: 600;
 }
 
+.stat-mini-sublabel {
+    font-size: 0.7rem;
+    color: #95a5a6;
+    margin-top: 0.2rem;
+    font-weight: 500;
+}
+
+/* Financial Breakdown */
+.financial-breakdown-item {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+    transition: all 0.3s ease;
+}
+
+.financial-breakdown-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.breakdown-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.breakdown-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.3rem;
+}
+
+.breakdown-detail {
+    font-size: 0.75rem;
+    color: #95a5a6;
+    margin-bottom: 0.3rem;
+}
+
+.breakdown-hint {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Clickable Card Styles */
+.clickable-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.clickable-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
+}
+
+.clickable-card-hover {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.clickable-card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
+}
+
+/* Monthly Recurring Revenue Card */
+.financial-mrr-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    color: white;
+}
+
+.mrr-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.mrr-content {
+    flex: 1;
+}
+
+.mrr-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mrr-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+}
+
+.mrr-detail {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
 /* Quick Actions */
 .quick-actions-grid {
     display: flex;
@@ -605,5 +936,30 @@
         font-size: 1.3rem;
     }
 }
+
+/* Tooltip Styles */
+[data-bs-toggle="tooltip"] {
+    cursor: help;
+}
+
+.breakdown-hint {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.breakdown-hint small {
+    font-size: 0.7rem;
+}
 </style>
+
+<script>
+// Initialize Bootstrap tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
 @endsection

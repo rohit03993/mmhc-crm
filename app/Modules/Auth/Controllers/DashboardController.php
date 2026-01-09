@@ -111,6 +111,80 @@ class DashboardController extends Controller
     }
 
     /**
+     * Show pending payments page (money owed TO company by patients)
+     */
+    public function pendingPayments(Request $request)
+    {
+        $filterType = $request->get('type', 'all'); // 'subscriptions', 'services', 'all'
+
+        // Get pending subscription payments
+        $pendingSubscriptions = \App\Modules\Plans\Models\Subscription::with(['user', 'plan'])
+            ->where(function($query) {
+                $query->where('status', 'pending')
+                      ->where(function($q) {
+                          // Has payment proof but not verified
+                          $q->where(function($q2) {
+                              $q2->whereNotNull('payment_screenshot')
+                                 ->orWhereNotNull('transaction_id');
+                          })
+                          ->where(function($q3) {
+                              $q3->where('payment_status', '!=', 'paid')
+                                 ->orWhereNull('payment_status')
+                                 ->orWhere('payment_status', 'partially_paid');
+                          });
+                      })
+                      // Or no payment proof yet
+                      ->orWhere(function($q) {
+                          $q->where('status', 'pending')
+                            ->whereNull('payment_screenshot')
+                            ->whereNull('transaction_id')
+                            ->where(function($q2) {
+                                $q2->where('payment_status', '!=', 'paid')
+                                   ->orWhereNull('payment_status');
+                            });
+                      });
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Get pending service payments (unpaid balance)
+        $pendingServices = \App\Modules\Services\Models\ServiceRequest::with(['patient', 'serviceType', 'assignedStaff'])
+            ->where('status', '!=', 'cancelled')
+            ->whereIn('status', ['assigned', 'in_progress', 'completed', 'pending'])
+            ->whereRaw('COALESCE(total_amount, 0) > COALESCE(prepaid_amount, 0)')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($service) {
+                $service->unpaid_balance = $service->total_amount - ($service->prepaid_amount ?? 0);
+                return $service;
+            });
+
+        // Store original counts before filtering
+        $totalSubscriptionsCount = $pendingSubscriptions->count();
+        $totalServicesCount = $pendingServices->count();
+
+        // Filter collections for display based on type
+        $displaySubscriptions = ($filterType === 'all' || $filterType === 'subscriptions') ? $pendingSubscriptions : collect();
+        $displayServices = ($filterType === 'all' || $filterType === 'services') ? $pendingServices : collect();
+
+        // Calculate totals (from filtered collections for display)
+        $totalPendingSubscriptions = $displaySubscriptions->sum('total_amount');
+        $totalPendingServices = $displayServices->sum('unpaid_balance');
+        $totalPending = $totalPendingSubscriptions + $totalPendingServices;
+
+        return view('auth::admin.pending-payments', [
+            'pendingSubscriptions' => $displaySubscriptions,
+            'pendingServices' => $displayServices,
+            'totalPendingSubscriptions' => $totalPendingSubscriptions,
+            'totalPendingServices' => $totalPendingServices,
+            'totalPending' => $totalPending,
+            'filterType' => $filterType,
+            'totalSubscriptionsCount' => $totalSubscriptionsCount,
+            'totalServicesCount' => $totalServicesCount,
+        ]);
+    }
+
+    /**
      * Get user statistics (for patients)
      */
     protected function getUserStats($user)
@@ -197,7 +271,294 @@ class DashboardController extends Controller
             'in_progress_services' => \App\Modules\Services\Models\ServiceRequest::where('status', 'in_progress')->count(),
         ];
 
+        // Add financial statistics
+        $stats['financial'] = $this->getFinancialStats();
+
         return $stats;
+    }
+
+    /**
+     * Get financial statistics for admin dashboard
+     */
+    protected function getFinancialStats()
+    {
+        // 1. Subscription Revenue
+        // Total revenue from subscriptions with paid status or active status with paid amount
+        $totalSubscriptionRevenue = \App\Modules\Plans\Models\Subscription::where(function($query) {
+                $query->where('payment_status', 'paid')
+                      ->orWhere(function($q) {
+                          $q->where('status', 'active')
+                            ->whereNotNull('paid_amount')
+                            ->where('paid_amount', '>', 0);
+                      });
+            })
+            ->sum('paid_amount');
+        
+        // If paid_amount is not reliable, use total_amount as fallback
+        if ($totalSubscriptionRevenue == 0) {
+            $totalSubscriptionRevenue = \App\Modules\Plans\Models\Subscription::where(function($query) {
+                    $query->where('payment_status', 'paid')
+                          ->orWhere('status', 'active');
+                })
+                ->sum('total_amount');
+        }
+
+        // Active subscription revenue (only active subscriptions)
+        $subscriptionRevenue = \App\Modules\Plans\Models\Subscription::where('status', 'active')
+            ->where(function($query) {
+                $query->whereNotNull('paid_amount')
+                      ->where('paid_amount', '>', 0)
+                      ->orWhereNotNull('total_amount')
+                      ->where('total_amount', '>', 0);
+            })
+            ->sum('paid_amount');
+        
+        if ($subscriptionRevenue == 0) {
+            $subscriptionRevenue = \App\Modules\Plans\Models\Subscription::where('status', 'active')
+                ->sum('total_amount');
+        }
+
+        // Active subscriptions count
+        $activeSubscriptionsCount = \App\Modules\Plans\Models\Subscription::where('status', 'active')->count();
+
+        // 2. Service Revenue
+        // Total revenue from service requests (prepaid_amount from completed/in_progress services)
+        $serviceRevenue = \App\Modules\Services\Models\ServiceRequest::whereIn('status', ['assigned', 'in_progress', 'completed'])
+            ->where('status', '!=', 'cancelled')
+            ->sum('prepaid_amount');
+
+        // Alternative: Use total_amount if prepaid_amount is not reliable
+        if ($serviceRevenue == 0) {
+            $serviceRevenue = \App\Modules\Services\Models\ServiceRequest::whereIn('status', ['assigned', 'in_progress', 'completed'])
+                ->where('status', '!=', 'cancelled')
+                ->sum('total_amount');
+        }
+
+        // 3. Total Staff Payouts
+        $totalStaffPayouts = \App\Modules\Payments\Models\StaffPayment::sum('amount');
+
+        // 4. Net Profit (Revenue - Payouts)
+        $netProfit = ($totalSubscriptionRevenue + $serviceRevenue) - $totalStaffPayouts;
+
+        // 5. Pending Payments (Money OWED TO COMPANY by customers/patients)
+        // IMPORTANT: This is money patients owe, NOT money owed to staff
+        
+        // Pending subscription payments: Subscriptions where payment proof submitted but not verified
+        $pendingSubscriptionPayments = \App\Modules\Plans\Models\Subscription::where(function($query) {
+                // Status is pending AND has payment proof (screenshot or transaction ID) but not verified
+                $query->where('status', 'pending')
+                      ->where(function($q) {
+                          $q->whereNotNull('payment_screenshot')
+                            ->orWhereNotNull('transaction_id');
+                      })
+                      ->where(function($q) {
+                          $q->where('payment_status', '!=', 'paid')
+                            ->orWhereNull('payment_status')
+                            ->orWhere('payment_status', 'partially_paid');
+                      });
+            })
+            ->sum('total_amount');
+
+        // Also include subscriptions with status pending and no payment proof yet
+        $pendingSubscriptionsNoProof = \App\Modules\Plans\Models\Subscription::where('status', 'pending')
+            ->whereNull('payment_screenshot')
+            ->whereNull('transaction_id')
+            ->where(function($q) {
+                $q->where('payment_status', '!=', 'paid')
+                  ->orWhereNull('payment_status');
+            })
+            ->sum('total_amount');
+
+        $pendingSubscriptionPayments += $pendingSubscriptionsNoProof;
+
+        // Pending service payments: Services where patient hasn't paid fully (unpaid balance)
+        $pendingServicePayments = \App\Modules\Services\Models\ServiceRequest::where('status', '!=', 'cancelled')
+            ->where(function($query) {
+                // Service is assigned, in progress, or completed but payment not fully received
+                $query->whereIn('status', ['assigned', 'in_progress', 'completed', 'pending'])
+                      ->whereRaw('COALESCE(total_amount, 0) > COALESCE(prepaid_amount, 0)');
+            })
+            ->selectRaw('SUM(GREATEST(0, COALESCE(total_amount, 0) - COALESCE(prepaid_amount, 0))) as pending')
+            ->first()->pending ?? 0;
+
+        $totalPendingPayments = $pendingSubscriptionPayments + $pendingServicePayments;
+        
+        // Count of pending payment items for display
+        $pendingSubscriptionsCount = \App\Modules\Plans\Models\Subscription::where(function($query) {
+                $query->where('status', 'pending')
+                      ->where(function($q) {
+                          $q->where(function($q2) {
+                              $q2->whereNotNull('payment_screenshot')
+                                 ->orWhereNotNull('transaction_id');
+                          })
+                          ->where(function($q3) {
+                              $q3->where('payment_status', '!=', 'paid')
+                                 ->orWhereNull('payment_status')
+                                 ->orWhere('payment_status', 'partially_paid');
+                          });
+                      })
+                      ->orWhere(function($q) {
+                          $q->where('status', 'pending')
+                            ->whereNull('payment_screenshot')
+                            ->whereNull('transaction_id')
+                            ->where(function($q2) {
+                                $q2->where('payment_status', '!=', 'paid')
+                                   ->orWhereNull('payment_status');
+                            });
+                      });
+            })
+            ->count();
+            
+        $pendingServiceRequestsCount = \App\Modules\Services\Models\ServiceRequest::where('status', '!=', 'cancelled')
+            ->whereIn('status', ['assigned', 'in_progress', 'completed', 'pending'])
+            ->whereRaw('COALESCE(total_amount, 0) > COALESCE(prepaid_amount, 0)')
+            ->count();
+
+        // 6. This Month Revenue
+        $thisMonthStart = now()->startOfMonth();
+        
+        // Subscriptions paid this month (use payment_verified_at or created_at as fallback)
+        $thisMonthSubscriptionRevenue = \App\Modules\Plans\Models\Subscription::where(function($query) use ($thisMonthStart) {
+                $query->where('payment_status', 'paid')
+                      ->where(function($q) use ($thisMonthStart) {
+                          $q->where('payment_verified_at', '>=', $thisMonthStart)
+                            ->orWhere(function($q2) use ($thisMonthStart) {
+                                $q2->whereNull('payment_verified_at')
+                                   ->where('created_at', '>=', $thisMonthStart);
+                            });
+                      });
+            })
+            ->sum('paid_amount');
+
+        // Services paid this month (use created_at as proxy for payment date, or admin_approved_at for completed services)
+        $thisMonthServiceRevenue = \App\Modules\Services\Models\ServiceRequest::where(function($query) use ($thisMonthStart) {
+                $query->where(function($q) use ($thisMonthStart) {
+                        $q->where('created_at', '>=', $thisMonthStart)
+                          ->whereIn('status', ['assigned', 'in_progress', 'completed'])
+                          ->where('status', '!=', 'cancelled');
+                    })
+                    ->orWhere(function($q) use ($thisMonthStart) {
+                        $q->where('admin_approved_at', '>=', $thisMonthStart)
+                          ->where('status', 'completed');
+                    });
+            })
+            ->sum('prepaid_amount');
+
+        $thisMonthRevenue = $thisMonthSubscriptionRevenue + $thisMonthServiceRevenue;
+
+        // 6. Pending Staff Payments (Money OWED TO STAFF by company)
+        // Calculate total pending payments to all staff members
+        $pendingStaffPayments = $this->calculatePendingStaffPayments();
+        
+        // Count of staff members with pending payments
+        $staffWithPendingPayments = \App\Models\Core\User::whereIn('role', ['nurse', 'caregiver'])
+            ->where('is_active', true)
+            ->get()
+            ->filter(function($staff) {
+                $payments = $this->calculatePendingPaymentsForStaff($staff);
+                return $payments['total'] > 0;
+            })
+            ->count();
+
+        // 7. Active Subscriptions Monthly Recurring Revenue (MRR)
+        // Calculate monthly equivalent from active subscriptions
+        $mrr = \App\Modules\Plans\Models\Subscription::where('status', 'active')
+            ->get()
+            ->sum(function($subscription) {
+                $frequency = $subscription->payment_frequency ?? 'monthly';
+                $amount = $subscription->paid_amount > 0 ? $subscription->paid_amount : $subscription->total_amount;
+                
+                return match($frequency) {
+                    'monthly' => $amount,
+                    'half_yearly' => $amount / 6,
+                    'annually' => $amount / 12,
+                    'full_payment' => 0, // One-time payment, no recurring
+                    default => $amount / 12, // Default to monthly
+                };
+            });
+
+        return [
+            'total_subscription_revenue' => round($totalSubscriptionRevenue, 2),
+            'active_subscription_revenue' => round($subscriptionRevenue, 2),
+            'active_subscriptions_count' => $activeSubscriptionsCount,
+            'total_service_revenue' => round($serviceRevenue, 2),
+            'total_revenue' => round($totalSubscriptionRevenue + $serviceRevenue, 2),
+            'total_staff_payouts' => round($totalStaffPayouts, 2),
+            'net_profit' => round($netProfit, 2),
+            'pending_subscription_payments' => round($pendingSubscriptionPayments, 2),
+            'pending_service_payments' => round($pendingServicePayments, 2),
+            'total_pending_payments' => round($totalPendingPayments, 2),
+            'pending_subscriptions_count' => $pendingSubscriptionsCount,
+            'pending_service_requests_count' => $pendingServiceRequestsCount,
+            'pending_staff_payments' => round($pendingStaffPayments, 2),
+            'staff_with_pending_payments' => $staffWithPendingPayments,
+            'this_month_revenue' => round($thisMonthRevenue, 2),
+            'this_month_subscription_revenue' => round($thisMonthSubscriptionRevenue, 2),
+            'this_month_service_revenue' => round($thisMonthServiceRevenue, 2),
+            'monthly_recurring_revenue' => round($mrr, 2),
+        ];
+    }
+
+    /**
+     * Calculate total pending payments to all staff members
+     */
+    protected function calculatePendingStaffPayments()
+    {
+        $totalPending = 0;
+        
+        $staffMembers = \App\Models\Core\User::whereIn('role', ['nurse', 'caregiver'])
+            ->where('is_active', true)
+            ->get();
+
+        foreach ($staffMembers as $staff) {
+            $payments = $this->calculatePendingPaymentsForStaff($staff);
+            $totalPending += $payments['total'];
+        }
+
+        return $totalPending;
+    }
+
+    /**
+     * Calculate pending payments for a specific staff member
+     * (Similar logic to AdminPaymentController::calculatePendingPayments)
+     */
+    protected function calculatePendingPaymentsForStaff($staff)
+    {
+        $rewardService = app(\App\Modules\Rewards\Services\RewardService::class);
+
+        // 1. Service Request Earnings (completed and approved, but not paid)
+        $serviceEarnings = \App\Modules\Services\Models\ServiceRequest::where('assigned_staff_id', $staff->id)
+            ->where('status', 'completed')
+            ->whereNotNull('admin_approved_at')
+            ->where('staff_payment_processed', false)
+            ->sum('total_staff_payout') ?? 0;
+
+        // 2. Patient Reward Earnings
+        $patientRewardEarnings = \App\Modules\Rewards\Models\CaregiverReward::where('user_id', $staff->id)
+            ->where('payment_processed', false)
+            ->sum('reward_amount') ?? 0;
+
+        // 3. Staff Referral Earnings
+        $staffReferralEarnings = \App\Modules\Referrals\Models\Referral::where('referrer_id', $staff->id)
+            ->where('status', 'completed')
+            ->where('payment_processed', false)
+            ->sum('reward_amount') ?? 0;
+
+        // 4. Subscription Referral Earnings
+        $subscriptionReferralEarnings = \App\Modules\Plans\Models\Subscription::where('referrer_id', $staff->id)
+            ->where('status', 'active')
+            ->where('referral_payment_processed', false)
+            ->sum('referral_commission_amount') ?? 0;
+
+        $total = $serviceEarnings + $patientRewardEarnings + $staffReferralEarnings + $subscriptionReferralEarnings;
+
+        return [
+            'service_request' => ['amount' => $serviceEarnings],
+            'patient_reward' => ['amount' => $patientRewardEarnings],
+            'staff_referral' => ['amount' => $staffReferralEarnings],
+            'subscription_referral' => ['amount' => $subscriptionReferralEarnings],
+            'total' => $total,
+        ];
     }
 
     /**

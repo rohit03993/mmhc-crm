@@ -127,6 +127,7 @@ Route::middleware(['auth'])->group(function () {
     // Admin Routes for Profile Management
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [\App\Modules\Auth\Controllers\DashboardController::class, 'adminDashboard'])->name('dashboard');
+        Route::get('/pending-payments', [\App\Modules\Auth\Controllers\DashboardController::class, 'pendingPayments'])->name('pending-payments');
         Route::get('/profiles', [ProfileController::class, 'adminIndex'])->name('profiles');
         Route::get('/profiles/{user}', [ProfileController::class, 'adminView'])->name('profiles.view');
         
@@ -169,6 +170,7 @@ Route::middleware(['auth'])->group(function () {
         // Staff Payment Management Routes
         Route::prefix('payments')->name('payments.')->group(function () {
             Route::get('/', [\App\Modules\Payments\Controllers\AdminPaymentController::class, 'index'])->name('index');
+            Route::get('/history', [\App\Modules\Payments\Controllers\AdminPaymentController::class, 'history'])->name('history');
             Route::get('/staff/{staff}/form', [\App\Modules\Payments\Controllers\AdminPaymentController::class, 'showPaymentForm'])->name('form');
             Route::post('/staff/{staff}/process', [\App\Modules\Payments\Controllers\AdminPaymentController::class, 'processPayment'])->name('process');
         });

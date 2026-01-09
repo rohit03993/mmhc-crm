@@ -169,7 +169,7 @@ class AuthController extends Controller
             // Normalize and store phone number
             $userData['phone'] = $normalizedPhone;
             
-            // Store plain text password for admin viewing
+            // Store password (mutator will auto-encrypt plain_password)
             $userData['plain_password'] = $userData['password'];
             $userData['password'] = Hash::make($userData['password']);
             
@@ -310,7 +310,7 @@ class AuthController extends Controller
         // Normalize and store phone number
         $userData['phone'] = $normalizedPhone;
         
-        // Store plain text password for admin viewing
+        // Store password (mutator will auto-encrypt plain_password)
         $userData['plain_password'] = $userData['password'];
         $userData['password'] = Hash::make($userData['password']);
         
@@ -339,11 +339,11 @@ class AuthController extends Controller
      */
     public function viewUser(User $user)
     {
-        // Load the plain password for display
-        $user->makeVisible(['plain_password']);
-        
         // Extract 10-digit phone for display
         $phoneDisplay = $this->userService->extractPhoneDigits($user->phone);
+        
+        // Get decrypted password using accessor (admin only)
+        $decryptedPassword = $user->decrypted_password;
         
         return response()->json([
             'success' => true,
@@ -359,7 +359,7 @@ class AuthController extends Controller
                 'date_of_birth' => $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : null,
                 'is_active' => $user->is_active,
                 'created_at' => $user->created_at->format('M d, Y'),
-                'plain_password' => $user->plain_password,
+                'plain_password' => $decryptedPassword, // Use decrypted password accessor
                 'reward_points' => $user->reward_points ?? 0,
             ]
         ]);
@@ -370,10 +370,11 @@ class AuthController extends Controller
      */
     public function editUser(User $user)
     {
-        $user->makeVisible(['plain_password']);
-        
         // Extract 10-digit phone for display
         $phoneDisplay = $this->userService->extractPhoneDigits($user->phone);
+        
+        // Get decrypted password using accessor (admin only)
+        $decryptedPassword = $user->decrypted_password;
         
         return response()->json([
             'success' => true,
@@ -388,7 +389,7 @@ class AuthController extends Controller
                 'pincode' => $user->pincode,
                 'date_of_birth' => $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : null,
                 'is_active' => $user->is_active,
-                'plain_password' => $user->plain_password,
+                'plain_password' => $decryptedPassword, // Use decrypted password accessor
             ]
         ]);
     }
@@ -444,10 +445,10 @@ class AuthController extends Controller
             $updateData['is_active'] = $request->is_active == '1' || $request->is_active === true || $request->is_active === 1;
         }
         
-        // Update password if provided
+        // Update password if provided (mutator will auto-encrypt plain_password)
         if ($request->filled('password')) {
             $updateData['password'] = Hash::make($request->password);
-            $updateData['plain_password'] = $request->password; // Store plain text for admin viewing
+            $updateData['plain_password'] = $request->password;
         }
         
         // Get pincode coordinates from pincode database
@@ -495,7 +496,7 @@ class AuthController extends Controller
         
         $user->update([
             'password' => Hash::make($newPassword),
-            'plain_password' => $newPassword, // Store plain text for admin viewing
+            'plain_password' => $newPassword, // Mutator will auto-encrypt
         ]);
 
         return response()->json([

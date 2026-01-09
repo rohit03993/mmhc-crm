@@ -72,14 +72,14 @@
                 margin-left: 0;
                 margin-right: 0;
             }
-            
-            /* Ensure bottom nav is always visible */
+        }
+        
+        /* Hide bottom nav on desktop */
+        @media (min-width: 768px) {
             .app-bottom-nav {
-                display: flex !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                position: fixed !important;
-                bottom: 0 !important;
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
             }
         }
 
@@ -185,9 +185,36 @@
             margin-bottom: 1.5rem;
         }
     </style>
+    
+    <style>
+        /* Auth pages styling */
+        .auth-page-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+        }
+        
+        body:has(.auth-page-wrapper) {
+            overflow: hidden;
+        }
+        
+        body:has(.auth-page-wrapper) .container-fluid,
+        body:has(.auth-page-wrapper) .row {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
 </head>
 <body>
-    @include('auth::components.navbar')
+    @if(auth()->check())
+        @include('auth::components.navbar')
+    @endif
     <div class="container-fluid">
         <div class="row">
             @if(auth()->check())

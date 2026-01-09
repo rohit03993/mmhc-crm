@@ -35,7 +35,7 @@ class SetPassword extends Command
         
         $user->update([
             'password' => Hash::make($password),
-            'plain_password' => $password, // Store plain text for admin viewing
+            'plain_password' => $password, // Mutator will auto-encrypt
         ]);
         
         $this->info("✅ Password updated for user '{$user->name}' ({$user->email})");

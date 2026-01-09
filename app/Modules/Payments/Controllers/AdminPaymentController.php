@@ -69,6 +69,12 @@ class AdminPaymentController extends Controller
         $staff = User::findOrFail($staffId);
         $paymentType = $request->get('type', 'all');
         
+        // Don't allow 'all' type - redirect to index if invalid type
+        if ($paymentType === 'all' || !in_array($paymentType, ['service_request', 'patient_reward', 'staff_referral', 'subscription_referral'])) {
+            return redirect()->route('admin.payments.index')
+                ->with('error', 'Please select a specific payment category.');
+        }
+        
         $pendingPayments = $this->calculatePendingPayments($staff);
         $paymentDetails = $this->getPaymentDetails($staff, $paymentType);
         
@@ -79,6 +85,50 @@ class AdminPaymentController extends Controller
 
         return view('payments::admin.payment-form', compact('staff', 'pendingPayments', 'paymentType', 'paymentDetails'));
     }
+    
+    /**
+     * Show payment history for admin
+     */
+    public function history(Request $request)
+    {
+        $admin = Auth::user();
+        $filterType = $request->get('type', 'all');
+        $filterStaff = $request->get('staff', 'all');
+        
+        $query = StaffPayment::with(['staff', 'admin'])
+            ->where('admin_id', $admin->id)
+            ->orderBy('paid_at', 'desc');
+        
+        // Filter by payment type
+        if ($filterType !== 'all') {
+            $query->where('payment_type', $filterType);
+        }
+        
+        // Filter by staff
+        if ($filterStaff !== 'all') {
+            $query->where('staff_id', $filterStaff);
+        }
+        
+        $payments = $query->paginate(20);
+        
+        // Get all staff for filter dropdown
+        $allStaff = User::whereIn('role', ['nurse', 'caregiver'])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        
+        // Calculate totals
+        $totalPaid = StaffPayment::where('admin_id', $admin->id)
+            ->when($filterType !== 'all', function($q) use ($filterType) {
+                return $q->where('payment_type', $filterType);
+            })
+            ->when($filterStaff !== 'all', function($q) use ($filterStaff) {
+                return $q->where('staff_id', $filterStaff);
+            })
+            ->sum('amount');
+        
+        return view('payments::admin.history', compact('payments', 'filterType', 'filterStaff', 'allStaff', 'totalPaid'));
+    }
 
     /**
      * Process payment submission
@@ -88,9 +138,12 @@ class AdminPaymentController extends Controller
         $request->validate([
             'payment_type' => 'required|in:service_request,patient_reward,staff_referral,subscription_referral',
             'amount' => 'required|numeric|min:0.01',
-            'transaction_id' => 'nullable|string|max:255',
+            'transaction_id' => 'required|string|max:255',
             'notes' => 'nullable|string',
-            'payment_screenshot' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'payment_screenshot' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ], [
+            'transaction_id.required' => 'Transaction ID is required. Please enter the transaction ID from your payment app.',
+            'payment_screenshot.required' => 'Payment screenshot is required. Please upload the payment confirmation screenshot.',
         ]);
 
         $staff = User::findOrFail($staffId);
@@ -135,20 +188,18 @@ class AdminPaymentController extends Controller
             ->where('staff_payment_processed', false)
             ->sum('total_staff_payout') ?? 0;
 
-        // 2. Patient Reward Earnings (if >= ₹500)
+        // 2. Patient Reward Earnings (show all, not just >= ₹500 for admin)
         $totalRewardPoints = $staff->reward_points ?? 0;
         $totalRewardAmount = $rewardService->calculateRewardAmount($totalRewardPoints);
-        $unpaidRewards = CaregiverReward::where('user_id', $staff->id)
+        $patientRewardEarnings = CaregiverReward::where('user_id', $staff->id)
             ->where('payment_processed', false)
             ->sum('reward_amount') ?? 0;
-        $patientRewardEarnings = $unpaidRewards >= self::MINIMUM_WITHDRAWAL ? $unpaidRewards : 0;
 
-        // 3. Staff Referral Earnings (if >= ₹500)
+        // 3. Staff Referral Earnings (show all, not just >= ₹500 for admin)
         $staffReferralEarnings = Referral::where('referrer_id', $staff->id)
             ->where('status', 'completed')
             ->where('payment_processed', false)
             ->sum('reward_amount') ?? 0;
-        $staffReferralEarnings = $staffReferralEarnings >= self::MINIMUM_WITHDRAWAL ? $staffReferralEarnings : 0;
 
         // 4. Subscription Referral Earnings
         $subscriptionReferralEarnings = Subscription::where('referrer_id', $staff->id)
@@ -170,6 +221,7 @@ class AdminPaymentController extends Controller
                 'count' => $patientRewardEarnings > 0 ? CaregiverReward::where('user_id', $staff->id)
                     ->where('payment_processed', false)
                     ->count() : 0,
+                'meets_threshold' => $patientRewardEarnings >= self::MINIMUM_WITHDRAWAL,
             ],
             'staff_referral' => [
                 'amount' => $staffReferralEarnings,
@@ -177,6 +229,7 @@ class AdminPaymentController extends Controller
                     ->where('status', 'completed')
                     ->where('payment_processed', false)
                     ->count() : 0,
+                'meets_threshold' => $staffReferralEarnings >= self::MINIMUM_WITHDRAWAL,
             ],
             'subscription_referral' => [
                 'amount' => $subscriptionReferralEarnings,
@@ -204,31 +257,18 @@ class AdminPaymentController extends Controller
                     ->get();
 
             case 'patient_reward':
-                $unpaidRewards = CaregiverReward::where('user_id', $staff->id)
+                // Admin can see all unpaid rewards, regardless of threshold
+                return CaregiverReward::where('user_id', $staff->id)
                     ->where('payment_processed', false)
-                    ->sum('reward_amount') ?? 0;
-                
-                if ($unpaidRewards >= self::MINIMUM_WITHDRAWAL) {
-                    return CaregiverReward::where('user_id', $staff->id)
-                        ->where('payment_processed', false)
-                        ->get();
-                }
-                return collect();
+                    ->get();
 
             case 'staff_referral':
-                $totalAmount = Referral::where('referrer_id', $staff->id)
+                // Admin can see all unpaid referrals, regardless of threshold
+                return Referral::where('referrer_id', $staff->id)
                     ->where('status', 'completed')
                     ->where('payment_processed', false)
-                    ->sum('reward_amount') ?? 0;
-                
-                if ($totalAmount >= self::MINIMUM_WITHDRAWAL) {
-                    return Referral::where('referrer_id', $staff->id)
-                        ->where('status', 'completed')
-                        ->where('payment_processed', false)
-                        ->with(['referred'])
-                        ->get();
-                }
-                return collect();
+                    ->with(['referred'])
+                    ->get();
 
             case 'subscription_referral':
                 return Subscription::where('referrer_id', $staff->id)

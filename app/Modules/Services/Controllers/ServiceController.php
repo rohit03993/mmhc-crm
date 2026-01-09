@@ -368,11 +368,31 @@ class ServiceController extends Controller
     /**
      * Admin: Display all service requests
      */
-    public function adminIndex()
+    public function adminIndex(Request $request)
     {
-        $serviceRequests = ServiceRequest::with(['patient', 'serviceType', 'assignedStaff', 'preferredStaff', 'approvedBy'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        // Get filter parameters
+        $statusFilter = $request->get('status', 'all');
+        $filterId = $request->get('filter'); // Specific ID filter from pending payments page
+        
+        $query = ServiceRequest::with(['patient', 'serviceType', 'assignedStaff', 'preferredStaff', 'approvedBy']);
+        
+        // Filter by status
+        if ($statusFilter !== 'all') {
+            if ($statusFilter === 'completed' && $request->get('filter') === 'completed') {
+                // Show completed requests that need approval
+                $query->where('status', 'completed')
+                      ->whereNull('admin_approved_at');
+            } else {
+                $query->where('status', $statusFilter);
+            }
+        }
+        
+        // Filter by specific ID (from pending payments link)
+        if ($filterId) {
+            $query->where('id', $filterId);
+        }
+        
+        $serviceRequests = $query->orderBy('created_at', 'desc')->paginate(15);
         
         $stats = [
             'total_requests' => ServiceRequest::count(),
@@ -385,7 +405,7 @@ class ServiceController extends Controller
                 ->count(),
         ];
         
-        return view('services::admin.requests.index', compact('serviceRequests', 'stats'));
+        return view('services::admin.requests.index', compact('serviceRequests', 'stats', 'statusFilter', 'filterId'));
     }
 
     /**

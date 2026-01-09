@@ -5,6 +5,7 @@ namespace App\Models\Core;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Crypt;
 
 class User extends Authenticatable
 {
@@ -202,5 +203,68 @@ class User extends Authenticatable
     public function staffPayments()
     {
         return $this->hasMany(\App\Modules\Payments\Models\StaffPayment::class, 'staff_id');
+    }
+
+    /**
+     * Get decrypted plain password (admin only - for viewing)
+     * Returns null if password cannot be decrypted (old unencrypted records)
+     * 
+     * Usage: $user->decrypted_password
+     */
+    public function getDecryptedPasswordAttribute()
+    {
+        $plainPassword = $this->attributes['plain_password'] ?? null;
+        
+        if (!$plainPassword) {
+            return null;
+        }
+
+        try {
+            // Check if it's already encrypted (Laravel Crypt produces base64 strings with length > 60)
+            // Encrypted values from Laravel's Crypt are typically long base64 strings
+            if (strlen($plainPassword) > 60 && base64_decode($plainPassword, true) !== false) {
+                // Try to decrypt - if it fails, it might be an old unencrypted password
+                return Crypt::decryptString($plainPassword);
+            } else {
+                // Old unencrypted password - return as is for backward compatibility
+                // Migration will encrypt these later
+                return $plainPassword;
+            }
+        } catch (\Exception $e) {
+            // If decryption fails, it might be an old unencrypted password
+            // Return the original value for backward compatibility
+            // Migration will encrypt these later
+            \Log::debug('Could not decrypt plain_password for user ' . $this->id . ': ' . $e->getMessage());
+            return $plainPassword;
+        }
+    }
+
+    /**
+     * Set encrypted plain password
+     * Automatically encrypts when setting plain_password attribute
+     */
+    public function setPlainPasswordAttribute($value)
+    {
+        if ($value === null || $value === '') {
+            $this->attributes['plain_password'] = null;
+            return;
+        }
+
+        // Only encrypt if it's not already encrypted
+        // Check if it looks like an encrypted string (long and contains special chars)
+        if (strlen($value) > 60 || str_contains($value, ':')) {
+            // Already encrypted, store as is
+            $this->attributes['plain_password'] = $value;
+        } else {
+            // Encrypt the password
+            try {
+                $this->attributes['plain_password'] = Crypt::encryptString($value);
+            } catch (\Exception $e) {
+                // If encryption fails, log error but don't break registration
+                \Log::error('Failed to encrypt plain_password: ' . $e->getMessage());
+                // Store as null to prevent plain text storage
+                $this->attributes['plain_password'] = null;
+            }
+        }
     }
 }
