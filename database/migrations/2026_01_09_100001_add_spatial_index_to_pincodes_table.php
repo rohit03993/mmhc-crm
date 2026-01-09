@@ -17,39 +17,58 @@ return new class extends Migration
         $columnExists = DB::select("SHOW COLUMNS FROM pincodes LIKE 'location'");
         
         if (empty($columnExists)) {
-            // MySQL spatial indexes require NOT NULL
-            // Step 1: Add POINT column as NOT NULL with default (sentinel value for missing coordinates)
-            // Using POINT(0 0) as sentinel - this is in the middle of the ocean, won't match real locations
-            DB::statement("ALTER TABLE pincodes ADD COLUMN location POINT NOT NULL DEFAULT (ST_GeomFromText('POINT(0 0)', 4326)) AFTER longitude");
-        } else {
-            // Column exists but might be NULL - need to convert to NOT NULL
-            // First, populate any NULL values with sentinel
+            // Step 1: Add POINT column as nullable first (MySQL doesn't allow functions in DEFAULT)
+            DB::statement("ALTER TABLE pincodes ADD COLUMN location POINT NULL AFTER longitude");
+            
+            // Step 2: Populate POINT column from existing latitude/longitude data
+            DB::statement("
+                UPDATE pincodes 
+                SET location = ST_GeomFromText(
+                    CONCAT('POINT(', longitude, ' ', latitude, ')'),
+                    4326
+                )
+                WHERE latitude IS NOT NULL 
+                AND longitude IS NOT NULL
+            ");
+            
+            // Step 3: Set sentinel value POINT(0 0) for pincodes without coordinates
             DB::statement("
                 UPDATE pincodes 
                 SET location = ST_GeomFromText('POINT(0 0)', 4326)
                 WHERE location IS NULL
             ");
             
-            // Update existing NULL location column to NOT NULL with default
+            // Step 4: Convert to NOT NULL (now all rows have values)
+            DB::statement("ALTER TABLE pincodes MODIFY COLUMN location POINT NOT NULL");
+        } else {
+            // Column exists - handle existing data
+            // Populate NULL values with sentinel
             DB::statement("
-                ALTER TABLE pincodes 
-                MODIFY COLUMN location POINT NOT NULL DEFAULT (ST_GeomFromText('POINT(0 0)', 4326))
+                UPDATE pincodes 
+                SET location = ST_GeomFromText('POINT(0 0)', 4326)
+                WHERE location IS NULL
             ");
+            
+            // Update from lat/lng if location is sentinel value
+            DB::statement("
+                UPDATE pincodes 
+                SET location = ST_GeomFromText(
+                    CONCAT('POINT(', longitude, ' ', latitude, ')'),
+                    4326
+                )
+                WHERE latitude IS NOT NULL 
+                AND longitude IS NOT NULL
+                AND (location IS NULL OR location = ST_GeomFromText('POINT(0 0)', 4326))
+            ");
+            
+            // Convert to NOT NULL if not already
+            $columnInfo = DB::select("SHOW COLUMNS FROM pincodes WHERE Field = 'location'");
+            if (!empty($columnInfo) && $columnInfo[0]->Null === 'YES') {
+                DB::statement("ALTER TABLE pincodes MODIFY COLUMN location POINT NOT NULL");
+            }
         }
 
-        // Step 2: Populate POINT column from existing latitude/longitude data
-        DB::statement("
-            UPDATE pincodes 
-            SET location = ST_GeomFromText(
-                CONCAT('POINT(', longitude, ' ', latitude, ')'),
-                4326
-            )
-            WHERE latitude IS NOT NULL 
-            AND longitude IS NOT NULL
-            AND (location IS NULL OR location = ST_GeomFromText('POINT(0 0)', 4326))
-        ");
-
-        // Step 3: Check if spatial index exists before creating
+        // Step 5: Check if spatial index exists before creating
         $indexExists = DB::select("SHOW INDEXES FROM pincodes WHERE Key_name = 'idx_location_spatial'");
         
         if (empty($indexExists)) {
