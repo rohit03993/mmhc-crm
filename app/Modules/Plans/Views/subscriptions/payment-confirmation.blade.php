@@ -73,13 +73,27 @@
                     <div class="payment-method-card text-center">
                         <h6 class="mb-3"><i class="fas fa-mobile-alt me-2"></i>Make Payment</h6>
                         <div class="upi-id-box">
-                            <input type="hidden" id="upiId" value="{{ config('subscription.upi_id', 'mmhc@paytm') }}">
+                            @php
+                                $upiId = config('subscription.upi_id', 'mmhc@paytm');
+                                $amount = $subscription->total_amount;
+                                $merchantName = config('subscription.upi_merchant_name', 'MMHC');
+                                // Generate UPI payment link (works on mobile, tries on desktop too)
+                                $upiLink = "upi://pay?pa=" . urlencode($upiId) . "&pn=" . urlencode($merchantName) . "&am=" . number_format($amount, 2, '.', '') . "&cu=INR&tn=MMHC Subscription Payment";
+                                // Generate QR code data
+                                $qrData = "upi://pay?pa=" . urlencode($upiId) . "&pn=" . urlencode($merchantName) . "&am=" . number_format($amount, 2, '.', '') . "&cu=INR&tn=MMHC%20Subscription%20Payment";
+                            @endphp
+                            <input type="hidden" id="upiId" value="{{ $upiId }}">
+                            <input type="hidden" id="upiLink" value="{{ $upiLink }}">
+                            <input type="hidden" id="qrData" value="{{ $qrData }}">
+                            <input type="hidden" id="amount" value="{{ $amount }}">
+                            
+                            <!-- Same button for both mobile and desktop -->
                             <button type="button" 
-                                    class="btn btn-primary btn-lg w-100" 
+                                    class="btn btn-primary btn-lg w-100 mb-3" 
                                     onclick="openUPI()">
                                 <i class="fas fa-external-link-alt me-2"></i>Pay ₹{{ number_format($subscription->total_amount, 2) }}
                             </button>
-                            <small class="text-muted d-block mt-2">
+                            <small class="text-muted d-block">
                                 Opens PhonePe, Paytm, or Google Pay automatically
                             </small>
                         </div>
@@ -363,6 +377,116 @@
     text-align: center;
 }
 
+/* Desktop Payment Modal Styles */
+.desktop-payment-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.desktop-payment-content {
+    background: white;
+    border-radius: 16px;
+    padding: 0;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+}
+
+.desktop-payment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.desktop-payment-header h5 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #212529;
+    margin: 0;
+}
+
+.btn-close-modal {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.btn-close-modal:hover {
+    background: #f8f9fa;
+    color: #212529;
+}
+
+.desktop-payment-body {
+    padding: 24px;
+}
+
+.upi-id-display-modal {
+    background: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: 2px solid #007bff;
+    font-family: monospace;
+    color: #007bff;
+}
+
+#qrCodeContainerModal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+}
+
+#qrCodeContainerModal canvas {
+    border-radius: 8px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 .payment-success-message {
     text-align: center;
     padding: 40px 20px;
@@ -392,22 +516,6 @@
 </style>
 
 <script>
-// Check if user is returning from UPI app and show popup
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if we should show the upload popup (user returned from UPI app)
-    const urlParams = new URLSearchParams(window.location.search);
-    const fromUPI = urlParams.get('from_upi') === '1';
-    const showPopup = sessionStorage.getItem('showPaymentPopup') === 'true';
-    
-    if (fromUPI || showPopup) {
-        // Clear the flag
-        sessionStorage.removeItem('showPaymentPopup');
-        
-        // Show popup modal
-        showUploadPopup();
-    }
-});
-
 // Show popup to upload screenshot
 function showUploadPopup() {
     const popup = document.getElementById('uploadScreenshotPopup');
@@ -434,44 +542,254 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// UPI Deep Linking - Opens payment apps automatically
+// UPI Deep Linking - Opens payment apps automatically (works on mobile, shows modal on desktop)
 function openUPI() {
+    const upiLink = document.getElementById('upiLink').value;
     const upiId = document.getElementById('upiId').value;
-    const amount = {{ $subscription->total_amount }};
-    const merchantName = '{{ config("subscription.upi_merchant_name", "MMHC") }}';
+    const amount = parseFloat(document.getElementById('amount').value);
     const confirmationUrl = '{{ route("subscriptions.payment-confirmation", $subscription) }}?from_upi=1';
     
-    // UPI deep link format: upi://pay?pa=UPI_ID&pn=MERCHANT&am=AMOUNT&cu=INR
-    const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(merchantName)}&am=${amount.toFixed(2)}&cu=INR&tn=MMHC Subscription Payment`;
+    // Detect if we're on mobile or desktop
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
-    // Store flag to show popup when user returns
-    sessionStorage.setItem('showPaymentPopup', 'true');
-    
-    // Try to open UPI app
-    window.location.href = upiLink;
-    
-    // Fallback: Redirect to confirmation page after delay (if UPI app doesn't open)
-    setTimeout(() => {
-        if (document.hasFocus()) {
-            window.location.href = confirmationUrl;
-        }
-    }, 1500);
-}
-
-// Removed copyUPIId and showCopyFeedback functions - UPI ID is now hidden for security
-    if (btn) {
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
-        btn.classList.add('btn-success');
-        btn.classList.remove('btn-outline-primary');
+    if (isMobile) {
+        // Mobile: Store flag to show popup when user returns
+        sessionStorage.setItem('showPaymentPopup', 'true');
         
+        // Try to open UPI app (works on mobile)
+        window.location.href = upiLink;
+        
+        // Fallback: Redirect to confirmation page after delay (if UPI app doesn't open)
         setTimeout(() => {
-            btn.innerHTML = originalText;
-            btn.classList.remove('btn-success');
-            btn.classList.add('btn-outline-primary');
-        }, 2000);
+            if (document.hasFocus()) {
+                window.location.href = confirmationUrl;
+            }
+        }, 1500);
+    } else {
+        // Desktop: Try UPI deep link first, but it will likely fail
+        // So immediately show desktop payment modal with UPI ID and QR code
+        const hadFocus = document.hasFocus();
+        
+        // Try to open UPI link (will fail on desktop)
+        window.location.href = upiLink;
+        
+        // Check if UPI app opened (on desktop, it won't, so page stays focused)
+        setTimeout(() => {
+            // If page is still focused after 500ms, UPI app didn't open (desktop scenario)
+            if (document.hasFocus() || hadFocus) {
+                // Show desktop payment modal
+                showDesktopPaymentModal(upiId, amount);
+            }
+        }, 500);
     }
 }
+
+// Copy UPI ID and Amount to clipboard (Desktop)
+function copyUPIId() {
+    const upiId = document.getElementById('upiId').value;
+    const amount = {{ $subscription->total_amount }};
+    const textToCopy = `${upiId}\nAmount: ₹${amount.toFixed(2)}\n\nCopy this UPI ID and make payment from your phone (PhonePe, Paytm, Google Pay, etc.)`;
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            showCopyFeedback();
+        }).catch(() => {
+            // Fallback for older browsers
+            fallbackCopyTextToClipboard(textToCopy);
+        });
+    } else {
+        // Fallback for older browsers
+        fallbackCopyTextToClipboard(textToCopy);
+    }
+}
+
+// Fallback copy method for older browsers
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        showCopyFeedback();
+    } catch (err) {
+        alert('Failed to copy. Please copy manually: ' + text);
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+// Show copy feedback
+function showCopyFeedback() {
+    // Find all copy buttons and show feedback
+    const copyButtons = document.querySelectorAll('[onclick="copyUPIId()"]');
+    copyButtons.forEach(btn => {
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-primary', 'btn-primary');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            if (btn.classList.contains('btn-sm')) {
+                btn.classList.add('btn-outline-primary');
+            } else {
+                btn.classList.add('btn-primary');
+            }
+        }, 2000);
+    });
+}
+
+// Show desktop payment modal with UPI ID and QR code
+function showDesktopPaymentModal(upiId, amount) {
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('desktopPaymentModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'desktopPaymentModal';
+        modal.className = 'desktop-payment-modal';
+        modal.innerHTML = `
+            <div class="desktop-payment-content">
+                <div class="desktop-payment-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-qrcode me-2"></i>Make Payment via UPI
+                    </h5>
+                    <button type="button" class="btn-close-modal" onclick="closeDesktopPaymentModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="desktop-payment-body">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <label class="text-muted small d-block mb-2">UPI ID</label>
+                            <div class="d-flex align-items-center justify-content-center">
+                                <code class="upi-id-display-modal fs-5 fw-bold me-2" id="modalUpiId">${upiId}</code>
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-primary" 
+                                        onclick="copyUPIId()"
+                                        title="Copy UPI ID">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted small d-block mb-2">Amount</label>
+                            <div class="fs-4 fw-bold text-primary" id="modalAmount">₹${amount.toFixed(2)}</div>
+                        </div>
+                        <div id="qrCodeContainerModal" class="mb-3"></div>
+                        <button type="button" 
+                                class="btn btn-primary btn-lg w-100" 
+                                onclick="copyUPIId()">
+                            <i class="fas fa-copy me-2"></i>Copy UPI ID & Amount
+                        </button>
+                        <small class="text-muted d-block mt-2">
+                            Scan QR code or copy UPI ID and make payment from your phone
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    // Update modal content
+    const upiIdEl = document.getElementById('modalUpiId');
+    const amountEl = document.getElementById('modalAmount');
+    if (upiIdEl) upiIdEl.textContent = upiId;
+    if (amountEl) amountEl.textContent = `₹${amount.toFixed(2)}`;
+    
+    // Show modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Generate QR code after modal is shown
+    setTimeout(() => {
+        generateQRCodeModal();
+    }, 100);
+}
+
+// Close desktop payment modal
+function closeDesktopPaymentModal() {
+    const modal = document.getElementById('desktopPaymentModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('desktopPaymentModal');
+    if (modal && e.target === modal) {
+        closeDesktopPaymentModal();
+    }
+});
+
+// Generate QR Code for Desktop Modal (using QRious library)
+function generateQRCodeModal() {
+    const qrData = document.getElementById('qrData').value;
+    const qrContainer = document.getElementById('qrCodeContainerModal');
+    
+    if (qrContainer && qrData) {
+        // Clear previous QR code
+        qrContainer.innerHTML = '';
+        
+        // Create QR code using QRious library
+        const canvas = document.createElement('canvas');
+        canvas.id = 'qrcodeModal';
+        canvas.width = 200;
+        canvas.height = 200;
+        qrContainer.appendChild(canvas);
+        
+        // Load QRious library dynamically if not already loaded
+        if (typeof QRious === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js';
+            script.onload = function() {
+                new QRious({
+                    element: canvas,
+                    value: qrData,
+                    size: 200,
+                    background: 'white',
+                    foreground: 'black',
+                    level: 'H'
+                });
+            };
+            document.head.appendChild(script);
+        } else {
+            new QRious({
+                element: canvas,
+                value: qrData,
+                size: 200,
+                background: 'white',
+                foreground: 'black',
+                level: 'H'
+            });
+        }
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we should show the upload popup (user returned from UPI app)
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromUPI = urlParams.get('from_upi') === '1';
+    const showPopup = sessionStorage.getItem('showPaymentPopup') === 'true';
+    
+    if (fromUPI || showPopup) {
+        // Clear the flag
+        sessionStorage.removeItem('showPaymentPopup');
+        
+        // Show popup modal
+        showUploadPopup();
+    }
+});
 
 function previewImage(input) {
     const preview = document.getElementById('imagePreview');

@@ -57,7 +57,8 @@ class User extends Authenticatable
         'is_active' => 'boolean',
         'documents' => 'array',
         'reward_points' => 'integer',
-        'location' => 'array', // Spatial POINT column
+        // Note: 'location' is a spatial POINT column - do NOT cast it
+        // Spatial columns must be handled as raw database values
     ];
 
     /**
