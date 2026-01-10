@@ -12,12 +12,13 @@
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-12">
+        <div class="col-12 col-xl-10">
             <div class="card shadow-lg border-0">
                 <div class="card-body p-5">
-                    <div class="text-center mb-4">
-                        <img src="{{ asset('images/med-logo.png') }}" alt="MeD Miracle Health Care" class="brand-logo brand-logo--auth">
-                        <p class="text-muted mb-0">Create your account</p>
+                    <div class="text-center mb-3">
+                        <img src="{{ asset('images/med-logo.png') }}" alt="MeD Miracle Health Care" class="brand-logo brand-logo--auth" style="max-height: 50px;">
+                        <h2 class="mt-2 mb-1" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; font-size: 1.5rem;">Create your account</h2>
+                        <p class="text-muted mb-0" style="font-size: 0.9rem;">Join MMHC and get started with healthcare services</p>
                     </div>
 
                     @if($errors->any())
@@ -73,606 +74,775 @@
                     <div class="tab-content" id="registrationTabContent">
                         <!-- Patient Registration Form -->
                         <div class="tab-pane fade {{ (!isset($referralCode) || !$referralCode) ? 'show active' : '' }}" id="patient-form" role="tabpanel">
-                            <div class="row">
-                                <!-- Mobile: Full width, Desktop: Half width -->
-                                <div class="col-12 col-lg-6 mb-4 mb-lg-0">
-                                    <div class="text-center mb-4">
-                                        <i class="fas fa-user-injured fa-3x text-primary mb-3"></i>
-                                        <h4 class="text-primary">Patient Registration</h4>
-                                        <p class="text-muted">Get healthcare services at your doorstep</p>
+                            <!-- Desktop: Benefits Section at Top (Hidden until tab is active) -->
+                            <div class="desktop-benefits-section d-none d-lg-block mb-4" id="patient-benefits-desktop">
+                                <div class="info-panel-top">
+                                    <div class="text-center mb-3">
+                                        <h3 class="mb-2">Patient Registration</h3>
+                                        <p class="lead mb-0">Get healthcare services at your doorstep</p>
+                                    </div>
+                                    <div class="benefits-card">
+                                        <h5 class="mb-3"><i class="fas fa-star me-2"></i>Why Register as Patient?</h5>
+                                        <ul class="benefits-list">
+                                            <li><i class="fas fa-check-circle me-2"></i>Access to licensed nurses and caregivers</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Flexible healthcare plans</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>24/7 support available</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Easy booking and scheduling</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Quality healthcare services</li>
+                                        </ul>
                                     </div>
                                 </div>
-                                <div class="col-12 col-lg-6">
-                                    <form method="POST" action="{{ route('auth.register.post') }}" id="patientForm">
-                                        @csrf
-                                        <input type="hidden" name="role" value="patient">
-                                        
-                                        <div class="mb-3">
-                                            <label for="patient_name" class="form-label">Full Name</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-user"></i>
-                                                </span>
-                                                <input type="text" 
-                                                       class="form-control @error('name') is-invalid @enderror" 
-                                                       id="patient_name" 
-                                                       name="name" 
-                                                       value="{{ old('name') }}" 
-                                                       required>
+                            </div>
+
+                            <!-- Registration Form -->
+                            <div class="form-panel">
+                                <form method="POST" action="{{ route('auth.register.post') }}" id="patientForm">
+                                    @csrf
+                                    <input type="hidden" name="role" value="patient">
+                                    
+                                    <div class="row g-3">
+                                        <!-- Left Column: 4 fields -->
+                                        <div class="col-12 col-lg-6">
+                                            <div class="mb-3">
+                                                <label for="patient_name" class="form-label">Full Name</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-user"></i>
+                                                    </span>
+                                                    <input type="text" 
+                                                           class="form-control @error('name') is-invalid @enderror" 
+                                                           id="patient_name" 
+                                                           name="name" 
+                                                           value="{{ old('name') }}" 
+                                                           required>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="patient_email" class="form-label">Email Address</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-envelope"></i>
+                                                    </span>
+                                                    <input type="email" 
+                                                           class="form-control @error('email') is-invalid @enderror" 
+                                                           id="patient_email" 
+                                                           name="email" 
+                                                           value="{{ old('email') }}" 
+                                                           required>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="patient_phone" class="form-label">Phone Number</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">+91</span>
+                                                    <input type="tel" 
+                                                           class="form-control @error('phone') is-invalid @enderror" 
+                                                           id="patient_phone" 
+                                                           name="phone" 
+                                                           value="{{ old('phone') }}" 
+                                                           pattern="[0-9]{10}"
+                                                           maxlength="10"
+                                                           placeholder="9876543210"
+                                                           required>
+                                                </div>
+                                                <div class="form-text">Enter 10-digit Indian mobile number (e.g., 9876543210)</div>
+                                                @error('phone')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="patient_dob" class="form-label">Date of Birth</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-calendar"></i>
+                                                    </span>
+                                                    <input type="date" 
+                                                           class="form-control" 
+                                                           id="patient_dob" 
+                                                           name="date_of_birth" 
+                                                           value="{{ old('date_of_birth') }}">
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div class="mb-3">
-                                            <label for="patient_email" class="form-label">Email Address</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-envelope"></i>
-                                                </span>
-                                                <input type="email" 
-                                                       class="form-control @error('email') is-invalid @enderror" 
-                                                       id="patient_email" 
-                                                       name="email" 
-                                                       value="{{ old('email') }}" 
-                                                       required>
+                                        <!-- Right Column: 4 fields -->
+                                        <div class="col-12 col-lg-6">
+                                            <div class="mb-3">
+                                                <label for="patient_address" class="form-label">Address</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-map-marker-alt"></i>
+                                                    </span>
+                                                    <textarea class="form-control" 
+                                                              id="patient_address" 
+                                                              name="address" 
+                                                              rows="3" 
+                                                              placeholder="Enter your full address">{{ old('address') }}</textarea>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="patient_pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-map-pin"></i>
+                                                    </span>
+                                                    <input type="text" 
+                                                           class="form-control @error('pincode') is-invalid @enderror" 
+                                                           id="patient_pincode" 
+                                                           name="pincode" 
+                                                           value="{{ old('pincode') }}" 
+                                                           pattern="[1-9][0-9]{5}"
+                                                           maxlength="6"
+                                                           placeholder="Enter 6-digit pincode"
+                                                           required>
+                                                </div>
+                                                <div class="form-text">Enter your 6-digit Indian pincode (e.g., 462001)</div>
+                                                @error('pincode')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="patient_password" class="form-label">Password</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-lock"></i>
+                                                    </span>
+                                                    <input type="password" 
+                                                           class="form-control @error('password') is-invalid @enderror" 
+                                                           id="patient_password" 
+                                                           name="password" 
+                                                           required>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="patient_password_confirmation" class="form-label">Confirm Password</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-lock"></i>
+                                                    </span>
+                                                    <input type="password" 
+                                                           class="form-control" 
+                                                           id="patient_password_confirmation" 
+                                                           name="password_confirmation" 
+                                                           required>
+                                                </div>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div class="mb-3">
-                                            <label for="patient_phone" class="form-label">Phone Number</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">+91</span>
-                                                <input type="tel" 
-                                                       class="form-control @error('phone') is-invalid @enderror" 
-                                                       id="patient_phone" 
-                                                       name="phone" 
-                                                       value="{{ old('phone') }}" 
-                                                       pattern="[0-9]{10}"
-                                                       maxlength="10"
-                                                       placeholder="9876543210"
-                                                       required>
+                                    <!-- Full Width: Terms and Submit -->
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="mb-3 form-check">
+                                                <input type="checkbox" class="form-check-input" id="patient_terms" required>
+                                                <label class="form-check-label" for="patient_terms">
+                                                    I agree to the <a href="#" class="text-primary">Terms and Conditions</a>
+                                                </label>
                                             </div>
-                                            <div class="form-text">Enter 10-digit Indian mobile number (e.g., 9876543210)</div>
-                                            @error('phone')
-                                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                                            @enderror
-                                        </div>
 
-                                        <div class="mb-3">
-                                            <label for="patient_dob" class="form-label">Date of Birth</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-calendar"></i>
-                                                </span>
-                                                <input type="date" 
-                                                       class="form-control" 
-                                                       id="patient_dob" 
-                                                       name="date_of_birth" 
-                                                       value="{{ old('date_of_birth') }}">
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-primary btn-lg">
+                                                    <i class="fas fa-user-plus me-2"></i>
+                                                    Register as Patient
+                                                </button>
                                             </div>
                                         </div>
+                                    </div>
+                                </form>
+                            </div>
 
-                                        <div class="mb-3">
-                                            <label for="patient_address" class="form-label">Address</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-map-marker-alt"></i>
-                                                </span>
-                                                <textarea class="form-control" 
-                                                          id="patient_address" 
-                                                          name="address" 
-                                                          rows="3" 
-                                                          placeholder="Enter your full address">{{ old('address') }}</textarea>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="patient_pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-map-pin"></i>
-                                                </span>
-                                                <input type="text" 
-                                                       class="form-control @error('pincode') is-invalid @enderror" 
-                                                       id="patient_pincode" 
-                                                       name="pincode" 
-                                                       value="{{ old('pincode') }}" 
-                                                       pattern="[1-9][0-9]{5}"
-                                                       maxlength="6"
-                                                       placeholder="Enter 6-digit pincode"
-                                                       required>
-                                            </div>
-                                            <div class="form-text">Enter your 6-digit Indian pincode (e.g., 462001)</div>
-                                            @error('pincode')
-                                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="patient_password" class="form-label">Password</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-lock"></i>
-                                                </span>
-                                                <input type="password" 
-                                                       class="form-control @error('password') is-invalid @enderror" 
-                                                       id="patient_password" 
-                                                       name="password" 
-                                                       required>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="patient_password_confirmation" class="form-label">Confirm Password</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-lock"></i>
-                                                </span>
-                                                <input type="password" 
-                                                       class="form-control" 
-                                                       id="patient_password_confirmation" 
-                                                       name="password_confirmation" 
-                                                       required>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3 form-check">
-                                            <input type="checkbox" class="form-check-input" id="patient_terms" required>
-                                            <label class="form-check-label" for="patient_terms">
-                                                I agree to the <a href="#" class="text-primary">Terms and Conditions</a>
-                                            </label>
-                                        </div>
-
-                                        <div class="d-grid">
-                                            <button type="submit" class="btn btn-primary btn-lg">
-                                                <i class="fas fa-user-plus me-2"></i>
-                                                Register as Patient
-                                            </button>
-                                        </div>
-                                    </form>
+                            <!-- Mobile: Benefits Section at Bottom (Hidden until tab is active) -->
+                            <div class="mobile-benefits-section d-lg-none mt-4" id="patient-benefits-mobile">
+                                <div class="info-panel-top">
+                                    <div class="text-center mb-3">
+                                        <h3 class="mb-2">Patient Registration</h3>
+                                        <p class="lead mb-0">Get healthcare services at your doorstep</p>
+                                    </div>
+                                    <div class="benefits-card">
+                                        <h5 class="mb-3"><i class="fas fa-star me-2"></i>Why Register as Patient?</h5>
+                                        <ul class="benefits-list">
+                                            <li><i class="fas fa-check-circle me-2"></i>Access to licensed nurses and caregivers</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Flexible healthcare plans</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>24/7 support available</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Easy booking and scheduling</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Quality healthcare services</li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Nurse Registration Form -->
                         <div class="tab-pane fade {{ (isset($referralCode) && $referralCode) ? 'show active' : '' }}" id="nurse-form" role="tabpanel">
-                            <div class="row">
-                                <!-- Mobile: Full width, Desktop: Half width -->
-                                <div class="col-12 col-lg-6 mb-4 mb-lg-0">
-                                    <div class="text-center mb-4">
-                                        <i class="fas fa-user-nurse fa-3x text-info mb-3"></i>
-                                        <h4 class="text-info">Nurse Registration</h4>
-                                        <p class="text-muted">Licensed nursing professionals - Higher earning potential</p>
-                                        <div class="alert alert-info">
-                                            <small><strong>Nurse Benefits:</strong><br>
-                                            • ₹2000/day (24h) • ₹1200/day (12h) • ₹800/day (8h)<br>
-                                            • Licensed professional rates • Priority assignments</small>
-                                        </div>
-                                        @if(isset($referralCode) && $referralCode && $referrer)
-                                            <div class="alert alert-success mt-3">
-                                                <small><i class="fas fa-link me-2"></i><strong>Referral Link Active</strong><br>
-                                                Referred by: {{ $referrer->name }}<br>
-                                                Earn rewards when you complete registration!</small>
-                                            </div>
-                                        @endif
+                            <!-- Desktop: Benefits Section at Top (Hidden until tab is active) -->
+                            <div class="desktop-benefits-section d-none d-lg-block mb-4" id="nurse-benefits-desktop">
+                                <div class="info-panel-top">
+                                    <div class="text-center mb-3">
+                                        <h3 class="mb-2">Nurse Registration</h3>
+                                        <p class="lead mb-0">Licensed nursing professionals - Higher earning potential</p>
                                     </div>
+                                    <div class="benefits-card">
+                                        <h5 class="mb-3"><i class="fas fa-money-bill-wave me-2"></i>Nurse Benefits</h5>
+                                        <div class="pricing-grid-desktop mb-3">
+                                            <div class="pricing-item-desktop">
+                                                <span class="price">₹2,000</span>
+                                                <span class="duration">/day (24h)</span>
+                                            </div>
+                                            <div class="pricing-item-desktop">
+                                                <span class="price">₹1,200</span>
+                                                <span class="duration">/day (12h)</span>
+                                            </div>
+                                            <div class="pricing-item-desktop">
+                                                <span class="price">₹800</span>
+                                                <span class="duration">/day (8h)</span>
+                                            </div>
+                                        </div>
+                                        <ul class="benefits-list">
+                                            <li><i class="fas fa-check-circle me-2"></i>Licensed professional rates</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Priority assignments</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Flexible working hours</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Regular payment schedule</li>
+                                        </ul>
+                                    </div>
+                                    @if(isset($referralCode) && $referralCode && $referrer)
+                                        <div class="referral-badge">
+                                            <i class="fas fa-gift me-2"></i>
+                                            <strong>Referred by:</strong> {{ $referrer->name }}<br>
+                                            <small>Earn rewards when you complete registration!</small>
+                                        </div>
+                                    @endif
                                 </div>
-                                <div class="col-12 col-lg-6">
-                                    <form method="POST" action="{{ route('auth.register.post') }}{{ isset($referralCode) && $referralCode ? '?ref=' . $referralCode : '' }}" id="nurseForm" enctype="multipart/form-data">
-                                        @csrf
-                                        @if(isset($referralCode) && $referralCode)
-                                            <input type="hidden" name="ref" value="{{ $referralCode }}">
-                                        @endif
-                                        <input type="hidden" name="role" value="nurse">
-                                        
-                                        <div class="mb-3">
-                                            <label for="nurse_name" class="form-label">Full Name</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-user"></i>
-                                                </span>
-                                                <input type="text" 
-                                                       class="form-control @error('name') is-invalid @enderror" 
-                                                       id="nurse_name" 
-                                                       name="name" 
-                                                       value="{{ old('name') }}" 
-                                                       required>
+                            </div>
+
+                            <!-- Registration Form -->
+                            <div class="form-panel">
+                                <form method="POST" action="{{ route('auth.register.post') }}{{ isset($referralCode) && $referralCode ? '?ref=' . $referralCode : '' }}" id="nurseForm" enctype="multipart/form-data">
+                                    @csrf
+                                    @if(isset($referralCode) && $referralCode)
+                                        <input type="hidden" name="ref" value="{{ $referralCode }}">
+                                    @endif
+                                    <input type="hidden" name="role" value="nurse">
+                                    
+                                    <div class="row g-3">
+                                        <!-- Left Column: 5 fields -->
+                                        <div class="col-12 col-lg-6">
+                                            <div class="mb-3">
+                                                <label for="nurse_name" class="form-label">Full Name</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-user"></i>
+                                                    </span>
+                                                    <input type="text" 
+                                                           class="form-control @error('name') is-invalid @enderror" 
+                                                           id="nurse_name" 
+                                                           name="name" 
+                                                           value="{{ old('name') }}" 
+                                                           required>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="nurse_email" class="form-label">Email Address</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-envelope"></i>
+                                                    </span>
+                                                    <input type="email" 
+                                                           class="form-control @error('email') is-invalid @enderror" 
+                                                           id="nurse_email" 
+                                                           name="email" 
+                                                           value="{{ old('email') }}" 
+                                                           required>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="nurse_phone" class="form-label">Phone Number</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">+91</span>
+                                                    <input type="tel" 
+                                                           class="form-control @error('phone') is-invalid @enderror" 
+                                                           id="nurse_phone" 
+                                                           name="phone" 
+                                                           value="{{ old('phone') }}" 
+                                                           pattern="[0-9]{10}"
+                                                           maxlength="10"
+                                                           placeholder="9876543210"
+                                                           required>
+                                                </div>
+                                                <div class="form-text">Enter 10-digit Indian mobile number (e.g., 9876543210)</div>
+                                                @error('phone')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="nurse_dob" class="form-label">Date of Birth</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-calendar"></i>
+                                                    </span>
+                                                    <input type="date" 
+                                                           class="form-control" 
+                                                           id="nurse_dob" 
+                                                           name="date_of_birth" 
+                                                           value="{{ old('date_of_birth') }}">
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="nurse_qualification" class="form-label">Nursing Qualification</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-graduation-cap"></i>
+                                                    </span>
+                                                    <select class="form-select" id="nurse_qualification" name="qualification" required>
+                                                        <option value="">Select Qualification</option>
+                                                        <option value="GNM" {{ old('qualification') == 'GNM' ? 'selected' : '' }}>GNM (General Nursing & Midwifery)</option>
+                                                        <option value="B.Sc Nursing" {{ old('qualification') == 'B.Sc Nursing' ? 'selected' : '' }}>B.Sc Nursing</option>
+                                                        <option value="M.Sc Nursing" {{ old('qualification') == 'M.Sc Nursing' ? 'selected' : '' }}>M.Sc Nursing</option>
+                                                        <option value="ANM" {{ old('qualification') == 'ANM' ? 'selected' : '' }}>ANM (Auxiliary Nurse Midwife)</option>
+                                                        <option value="Other" {{ old('qualification') == 'Other' ? 'selected' : '' }}>Other</option>
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div class="mb-3">
-                                            <label for="nurse_email" class="form-label">Email Address</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-envelope"></i>
-                                                </span>
-                                                <input type="email" 
-                                                       class="form-control @error('email') is-invalid @enderror" 
-                                                       id="nurse_email" 
-                                                       name="email" 
-                                                       value="{{ old('email') }}" 
-                                                       required>
+                                        <!-- Right Column: 5 fields -->
+                                        <div class="col-12 col-lg-6">
+                                            <div class="mb-3">
+                                                <label for="nurse_experience" class="form-label">Years of Experience</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-clock"></i>
+                                                    </span>
+                                                    <select class="form-select" id="nurse_experience" name="experience" required>
+                                                        <option value="">Select Experience</option>
+                                                        <option value="0-1" {{ old('experience') == '0-1' ? 'selected' : '' }}>0-1 years</option>
+                                                        <option value="1-3" {{ old('experience') == '1-3' ? 'selected' : '' }}>1-3 years</option>
+                                                        <option value="3-5" {{ old('experience') == '3-5' ? 'selected' : '' }}>3-5 years</option>
+                                                        <option value="5-10" {{ old('experience') == '5-10' ? 'selected' : '' }}>5-10 years</option>
+                                                        <option value="10+" {{ old('experience') == '10+' ? 'selected' : '' }}>10+ years</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="nurse_pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-map-pin"></i>
+                                                    </span>
+                                                    <input type="text" 
+                                                           class="form-control @error('pincode') is-invalid @enderror" 
+                                                           id="nurse_pincode" 
+                                                           name="pincode" 
+                                                           value="{{ old('pincode') }}" 
+                                                           pattern="[1-9][0-9]{5}"
+                                                           maxlength="6"
+                                                           placeholder="Enter 6-digit pincode"
+                                                           required>
+                                                </div>
+                                                <div class="form-text">Enter your 6-digit Indian pincode (e.g., 462001)</div>
+                                                @error('pincode')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="nurse_password" class="form-label">Password</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-lock"></i>
+                                                    </span>
+                                                    <input type="password" 
+                                                           class="form-control @error('password') is-invalid @enderror" 
+                                                           id="nurse_password" 
+                                                           name="password" 
+                                                           required>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="nurse_password_confirmation" class="form-label">Confirm Password</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-lock"></i>
+                                                    </span>
+                                                    <input type="password" 
+                                                           class="form-control" 
+                                                           id="nurse_password_confirmation" 
+                                                           name="password_confirmation" 
+                                                           required>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div class="mb-3">
-                                            <label for="nurse_phone" class="form-label">Phone Number</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">+91</span>
-                                                <input type="tel" 
-                                                       class="form-control @error('phone') is-invalid @enderror" 
-                                                       id="nurse_phone" 
-                                                       name="phone" 
-                                                       value="{{ old('phone') }}" 
-                                                       pattern="[0-9]{10}"
-                                                       maxlength="10"
-                                                       placeholder="9876543210"
-                                                       required>
-                                            </div>
-                                            <div class="form-text">Enter 10-digit Indian mobile number (e.g., 9876543210)</div>
-                                            @error('phone')
-                                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="nurse_dob" class="form-label">Date of Birth</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-calendar"></i>
-                                                </span>
-                                                <input type="date" 
-                                                       class="form-control" 
-                                                       id="nurse_dob" 
-                                                       name="date_of_birth" 
-                                                       value="{{ old('date_of_birth') }}">
+                                        <!-- Full Width: Address -->
+                                        <div class="col-12">
+                                            <div class="mb-3">
+                                                <label for="nurse_address" class="form-label">Address</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-map-marker-alt"></i>
+                                                    </span>
+                                                    <textarea class="form-control" 
+                                                              id="nurse_address" 
+                                                              name="address" 
+                                                              rows="3" 
+                                                              placeholder="Enter your full address">{{ old('address') }}</textarea>
+                                                </div>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div class="mb-3">
-                                            <label for="nurse_qualification" class="form-label">Nursing Qualification</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-graduation-cap"></i>
-                                                </span>
-                                                <select class="form-control" id="nurse_qualification" name="qualification" required>
-                                                    <option value="">Select Qualification</option>
-                                                    <option value="GNM" {{ old('qualification') == 'GNM' ? 'selected' : '' }}>GNM (General Nursing & Midwifery)</option>
-                                                    <option value="B.Sc Nursing" {{ old('qualification') == 'B.Sc Nursing' ? 'selected' : '' }}>B.Sc Nursing</option>
-                                                    <option value="M.Sc Nursing" {{ old('qualification') == 'M.Sc Nursing' ? 'selected' : '' }}>M.Sc Nursing</option>
-                                                    <option value="ANM" {{ old('qualification') == 'ANM' ? 'selected' : '' }}>ANM (Auxiliary Nurse Midwife)</option>
-                                                    <option value="Other" {{ old('qualification') == 'Other' ? 'selected' : '' }}>Other</option>
-                                                </select>
+                                    <!-- Full Width: Terms and Submit -->
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="mb-3 form-check">
+                                                <input type="checkbox" class="form-check-input" id="nurse_terms" required>
+                                                <label class="form-check-label" for="nurse_terms">
+                                                    I agree to the <a href="#" class="text-primary">Terms and Conditions</a>
+                                                </label>
+                                            </div>
+
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-info btn-lg">
+                                                    <i class="fas fa-user-nurse me-2"></i>
+                                                    Register as Nurse
+                                                </button>
                                             </div>
                                         </div>
+                                    </div>
+                                </form>
+                            </div>
 
-                                        <div class="mb-3">
-                                            <label for="nurse_experience" class="form-label">Years of Experience</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-clock"></i>
-                                                </span>
-                                                <select class="form-control" id="nurse_experience" name="experience" required>
-                                                    <option value="">Select Experience</option>
-                                                    <option value="0-1" {{ old('experience') == '0-1' ? 'selected' : '' }}>0-1 years</option>
-                                                    <option value="1-3" {{ old('experience') == '1-3' ? 'selected' : '' }}>1-3 years</option>
-                                                    <option value="3-5" {{ old('experience') == '3-5' ? 'selected' : '' }}>3-5 years</option>
-                                                    <option value="5-10" {{ old('experience') == '5-10' ? 'selected' : '' }}>5-10 years</option>
-                                                    <option value="10+" {{ old('experience') == '10+' ? 'selected' : '' }}>10+ years</option>
-                                                </select>
+                            <!-- Mobile: Benefits Section at Bottom (Hidden until tab is active) -->
+                            <div class="mobile-benefits-section d-lg-none mt-4" id="nurse-benefits-mobile">
+                                <div class="info-panel-top">
+                                    <div class="text-center mb-3">
+                                        <h3 class="mb-2">Nurse Registration</h3>
+                                        <p class="lead mb-0">Licensed nursing professionals - Higher earning potential</p>
+                                    </div>
+                                    <div class="benefits-card">
+                                        <h5 class="mb-3"><i class="fas fa-money-bill-wave me-2"></i>Nurse Benefits</h5>
+                                        <div class="pricing-grid-horizontal mb-3">
+                                            <div class="pricing-item-horizontal">
+                                                <span class="price">₹2,000</span>
+                                                <span class="duration">/day (24h)</span>
+                                            </div>
+                                            <div class="pricing-item-horizontal">
+                                                <span class="price">₹1,200</span>
+                                                <span class="duration">/day (12h)</span>
+                                            </div>
+                                            <div class="pricing-item-horizontal">
+                                                <span class="price">₹800</span>
+                                                <span class="duration">/day (8h)</span>
                                             </div>
                                         </div>
-
-                                        <div class="mb-3">
-                                            <label for="nurse_address" class="form-label">Address</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-map-marker-alt"></i>
-                                                </span>
-                                                <textarea class="form-control" 
-                                                          id="nurse_address" 
-                                                          name="address" 
-                                                          rows="3" 
-                                                          placeholder="Enter your full address">{{ old('address') }}</textarea>
-                                            </div>
+                                        <ul class="benefits-list">
+                                            <li><i class="fas fa-check-circle me-2"></i>Licensed professional rates</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Priority assignments</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Flexible working hours</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Regular payment schedule</li>
+                                        </ul>
+                                    </div>
+                                    @if(isset($referralCode) && $referralCode && $referrer)
+                                        <div class="referral-badge-mobile">
+                                            <i class="fas fa-gift me-2"></i>
+                                            <strong>Referred by:</strong> {{ $referrer->name }}<br>
+                                            <small>Earn rewards when you complete registration!</small>
                                         </div>
-
-                                        <div class="mb-3">
-                                            <label for="nurse_pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-map-pin"></i>
-                                                </span>
-                                                <input type="text" 
-                                                       class="form-control @error('pincode') is-invalid @enderror" 
-                                                       id="nurse_pincode" 
-                                                       name="pincode" 
-                                                       value="{{ old('pincode') }}" 
-                                                       pattern="[1-9][0-9]{5}"
-                                                       maxlength="6"
-                                                       placeholder="Enter 6-digit pincode"
-                                                       required>
-                                            </div>
-                                            <div class="form-text">Enter your 6-digit Indian pincode (e.g., 462001)</div>
-                                            @error('pincode')
-                                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="nurse_documents" class="form-label">Professional Documents</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-file-upload"></i>
-                                                </span>
-                                                <input type="file" 
-                                                       class="form-control" 
-                                                       id="nurse_documents" 
-                                                       name="documents[]" 
-                                                       multiple 
-                                                       accept=".pdf,.jpg,.jpeg,.png">
-                                            </div>
-                                            <div class="form-text">Upload nursing license, certificates, ID proof (PDF, JPG, PNG - Max 2MB each)</div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="nurse_password" class="form-label">Password</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-lock"></i>
-                                                </span>
-                                                <input type="password" 
-                                                       class="form-control @error('password') is-invalid @enderror" 
-                                                       id="nurse_password" 
-                                                       name="password" 
-                                                       required>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="nurse_password_confirmation" class="form-label">Confirm Password</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-lock"></i>
-                                                </span>
-                                                <input type="password" 
-                                                       class="form-control" 
-                                                       id="nurse_password_confirmation" 
-                                                       name="password_confirmation" 
-                                                       required>
-                                            </div>
-                                        </div>
-
-                                        <div class="d-grid">
-                                            <button type="submit" class="btn btn-info btn-lg">
-                                                <i class="fas fa-user-nurse me-2"></i>
-                                                Register as Nurse
-                                            </button>
-                                        </div>
-                                    </form>
+                                    @endif
                                 </div>
                             </div>
                         </div>
 
                         <!-- Caregiver Registration Form -->
                         <div class="tab-pane fade" id="caregiver-form" role="tabpanel">
-                            <div class="row">
-                                <!-- Mobile: Full width, Desktop: Half width -->
-                                <div class="col-12 col-lg-6 mb-4 mb-lg-0">
-                                    <div class="text-center mb-4">
-                                        <i class="fas fa-user-md fa-3x text-success mb-3"></i>
-                                        <h4 class="text-success">Caregiver Registration</h4>
-                                        <p class="text-muted">General support staff - Start your healthcare journey</p>
-                                        <div class="alert alert-success">
-                                            <small><strong>Caregiver Benefits:</strong><br>
-                                            • ₹1500/day (24h) • ₹900/day (12h) • ₹700/day (8h)<br>
-                                            • General support rates • Flexible assignments</small>
-                                        </div>
-                                        @if(isset($referralCode) && $referralCode && $referrer)
-                                            <div class="alert alert-info mt-3">
-                                                <small><i class="fas fa-link me-2"></i><strong>Referral Link Active</strong><br>
-                                                Referred by: {{ $referrer->name }}<br>
-                                                Earn rewards when you complete registration!</small>
-                                            </div>
-                                        @endif
+                            <!-- Desktop: Benefits Section at Top (Hidden until tab is active) -->
+                            <div class="desktop-benefits-section d-none d-lg-block mb-4" id="caregiver-benefits-desktop">
+                                <div class="info-panel-top">
+                                    <div class="text-center mb-3">
+                                        <h3 class="mb-2">Caregiver Registration</h3>
+                                        <p class="lead mb-0">General support staff - Start your healthcare journey</p>
                                     </div>
+                                    <div class="benefits-card">
+                                        <h5 class="mb-3"><i class="fas fa-money-bill-wave me-2"></i>Caregiver Benefits</h5>
+                                        <div class="pricing-grid-desktop mb-3">
+                                            <div class="pricing-item-desktop">
+                                                <span class="price">₹1,500</span>
+                                                <span class="duration">/day (24h)</span>
+                                            </div>
+                                            <div class="pricing-item-desktop">
+                                                <span class="price">₹900</span>
+                                                <span class="duration">/day (12h)</span>
+                                            </div>
+                                            <div class="pricing-item-desktop">
+                                                <span class="price">₹700</span>
+                                                <span class="duration">/day (8h)</span>
+                                            </div>
+                                        </div>
+                                        <ul class="benefits-list">
+                                            <li><i class="fas fa-check-circle me-2"></i>General support rates</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Flexible assignments</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Easy onboarding process</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Regular payment schedule</li>
+                                        </ul>
+                                    </div>
+                                    @if(isset($referralCode) && $referralCode && $referrer)
+                                        <div class="referral-badge">
+                                            <i class="fas fa-gift me-2"></i>
+                                            <strong>Referred by:</strong> {{ $referrer->name }}<br>
+                                            <small>Earn rewards when you complete registration!</small>
+                                        </div>
+                                    @endif
                                 </div>
-                                <div class="col-12 col-lg-6">
-                                    <form method="POST" action="{{ route('auth.register.post') }}{{ isset($referralCode) && $referralCode ? '?ref=' . $referralCode : '' }}" id="caregiverForm" enctype="multipart/form-data">
-                                        @csrf
-                                        @if(isset($referralCode) && $referralCode)
-                                            <input type="hidden" name="ref" value="{{ $referralCode }}">
-                                        @endif
-                                        <input type="hidden" name="role" value="caregiver">
-                                        
-                                        <div class="mb-3">
-                                            <label for="caregiver_name" class="form-label">Full Name</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-user"></i>
-                                                </span>
-                                                <input type="text" 
-                                                       class="form-control @error('name') is-invalid @enderror" 
-                                                       id="caregiver_name" 
-                                                       name="name" 
-                                                       value="{{ old('name') }}" 
-                                                       required>
+                            </div>
+
+                            <!-- Registration Form -->
+                            <div class="form-panel">
+                                <form method="POST" action="{{ route('auth.register.post') }}{{ isset($referralCode) && $referralCode ? '?ref=' . $referralCode : '' }}" id="caregiverForm" enctype="multipart/form-data">
+                                    @csrf
+                                    @if(isset($referralCode) && $referralCode)
+                                        <input type="hidden" name="ref" value="{{ $referralCode }}">
+                                    @endif
+                                    <input type="hidden" name="role" value="caregiver">
+                                    
+                                    <div class="row g-3">
+                                        <!-- Left Column: 5 fields -->
+                                        <div class="col-12 col-lg-6">
+                                            <div class="mb-3">
+                                                <label for="caregiver_name" class="form-label">Full Name</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-user"></i>
+                                                    </span>
+                                                    <input type="text" 
+                                                           class="form-control @error('name') is-invalid @enderror" 
+                                                           id="caregiver_name" 
+                                                           name="name" 
+                                                           value="{{ old('name') }}" 
+                                                           required>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="caregiver_email" class="form-label">Email Address</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-envelope"></i>
+                                                    </span>
+                                                    <input type="email" 
+                                                           class="form-control @error('email') is-invalid @enderror" 
+                                                           id="caregiver_email" 
+                                                           name="email" 
+                                                           value="{{ old('email') }}" 
+                                                           required>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="caregiver_phone" class="form-label">Phone Number</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">+91</span>
+                                                    <input type="tel" 
+                                                           class="form-control @error('phone') is-invalid @enderror" 
+                                                           id="caregiver_phone" 
+                                                           name="phone" 
+                                                           value="{{ old('phone') }}" 
+                                                           pattern="[0-9]{10}"
+                                                           maxlength="10"
+                                                           placeholder="9876543210"
+                                                           required>
+                                                </div>
+                                                <div class="form-text">Enter 10-digit Indian mobile number (e.g., 9876543210)</div>
+                                                @error('phone')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="caregiver_dob" class="form-label">Date of Birth</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-calendar"></i>
+                                                    </span>
+                                                    <input type="date" 
+                                                           class="form-control" 
+                                                           id="caregiver_dob" 
+                                                           name="date_of_birth" 
+                                                           value="{{ old('date_of_birth') }}">
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="caregiver_qualification" class="form-label">Professional Qualification</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-graduation-cap"></i>
+                                                    </span>
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           id="caregiver_qualification" 
+                                                           name="qualification" 
+                                                           value="{{ old('qualification') }}" 
+                                                           placeholder="e.g., B.Sc Nursing, GNM, ANM">
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div class="mb-3">
-                                            <label for="caregiver_email" class="form-label">Email Address</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-envelope"></i>
-                                                </span>
-                                                <input type="email" 
-                                                       class="form-control @error('email') is-invalid @enderror" 
-                                                       id="caregiver_email" 
-                                                       name="email" 
-                                                       value="{{ old('email') }}" 
-                                                       required>
+                                        <!-- Right Column: 5 fields -->
+                                        <div class="col-12 col-lg-6">
+                                            <div class="mb-3">
+                                                <label for="caregiver_experience" class="form-label">Years of Experience</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-briefcase"></i>
+                                                    </span>
+                                                    <select class="form-select" id="caregiver_experience" name="experience">
+                                                        <option value="">Select Experience</option>
+                                                        <option value="0-1" {{ old('experience') == '0-1' ? 'selected' : '' }}>0-1 years</option>
+                                                        <option value="1-3" {{ old('experience') == '1-3' ? 'selected' : '' }}>1-3 years</option>
+                                                        <option value="3-5" {{ old('experience') == '3-5' ? 'selected' : '' }}>3-5 years</option>
+                                                        <option value="5+" {{ old('experience') == '5+' ? 'selected' : '' }}>5+ years</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="caregiver_pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-map-pin"></i>
+                                                    </span>
+                                                    <input type="text" 
+                                                           class="form-control @error('pincode') is-invalid @enderror" 
+                                                           id="caregiver_pincode" 
+                                                           name="pincode" 
+                                                           value="{{ old('pincode') }}" 
+                                                           pattern="[1-9][0-9]{5}"
+                                                           maxlength="6"
+                                                           placeholder="Enter 6-digit pincode"
+                                                           required>
+                                                </div>
+                                                <div class="form-text">Enter your 6-digit Indian pincode (e.g., 462001)</div>
+                                                @error('pincode')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="caregiver_password" class="form-label">Password</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-lock"></i>
+                                                    </span>
+                                                    <input type="password" 
+                                                           class="form-control @error('password') is-invalid @enderror" 
+                                                           id="caregiver_password" 
+                                                           name="password" 
+                                                           required>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="caregiver_password_confirmation" class="form-label">Confirm Password</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-lock"></i>
+                                                    </span>
+                                                    <input type="password" 
+                                                           class="form-control" 
+                                                           id="caregiver_password_confirmation" 
+                                                           name="password_confirmation" 
+                                                           required>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div class="mb-3">
-                                            <label for="caregiver_phone" class="form-label">Phone Number</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">+91</span>
-                                                <input type="tel" 
-                                                       class="form-control @error('phone') is-invalid @enderror" 
-                                                       id="caregiver_phone" 
-                                                       name="phone" 
-                                                       value="{{ old('phone') }}" 
-                                                       pattern="[0-9]{10}"
-                                                       maxlength="10"
-                                                       placeholder="9876543210"
-                                                       required>
-                                            </div>
-                                            <div class="form-text">Enter 10-digit Indian mobile number (e.g., 9876543210)</div>
-                                            @error('phone')
-                                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="caregiver_dob" class="form-label">Date of Birth</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-calendar"></i>
-                                                </span>
-                                                <input type="date" 
-                                                       class="form-control" 
-                                                       id="caregiver_dob" 
-                                                       name="date_of_birth" 
-                                                       value="{{ old('date_of_birth') }}">
+                                        <!-- Full Width: Address -->
+                                        <div class="col-12">
+                                            <div class="mb-3">
+                                                <label for="caregiver_address" class="form-label">Address</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-map-marker-alt"></i>
+                                                    </span>
+                                                    <textarea class="form-control" 
+                                                              id="caregiver_address" 
+                                                              name="address" 
+                                                              rows="3" 
+                                                              placeholder="Enter your full address">{{ old('address') }}</textarea>
+                                                </div>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div class="mb-3">
-                                            <label for="caregiver_qualification" class="form-label">Professional Qualification</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-graduation-cap"></i>
-                                                </span>
-                                                <input type="text" 
-                                                       class="form-control" 
-                                                       id="caregiver_qualification" 
-                                                       name="qualification" 
-                                                       value="{{ old('qualification') }}" 
-                                                       placeholder="e.g., B.Sc Nursing, GNM, ANM">
+                                    <!-- Full Width: Terms and Submit -->
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="mb-3 form-check">
+                                                <input type="checkbox" class="form-check-input" id="caregiver_terms" required>
+                                                <label class="form-check-label" for="caregiver_terms">
+                                                    I agree to the <a href="#" class="text-primary">Terms and Conditions</a>
+                                                </label>
+                                            </div>
+
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-success btn-lg">
+                                                    <i class="fas fa-user-plus me-2"></i>
+                                                    Register as Caregiver
+                                                </button>
                                             </div>
                                         </div>
+                                    </div>
+                                </form>
+                            </div>
 
-                                        <div class="mb-3">
-                                            <label for="caregiver_experience" class="form-label">Years of Experience</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-briefcase"></i>
-                                                </span>
-                                                <select class="form-select" id="caregiver_experience" name="experience">
-                                                    <option value="">Select Experience</option>
-                                                    <option value="0-1" {{ old('experience') == '0-1' ? 'selected' : '' }}>0-1 years</option>
-                                                    <option value="1-3" {{ old('experience') == '1-3' ? 'selected' : '' }}>1-3 years</option>
-                                                    <option value="3-5" {{ old('experience') == '3-5' ? 'selected' : '' }}>3-5 years</option>
-                                                    <option value="5+" {{ old('experience') == '5+' ? 'selected' : '' }}>5+ years</option>
-                                                </select>
+                            <!-- Mobile: Benefits Section at Bottom (Hidden until tab is active) -->
+                            <div class="mobile-benefits-section d-lg-none mt-4" id="caregiver-benefits-mobile">
+                                <div class="info-panel-top">
+                                    <div class="text-center mb-3">
+                                        <h3 class="mb-2">Caregiver Registration</h3>
+                                        <p class="lead mb-0">General support staff - Start your healthcare journey</p>
+                                    </div>
+                                    <div class="benefits-card">
+                                        <h5 class="mb-3"><i class="fas fa-money-bill-wave me-2"></i>Caregiver Benefits</h5>
+                                        <div class="pricing-grid-horizontal mb-3">
+                                            <div class="pricing-item-horizontal">
+                                                <span class="price">₹1,500</span>
+                                                <span class="duration">/day (24h)</span>
+                                            </div>
+                                            <div class="pricing-item-horizontal">
+                                                <span class="price">₹900</span>
+                                                <span class="duration">/day (12h)</span>
+                                            </div>
+                                            <div class="pricing-item-horizontal">
+                                                <span class="price">₹700</span>
+                                                <span class="duration">/day (8h)</span>
                                             </div>
                                         </div>
-
-                                        <div class="mb-3">
-                                            <label for="caregiver_address" class="form-label">Address</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-map-marker-alt"></i>
-                                                </span>
-                                                <textarea class="form-control" 
-                                                          id="caregiver_address" 
-                                                          name="address" 
-                                                          rows="3" 
-                                                          placeholder="Enter your full address">{{ old('address') }}</textarea>
-                                            </div>
+                                        <ul class="benefits-list">
+                                            <li><i class="fas fa-check-circle me-2"></i>General support rates</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Flexible assignments</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Easy onboarding process</li>
+                                            <li><i class="fas fa-check-circle me-2"></i>Regular payment schedule</li>
+                                        </ul>
+                                    </div>
+                                    @if(isset($referralCode) && $referralCode && $referrer)
+                                        <div class="referral-badge-mobile">
+                                            <i class="fas fa-gift me-2"></i>
+                                            <strong>Referred by:</strong> {{ $referrer->name }}<br>
+                                            <small>Earn rewards when you complete registration!</small>
                                         </div>
-
-                                        <div class="mb-3">
-                                            <label for="caregiver_pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-map-pin"></i>
-                                                </span>
-                                                <input type="text" 
-                                                       class="form-control @error('pincode') is-invalid @enderror" 
-                                                       id="caregiver_pincode" 
-                                                       name="pincode" 
-                                                       value="{{ old('pincode') }}" 
-                                                       pattern="[1-9][0-9]{5}"
-                                                       maxlength="6"
-                                                       placeholder="Enter 6-digit pincode"
-                                                       required>
-                                            </div>
-                                            <div class="form-text">Enter your 6-digit Indian pincode (e.g., 462001)</div>
-                                            @error('pincode')
-                                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="caregiver_documents" class="form-label">Upload Documents</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-file-upload"></i>
-                                                </span>
-                                                <input type="file" 
-                                                       class="form-control" 
-                                                       id="caregiver_documents" 
-                                                       name="documents[]" 
-                                                       multiple 
-                                                       accept=".pdf,.jpg,.jpeg,.png">
-                                            </div>
-                                            <div class="form-text">Upload your certificates, licenses, and ID documents (PDF, JPG, PNG)</div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="caregiver_password" class="form-label">Password</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-lock"></i>
-                                                </span>
-                                                <input type="password" 
-                                                       class="form-control @error('password') is-invalid @enderror" 
-                                                       id="caregiver_password" 
-                                                       name="password" 
-                                                       required>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="caregiver_password_confirmation" class="form-label">Confirm Password</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-lock"></i>
-                                                </span>
-                                                <input type="password" 
-                                                       class="form-control" 
-                                                       id="caregiver_password_confirmation" 
-                                                       name="password_confirmation" 
-                                                       required>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3 form-check">
-                                            <input type="checkbox" class="form-check-input" id="caregiver_terms" required>
-                                            <label class="form-check-label" for="caregiver_terms">
-                                                I agree to the <a href="#" class="text-primary">Terms and Conditions</a>
-                                            </label>
-                                        </div>
-
-                                        <div class="d-grid">
-                                            <button type="submit" class="btn btn-success btn-lg">
-                                                <i class="fas fa-user-plus me-2"></i>
-                                                Register as Caregiver
-                                            </button>
-                                        </div>
-                                    </form>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -693,44 +863,727 @@
 </div>
 
 <style>
-/* Mobile-First Responsive Design */
-.nav-pills .nav-link {
-    border-radius: 0.5rem;
-    margin: 0 0.25rem;
-    transition: all 0.3s ease;
+/* Modern Registration Design */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 1rem 0;
+}
+
+/* Info Panel Styling - Removed (using info-panel-top instead) */
+
+/* Desktop Benefits Section at Top - Hidden by default, shown when tab is active */
+.desktop-benefits-section {
+    margin-bottom: 1.5rem;
+    display: none !important;
+}
+
+.desktop-benefits-section.active,
+.tab-pane.active .desktop-benefits-section {
+    display: block !important;
+}
+
+/* Mobile Benefits Section - Hidden by default, shown when tab is active */
+.mobile-benefits-section {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    display: none !important;
+}
+
+.mobile-benefits-section.active,
+.tab-pane.active .mobile-benefits-section {
+    display: block !important;
+}
+
+/* Hide mobile benefits section on desktop (992px and above) - they should only show on mobile */
+@media (min-width: 992px) {
+    .mobile-benefits-section {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+        width: 0 !important;
+    }
+    
+    .mobile-benefits-section.active,
+    .tab-pane.active .mobile-benefits-section,
+    .mobile-benefits-section.d-lg-none {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+        width: 0 !important;
+    }
+}
+
+/* Show mobile benefits section only on mobile devices (below 992px) */
+@media (max-width: 991px) {
+    .mobile-benefits-section.active,
+    .tab-pane.active .mobile-benefits-section {
+        display: block !important;
+        visibility: visible !important;
+        height: auto !important;
+        margin-top: 1.5rem !important;
+        padding: 1.5rem !important;
+        overflow: visible !important;
+        opacity: 1 !important;
+    }
+}
+
+.info-panel-top {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Icons removed - cleaner design */
+
+.info-panel-top h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.info-panel-top .lead {
+    font-size: 0.95rem;
+    color: #718096;
+}
+
+.mobile-benefits-section .icon-wrapper {
+    width: 90px;
+    height: 90px;
+    margin-bottom: 1.5rem;
+}
+
+.mobile-benefits-section .icon-wrapper i {
+    font-size: 3rem;
+}
+
+.mobile-benefits-section h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.benefits-card-mobile {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-top: 1.5rem;
+}
+
+.benefits-card-mobile h5 {
+    color: #2d3748;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.referral-badge-mobile {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin-top: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+}
+
+.referral-badge-mobile i {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.referral-badge-mobile strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+}
+
+.referral-badge-mobile small {
+    opacity: 0.95;
+    font-size: 0.85rem;
+}
+
+.icon-wrapper {
+    display: inline-block;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    margin: 0 auto;
+}
+
+.icon-wrapper i {
+    color: white;
+    font-size: 4rem;
+}
+
+.info-panel h3 {
+    font-weight: 700;
+    color: #2d3748;
+    font-size: 1.75rem;
+}
+
+.info-panel .lead {
+    color: #718096;
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+.benefits-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    margin-top: 1.5rem;
+}
+
+.benefits-card h5 {
+    color: #2d3748;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.benefits-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.benefits-list li {
+    padding: 0.75rem 0;
+    color: #4a5568;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #f7fafc;
+}
+
+.benefits-list li:last-child {
+    border-bottom: none;
+}
+
+.benefits-list li i {
+    color: #48bb78;
     font-size: 0.9rem;
-    padding: 0.75rem 1rem;
+}
+
+/* Desktop Pricing Grid */
+.pricing-grid-desktop {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.pricing-item-desktop {
+    text-align: center;
+    padding: 0.875rem 0.75rem;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.pricing-item-desktop:hover {
+    border-color: #667eea;
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+}
+
+.pricing-item-desktop .price {
+    display: block;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #667eea;
+    line-height: 1.2;
+    margin-bottom: 0.15rem;
+}
+
+.pricing-item-desktop .duration {
+    display: block;
+    font-size: 0.75rem;
+    color: #718096;
+    font-weight: 500;
+}
+
+.pricing-grid-desktop {
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+/* Mobile Pricing Grid - Horizontal */
+.pricing-grid-horizontal {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.pricing-item-horizontal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+}
+
+.pricing-item-horizontal .price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.pricing-item-horizontal .duration {
+    font-size: 0.875rem;
+    color: #718096;
+    font-weight: 500;
+}
+
+.referral-badge {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    margin-top: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+}
+
+.referral-badge i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.referral-badge strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+}
+
+.referral-badge small {
+    opacity: 0.95;
+    font-size: 0.875rem;
+}
+
+/* Form Panel Styling */
+.form-panel {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    height: 100%;
+}
+
+.card {
+    border: none;
+    border-radius: 24px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    background: white;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.brand-logo--auth {
+    max-height: 60px;
+    margin-bottom: 1rem;
+}
+
+/* Modern Tab Navigation */
+.nav-pills {
+    background: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    gap: 0.5rem;
+}
+
+.nav-pills .nav-link {
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    border: 2px solid transparent;
+    color: #6c757d;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-pills .nav-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.nav-pills .nav-link:hover::before {
+    left: 100%;
 }
 
 .nav-pills .nav-link.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
+    background: var(--primary-gradient);
+    color: white;
+    border-color: transparent;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
 
 .nav-pills .nav-link:not(.active) {
-    background-color: #f8f9fa;
-    color: #6c757d;
-    border: 1px solid #dee2e6;
+    background: white;
+    border-color: #e9ecef;
 }
 
-.nav-pills .nav-link:hover:not(.active) {
-    background-color: #e9ecef;
-    color: #495057;
+.nav-pills .nav-link:not(.active):hover {
+    background: white;
+    border-color: #667eea;
+    color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 
+/* Tab Content Styling */
 .tab-pane {
-    min-height: 400px;
+    animation: fadeIn 0.4s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Modern Form Styling */
+.form-label {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.35rem;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 0.25rem;
+}
+
+.mb-3 {
+    margin-bottom: 1rem !important;
+}
+
+.form-panel .mb-3 {
+    margin-bottom: 0.875rem !important;
 }
 
 .input-group-text {
-    background-color: #f8f9fa;
-    border-color: #dee2e6;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border: 2px solid #e2e8f0;
+    border-right: none;
+    color: #667eea;
     min-width: 45px;
+    justify-content: center;
+    font-size: 0.9rem;
+    padding: 0.65rem 0.75rem;
+    transition: all 0.3s ease;
 }
 
-.form-control:focus {
+.form-control,
+.form-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.65rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: white;
+}
+
+.input-group .form-control {
+    border-left: none;
+    border-radius: 0 12px 12px 0;
+}
+
+.input-group .form-select {
+    border-left: none;
+    border-radius: 0 12px 12px 0;
+}
+
+.form-control:focus,
+.form-select:focus {
     border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    background: #fafbfc;
+    outline: none;
+}
+
+.form-control:focus + .input-group-text,
+.input-group:focus-within .input-group-text {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8edff 100%);
+    color: #667eea;
+}
+
+.form-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+textarea.form-control {
+    border-radius: 10px;
+    resize: vertical;
+    min-height: 70px;
+    padding: 0.65rem 0.875rem;
+}
+
+.form-text {
+    font-size: 0.8rem;
+    color: #718096;
+    margin-top: 0.25rem;
+}
+
+/* Error States */
+.is-invalid {
+    border-color: #e53e3e !important;
+    background: #fff5f5;
+}
+
+.is-invalid:focus {
+    box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.1);
+}
+
+.invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #e53e3e;
+    font-weight: 500;
+}
+
+/* Modern Buttons */
+.btn {
+    border-radius: 12px;
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.btn-info {
+    background: var(--info-gradient);
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+    color: white;
+}
+
+.btn-info:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 172, 254, 0.5);
+    color: white;
+}
+
+.btn-success {
+    background: var(--success-gradient);
+    box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(17, 153, 142, 0.5);
+}
+
+.btn-lg {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+}
+
+.form-panel .btn-lg {
+    padding: 0.75rem 1.75rem;
+    font-size: 0.95rem;
+}
+
+/* Checkbox Styling */
+.form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid #cbd5e0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.form-check-input:checked {
+    background: var(--primary-gradient);
+    border-color: #667eea;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.form-check-label {
+    color: #4a5568;
+    cursor: pointer;
+    margin-left: 0.5rem;
+}
+
+.form-check-label a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+}
+
+.form-check-label a:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+/* Password Strength Indicator */
+.password-strength {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    background: #f7fafc;
+}
+
+/* Alert Styling */
+.alert {
+    border-radius: 12px;
+    border: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+    color: #2c5282;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+    color: #22543d;
+}
+
+/* Benefit Cards */
+.alert.alert-info,
+.alert.alert-success {
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+/* Icon Styling */
+.fa-3x {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3));
+}
+
+.text-primary .fa-3x {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.text-info .fa-3x {
+    background: var(--info-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.text-success .fa-3x {
+    background: var(--success-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Compact spacing for form */
+.form-panel .form-check {
+    margin-bottom: 0.75rem;
+}
+
+.form-panel .d-grid {
+    margin-top: 0.5rem;
 }
 
 .btn-primary {
@@ -750,75 +1603,141 @@
 
 /* Logo styles removed - now using text-based logo */
 
-/* Mobile Optimizations */
+/* Responsive Design */
+@media (max-width: 991px) {
+    .info-panel {
+        position: relative;
+        top: auto;
+        max-height: none;
+        margin-bottom: 0;
+    }
+    
+    .form-panel {
+        max-height: none;
+    }
+}
+
 @media (max-width: 768px) {
+    body {
+        padding: 1rem 0;
+    }
+    
     .container {
-        padding: 0.5rem;
+        padding: 0 1rem;
     }
     
     .card-body {
         padding: 1.5rem !important;
     }
     
+    .nav-pills {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+    
     .nav-pills .nav-link {
-        font-size: 0.8rem;
-        padding: 0.6rem 0.8rem;
-        margin: 0 0.1rem;
+        width: 100%;
+        font-size: 0.875rem;
+        padding: 0.875rem 1.25rem;
+        margin: 0;
     }
     
     .nav-pills .nav-link i {
-        display: none; /* Hide icons on mobile to save space */
+        display: none;
     }
     
-    .tab-pane {
-        min-height: auto;
+    .info-panel {
+        padding: 2rem 1.5rem;
     }
     
-    .form-control {
+    .form-panel {
+        padding: 2rem 1.5rem;
+    }
+    
+    .icon-wrapper {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .icon-wrapper i {
+        font-size: 2.5rem;
+    }
+    
+    .info-panel h3 {
+        font-size: 1.5rem;
+    }
+    
+    .mobile-benefits-section {
+        padding: 1.5rem 1.25rem;
+    }
+    
+    .benefits-card-mobile {
+        padding: 1.25rem;
+    }
+    
+    .mobile-benefits-section .icon-wrapper {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .mobile-benefits-section .icon-wrapper i {
+        font-size: 2.5rem;
+    }
+    
+    .mobile-benefits-section h3 {
+        font-size: 1.35rem;
+    }
+    
+    .pricing-item-horizontal {
+        padding: 0.875rem 1rem;
+    }
+    
+    .pricing-item-horizontal .price {
+        font-size: 1.35rem;
+    }
+    
+    .pricing-item-horizontal .duration {
+        font-size: 0.8rem;
+    }
+    
+    .form-control,
+    .form-select {
         font-size: 16px; /* Prevents zoom on iOS */
     }
     
     .btn-lg {
-        padding: 0.75rem 1.5rem;
+        padding: 0.875rem 2rem;
         font-size: 1rem;
     }
     
-    .fa-3x {
-        font-size: 2rem !important; /* Smaller icons on mobile */
-    }
-    
-    .mb-4 {
-        margin-bottom: 1rem !important;
+    .form-label {
+        font-size: 0.8rem;
     }
 }
 
 @media (max-width: 576px) {
     .card-body {
-        padding: 1rem !important;
-    }
-    
-    .nav-pills {
-        flex-direction: column;
-        gap: 0.5rem;
+        padding: 1.5rem 1rem !important;
     }
     
     .nav-pills .nav-link {
-        width: 100%;
-        margin: 0;
-        text-align: center;
-    }
-    
-    .input-group {
-        flex-wrap: nowrap;
+        padding: 0.75rem 1rem;
+        font-size: 0.8rem;
     }
     
     .input-group-text {
-        min-width: 40px;
+        min-width: 45px;
         font-size: 0.9rem;
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .btn {
+        width: 100%;
     }
 }
 
-/* Tablet Optimizations */
 @media (min-width: 768px) and (max-width: 1024px) {
     .col-lg-6 {
         flex: 0 0 50%;
@@ -826,33 +1745,92 @@
     }
     
     .nav-pills .nav-link {
-        font-size: 0.85rem;
-        padding: 0.7rem 0.9rem;
+        font-size: 0.875rem;
+        padding: 0.875rem 1.25rem;
     }
 }
 
-/* Large Desktop Optimizations */
 @media (min-width: 1200px) {
     .container {
         max-width: 1200px;
     }
     
     .card-body {
-        padding: 3rem !important;
+        padding: 4rem !important;
     }
+}
+
+/* Smooth Transitions */
+* {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Loading State */
+.btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle tab switching
-    const patientTab = document.getElementById('patient-tab');
-    const caregiverTab = document.getElementById('caregiver-tab');
-    const patientForm = document.getElementById('patient-form');
-    const caregiverForm = document.getElementById('caregiver-form');
+// Show/hide benefits section based on active tab
+function updateBenefitsVisibility() {
+    const activeTabPane = document.querySelector('.tab-pane.active');
+    if (activeTabPane) {
+        // Hide all benefits sections first
+        document.querySelectorAll('.desktop-benefits-section, .mobile-benefits-section').forEach(el => {
+            el.classList.remove('active');
+        });
+        
+        // Show benefits for active tab
+        const desktopBenefits = activeTabPane.querySelector('.desktop-benefits-section');
+        const mobileBenefits = activeTabPane.querySelector('.mobile-benefits-section');
+        
+        if (desktopBenefits) desktopBenefits.classList.add('active');
+        if (mobileBenefits) mobileBenefits.classList.add('active');
+    }
+}
 
-    // Phone number validation for both forms
+document.addEventListener('DOMContentLoaded', function() {
+    // Show benefits for initially active tab
+    updateBenefitsVisibility();
+    
+    // Update benefits visibility when tabs change
+    const tabButtons = document.querySelectorAll('[data-bs-toggle="pill"], [data-bs-toggle="tab"]');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            setTimeout(updateBenefitsVisibility, 100); // Small delay to ensure tab is switched
+        });
+    });
+    
+    // Also listen for Bootstrap tab events
+    const tabElements = document.querySelectorAll('#patient-tab, #nurse-tab, #caregiver-tab');
+    tabElements.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', updateBenefitsVisibility);
+    });
+    
+    // Phone number validation for all three forms
     const patientPhone = document.getElementById('patient_phone');
+    const nursePhone = document.getElementById('nurse_phone');
     const caregiverPhone = document.getElementById('caregiver_phone');
 
     // Function to validate phone number
@@ -885,71 +1863,131 @@ document.addEventListener('DOMContentLoaded', function() {
         validatePhone(phoneInput);
     }
 
-    // Add event listeners for phone validation
-    if (patientPhone) {
-        patientPhone.addEventListener('input', function() {
-            formatPhoneInput(this);
-        });
-        
-        patientPhone.addEventListener('blur', function() {
-            validatePhone(this);
-        });
-    }
-
-    if (caregiverPhone) {
-        caregiverPhone.addEventListener('input', function() {
-            formatPhoneInput(this);
-        });
-        
-        caregiverPhone.addEventListener('blur', function() {
-            validatePhone(this);
-        });
-    }
-
-    // Add click handlers for better UX
-    patientTab.addEventListener('click', function() {
-        // Clear caregiver form if switching
-        if (caregiverForm.querySelector('form').checkValidity()) {
-            // Form is valid, ask for confirmation
-            if (!confirm('Are you sure you want to switch tabs? Your caregiver form data will be lost.')) {
-                return false;
-            }
+    // Add event listeners for phone validation for all forms
+    [patientPhone, nursePhone, caregiverPhone].forEach(phoneInput => {
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function() {
+                formatPhoneInput(this);
+            });
+            
+            phoneInput.addEventListener('blur', function() {
+                validatePhone(this);
+            });
         }
     });
 
-    caregiverTab.addEventListener('click', function() {
-        // Clear patient form if switching
-        if (patientForm.querySelector('form').checkValidity()) {
-            // Form is valid, ask for confirmation
-            if (!confirm('Are you sure you want to switch tabs? Your patient form data will be lost.')) {
-                return false;
-            }
+    // Pincode validation for all forms
+    const patientPincode = document.getElementById('patient_pincode');
+    const nursePincode = document.getElementById('nurse_pincode');
+    const caregiverPincode = document.getElementById('caregiver_pincode');
+
+    function formatPincodeInput(pincodeInput) {
+        let value = pincodeInput.value.replace(/\D/g, '');
+        if (value.length > 6) {
+            value = value.substring(0, 6);
+        }
+        pincodeInput.value = value;
+    }
+
+    [patientPincode, nursePincode, caregiverPincode].forEach(pincodeInput => {
+        if (pincodeInput) {
+            pincodeInput.addEventListener('input', function() {
+                formatPincodeInput(this);
+            });
+        }
+    });
+
+    // Date of birth validation - prevent future dates
+    const dateInputs = document.querySelectorAll('input[type="date"][name="date_of_birth"]');
+    const today = new Date().toISOString().split('T')[0];
+    dateInputs.forEach(dateInput => {
+        if (dateInput) {
+            dateInput.setAttribute('max', today);
         }
     });
 
     // Form submission validation
-    const patientFormElement = document.getElementById('patientForm');
-    const caregiverFormElement = document.getElementById('caregiverForm');
+    const forms = ['patientForm', 'nurseForm', 'caregiverForm'];
+    const phoneFields = {
+        'patientForm': patientPhone,
+        'nurseForm': nursePhone,
+        'caregiverForm': caregiverPhone
+    };
 
-    if (patientFormElement) {
-        patientFormElement.addEventListener('submit', function(e) {
-            if (!validatePhone(patientPhone)) {
-                e.preventDefault();
-                patientPhone.focus();
-                return false;
-            }
-        });
+    forms.forEach(formId => {
+        const form = document.getElementById(formId);
+        const phoneField = phoneFields[formId];
+        
+        if (form && phoneField) {
+            form.addEventListener('submit', function(e) {
+                if (!validatePhone(phoneField)) {
+                    e.preventDefault();
+                    phoneField.focus();
+                    return false;
+                }
+            });
+        }
+    });
+
+    // Password strength indicator
+    const passwordInputs = document.querySelectorAll('input[type="password"][name="password"]');
+    passwordInputs.forEach(passwordInput => {
+        if (passwordInput) {
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+                const strength = getPasswordStrength(password);
+                
+                // Remove existing strength indicator
+                const existingIndicator = this.parentElement.parentElement.querySelector('.password-strength');
+                if (existingIndicator) {
+                    existingIndicator.remove();
+                }
+                
+                // Add strength indicator
+                if (password.length > 0) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'password-strength mt-1';
+                    indicator.innerHTML = `<small class="text-${strength.color}"><i class="fas ${strength.icon} me-1"></i>${strength.text}</small>`;
+                    this.parentElement.parentElement.appendChild(indicator);
+                }
+            });
+        }
+    });
+
+    function getPasswordStrength(password) {
+        let strength = 0;
+        if (password.length >= 6) strength++;
+        if (password.length >= 8) strength++;
+        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+        if (/[0-9]/.test(password)) strength++;
+        if (/[^a-zA-Z0-9]/.test(password)) strength++;
+
+        if (strength <= 2) {
+            return { text: 'Weak password', color: 'danger', icon: 'fa-exclamation-circle' };
+        } else if (strength <= 3) {
+            return { text: 'Medium password', color: 'warning', icon: 'fa-exclamation-triangle' };
+        } else {
+            return { text: 'Strong password', color: 'success', icon: 'fa-check-circle' };
+        }
     }
 
-    if (caregiverFormElement) {
-        caregiverFormElement.addEventListener('submit', function(e) {
-            if (!validatePhone(caregiverPhone)) {
+    // Smooth scroll to first error on form submission
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            if (!this.checkValidity()) {
                 e.preventDefault();
-                caregiverPhone.focus();
-                return false;
+                e.stopPropagation();
+                
+                // Find first invalid field
+                const firstInvalid = this.querySelector(':invalid');
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstInvalid.focus();
+                }
             }
+            this.classList.add('was-validated');
         });
-    }
+    });
 });
 </script>
 @endsection
