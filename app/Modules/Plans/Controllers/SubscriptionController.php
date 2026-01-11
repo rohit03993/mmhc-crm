@@ -36,7 +36,7 @@ class SubscriptionController extends Controller
             
             // Get user's subscriptions
             try {
-                $subscriptions = $this->subscriptionService->getUserSubscriptions($user);
+            $subscriptions = $this->subscriptionService->getUserSubscriptions($user);
             } catch (\Exception $e) {
                 \Log::error('Error getting subscriptions in index', [
                     'error' => $e->getMessage(),
@@ -80,7 +80,7 @@ class SubscriptionController extends Controller
             if ($activeSubscription) {
                 try {
                     $availablePlans = Plan::active()->ordered()->get();
-                } catch (\Exception $e) {
+        } catch (\Exception $e) {
                     \Log::error('Error getting available plans', ['error' => $e->getMessage()]);
                 }
             }
@@ -631,11 +631,11 @@ class SubscriptionController extends Controller
             $pathsToTry = [
                 // Try 1: Storage disk public (most common)
                 Storage::disk('public')->path($filePath),
-                // Try 2: Direct storage path
+            // Try 2: Direct storage path
                 storage_path('app/public/' . $filePath),
-                // Try 3: Without public prefix
+            // Try 3: Without public prefix
                 storage_path('app/' . $filePath),
-                // Try 4: Check if it's already a full path
+            // Try 4: Check if it's already a full path
                 $filePath,
                 // Try 5: Public storage symlink path
                 public_path('storage/' . $filePath),

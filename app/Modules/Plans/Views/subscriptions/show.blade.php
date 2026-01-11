@@ -11,7 +11,7 @@
     </div>
 </div>
 
-<div class="container-fluid px-3 py-4">
+<div class="container-fluid px-3 py-4 subscription-page-container">
     <div class="row">
         <div class="col-12 col-lg-8 mx-auto">
             <!-- Subscription Details Card -->
@@ -246,6 +246,14 @@
 @include('auth::components.bottom-nav')
 
 <style>
+/* Mobile padding for bottom nav - prevents content from being blocked */
+@media (max-width: 767px) {
+    .subscription-page-container {
+        padding-bottom: 20px !important;
+        margin-bottom: 80px !important;
+    }
+}
+
 .subscription-detail-card {
     background: #fff;
     border-radius: 16px;

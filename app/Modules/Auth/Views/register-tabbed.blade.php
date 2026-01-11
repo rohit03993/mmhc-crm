@@ -1811,6 +1811,52 @@ function updateBenefitsVisibility() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Check for role parameter in URL and activate the corresponding tab
+    const urlParams = new URLSearchParams(window.location.search);
+    const roleParam = urlParams.get('role');
+    
+    if (roleParam) {
+        let targetTabId = null;
+        let targetPaneId = null;
+        
+        // Map role parameter to tab and pane IDs
+        if (roleParam === 'patient') {
+            targetTabId = 'patient-tab';
+            targetPaneId = 'patient-form';
+        } else if (roleParam === 'nurse') {
+            targetTabId = 'nurse-tab';
+            targetPaneId = 'nurse-form';
+        } else if (roleParam === 'caregiver') {
+            targetTabId = 'caregiver-tab';
+            targetPaneId = 'caregiver-form';
+        }
+        
+        if (targetTabId && targetPaneId) {
+            // Remove active class from all tabs and panes
+            document.querySelectorAll('.nav-link').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.remove('show', 'active');
+            });
+            
+            // Activate the target tab and pane
+            const targetTab = document.getElementById(targetTabId);
+            const targetPane = document.getElementById(targetPaneId);
+            
+            if (targetTab && targetPane) {
+                targetTab.classList.add('active');
+                targetPane.classList.add('show', 'active');
+                
+                // Use Bootstrap tab API if available
+                if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+                    const tabTrigger = new bootstrap.Tab(targetTab);
+                    tabTrigger.show();
+                }
+            }
+        }
+    }
+    
     // Show benefits for initially active tab
     updateBenefitsVisibility();
     

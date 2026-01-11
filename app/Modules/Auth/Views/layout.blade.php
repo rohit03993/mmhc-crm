@@ -61,6 +61,8 @@
             .main-content {
                 background-color: transparent;
                 padding: 0;
+                padding-bottom: 80px !important; /* Space for fixed bottom navigation */
+                min-height: calc(100vh - 80px);
             }
             
             .container-fluid {

@@ -317,6 +317,18 @@
         padding-bottom: 0 !important;
     }
     
+    /* Ensure main content has space for bottom nav */
+    .main-content {
+        padding-bottom: 80px !important;
+        margin-bottom: 0;
+    }
+    
+    /* Add padding to container on mobile if needed */
+    .container-fluid,
+    .container {
+        padding-bottom: 0;
+    }
+    
     .app-bottom-nav {
         display: flex !important;
         visibility: visible !important;
