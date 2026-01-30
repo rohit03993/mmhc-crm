@@ -4,21 +4,21 @@ use Illuminate\Support\Facades\Route;
 use App\Modules\Profiles\Controllers\DocumentController;
 use App\Modules\Profiles\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PageContentController;
+use App\Http\Controllers\Admin\AchievementMediaController;
+use App\Http\Controllers\Admin\SiteSettingsController;
 
 Route::get('/', function () {
-    // Get page content for dynamic rendering
     $pageContent = \App\Models\PageContent::getAllSections();
-    // Use new Plan model for subscription plans
     $healthcarePlans = \App\Modules\Plans\Models\Plan::active()->ordered()->get();
-    return view('welcome', compact('pageContent', 'healthcarePlans'));
+    $achievementMedia = \App\Models\AchievementMedia::ordered()->get();
+    return view('welcome', compact('pageContent', 'healthcarePlans', 'achievementMedia'));
 });
 
-// Landing page route (always accessible)
 Route::get('/landing', function () {
     $pageContent = \App\Models\PageContent::getAllSections();
-    // Use new Plan model for subscription plans
     $healthcarePlans = \App\Modules\Plans\Models\Plan::active()->ordered()->get();
-    return view('welcome', compact('pageContent', 'healthcarePlans'));
+    $achievementMedia = \App\Models\AchievementMedia::ordered()->get();
+    return view('welcome', compact('pageContent', 'healthcarePlans', 'achievementMedia'));
 })->name('landing');
 
 // Services module routes
@@ -141,6 +141,20 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/service-requests/{serviceRequest}/assign', [\App\Modules\Services\Controllers\ServiceController::class, 'assign'])->name('service-requests.assign.post');
         Route::post('/service-requests/{serviceRequest}/approve-payment', [\App\Modules\Services\Controllers\ServiceController::class, 'approvePayment'])->name('service-requests.approve-payment');
         
+        // Achievement & Media Coverage (landing carousel)
+        Route::get('/achievement-media', [AchievementMediaController::class, 'index'])->name('achievement-media.index');
+        Route::get('/achievement-media/{achievementMedia}/edit', [AchievementMediaController::class, 'edit'])->name('achievement-media.edit');
+        Route::post('/achievement-media', [AchievementMediaController::class, 'store'])->name('achievement-media.store');
+        Route::put('/achievement-media/{achievementMedia}', [AchievementMediaController::class, 'update'])->name('achievement-media.update');
+        Route::post('/achievement-media/order', [AchievementMediaController::class, 'updateOrder'])->name('achievement-media.update-order');
+        Route::post('/achievement-media/{achievementMedia}/move-up', [AchievementMediaController::class, 'moveUp'])->name('achievement-media.move-up');
+        Route::post('/achievement-media/{achievementMedia}/move-down', [AchievementMediaController::class, 'moveDown'])->name('achievement-media.move-down');
+        Route::delete('/achievement-media/{achievementMedia}', [AchievementMediaController::class, 'destroy'])->name('achievement-media.destroy');
+
+        // Site settings (logo, company name, tagline)
+        Route::get('/site-settings', [SiteSettingsController::class, 'index'])->name('site-settings.index');
+        Route::put('/site-settings', [SiteSettingsController::class, 'update'])->name('site-settings.update');
+
         // Page Content Management Routes
         Route::get('/page-content', [PageContentController::class, 'index'])->name('page-content.index');
         Route::get('/page-content/{id}/edit', [PageContentController::class, 'edit'])->name('page-content.edit');

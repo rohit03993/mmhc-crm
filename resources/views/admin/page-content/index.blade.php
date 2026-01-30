@@ -43,6 +43,24 @@
                 </div>
             </div>
 
+            <!-- Achievements & Media (carousel) - prominent link -->
+            <div class="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-xl p-6 mb-8">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-trophy text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800">Achievements & Media Coverage</h3>
+                            <p class="text-gray-600 text-sm">Add and order images for the carousel above Core Values on the landing page.</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('admin.achievement-media.index') }}" class="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">
+                        <i class="fas fa-images mr-2"></i>Manage carousel images
+                    </a>
+                </div>
+            </div>
+
             <!-- Sections Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @forelse($sections as $section)

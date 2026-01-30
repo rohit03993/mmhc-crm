@@ -14,6 +14,9 @@ class DatabaseSeeder extends Seeder
     {
         // Seed Healthcare Plans first (for landing page and plans module)
         $this->call(HealthcarePlansSeeder::class);
+
+        // Demo images for Achievements & Media carousel (landing page)
+        $this->call(AchievementMediaSeeder::class);
         
         // Seed Subscription Plans (for patient subscriptions)
         $this->call(SubscriptionPlansSeeder::class);

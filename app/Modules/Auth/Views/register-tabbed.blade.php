@@ -16,7 +16,7 @@
             <div class="card shadow-lg border-0">
                 <div class="card-body p-5">
                     <div class="text-center mb-3">
-                        <img src="{{ asset('images/med-logo.png') }}" alt="MeD Miracle Health Care" class="brand-logo brand-logo--auth" style="max-height: 50px;">
+                        <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--auth" style="max-height: 50px;">
                         <h2 class="mt-2 mb-1" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; font-size: 1.5rem;">Create your account</h2>
                         <p class="text-muted mb-0" style="font-size: 0.9rem;">Join MMHC and get started with healthcare services</p>
                     </div>

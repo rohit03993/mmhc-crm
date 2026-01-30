@@ -423,6 +423,19 @@
                                 <i class="fas fa-chevron-right"></i>
                             </div>
                         </a>
+
+                        <a href="{{ route('admin.achievement-media.index') }}" class="quick-action-btn">
+                            <div class="quick-action-icon bg-info">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="quick-action-content">
+                                <div class="quick-action-title">Achievements & Media</div>
+                                <div class="quick-action-desc">Carousel images</div>
+                            </div>
+                            <div class="quick-action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </a>
                         
                         @if($stats['pending_approvals'] > 0)
                         <a href="{{ route('admin.service-requests') }}?filter=completed" class="quick-action-btn quick-action-urgent">

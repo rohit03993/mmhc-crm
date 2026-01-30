@@ -342,7 +342,7 @@
 <div class="auth-page-wrapper">
     <div class="login-card">
         <div class="login-card-header">
-            <img src="{{ asset('images/med-logo.png') }}" alt="MED Miracle Health Care" class="brand-logo">
+            <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MED Miracle Health Care' }}" class="brand-logo">
             <h2>Welcome Back</h2>
             <p>Sign in to your account to continue</p>
         </div>

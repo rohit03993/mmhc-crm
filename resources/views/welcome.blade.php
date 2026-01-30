@@ -87,8 +87,8 @@
                 <!-- Logo -->
                 <div class="flex items-center">
                     <a href="#home" class="flex items-center space-x-3">
-                        <img src="{{ asset('images/med-logo.png') }}" alt="MeD Miracle Health Care" class="h-12 w-auto">
-                        <span class="sr-only">MeD Miracle Health Care</span>
+                        <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="h-12 w-auto">
+                        <span class="sr-only">{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}</span>
                     </a>
                 </div>
                 
@@ -725,7 +725,55 @@
                     </p>
                 </div>
             </div>
-            
+
+            <!-- Achievements & Media Coverage (carousel) -->
+            @if(isset($achievementMedia) && $achievementMedia->isNotEmpty())
+            <div id="achievement-media" class="mb-20 scroll-mt-24">
+                <h3 class="text-3xl font-bold text-gray-800 text-center mb-12">Achievements & Media Coverage</h3>
+                <div class="max-w-7xl mx-auto px-2"
+                     x-data="{
+                         active: 0,
+                         total: {{ $achievementMedia->count() }},
+                         next() { this.active = (this.active + 1) % this.total },
+                         prev() { this.active = (this.active - 1 + this.total) % this.total }
+                     }"
+                     x-init="const advance = () => $data.next(); setInterval(advance, 5000)">
+                    <div class="relative bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 min-h-[420px] md:min-h-[520px] flex items-center">
+                        @foreach($achievementMedia as $index => $item)
+                        <div x-show="active === {{ $index }}"
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0"
+                             x-transition:enter-end="opacity-100"
+                             x-transition:leave="transition ease-in duration-200"
+                             x-transition:leave-start="opacity-100"
+                             x-transition:leave-end="opacity-0"
+                             class="absolute inset-0 flex items-center justify-center p-4">
+                            <img src="{{ Storage::url($item->image_path) }}" alt="{{ $item->caption ?? 'Achievement' }}" class="max-w-full max-h-[400px] md:max-h-[540px] w-auto h-auto object-contain rounded-lg">
+                            @if($item->caption)
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-6 py-4 rounded-b-2xl">
+                                <p class="text-white font-medium text-center">{{ $item->caption }}</p>
+                            </div>
+                            @endif
+                        </div>
+                        @endforeach
+                    </div>
+                    <div class="flex items-center justify-center gap-4 mt-4">
+                        <button @click="prev()" class="p-2 rounded-full bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-600 transition" aria-label="Previous">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div class="flex gap-2 items-center">
+                            @foreach($achievementMedia as $index => $item)
+                            <button @click="active = {{ $index }}" :class="active === {{ $index }} ? 'bg-blue-600 w-8' : 'bg-gray-300 w-2'" class="h-2 rounded-full transition-all" aria-label="Go to slide {{ $index + 1 }}"></button>
+                            @endforeach
+                        </div>
+                        <button @click="next()" class="p-2 rounded-full bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-600 transition" aria-label="Next">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <!-- Values -->
             <div class="mb-20">
                 <h3 class="text-3xl font-bold text-gray-800 text-center mb-12">Our Core Values</h3>

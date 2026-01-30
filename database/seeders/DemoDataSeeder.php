@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use App\Models\Core\User;
 use App\Modules\Services\Models\ServiceType;
 use App\Modules\Services\Models\ServiceRequest;
@@ -26,18 +28,16 @@ class DemoDataSeeder extends Seeder
                 'name' => 'Mantu Kumar',
                 'email' => 'mantu@themmhc.com',
                 'phone' => '9113311256',
-                'password' => 'password123', // Laravel's 'hashed' cast will automatically hash this
+                'password' => 'password123',
                 'role' => 'admin',
                 'unique_id' => 'M-UID-000001',
                 'address' => 'Udgam Incubation Centre, Rohit Nagar, Phase 1, Bhopal 462023',
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]);
-        } else {
-            // Update password in case it was double-hashed before
-            $admin->password = 'password123';
-            $admin->save();
         }
+        // Ensure password is stored as a single hash so Auth::attempt() works
+        DB::table('users')->where('id', $admin->id)->update(['password' => Hash::make('password123')]);
 
         // Create ONE Demo Nurse
         $nurseUniqueId = 'N-UID-000001';
@@ -118,10 +118,15 @@ class DemoDataSeeder extends Seeder
             $patient->save();
         }
 
-        // Get service types
+        // Get service types (seed them if missing so this seeder can run alone)
         $serviceTypes = ServiceType::all();
         if ($serviceTypes->isEmpty()) {
-            $this->command->warn('No service types found. Please run ServiceTypesSeeder first.');
+            $this->command->warn('No service types found. Running ServiceTypesSeeder...');
+            $this->call(ServiceTypesSeeder::class);
+            $serviceTypes = ServiceType::all();
+        }
+        if ($serviceTypes->isEmpty()) {
+            $this->command->error('Could not load service types. Aborting.');
             return;
         }
 

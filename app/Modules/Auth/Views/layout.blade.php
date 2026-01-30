@@ -225,9 +225,9 @@
                     <div class="position-sticky pt-3">
                         <div class="text-center mb-4">
                             <div class="brand-logo-card">
-                                <img src="{{ asset('images/med-logo.png') }}" alt="MeD Miracle Health Care" class="brand-logo brand-logo--sidebar">
+                                <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--sidebar">
                             </div>
-                            <div class="brand-tagline">Miracle Health Care</div>
+                            <div class="brand-tagline">{{ $siteTagline ?? 'Miracle Health Care' }}</div>
                         </div>
                         
                         <ul class="nav flex-column">
@@ -406,6 +406,20 @@
                                     <a class="nav-link text-white {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" href="{{ route('admin.payments.index') }}">
                                         <i class="fas fa-money-bill-wave me-2"></i>
                                         Staff Payments
+                                    </a>
+                                </li>
+                                
+                                <li class="nav-item">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.achievement-media*') ? 'active' : '' }}" href="{{ route('admin.achievement-media.index') }}">
+                                        <i class="fas fa-trophy me-2"></i>
+                                        Achievements & Media
+                                    </a>
+                                </li>
+                                
+                                <li class="nav-item">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.site-settings*') ? 'active' : '' }}" href="{{ route('admin.site-settings.index') }}">
+                                        <i class="fas fa-cog me-2"></i>
+                                        Site Settings
                                     </a>
                                 </li>
                                 

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Core\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class ResetAdminPassword extends Command
@@ -46,9 +47,8 @@ class ResetAdminPassword extends Command
             }
         }
 
-        // Update password
-        $admin->password = Hash::make($newPassword);
-        $admin->save();
+        // Update password directly so hash is stored correctly (bypass model cast)
+        DB::table('users')->where('id', $admin->id)->update(['password' => Hash::make($newPassword)]);
 
         $this->info("✅ Password reset successfully!");
         $this->line("Email: {$admin->email}");
