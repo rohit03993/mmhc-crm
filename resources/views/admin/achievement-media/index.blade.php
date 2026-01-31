@@ -80,7 +80,7 @@
                                 </button>
                             </form>
                         </div>
-                        <img src="{{ Storage::url($item->image_path) }}" alt="" class="w-24 h-16 object-cover rounded-lg border border-gray-200">
+                        <img src="{{ asset('achievement-media/' . basename($item->image_path)) }}" alt="" class="w-24 h-16 object-cover rounded-lg border border-gray-200">
                         <div class="flex-1 min-w-0">
                             <p class="text-gray-800 font-medium truncate">{{ $item->caption ?: '—' }}</p>
                             <p class="text-sm text-gray-500">#{{ $index + 1 }}</p>

@@ -32,7 +32,7 @@
 
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                 <p class="text-gray-600 mb-4">Current image:</p>
-                <img src="{{ Storage::url($achievementMedia->image_path) }}" alt="" class="max-w-full h-auto max-h-48 rounded-lg border border-gray-200 mb-6">
+                <img src="{{ asset('achievement-media/' . basename($achievementMedia->image_path)) }}" alt="" class="max-w-full h-auto max-h-48 rounded-lg border border-gray-200 mb-6">
             </div>
 
             <form action="{{ route('admin.achievement-media.update', $achievementMedia) }}" method="POST" enctype="multipart/form-data" class="bg-white rounded-lg shadow-md p-6 space-y-6">
