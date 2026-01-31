@@ -748,7 +748,7 @@
                              x-transition:leave-start="opacity-100"
                              x-transition:leave-end="opacity-0"
                              class="absolute inset-0 flex items-center justify-center p-4">
-                            <img src="{{ asset('achievement-media/' . basename($item->image_path)) }}" alt="{{ $item->caption ?? 'Achievement' }}" class="max-w-full max-h-[400px] md:max-h-[540px] w-auto h-auto object-contain rounded-lg">
+                            <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->caption ?? 'Achievement' }}" class="max-w-full max-h-[400px] md:max-h-[540px] w-auto h-auto object-contain rounded-lg">
                             @if($item->caption)
                             <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-6 py-4 rounded-b-2xl">
                                 <p class="text-white font-medium text-center">{{ $item->caption }}</p>
