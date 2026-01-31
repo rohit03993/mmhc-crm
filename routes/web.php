@@ -6,6 +6,12 @@ use App\Modules\Profiles\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PageContentController;
 use App\Http\Controllers\Admin\AchievementMediaController;
 use App\Http\Controllers\Admin\SiteSettingsController;
+use App\Http\Controllers\StorageController;
+
+// Serve storage/app/public files via Laravel (when web server cannot follow public/storage symlink)
+Route::get('/storage/{path}', [StorageController::class, 'show'])
+    ->where('path', '.+')
+    ->name('storage.serve');
 
 Route::get('/', function () {
     $pageContent = \App\Models\PageContent::getAllSections();
