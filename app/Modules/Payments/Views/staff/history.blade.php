@@ -76,7 +76,7 @@
                     </div>
                     <div class="col-md-2 text-end">
                         @if($payment->payment_screenshot)
-                            <a href="{{ asset('storage/' . $payment->payment_screenshot) }}" 
+                            <a href="{{ storage_asset($payment->payment_screenshot) }}" 
                                target="_blank" 
                                class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-image"></i> View Screenshot

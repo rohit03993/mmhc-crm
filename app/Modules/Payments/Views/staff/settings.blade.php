@@ -87,7 +87,7 @@
                         @if($user->qr_code_path)
                             <div class="mt-3">
                                 <p class="mb-2"><strong>Current QR Code:</strong></p>
-                                <img src="{{ asset('storage/' . $user->qr_code_path) }}" alt="QR Code" class="qr-preview">
+                                <img src="{{ storage_asset($user->qr_code_path) }}" alt="QR Code" class="qr-preview">
                             </div>
                         @endif
                     </div>

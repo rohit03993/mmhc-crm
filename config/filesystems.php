@@ -77,4 +77,16 @@ return [
         public_path('storage') => storage_path('app/public'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Serve storage via Laravel (fallback when symlink cannot be used)
+    |--------------------------------------------------------------------------
+    |
+    | When false (default): use public/storage symlink (asset('storage/...')).
+    | When true (e.g. VPS with disable_symlinks): use Laravel route /storage?path=...
+    |
+    */
+
+    'serve_via_laravel' => env('SERVE_STORAGE_VIA_LARAVEL', false),
+
 ];

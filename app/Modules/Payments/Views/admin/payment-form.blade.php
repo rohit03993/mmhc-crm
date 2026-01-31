@@ -221,7 +221,7 @@ function showCopyFeedback() {
                 
                 @if($staff->qr_code_path)
                     <div class="text-center mb-3">
-                        <img src="{{ asset('storage/' . $staff->qr_code_path) }}" alt="QR Code" class="qr-code-preview">
+                        <img src="{{ storage_asset($staff->qr_code_path) }}" alt="QR Code" class="qr-code-preview">
                     </div>
                 @else
                     <p class="text-muted text-center">No QR code uploaded</p>

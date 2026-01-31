@@ -264,7 +264,7 @@
                         
                         @if($section->image_path)
                             <div class="mb-3">
-                                <img src="{{ asset('storage/' . $section->image_path) }}" alt="Current Image" class="w-48 h-32 object-cover rounded-lg border">
+                                <img src="{{ storage_asset($section->image_path) }}" alt="Current Image" class="w-48 h-32 object-cover rounded-lg border">
                                 <p class="text-sm text-gray-600 mt-1">Current image</p>
                             </div>
                         @endif

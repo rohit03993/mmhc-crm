@@ -139,7 +139,7 @@
                             </small>
                         @endif
                         @if($payment->payment_screenshot)
-                            <a href="{{ asset('storage/' . $payment->payment_screenshot) }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-1">
+                            <a href="{{ storage_asset($payment->payment_screenshot) }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-1">
                                 <i class="fas fa-image me-1"></i>View Screenshot
                             </a>
                         @endif

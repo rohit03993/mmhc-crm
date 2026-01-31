@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Models\SiteSetting;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -25,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
     {
         if (Schema::hasTable('site_settings')) {
             $logoPath = SiteSetting::get('logo_path');
-            View::share('siteLogoUrl', $logoPath ? Storage::url($logoPath) : asset('images/med-logo.png'));
+            View::share('siteLogoUrl', ($logoPath && storage_asset($logoPath)) ? storage_asset($logoPath) : asset('images/med-logo.png'));
             View::share('siteCompanyName', SiteSetting::get('company_name') ?: 'MeD Miracle Health Care');
             View::share('siteTagline', SiteSetting::get('tagline') ?: 'Miracle Health Care');
         } else {

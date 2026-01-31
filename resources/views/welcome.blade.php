@@ -748,7 +748,7 @@
                              x-transition:leave-start="opacity-100"
                              x-transition:leave-end="opacity-0"
                              class="absolute inset-0 flex items-center justify-center p-4">
-                            <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->caption ?? 'Achievement' }}" class="max-w-full max-h-[400px] md:max-h-[540px] w-auto h-auto object-contain rounded-lg">
+                            <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#f3f4f6" width="400" height="300"/><text fill="#9ca3af" font-family="sans-serif" font-size="18" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">No image</text></svg>') }}" alt="{{ $item->caption ?? 'Achievement' }}" class="max-w-full max-h-[400px] md:max-h-[540px] w-auto h-auto object-contain rounded-lg">
                             @if($item->caption)
                             <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-6 py-4 rounded-b-2xl">
                                 <p class="text-white font-medium text-center">{{ $item->caption }}</p>

@@ -13,9 +13,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class StorageController extends Controller
 {
-    public function show(Request $request, string $path): StreamedResponse
+    public function show(Request $request): StreamedResponse
     {
-        $path = $this->sanitizePath($path);
+        $path = $this->sanitizePath((string) $request->query('path', ''));
         if ($path === null || ! Storage::disk('public')->exists($path)) {
             abort(404);
         }

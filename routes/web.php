@@ -8,10 +8,8 @@ use App\Http\Controllers\Admin\AchievementMediaController;
 use App\Http\Controllers\Admin\SiteSettingsController;
 use App\Http\Controllers\StorageController;
 
-// Serve storage/app/public files via Laravel (when web server cannot follow public/storage symlink)
-Route::get('/storage/{path}', [StorageController::class, 'show'])
-    ->where('path', '.+')
-    ->name('storage.serve');
+// Serve storage/app/public via Laravel (query string so Nginx static regex doesn't match; no symlink/Nginx changes needed)
+Route::get('/storage', [StorageController::class, 'show'])->name('storage.serve');
 
 Route::get('/', function () {
     $pageContent = \App\Models\PageContent::getAllSections();
