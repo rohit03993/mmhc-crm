@@ -57,6 +57,25 @@
             </a>
         </div>
 
+        <!-- Nursing Warrior Badge (nurse & caregiver only) -->
+        @if($user->isStaff())
+        <div class="app-detail-section app-nursing-warrior-badge">
+            <div class="app-section-header">
+                <div class="app-section-icon-header">
+                    <i class="fas fa-award"></i>
+                </div>
+                <h3 class="app-section-title">Earned Badge</h3>
+            </div>
+            <div class="app-warrior-badge-card">
+                <div class="app-warrior-badge-image-wrap">
+                    <img src="{{ asset('images/nursing-warrior-badge.png') }}" alt="Nursing Warrior Badge" class="app-warrior-badge-img">
+                </div>
+                <p class="app-warrior-badge-label mb-0">You have earned this <strong>Nursing Warrior</strong> badge</p>
+                <p class="app-warrior-badge-sublabel">MeD Miracle Health Care – {{ $user->role === 'nurse' ? 'Nurse Warrior' : 'Caregiver Warrior' }}</p>
+            </div>
+        </div>
+        @endif
+
         <!-- Profile Details - Modern Card Grid -->
         <div class="app-detail-section">
             <div class="app-section-header">
@@ -472,6 +491,54 @@
     text-decoration: none;
     font-weight: 600;
     font-size: 0.9rem;
+}
+
+/* Nursing Warrior Badge Section */
+.app-nursing-warrior-badge .app-section-icon-header {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.app-warrior-badge-card {
+    background: linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,249,255,0.98) 100%);
+    border-radius: 20px;
+    padding: 24px;
+    text-align: center;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.08);
+}
+
+.app-warrior-badge-image-wrap {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-radius: 16px;
+    padding: 16px;
+    display: inline-block;
+    margin-bottom: 16px;
+}
+
+.app-warrior-badge-img {
+    max-height: 140px;
+    width: auto;
+    display: block;
+}
+
+.app-warrior-badge-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.app-warrior-badge-sublabel {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 6px;
 }
 
 .app-professional-section,

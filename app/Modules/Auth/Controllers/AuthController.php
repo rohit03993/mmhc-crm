@@ -86,7 +86,12 @@ class AuthController extends Controller
             }
         }
 
-        return view('auth::register-tabbed', compact('referralCode', 'referrer'));
+        // Nursing Warrior flow: only Nurse Warrior & Caregiver Warrior tabs, show badge
+        $warrior = $request->has('warrior');
+        // Patient-only flow: only Patient registration when coming from "I'm a Patient"
+        $patientOnly = $request->get('role') === 'patient';
+
+        return view('auth::register-tabbed', compact('referralCode', 'referrer', 'warrior', 'patientOnly'));
     }
 
     /**
@@ -245,14 +250,34 @@ class AuthController extends Controller
                 default => 'Registration successful!'
             };
 
-            // Add referral success message if applicable
-            if ($isReferralRegistration && $referralCode) {
-                $roleMessage .= ' Thank you for joining through referral!';
+            // Nurse/Caregiver: show Nursing Warrior welcome page with badge
+            if (in_array($userData['role'], ['nurse', 'caregiver'])) {
+                $request->session()->put('nursing_warrior_just_registered', true);
+                return redirect()->route('auth.welcome.nursing-warrior');
             }
 
+            // Patient: go to dashboard with success message
             return redirect()->route('dashboard')
                 ->with('success', $roleMessage);
         });
+    }
+
+    /**
+     * Show Nursing Warrior welcome page (after nurse/caregiver registration)
+     */
+    public function showWelcomeNursingWarrior(Request $request)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('auth.login');
+        }
+        $user = Auth::user();
+        if (!in_array($user->role, ['nurse', 'caregiver'])) {
+            return redirect()->route('dashboard');
+        }
+        if (!$request->session()->pull('nursing_warrior_just_registered', false)) {
+            return redirect()->route('dashboard');
+        }
+        return view('auth::welcome-nursing-warrior');
     }
 
     /**

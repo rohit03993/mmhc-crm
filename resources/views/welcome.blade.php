@@ -164,8 +164,8 @@
                         <a href="{{ route('auth.register') }}?role=patient" class="px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:shadow-xl transition transform hover:scale-105 text-center">
                             <i class="fas fa-user mr-2"></i>I'm a Patient
                         </a>
-                        <a href="{{ route('auth.register') }}?role=caregiver" class="px-8 py-4 bg-yellow-400 text-gray-900 rounded-lg font-semibold hover:shadow-xl transition transform hover:scale-105 text-center">
-                            <i class="fas fa-user-nurse mr-2"></i>I'm a Caregiver
+                        <a href="{{ route('auth.register') }}?warrior=1" class="px-8 py-4 bg-yellow-400 text-gray-900 rounded-lg font-semibold hover:shadow-xl transition transform hover:scale-105 text-center">
+                            <i class="fas fa-user-nurse mr-2"></i>I'm a Nursing Warrior
                         </a>
                     </div>
                     
@@ -378,7 +378,7 @@
 
             <div class="text-center mt-12">
                 <p class="text-gray-600 mb-6">Want to see more of our amazing caregivers?</p>
-                <a href="{{ route('auth.register') }}?role=caregiver" class="bg-gradient-to-r from-blue-600 to-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                <a href="{{ route('auth.register') }}?warrior=1" class="bg-gradient-to-r from-blue-600 to-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition">
                     Join Our Team
                 </a>
             </div>
@@ -1000,7 +1000,7 @@
                             <a href="#about" class="text-blue-600 hover:text-blue-700 font-medium transition">About Us</a>
                             <a href="#testimonials" class="text-blue-600 hover:text-blue-700 font-medium transition">Testimonials</a>
                             <a href="{{ route('auth.register') }}?role=patient" class="text-blue-600 hover:text-blue-700 font-medium transition">Patient Registration</a>
-                            <a href="{{ route('auth.register') }}?role=caregiver" class="text-blue-600 hover:text-blue-700 font-medium transition">Caregiver Registration</a>
+                            <a href="{{ route('auth.register') }}?warrior=1" class="text-blue-600 hover:text-blue-700 font-medium transition">Nursing Warrior</a>
                         </div>
                     </div>
                 </div>

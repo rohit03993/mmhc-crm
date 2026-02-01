@@ -16,10 +16,21 @@
             <div class="card shadow-lg border-0">
                 <div class="card-body p-5">
                     <div class="text-center mb-3">
-                        <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--auth" style="max-height: 50px;">
-                        <h2 class="mt-2 mb-1" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; font-size: 1.5rem;">Create your account</h2>
-                        <p class="text-muted mb-0" style="font-size: 0.9rem;">Join MMHC and get started with healthcare services</p>
+                        <div class="d-inline-block rounded-3 px-3 py-2 mb-2" style="background: rgba(102, 126, 234, 0.08);">
+                            <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--auth" style="max-height: 50px; display: block;">
+                        </div>
+                        <h2 class="mt-2 mb-1" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; font-size: 1.5rem;">{{ isset($warrior) && $warrior ? 'Join as Nursing Warrior' : 'Create your account' }}</h2>
+                        <p class="text-muted mb-0" style="font-size: 0.9rem;">{{ isset($warrior) && $warrior ? 'Register as Nurse Warrior or Caregiver Warrior' : 'Join MMHC and get started with healthcare services' }}</p>
                     </div>
+
+                    @if(isset($warrior) && $warrior)
+                    <div class="text-center mb-4 p-4 rounded-3" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%); border: 1px solid rgba(102, 126, 234, 0.25);">
+                        <div class="d-inline-block rounded-4 overflow-hidden p-2" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);">
+                            <img src="{{ asset('images/nursing-warrior-badge.png') }}" alt="Nursing Warrior Badge" class="img-fluid mb-0" style="max-height: 140px; width: auto; display: block; vertical-align: middle;">
+                        </div>
+                        <p class="text-muted mb-0 small mt-2"><strong>Earn this badge</strong> when you register as Nurse Warrior or Caregiver Warrior.</p>
+                    </div>
+                    @endif
 
                     @if($errors->any())
                         <div class="alert alert-danger">
@@ -45,7 +56,7 @@
 
                     <!-- Tab Navigation -->
                     <ul class="nav nav-pills nav-fill mb-4" id="registrationTabs" role="tablist">
-                        @if(!isset($referralCode) || !$referralCode)
+                        @if(((!isset($referralCode) || !$referralCode) && empty($warrior)) || !empty($patientOnly))
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="patient-tab" data-bs-toggle="pill" data-bs-target="#patient-form" type="button" role="tab">
                                     <i class="fas fa-user-injured me-2 d-none d-sm-inline"></i>
@@ -54,46 +65,29 @@
                                 </button>
                             </li>
                         @endif
+                        @if(empty($patientOnly))
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link {{ (isset($referralCode) && $referralCode) ? 'active' : '' }}" id="nurse-tab" data-bs-toggle="pill" data-bs-target="#nurse-form" type="button" role="tab">
+                            <button class="nav-link {{ (isset($referralCode) && $referralCode) || !empty($warrior) ? 'active' : '' }}" id="nurse-tab" data-bs-toggle="pill" data-bs-target="#nurse-form" type="button" role="tab">
                                 <i class="fas fa-user-nurse me-2 d-none d-sm-inline"></i>
-                                <span class="d-block d-sm-none">Nurse</span>
-                                <span class="d-none d-sm-block">Nurse Registration</span>
+                                <span class="d-block d-sm-none">{{ !empty($warrior) ? 'Nurse Warrior' : 'Nurse' }}</span>
+                                <span class="d-none d-sm-block">{{ !empty($warrior) ? 'Nurse Warrior' : 'Nurse Registration' }}</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="caregiver-tab" data-bs-toggle="pill" data-bs-target="#caregiver-form" type="button" role="tab">
                                 <i class="fas fa-user-md me-2 d-none d-sm-inline"></i>
-                                <span class="d-block d-sm-none">Caregiver</span>
-                                <span class="d-none d-sm-block">Caregiver Registration</span>
+                                <span class="d-block d-sm-none">{{ !empty($warrior) ? 'Caregiver Warrior' : 'Caregiver' }}</span>
+                                <span class="d-none d-sm-block">{{ !empty($warrior) ? 'Caregiver Warrior' : 'Caregiver Registration' }}</span>
                             </button>
                         </li>
+                        @endif
                     </ul>
 
                     <!-- Tab Content -->
                     <div class="tab-content" id="registrationTabContent">
-                        <!-- Patient Registration Form -->
-                        <div class="tab-pane fade {{ (!isset($referralCode) || !$referralCode) ? 'show active' : '' }}" id="patient-form" role="tabpanel">
-                            <!-- Desktop: Benefits Section at Top (Hidden until tab is active) -->
-                            <div class="desktop-benefits-section d-none d-lg-block mb-4" id="patient-benefits-desktop">
-                                <div class="info-panel-top">
-                                    <div class="text-center mb-3">
-                                        <h3 class="mb-2">Patient Registration</h3>
-                                        <p class="lead mb-0">Get healthcare services at your doorstep</p>
-                                    </div>
-                                    <div class="benefits-card">
-                                        <h5 class="mb-3"><i class="fas fa-star me-2"></i>Why Register as Patient?</h5>
-                                        <ul class="benefits-list">
-                                            <li><i class="fas fa-check-circle me-2"></i>Access to licensed nurses and caregivers</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Flexible healthcare plans</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>24/7 support available</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Easy booking and scheduling</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Quality healthcare services</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-
+                        @if(empty($warrior))
+                        <!-- Patient Registration Form (not rendered in warrior flow) -->
+                        <div class="tab-pane fade {{ (!isset($referralCode) || !$referralCode) || !empty($patientOnly) ? 'show active' : '' }}" id="patient-form" role="tabpanel">
                             <!-- Registration Form -->
                             <div class="form-panel">
                                 <form method="POST" action="{{ route('auth.register.post') }}" id="patientForm">
@@ -256,70 +250,12 @@
                                     </div>
                                 </form>
                             </div>
-
-                            <!-- Mobile: Benefits Section at Bottom (Hidden until tab is active) -->
-                            <div class="mobile-benefits-section d-lg-none mt-4" id="patient-benefits-mobile">
-                                <div class="info-panel-top">
-                                    <div class="text-center mb-3">
-                                        <h3 class="mb-2">Patient Registration</h3>
-                                        <p class="lead mb-0">Get healthcare services at your doorstep</p>
-                                    </div>
-                                    <div class="benefits-card">
-                                        <h5 class="mb-3"><i class="fas fa-star me-2"></i>Why Register as Patient?</h5>
-                                        <ul class="benefits-list">
-                                            <li><i class="fas fa-check-circle me-2"></i>Access to licensed nurses and caregivers</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Flexible healthcare plans</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>24/7 support available</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Easy booking and scheduling</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Quality healthcare services</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
+                        @endif
 
+                        @if(empty($patientOnly))
                         <!-- Nurse Registration Form -->
-                        <div class="tab-pane fade {{ (isset($referralCode) && $referralCode) ? 'show active' : '' }}" id="nurse-form" role="tabpanel">
-                            <!-- Desktop: Benefits Section at Top (Hidden until tab is active) -->
-                            <div class="desktop-benefits-section d-none d-lg-block mb-4" id="nurse-benefits-desktop">
-                                <div class="info-panel-top">
-                                    <div class="text-center mb-3">
-                                        <h3 class="mb-2">Nurse Registration</h3>
-                                        <p class="lead mb-0">Licensed nursing professionals - Higher earning potential</p>
-                                    </div>
-                                    <div class="benefits-card">
-                                        <h5 class="mb-3"><i class="fas fa-money-bill-wave me-2"></i>Nurse Benefits</h5>
-                                        <div class="pricing-grid-desktop mb-3">
-                                            <div class="pricing-item-desktop">
-                                                <span class="price">₹2,000</span>
-                                                <span class="duration">/day (24h)</span>
-                                            </div>
-                                            <div class="pricing-item-desktop">
-                                                <span class="price">₹1,200</span>
-                                                <span class="duration">/day (12h)</span>
-                                            </div>
-                                            <div class="pricing-item-desktop">
-                                                <span class="price">₹800</span>
-                                                <span class="duration">/day (8h)</span>
-                                            </div>
-                                        </div>
-                                        <ul class="benefits-list">
-                                            <li><i class="fas fa-check-circle me-2"></i>Licensed professional rates</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Priority assignments</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Flexible working hours</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Regular payment schedule</li>
-                                        </ul>
-                                    </div>
-                                    @if(isset($referralCode) && $referralCode && $referrer)
-                                        <div class="referral-badge">
-                                            <i class="fas fa-gift me-2"></i>
-                                            <strong>Referred by:</strong> {{ $referrer->name }}<br>
-                                            <small>Earn rewards when you complete registration!</small>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-
+                        <div class="tab-pane fade {{ (isset($referralCode) && $referralCode) || !empty($warrior) ? 'show active' : '' }}" id="nurse-form" role="tabpanel">
                             <!-- Registration Form -->
                             <div class="form-panel">
                                 <form method="POST" action="{{ route('auth.register.post') }}{{ isset($referralCode) && $referralCode ? '?ref=' . $referralCode : '' }}" id="nurseForm" enctype="multipart/form-data">
@@ -522,90 +458,10 @@
                                     </div>
                                 </form>
                             </div>
-
-                            <!-- Mobile: Benefits Section at Bottom (Hidden until tab is active) -->
-                            <div class="mobile-benefits-section d-lg-none mt-4" id="nurse-benefits-mobile">
-                                <div class="info-panel-top">
-                                    <div class="text-center mb-3">
-                                        <h3 class="mb-2">Nurse Registration</h3>
-                                        <p class="lead mb-0">Licensed nursing professionals - Higher earning potential</p>
-                                    </div>
-                                    <div class="benefits-card">
-                                        <h5 class="mb-3"><i class="fas fa-money-bill-wave me-2"></i>Nurse Benefits</h5>
-                                        <div class="pricing-grid-horizontal mb-3">
-                                            <div class="pricing-item-horizontal">
-                                                <span class="price">₹2,000</span>
-                                                <span class="duration">/day (24h)</span>
-                                            </div>
-                                            <div class="pricing-item-horizontal">
-                                                <span class="price">₹1,200</span>
-                                                <span class="duration">/day (12h)</span>
-                                            </div>
-                                            <div class="pricing-item-horizontal">
-                                                <span class="price">₹800</span>
-                                                <span class="duration">/day (8h)</span>
-                                            </div>
-                                        </div>
-                                        <ul class="benefits-list">
-                                            <li><i class="fas fa-check-circle me-2"></i>Licensed professional rates</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Priority assignments</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Flexible working hours</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Regular payment schedule</li>
-                                        </ul>
-                                    </div>
-                                    @if(isset($referralCode) && $referralCode && $referrer)
-                                        <div class="referral-badge-mobile">
-                                            <i class="fas fa-gift me-2"></i>
-                                            <strong>Referred by:</strong> {{ $referrer->name }}<br>
-                                            <small>Earn rewards when you complete registration!</small>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
                         </div>
 
                         <!-- Caregiver Registration Form -->
                         <div class="tab-pane fade" id="caregiver-form" role="tabpanel">
-                            <!-- Desktop: Benefits Section at Top (Hidden until tab is active) -->
-                            <div class="desktop-benefits-section d-none d-lg-block mb-4" id="caregiver-benefits-desktop">
-                                <div class="info-panel-top">
-                                    <div class="text-center mb-3">
-                                        <h3 class="mb-2">Caregiver Registration</h3>
-                                        <p class="lead mb-0">General support staff - Start your healthcare journey</p>
-                                    </div>
-                                    <div class="benefits-card">
-                                        <h5 class="mb-3"><i class="fas fa-money-bill-wave me-2"></i>Caregiver Benefits</h5>
-                                        <div class="pricing-grid-desktop mb-3">
-                                            <div class="pricing-item-desktop">
-                                                <span class="price">₹1,500</span>
-                                                <span class="duration">/day (24h)</span>
-                                            </div>
-                                            <div class="pricing-item-desktop">
-                                                <span class="price">₹900</span>
-                                                <span class="duration">/day (12h)</span>
-                                            </div>
-                                            <div class="pricing-item-desktop">
-                                                <span class="price">₹700</span>
-                                                <span class="duration">/day (8h)</span>
-                                            </div>
-                                        </div>
-                                        <ul class="benefits-list">
-                                            <li><i class="fas fa-check-circle me-2"></i>General support rates</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Flexible assignments</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Easy onboarding process</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Regular payment schedule</li>
-                                        </ul>
-                                    </div>
-                                    @if(isset($referralCode) && $referralCode && $referrer)
-                                        <div class="referral-badge">
-                                            <i class="fas fa-gift me-2"></i>
-                                            <strong>Referred by:</strong> {{ $referrer->name }}<br>
-                                            <small>Earn rewards when you complete registration!</small>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-
                             <!-- Registration Form -->
                             <div class="form-panel">
                                 <form method="POST" action="{{ route('auth.register.post') }}{{ isset($referralCode) && $referralCode ? '?ref=' . $referralCode : '' }}" id="caregiverForm" enctype="multipart/form-data">
@@ -805,47 +661,8 @@
                                     </div>
                                 </form>
                             </div>
-
-                            <!-- Mobile: Benefits Section at Bottom (Hidden until tab is active) -->
-                            <div class="mobile-benefits-section d-lg-none mt-4" id="caregiver-benefits-mobile">
-                                <div class="info-panel-top">
-                                    <div class="text-center mb-3">
-                                        <h3 class="mb-2">Caregiver Registration</h3>
-                                        <p class="lead mb-0">General support staff - Start your healthcare journey</p>
-                                    </div>
-                                    <div class="benefits-card">
-                                        <h5 class="mb-3"><i class="fas fa-money-bill-wave me-2"></i>Caregiver Benefits</h5>
-                                        <div class="pricing-grid-horizontal mb-3">
-                                            <div class="pricing-item-horizontal">
-                                                <span class="price">₹1,500</span>
-                                                <span class="duration">/day (24h)</span>
-                                            </div>
-                                            <div class="pricing-item-horizontal">
-                                                <span class="price">₹900</span>
-                                                <span class="duration">/day (12h)</span>
-                                            </div>
-                                            <div class="pricing-item-horizontal">
-                                                <span class="price">₹700</span>
-                                                <span class="duration">/day (8h)</span>
-                                            </div>
-                                        </div>
-                                        <ul class="benefits-list">
-                                            <li><i class="fas fa-check-circle me-2"></i>General support rates</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Flexible assignments</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Easy onboarding process</li>
-                                            <li><i class="fas fa-check-circle me-2"></i>Regular payment schedule</li>
-                                        </ul>
-                                    </div>
-                                    @if(isset($referralCode) && $referralCode && $referrer)
-                                        <div class="referral-badge-mobile">
-                                            <i class="fas fa-gift me-2"></i>
-                                            <strong>Referred by:</strong> {{ $referrer->name }}<br>
-                                            <small>Earn rewards when you complete registration!</small>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
                         </div>
+                        @endif
                     </div>
 
                     <div class="text-center mt-4">
