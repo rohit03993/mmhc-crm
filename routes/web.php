@@ -5,7 +5,9 @@ use App\Modules\Profiles\Controllers\DocumentController;
 use App\Modules\Profiles\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PageContentController;
 use App\Http\Controllers\Admin\AchievementMediaController;
+use App\Http\Controllers\Admin\FeaturedTeamController;
 use App\Http\Controllers\Admin\SiteSettingsController;
+use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\StorageController;
 
 // Serve storage/app/public via Laravel (query string so Nginx static regex doesn't match; no symlink/Nginx changes needed)
@@ -15,14 +17,18 @@ Route::get('/', function () {
     $pageContent = \App\Models\PageContent::getAllSections();
     $healthcarePlans = \App\Modules\Plans\Models\Plan::active()->ordered()->get();
     $achievementMedia = \App\Models\AchievementMedia::ordered()->get();
-    return view('welcome', compact('pageContent', 'healthcarePlans', 'achievementMedia'));
+    $featuredTeam = \App\Models\FeaturedTeam::ordered()->get();
+    $testimonials = \App\Models\Testimonial::ordered()->get();
+    return view('welcome', compact('pageContent', 'healthcarePlans', 'achievementMedia', 'featuredTeam', 'testimonials'));
 });
 
 Route::get('/landing', function () {
     $pageContent = \App\Models\PageContent::getAllSections();
     $healthcarePlans = \App\Modules\Plans\Models\Plan::active()->ordered()->get();
     $achievementMedia = \App\Models\AchievementMedia::ordered()->get();
-    return view('welcome', compact('pageContent', 'healthcarePlans', 'achievementMedia'));
+    $featuredTeam = \App\Models\FeaturedTeam::ordered()->get();
+    $testimonials = \App\Models\Testimonial::ordered()->get();
+    return view('welcome', compact('pageContent', 'healthcarePlans', 'achievementMedia', 'featuredTeam', 'testimonials'));
 })->name('landing');
 
 // Services module routes
@@ -155,9 +161,29 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/achievement-media/{achievementMedia}/move-down', [AchievementMediaController::class, 'moveDown'])->name('achievement-media.move-down');
         Route::delete('/achievement-media/{achievementMedia}', [AchievementMediaController::class, 'destroy'])->name('achievement-media.destroy');
 
-        // Site settings (logo, company name, tagline)
+        // Site settings (logo, company name, tagline, founder image)
         Route::get('/site-settings', [SiteSettingsController::class, 'index'])->name('site-settings.index');
         Route::put('/site-settings', [SiteSettingsController::class, 'update'])->name('site-settings.update');
+
+        // Featured Team (Meet Our Expert Nursing Team)
+        Route::get('/featured-team', [FeaturedTeamController::class, 'index'])->name('featured-team.index');
+        Route::get('/featured-team/create', [FeaturedTeamController::class, 'create'])->name('featured-team.create');
+        Route::post('/featured-team', [FeaturedTeamController::class, 'store'])->name('featured-team.store');
+        Route::get('/featured-team/{featuredTeam}/edit', [FeaturedTeamController::class, 'edit'])->name('featured-team.edit');
+        Route::put('/featured-team/{featuredTeam}', [FeaturedTeamController::class, 'update'])->name('featured-team.update');
+        Route::post('/featured-team/{featuredTeam}/move-up', [FeaturedTeamController::class, 'moveUp'])->name('featured-team.move-up');
+        Route::post('/featured-team/{featuredTeam}/move-down', [FeaturedTeamController::class, 'moveDown'])->name('featured-team.move-down');
+        Route::delete('/featured-team/{featuredTeam}', [FeaturedTeamController::class, 'destroy'])->name('featured-team.destroy');
+
+        // Testimonials (What Our Patients Say)
+        Route::get('/testimonials', [TestimonialController::class, 'index'])->name('testimonials.index');
+        Route::get('/testimonials/create', [TestimonialController::class, 'create'])->name('testimonials.create');
+        Route::post('/testimonials', [TestimonialController::class, 'store'])->name('testimonials.store');
+        Route::get('/testimonials/{testimonial}/edit', [TestimonialController::class, 'edit'])->name('testimonials.edit');
+        Route::put('/testimonials/{testimonial}', [TestimonialController::class, 'update'])->name('testimonials.update');
+        Route::post('/testimonials/{testimonial}/move-up', [TestimonialController::class, 'moveUp'])->name('testimonials.move-up');
+        Route::post('/testimonials/{testimonial}/move-down', [TestimonialController::class, 'moveDown'])->name('testimonials.move-down');
+        Route::delete('/testimonials/{testimonial}', [TestimonialController::class, 'destroy'])->name('testimonials.destroy');
 
         // Page Content Management Routes
         Route::get('/page-content', [PageContentController::class, 'index'])->name('page-content.index');

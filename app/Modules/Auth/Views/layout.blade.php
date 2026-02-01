@@ -409,17 +409,32 @@
                                     </a>
                                 </li>
                                 
+                                <li class="nav-item mt-3">
+                                    <span class="nav-link text-white-50 text-uppercase small px-3 py-2" style="font-size: 0.7rem; letter-spacing: 0.05em;">Website front page</span>
+                                </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-white {{ request()->routeIs('admin.achievement-media*') ? 'active' : '' }}" href="{{ route('admin.achievement-media.index') }}">
-                                        <i class="fas fa-trophy me-2"></i>
-                                        Achievements & Media
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.site-settings*') ? 'active' : '' }}" href="{{ route('admin.site-settings.index') }}">
+                                        <i class="fas fa-cog me-2"></i>
+                                        Site Settings (Founder & logo)
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.featured-team*') ? 'active' : '' }}" href="{{ route('admin.featured-team.index') }}">
+                                        <i class="fas fa-users me-2"></i>
+                                        Expert Nursing Team
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.testimonials*') ? 'active' : '' }}" href="{{ route('admin.testimonials.index') }}">
+                                        <i class="fas fa-quote-left me-2"></i>
+                                        What Our Patients Say
                                     </a>
                                 </li>
                                 
                                 <li class="nav-item">
-                                    <a class="nav-link text-white {{ request()->routeIs('admin.site-settings*') ? 'active' : '' }}" href="{{ route('admin.site-settings.index') }}">
-                                        <i class="fas fa-cog me-2"></i>
-                                        Site Settings
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.achievement-media*') ? 'active' : '' }}" href="{{ route('admin.achievement-media.index') }}">
+                                        <i class="fas fa-trophy me-2"></i>
+                                        Achievements & Media
                                     </a>
                                 </li>
                                 

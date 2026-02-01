@@ -12,10 +12,11 @@ class SiteSettingsController extends Controller
     public function index()
     {
         $logoPath = SiteSetting::get('logo_path');
+        $founderImagePath = SiteSetting::get('founder_image_path');
         $companyName = SiteSetting::get('company_name', 'MeD Miracle Health Care');
         $tagline = SiteSetting::get('tagline', 'Miracle Health Care');
 
-        return view('admin.site-settings.index', compact('logoPath', 'companyName', 'tagline'));
+        return view('admin.site-settings.index', compact('logoPath', 'founderImagePath', 'companyName', 'tagline'));
     }
 
     public function update(Request $request)
@@ -24,6 +25,7 @@ class SiteSettingsController extends Controller
             'company_name' => 'nullable|string|max:255',
             'tagline' => 'nullable|string|max:255',
             'logo' => 'nullable|image|max:2048',
+            'founder_image' => 'nullable|image|max:2048',
         ]);
 
         if (!empty($validated['company_name'])) {
@@ -40,6 +42,15 @@ class SiteSettingsController extends Controller
             }
             $path = $request->file('logo')->store('site-settings', 'public');
             SiteSetting::set('logo_path', $path);
+        }
+
+        if ($request->hasFile('founder_image')) {
+            $oldPath = SiteSetting::get('founder_image_path');
+            if ($oldPath && Storage::disk('public')->exists($oldPath)) {
+                Storage::disk('public')->delete($oldPath);
+            }
+            $path = $request->file('founder_image')->store('site-settings', 'public');
+            SiteSetting::set('founder_image_path', $path);
         }
 
         return redirect()->route('admin.site-settings.index')

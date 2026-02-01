@@ -48,12 +48,24 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
                     @if($logoPath)
                         <div class="mb-3 flex items-center gap-4">
-                            <img src="{{ Storage::url($logoPath) }}" alt="Current logo" class="h-14 w-auto border border-gray-200 rounded">
+                            <img src="{{ storage_asset($logoPath) }}" alt="Current logo" class="h-14 w-auto border border-gray-200 rounded">
                             <span class="text-sm text-gray-500">Current logo. Upload a new image to replace.</span>
                         </div>
                     @endif
                     <input type="file" name="logo" accept="image/*" class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700">
                     @error('logo') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Founder image (Meet Our Founder section)</label>
+                    @if($founderImagePath ?? null)
+                        <div class="mb-3 flex items-center gap-4">
+                            <img src="{{ storage_asset($founderImagePath) }}" alt="Founder" class="h-24 w-24 rounded-full object-cover border border-gray-200">
+                            <span class="text-sm text-gray-500">Current founder photo. Upload a new image to replace.</span>
+                        </div>
+                    @endif
+                    <input type="file" name="founder_image" accept="image/*" class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700">
+                    @error('founder_image') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>

@@ -304,10 +304,10 @@
         </div>
     </section>
 
-    <!-- STAR PERFORMERS SECTION -->
+    <!-- STAR PERFORMERS SECTION (Meet Our Expert Nursing Team) -->
+    @if(isset($featuredTeam) && $featuredTeam->isNotEmpty())
     <section id="star-performers" class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Section Header -->
             <div class="text-center mb-16">
                 <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                     Meet Our <span class="gradient-text">Expert Nursing Team</span>
@@ -316,220 +316,66 @@
                     Trained & verified nurses and attendants providing all-round medical support with compassion and professionalism. हम समझते हैं आपकी हर जरूरत।
                 </p>
             </div>
-            
-            <!-- Caregivers Carousel -->
-            <div class="relative" x-data="{ currentSlide: 0, totalSlides: 4 }">
-                <!-- Carousel Container -->
+
+            <div class="relative" x-data="{ currentSlide: 0, totalSlides: {{ $featuredTeam->count() }} }">
                 <div class="overflow-hidden">
-                    <div class="flex transition-transform duration-500 ease-in-out" 
-                         :style="`transform: translateX(-${currentSlide * 100}%)`">
-                        
-                        <!-- Caregiver 1 -->
+                    <div class="flex transition-transform duration-500 ease-in-out" :style="`transform: translateX(-${currentSlide * 100}%)`">
+                        @foreach($featuredTeam as $member)
                         <div class="w-full flex-shrink-0 px-4">
                             <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center">
                                 <div class="relative mb-6">
-                                    <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face" 
-                                         alt="Dr. Sarah Johnson" 
-                                         class="w-32 h-32 rounded-full mx-auto object-cover border-4 border-white shadow-lg">
+                                    @if($member->image_path && storage_asset($member->image_path))
+                                        <img src="{{ storage_asset($member->image_path) }}" alt="{{ $member->name }}" class="w-32 h-32 rounded-full mx-auto object-cover border-4 border-white shadow-lg">
+                                    @else
+                                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face" alt="{{ $member->name }}" class="w-32 h-32 rounded-full mx-auto object-cover border-4 border-white shadow-lg">
+                                    @endif
                                     <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
                                         <div class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
                                             <i class="fas fa-check mr-1"></i>Verified
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <h3 class="text-2xl font-bold text-gray-800 mb-2">Dr. Sarah Johnson</h3>
-                                <p class="text-blue-600 font-semibold mb-3">Senior Caregiver & RN</p>
-                                
-                                <!-- Rating -->
+                                <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ $member->name }}</h3>
+                                @if($member->title)
+                                <p class="text-blue-600 font-semibold mb-3">{{ $member->title }}</p>
+                                @endif
+                                @if($member->rating !== null || $member->reviews_count !== null)
                                 <div class="flex justify-center items-center mb-4">
                                     <div class="flex text-yellow-400 mr-2">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
+                                        @for($s = 1; $s <= 5; $s++)<i class="fas fa-star"></i>@endfor
                                     </div>
-                                    <span class="text-gray-600 font-semibold">4.9 (127 reviews)</span>
+                                    <span class="text-gray-600 font-semibold">{{ $member->rating ? number_format((float)$member->rating, 1) : '—' }}@if($member->reviews_count) ({{ $member->reviews_count }} reviews)@endif</span>
                                 </div>
-                                
-                                <p class="text-gray-600 mb-6 leading-relaxed">
-                                    "Specializing in elderly care with 8 years of experience. Passionate about providing compassionate healthcare and building meaningful relationships with patients."
-                                </p>
-                                
+                                @endif
+                                @if($member->bio)
+                                <p class="text-gray-600 mb-6 leading-relaxed">"{{ $member->bio }}"</p>
+                                @endif
+                                @if(!empty($member->skills_array))
                                 <div class="flex flex-wrap justify-center gap-2 mb-6">
-                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">Elderly Care</span>
-                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">Diabetes Management</span>
-                                    <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">Medication Admin</span>
+                                    @php $skillClasses = ['bg-blue-100 text-blue-800', 'bg-green-100 text-green-800', 'bg-purple-100 text-purple-800', 'bg-red-100 text-red-800', 'bg-orange-100 text-orange-800', 'bg-pink-100 text-pink-800', 'bg-yellow-100 text-yellow-800']; @endphp
+                                    @foreach($member->skills_array as $si => $skill)
+                                    <span class="{{ $skillClasses[$si % 7] }} px-3 py-1 rounded-full text-sm">{{ trim($skill) }}</span>
+                                    @endforeach
                                 </div>
-                                
-                                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-                                    View Profile
-                                </button>
+                                @endif
                             </div>
                         </div>
-                        
-                        <!-- Caregiver 2 -->
-                        <div class="w-full flex-shrink-0 px-4">
-                            <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center">
-                                <div class="relative mb-6">
-                                    <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300&h=300&fit=crop&crop=face" 
-                                         alt="Dr. Michael Chen" 
-                                         class="w-32 h-32 rounded-full mx-auto object-cover border-4 border-white shadow-lg">
-                                    <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-                                        <div class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                                            <i class="fas fa-check mr-1"></i>Verified
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <h3 class="text-2xl font-bold text-gray-800 mb-2">Dr. Michael Chen</h3>
-                                <p class="text-blue-600 font-semibold mb-3">Cardiac Care Specialist</p>
-                                
-                                <!-- Rating -->
-                                <div class="flex justify-center items-center mb-4">
-                                    <div class="flex text-yellow-400 mr-2">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                    <span class="text-gray-600 font-semibold">4.8 (89 reviews)</span>
-                                </div>
-                                
-                                <p class="text-gray-600 mb-6 leading-relaxed">
-                                    "Expert in cardiac care and rehabilitation. 12 years of experience helping patients recover and maintain heart health through personalized care plans."
-                                </p>
-                                
-                                <div class="flex flex-wrap justify-center gap-2 mb-6">
-                                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">Cardiac Care</span>
-                                    <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">Rehabilitation</span>
-                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">Health Coaching</span>
-                                </div>
-                                
-                                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-                                    View Profile
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Caregiver 3 -->
-                        <div class="w-full flex-shrink-0 px-4">
-                            <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center">
-                                <div class="relative mb-6">
-                                    <img src="https://images.unsplash.com/photo-1594824804732-9815c48a5b72?w=300&h=300&fit=crop&crop=face" 
-                                         alt="Nurse Emily Rodriguez" 
-                                         class="w-32 h-32 rounded-full mx-auto object-cover border-4 border-white shadow-lg">
-                                    <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-                                        <div class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                                            <i class="fas fa-check mr-1"></i>Verified
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <h3 class="text-2xl font-bold text-gray-800 mb-2">Nurse Emily Rodriguez</h3>
-                                <p class="text-blue-600 font-semibold mb-3">Pediatric Care Specialist</p>
-                                
-                                <!-- Rating -->
-                                <div class="flex justify-center items-center mb-4">
-                                    <div class="flex text-yellow-400 mr-2">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                    <span class="text-gray-600 font-semibold">5.0 (156 reviews)</span>
-                                </div>
-                                
-                                <p class="text-gray-600 mb-6 leading-relaxed">
-                                    "Specializing in pediatric care with 6 years of experience. Known for her gentle approach and ability to make children feel comfortable during medical care."
-                                </p>
-                                
-                                <div class="flex flex-wrap justify-center gap-2 mb-6">
-                                    <span class="bg-pink-100 text-pink-800 px-3 py-1 rounded-full text-sm">Pediatric Care</span>
-                                    <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">Child Development</span>
-                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">Vaccination</span>
-                                </div>
-                                
-                                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-                                    View Profile
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Caregiver 4 -->
-                        <div class="w-full flex-shrink-0 px-4">
-                            <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center">
-                                <div class="relative mb-6">
-                                    <img src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=300&h=300&fit=crop&crop=face" 
-                                         alt="Dr. James Wilson" 
-                                         class="w-32 h-32 rounded-full mx-auto object-cover border-4 border-white shadow-lg">
-                                    <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-                                        <div class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                                            <i class="fas fa-check mr-1"></i>Verified
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <h3 class="text-2xl font-bold text-gray-800 mb-2">Dr. James Wilson</h3>
-                                <p class="text-blue-600 font-semibold mb-3">Emergency Care Specialist</p>
-                                
-                                <!-- Rating -->
-                                <div class="flex justify-center items-center mb-4">
-                                    <div class="flex text-yellow-400 mr-2">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                    <span class="text-gray-600 font-semibold">4.9 (203 reviews)</span>
-                                </div>
-                                
-                                <p class="text-gray-600 mb-6 leading-relaxed">
-                                    "Emergency care expert with 15 years of experience. Available 24/7 for urgent medical situations and providing immediate, life-saving care."
-                                </p>
-                                
-                                <div class="flex flex-wrap justify-center gap-2 mb-6">
-                                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">Emergency Care</span>
-                                    <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">Trauma Care</span>
-                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">24/7 Available</span>
-                                </div>
-                                
-                                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-                                    View Profile
-                                </button>
-                            </div>
-                        </div>
-                        
+                        @endforeach
                     </div>
                 </div>
-                
-                <!-- Navigation Arrows -->
-                <button @click="currentSlide = (currentSlide - 1 + totalSlides) % totalSlides" 
-                        class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-full p-3 hover:shadow-xl transition">
+                <button @click="currentSlide = (currentSlide - 1 + totalSlides) % totalSlides" class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-full p-3 hover:shadow-xl transition">
                     <i class="fas fa-chevron-left text-gray-600"></i>
                 </button>
-                
-                <button @click="currentSlide = (currentSlide + 1) % totalSlides" 
-                        class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-full p-3 hover:shadow-xl transition">
+                <button @click="currentSlide = (currentSlide + 1) % totalSlides" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-full p-3 hover:shadow-xl transition">
                     <i class="fas fa-chevron-right text-gray-600"></i>
                 </button>
-                
-                <!-- Dots Indicator -->
                 <div class="flex justify-center mt-8 space-x-2">
                     <template x-for="i in totalSlides" :key="i">
-                        <button @click="currentSlide = i - 1" 
-                                :class="currentSlide === i - 1 ? 'bg-blue-600' : 'bg-gray-300'"
-                                class="w-3 h-3 rounded-full transition">
-                        </button>
+                        <button @click="currentSlide = i - 1" :class="currentSlide === i - 1 ? 'bg-blue-600' : 'bg-gray-300'" class="w-3 h-3 rounded-full transition"></button>
                     </template>
                 </div>
             </div>
-            
-            <!-- Bottom CTA -->
+
             <div class="text-center mt-12">
                 <p class="text-gray-600 mb-6">Want to see more of our amazing caregivers?</p>
                 <a href="{{ route('auth.register') }}?role=caregiver" class="bg-gradient-to-r from-blue-600 to-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition">
@@ -538,6 +384,7 @@
             </div>
         </div>
     </section>
+    @endif
 
     <!-- WHY CHOOSE MMHC SECTION -->
     <section id="why-choose" class="py-20 bg-gray-50">
@@ -874,7 +721,8 @@
                 <h3 class="text-3xl font-bold text-gray-800 mb-12">Meet Our Founder</h3>
                 <div class="max-w-2xl mx-auto">
                     <div class="bg-gradient-to-br from-blue-50 to-green-50 rounded-2xl shadow-xl p-8">
-                        <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&h=200&fit=crop&crop=face" 
+                        @php $founderImagePath = \App\Models\SiteSetting::get('founder_image_path'); @endphp
+                        <img src="{{ ($founderImagePath && storage_asset($founderImagePath)) ? storage_asset($founderImagePath) : 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&h=200&fit=crop&crop=face' }}" 
                              alt="Mantu Kumar - Founder" 
                              class="w-32 h-32 rounded-full mx-auto mb-6 object-cover border-4 border-white shadow-lg">
                         <h4 class="text-3xl font-bold text-gray-800 mb-3">Mantu Kumar</h4>
@@ -885,7 +733,7 @@
                         <div class="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
                             <span class="bg-white px-4 py-2 rounded-full shadow">🏆 Multiple Award Winner</span>
                             <span class="bg-white px-4 py-2 rounded-full shadow">💼 BNI Member</span>
-                            <span class="bg-white px-4 py-2 rounded-full shadow">🏥 NACH Powered</span>
+                            <span class="bg-white px-4 py-2 rounded-full shadow">Entrepreneur</span>
                         </div>
                     </div>
                 </div>
@@ -906,180 +754,63 @@
                 </p>
             </div>
             
-            <!-- Testimonials Carousel -->
-            <div class="relative" x-data="{ currentTestimonial: 0, totalTestimonials: 4 }">
+            <!-- Testimonials Carousel (admin-editable: Admin → Website front page → Testimonials) -->
+            @php
+                $quoteBgClasses = ['bg-blue-100', 'bg-green-100', 'bg-purple-100', 'bg-orange-100'];
+                $quoteIconClasses = ['text-blue-600', 'text-green-600', 'text-purple-600', 'text-orange-600'];
+                $subtitleClasses = ['text-blue-600', 'text-green-600', 'text-purple-600', 'text-orange-600'];
+            @endphp
+            <div class="relative" x-data="{ currentTestimonial: 0, totalTestimonials: {{ $testimonials->count() ?: 1 }} }">
                 <!-- Carousel Container -->
                 <div class="overflow-hidden">
                     <div class="flex transition-transform duration-500 ease-in-out" 
                          :style="`transform: translateX(-${currentTestimonial * 100}%)`">
-                        
-                        <!-- Testimonial 1 -->
+                        @forelse($testimonials as $index => $t)
+                        @php $ci = $index % 4; @endphp
                         <div class="w-full flex-shrink-0 px-4">
                             <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center max-w-4xl mx-auto">
-                                <!-- Quote Icon -->
-                                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <i class="fas fa-quote-left text-blue-600 text-2xl"></i>
+                                <div class="w-16 h-16 {{ $quoteBgClasses[$ci] }} rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <i class="fas fa-quote-left {{ $quoteIconClasses[$ci] }} text-2xl"></i>
                                 </div>
-                                
-                                <!-- Rating -->
                                 <div class="flex justify-center items-center mb-6">
                                     <div class="flex text-yellow-400 mr-2">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
+                                        @for($i = 0; $i < 5; $i++)<i class="fas fa-star"></i>@endfor
                                     </div>
-                                    <span class="text-gray-600 font-semibold">5.0</span>
+                                    <span class="text-gray-600 font-semibold">{{ number_format($t->rating ?? 5, 1) }}</span>
                                 </div>
-                                
-                                <!-- Testimonial Text -->
-                                <blockquote class="text-xl text-gray-700 leading-relaxed mb-8 italic">
-                                    "MMHC has completely transformed how I manage my health. The caregivers are incredibly professional and caring. The medication reminders have been a lifesaver, and I love how easy it is to book appointments. I recommend MMHC to everyone!"
-                                </blockquote>
-                                
-                                <!-- Patient Info -->
+                                <blockquote class="text-xl text-gray-700 leading-relaxed mb-8 italic">"{{ $t->quote }}"</blockquote>
                                 <div class="flex items-center justify-center">
-                                    <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face" 
-                                         alt="Sarah Johnson" 
-                                         class="w-16 h-16 rounded-full object-cover mr-4">
+                                    @if($t->image_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($t->image_path))
+                                        <img src="{{ storage_asset($t->image_path) }}" alt="{{ $t->name }}" class="w-16 h-16 rounded-full object-cover mr-4">
+                                    @else
+                                        <div class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mr-4 text-gray-400"><i class="fas fa-user text-2xl"></i></div>
+                                    @endif
                                     <div class="text-left">
-                                        <h4 class="text-lg font-bold text-gray-800">Sarah Johnson</h4>
-                                        <p class="text-blue-600 font-semibold">Patient since 2022</p>
+                                        <h4 class="text-lg font-bold text-gray-800">{{ $t->name }}</h4>
+                                        @if($t->patient_since)<p class="{{ $subtitleClasses[$ci] }} font-semibold">{{ $t->patient_since }}</p>@endif
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Testimonial 2 -->
+                        @empty
                         <div class="w-full flex-shrink-0 px-4">
-                            <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center max-w-4xl mx-auto">
-                                <!-- Quote Icon -->
-                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <i class="fas fa-quote-left text-green-600 text-2xl"></i>
-                                </div>
-                                
-                                <!-- Rating -->
-                                <div class="flex justify-center items-center mb-6">
-                                    <div class="flex text-yellow-400 mr-2">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                    <span class="text-gray-600 font-semibold">5.0</span>
-                                </div>
-                                
-                                <!-- Testimonial Text -->
-                                <blockquote class="text-xl text-gray-700 leading-relaxed mb-8 italic">
-                                    "As a senior citizen, I was worried about managing my medications and appointments. MMHC made everything so simple! Dr. Sarah is amazing - she's patient, knowledgeable, and always available when I need help. The 24/7 support gives me peace of mind."
-                                </blockquote>
-                                
-                                <!-- Patient Info -->
-                                <div class="flex items-center justify-center">
-                                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face" 
-                                         alt="Robert Chen" 
-                                         class="w-16 h-16 rounded-full object-cover mr-4">
-                                    <div class="text-left">
-                                        <h4 class="text-lg font-bold text-gray-800">Robert Chen</h4>
-                                        <p class="text-green-600 font-semibold">Patient since 2021</p>
-                                    </div>
-                                </div>
+                            <div class="bg-white rounded-2xl shadow-lg p-8 text-center max-w-4xl mx-auto text-gray-500">
+                                <i class="fas fa-quote-left text-4xl mb-4"></i>
+                                <p>No testimonials yet. Add them in Admin → Website front page → Testimonials.</p>
                             </div>
                         </div>
-                        
-                        <!-- Testimonial 3 -->
-                        <div class="w-full flex-shrink-0 px-4">
-                            <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center max-w-4xl mx-auto">
-                                <!-- Quote Icon -->
-                                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <i class="fas fa-quote-left text-purple-600 text-2xl"></i>
-                                </div>
-                                
-                                <!-- Rating -->
-                                <div class="flex justify-center items-center mb-6">
-                                    <div class="flex text-yellow-400 mr-2">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                    <span class="text-gray-600 font-semibold">5.0</span>
-                                </div>
-                                
-                                <!-- Testimonial Text -->
-                                <blockquote class="text-xl text-gray-700 leading-relaxed mb-8 italic">
-                                    "I'm a busy working mother and finding time for healthcare was always a challenge. MMHC's telemedicine feature is incredible! I can consult with doctors from home, and the medication delivery service is so convenient. The family plan covers all of us perfectly."
-                                </blockquote>
-                                
-                                <!-- Patient Info -->
-                                <div class="flex items-center justify-center">
-                                    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face" 
-                                         alt="Maria Rodriguez" 
-                                         class="w-16 h-16 rounded-full object-cover mr-4">
-                                    <div class="text-left">
-                                        <h4 class="text-lg font-bold text-gray-800">Maria Rodriguez</h4>
-                                        <p class="text-purple-600 font-semibold">Patient since 2023</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Testimonial 4 -->
-                        <div class="w-full flex-shrink-0 px-4">
-                            <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center max-w-4xl mx-auto">
-                                <!-- Quote Icon -->
-                                <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <i class="fas fa-quote-left text-orange-600 text-2xl"></i>
-                                </div>
-                                
-                                <!-- Rating -->
-                                <div class="flex justify-center items-center mb-6">
-                                    <div class="flex text-yellow-400 mr-2">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                    <span class="text-gray-600 font-semibold">5.0</span>
-                                </div>
-                                
-                                <!-- Testimonial Text -->
-                                <blockquote class="text-xl text-gray-700 leading-relaxed mb-8 italic">
-                                    "After my heart surgery, I needed continuous care and monitoring. MMHC's cardiac care program has been exceptional. Dr. Michael is not just a doctor, he's become like family. The recovery tracking and health coaching have helped me get back to my normal life faster than expected."
-                                </blockquote>
-                                
-                                <!-- Patient Info -->
-                                <div class="flex items-center justify-center">
-                                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face" 
-                                         alt="David Wilson" 
-                                         class="w-16 h-16 rounded-full object-cover mr-4">
-                                    <div class="text-left">
-                                        <h4 class="text-lg font-bold text-gray-800">David Wilson</h4>
-                                        <p class="text-orange-600 font-semibold">Patient since 2022</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
+                        @endforelse
                     </div>
                 </div>
-                
-                <!-- Navigation Arrows -->
+                @if($testimonials->count() > 1)
                 <button @click="currentTestimonial = (currentTestimonial - 1 + totalTestimonials) % totalTestimonials" 
                         class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-full p-3 hover:shadow-xl transition">
                     <i class="fas fa-chevron-left text-gray-600"></i>
                 </button>
-                
                 <button @click="currentTestimonial = (currentTestimonial + 1) % totalTestimonials" 
                         class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-full p-3 hover:shadow-xl transition">
                     <i class="fas fa-chevron-right text-gray-600"></i>
                 </button>
-                
-                <!-- Dots Indicator -->
                 <div class="flex justify-center mt-8 space-x-2">
                     <template x-for="i in totalTestimonials" :key="i">
                         <button @click="currentTestimonial = i - 1" 
@@ -1088,6 +819,7 @@
                         </button>
                     </template>
                 </div>
+                @endif
             </div>
             
             <!-- Stats Row -->
