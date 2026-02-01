@@ -80,6 +80,36 @@
                     @error('tagline') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                 </div>
 
+                <hr class="my-6 border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-address-book text-blue-600 mr-2"></i>Contact Information (Contact page & footer)
+                </h2>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Corporate Office Address</label>
+                    <textarea name="contact_address" rows="3" placeholder="Full address (line breaks allowed)" class="w-full rounded-lg border border-gray-300 px-3 py-2">{{ old('contact_address', $contactAddress ?? '') }}</textarea>
+                    @error('contact_address') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone (24×7)</label>
+                    <input type="text" name="contact_phone" value="{{ old('contact_phone', $contactPhone ?? '') }}" maxlength="100" placeholder="e.g. 9113311256" class="w-full rounded-lg border border-gray-300 px-3 py-2">
+                    @error('contact_phone') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Website (shown under phone)</label>
+                    <input type="text" name="contact_website" value="{{ old('contact_website', $contactWebsite ?? '') }}" maxlength="255" placeholder="e.g. www.themmhc.com" class="w-full rounded-lg border border-gray-300 px-3 py-2">
+                    @error('contact_website') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" name="contact_email" value="{{ old('contact_email', $contactEmail ?? '') }}" maxlength="255" placeholder="e.g. Care@themmhc.com" class="w-full rounded-lg border border-gray-300 px-3 py-2">
+                    @error('contact_email') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Service Locations</label>
+                    <textarea name="service_locations" rows="2" placeholder="e.g. Patna | Ranchi | Bhopal (line breaks allowed)" class="w-full rounded-lg border border-gray-300 px-3 py-2">{{ old('service_locations', $serviceLocations ?? '') }}</textarea>
+                    @error('service_locations') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                </div>
+
                 <button type="submit" class="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">
                     <i class="fas fa-save mr-2"></i>Save settings
                 </button>

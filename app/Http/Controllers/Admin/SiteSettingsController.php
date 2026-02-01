@@ -15,8 +15,16 @@ class SiteSettingsController extends Controller
         $founderImagePath = SiteSetting::get('founder_image_path');
         $companyName = SiteSetting::get('company_name', 'MeD Miracle Health Care');
         $tagline = SiteSetting::get('tagline', 'Miracle Health Care');
+        $contactAddress = SiteSetting::get('contact_address', "Udgam Incubation Centre, Rohit Nagar\nPhase 1 (Near Surya Children School)\nBhopal 462023, Madhya Pradesh");
+        $contactPhone = SiteSetting::get('contact_phone', '9113311256');
+        $contactWebsite = SiteSetting::get('contact_website', 'www.themmhc.com');
+        $contactEmail = SiteSetting::get('contact_email', 'Care@themmhc.com');
+        $serviceLocations = SiteSetting::get('service_locations', "Patna | Ranchi | Bhopal\nNoida | Gurgaon");
 
-        return view('admin.site-settings.index', compact('logoPath', 'founderImagePath', 'companyName', 'tagline'));
+        return view('admin.site-settings.index', compact(
+            'logoPath', 'founderImagePath', 'companyName', 'tagline',
+            'contactAddress', 'contactPhone', 'contactWebsite', 'contactEmail', 'serviceLocations'
+        ));
     }
 
     public function update(Request $request)
@@ -26,6 +34,11 @@ class SiteSettingsController extends Controller
             'tagline' => 'nullable|string|max:255',
             'logo' => 'nullable|image|max:2048',
             'founder_image' => 'nullable|image|max:2048',
+            'contact_address' => 'nullable|string|max:1000',
+            'contact_phone' => 'nullable|string|max:100',
+            'contact_website' => 'nullable|string|max:255',
+            'contact_email' => 'nullable|email|max:255',
+            'service_locations' => 'nullable|string|max:500',
         ]);
 
         if (!empty($validated['company_name'])) {
@@ -33,6 +46,21 @@ class SiteSettingsController extends Controller
         }
         if (array_key_exists('tagline', $validated)) {
             SiteSetting::set('tagline', $validated['tagline'] ?? '');
+        }
+        if (array_key_exists('contact_address', $validated)) {
+            SiteSetting::set('contact_address', $validated['contact_address'] ?? '');
+        }
+        if (array_key_exists('contact_phone', $validated)) {
+            SiteSetting::set('contact_phone', $validated['contact_phone'] ?? '');
+        }
+        if (array_key_exists('contact_website', $validated)) {
+            SiteSetting::set('contact_website', $validated['contact_website'] ?? '');
+        }
+        if (array_key_exists('contact_email', $validated)) {
+            SiteSetting::set('contact_email', $validated['contact_email'] ?? '');
+        }
+        if (array_key_exists('service_locations', $validated)) {
+            SiteSetting::set('service_locations', $validated['service_locations'] ?? '');
         }
 
         if ($request->hasFile('logo')) {

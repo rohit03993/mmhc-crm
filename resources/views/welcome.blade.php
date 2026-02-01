@@ -923,49 +923,61 @@
                 
                 <!-- Contact Info & Social Media -->
                 <div class="space-y-8">
-                    <!-- Contact Information -->
+                    <!-- Contact Information (from admin Site Settings) -->
+                    @php
+                        $contactAddress = \App\Models\SiteSetting::get('contact_address', "Udgam Incubation Centre, Rohit Nagar\nPhase 1 (Near Surya Children School)\nBhopal 462023, Madhya Pradesh");
+                        $contactPhone = \App\Models\SiteSetting::get('contact_phone', '9113311256');
+                        $contactWebsite = \App\Models\SiteSetting::get('contact_website', 'www.themmhc.com');
+                        $contactEmail = \App\Models\SiteSetting::get('contact_email', 'Care@themmhc.com');
+                        $serviceLocations = \App\Models\SiteSetting::get('service_locations', "Patna | Ranchi | Bhopal\nNoida | Gurgaon");
+                    @endphp
                     <div>
                         <h3 class="text-2xl font-bold text-gray-800 mb-6">Contact Information</h3>
                         <div class="space-y-6">
+                            @if($contactAddress)
                             <div class="flex items-start">
                                 <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                                     <i class="fas fa-map-marker-alt text-blue-600"></i>
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-gray-800 mb-1">Corporate Office</h4>
-                                    <p class="text-gray-600">Udgam Incubation Centre, Rohit Nagar<br>Phase 1 (Near Surya Children School)<br>Bhopal 462023, Madhya Pradesh</p>
+                                    <p class="text-gray-600">{!! nl2br(e($contactAddress)) !!}</p>
                                 </div>
                             </div>
-                            
+                            @endif
+                            @if($contactPhone || $contactWebsite)
                             <div class="flex items-start">
                                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                                     <i class="fas fa-phone text-green-600"></i>
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-gray-800 mb-1">Phone (24x7)</h4>
-                                    <p class="text-gray-600">9113311256<br>www.themmhc.com</p>
+                                    <p class="text-gray-600">{{ $contactPhone }}{!! $contactWebsite ? '<br>' . e($contactWebsite) : '' !!}</p>
                                 </div>
                             </div>
-                            
+                            @endif
+                            @if($contactEmail)
                             <div class="flex items-start">
                                 <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                                     <i class="fas fa-envelope text-purple-600"></i>
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-gray-800 mb-1">Email</h4>
-                                    <p class="text-gray-600">Care@themmhc.com</p>
+                                    <p class="text-gray-600">{{ $contactEmail }}</p>
                                 </div>
                             </div>
-                            
+                            @endif
+                            @if($serviceLocations)
                             <div class="flex items-start">
                                 <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                                     <i class="fas fa-map-marked-alt text-orange-600"></i>
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-gray-800 mb-1">Service Locations</h4>
-                                    <p class="text-gray-600">Patna | Ranchi | Bhopal<br>Noida | Gurgaon</p>
+                                    <p class="text-gray-600">{!! nl2br(e($serviceLocations)) !!}</p>
                                 </div>
                             </div>
+                            @endif
                         </div>
                     </div>
                     
@@ -1014,7 +1026,7 @@
             <!-- Bottom Bar -->
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <div class="text-gray-400 text-sm mb-4 md:mb-0">
-                    © 2025 Med Miracle Health Care (MMHC). All rights reserved. | Founded by Mantu Kumar
+                    © {{ date('Y') }} Med Miracle Health Care (MMHC). All rights reserved. | Founded by Mantu Kumar
                 </div>
                 <div class="flex space-x-6 text-sm">
                     <a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a>
