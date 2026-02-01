@@ -119,10 +119,6 @@
            class="filter-tab {{ $filterType === 'patient_reward' ? 'active' : '' }}">
             Patient Rewards
         </a>
-        <a href="{{ route('admin.payments.index', ['type' => 'staff_referral']) }}" 
-           class="filter-tab {{ $filterType === 'staff_referral' ? 'active' : '' }}">
-            Staff Referrals
-        </a>
         <a href="{{ route('admin.payments.index', ['type' => 'subscription_referral']) }}" 
            class="filter-tab {{ $filterType === 'subscription_referral' ? 'active' : '' }}">
             Subscription Referrals
@@ -168,16 +164,6 @@
                         </div>
                     </div>
                     <div class="breakdown-item">
-                        <div class="breakdown-amount">₹{{ number_format($item['payments']['staff_referral']['amount'], 2) }}</div>
-                        <div class="breakdown-label">
-                            <i class="fas fa-users me-1"></i>Staff Referrals
-                            <br><small>({{ $item['payments']['staff_referral']['count'] }} referrals)</small>
-                            @if(isset($item['payments']['staff_referral']['meets_threshold']) && !$item['payments']['staff_referral']['meets_threshold'])
-                                <br><small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Below ₹500 threshold</small>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="breakdown-item">
                         <div class="breakdown-amount">₹{{ number_format($item['payments']['subscription_referral']['amount'], 2) }}</div>
                         <div class="breakdown-label">
                             <i class="fas fa-star me-1"></i>Subscription Referrals
@@ -199,17 +185,6 @@
                            class="btn btn-sm btn-warning position-relative">
                             <i class="fas fa-gift me-1"></i>Pay Patient Rewards
                             @if(isset($item['payments']['patient_reward']['meets_threshold']) && !$item['payments']['patient_reward']['meets_threshold'])
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" title="Below ₹500 threshold - Admin can still process payment">
-                                    <i class="fas fa-info-circle"></i>
-                                </span>
-                            @endif
-                        </a>
-                    @endif
-                    @if($item['payments']['staff_referral']['amount'] > 0)
-                        <a href="{{ route('admin.payments.form', ['staff' => $item['staff']->id, 'type' => 'staff_referral']) }}" 
-                           class="btn btn-sm btn-info position-relative">
-                            <i class="fas fa-users me-1"></i>Pay Staff Referrals
-                            @if(isset($item['payments']['staff_referral']['meets_threshold']) && !$item['payments']['staff_referral']['meets_threshold'])
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" title="Below ₹500 threshold - Admin can still process payment">
                                     <i class="fas fa-info-circle"></i>
                                 </span>

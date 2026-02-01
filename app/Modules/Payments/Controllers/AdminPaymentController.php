@@ -51,11 +51,14 @@ class AdminPaymentController extends Controller
             return $b['payments']['total'] <=> $a['payments']['total'];
         });
 
-        // Filter by type if specified
-        if ($filterType !== 'all') {
+        // Filter by type if specified (staff_referral excluded – points only)
+        if ($filterType !== 'all' && $filterType !== 'staff_referral') {
             $pendingPayments = array_filter($pendingPayments, function($item) use ($filterType) {
-                return $item['payments'][$filterType]['amount'] > 0;
+                return isset($item['payments'][$filterType]) && $item['payments'][$filterType]['amount'] > 0;
             });
+        }
+        if ($filterType === 'staff_referral') {
+            $pendingPayments = [];
         }
 
         return view('payments::admin.index', compact('pendingPayments', 'totalPending', 'filterType'));
@@ -69,8 +72,13 @@ class AdminPaymentController extends Controller
         $staff = User::findOrFail($staffId);
         $paymentType = $request->get('type', 'all');
         
-        // Don't allow 'all' type - redirect to index if invalid type
-        if ($paymentType === 'all' || !in_array($paymentType, ['service_request', 'patient_reward', 'staff_referral', 'subscription_referral'])) {
+        // Don't allow 'all' type; staff_referral is points-only and not paid out
+        if ($paymentType === 'staff_referral') {
+            return redirect()->route('admin.payments.index')
+                ->with('info', 'Staff referrals are points-only and are not paid out.');
+        }
+        $allowedTypes = ['service_request', 'patient_reward', 'subscription_referral'];
+        if ($paymentType === 'all' || !in_array($paymentType, $allowedTypes)) {
             return redirect()->route('admin.payments.index')
                 ->with('error', 'Please select a specific payment category.');
         }
@@ -136,7 +144,7 @@ class AdminPaymentController extends Controller
     public function processPayment(Request $request, $staffId)
     {
         $request->validate([
-            'payment_type' => 'required|in:service_request,patient_reward,staff_referral,subscription_referral',
+            'payment_type' => 'required|in:service_request,patient_reward,subscription_referral',
             'amount' => 'required|numeric|min:0.01',
             'transaction_id' => 'required|string|max:255',
             'notes' => 'nullable|string',
@@ -195,11 +203,8 @@ class AdminPaymentController extends Controller
             ->where('payment_processed', false)
             ->sum('reward_amount') ?? 0;
 
-        // 3. Staff Referral Earnings (show all, not just >= ₹500 for admin)
-        $staffReferralEarnings = Referral::where('referrer_id', $staff->id)
-            ->where('status', 'completed')
-            ->where('payment_processed', false)
-            ->sum('reward_amount') ?? 0;
+        // 3. Staff Referral – points only, not paid out (excluded from payments)
+        $staffReferralEarnings = 0;
 
         // 4. Subscription Referral Earnings
         $subscriptionReferralEarnings = Subscription::where('referrer_id', $staff->id)
@@ -224,12 +229,9 @@ class AdminPaymentController extends Controller
                 'meets_threshold' => $patientRewardEarnings >= self::MINIMUM_WITHDRAWAL,
             ],
             'staff_referral' => [
-                'amount' => $staffReferralEarnings,
-                'count' => $staffReferralEarnings > 0 ? Referral::where('referrer_id', $staff->id)
-                    ->where('status', 'completed')
-                    ->where('payment_processed', false)
-                    ->count() : 0,
-                'meets_threshold' => $staffReferralEarnings >= self::MINIMUM_WITHDRAWAL,
+                'amount' => 0,
+                'count' => 0,
+                'meets_threshold' => false,
             ],
             'subscription_referral' => [
                 'amount' => $subscriptionReferralEarnings,

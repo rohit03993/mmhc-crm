@@ -122,7 +122,7 @@
 
     <!-- Overall Statistics -->
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="stat-card">
                 <div class="stat-value">{{ $overallStats['total_staff_with_referrals'] }}</div>
                 <div class="stat-label">
@@ -138,19 +138,11 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="stat-card info">
-                <div class="stat-value">{{ $overallStats['total_reward_points'] }}</div>
+                <div class="stat-value">{{ number_format($overallStats['completed_referrals'] * 10) }}</div>
                 <div class="stat-label">
-                    <i class="fas fa-gift me-2"></i>Total Reward Points
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card warning">
-                <div class="stat-value">₹{{ number_format($overallStats['total_reward_amount'], 2) }}</div>
-                <div class="stat-label">
-                    <i class="fas fa-rupee-sign me-2"></i>Total Reward Amount
+                    <i class="fas fa-star me-2"></i>Total Points (1 ref = 10 pts)
                 </div>
             </div>
         </div>
@@ -171,7 +163,7 @@
                                 <p class="mb-0 opacity-75">
                                     {{ ucfirst($overallStats['top_referrer']->role) }} &middot; 
                                     {{ $overallStats['top_referrer']->completed_referrals }} completed referrals &middot; 
-                                    ₹{{ number_format($overallStats['top_referrer']->total_reward_amount, 2) }} earned
+                                    {{ $overallStats['top_referrer']->completed_referrals * 10 }} pts
                                 </p>
                             </div>
                             <div class="col-md-4 text-md-end">
@@ -233,8 +225,7 @@
                                         <th style="width: 15%;">Referral Code</th>
                                         <th style="width: 10%;" class="text-center">Completed</th>
                                         <th style="width: 10%;" class="text-center">Pending</th>
-                                        <th style="width: 10%;" class="text-center">Reward Points</th>
-                                        <th style="width: 15%;" class="text-center">Reward Amount</th>
+                                        <th style="width: 15%;" class="text-center">Points (1 ref = 10 pts)</th>
                                         <th style="width: 10%;" class="text-center">Actions</th>
                                     </tr>
                                 </thead>
@@ -282,12 +273,7 @@
                                             </td>
                                             <td class="text-center">
                                                 <span class="fw-bold text-primary" style="font-size: 1.1rem;">
-                                                    <i class="fas fa-gift me-1"></i>{{ $staff->total_reward_points }}
-                                                </span>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="fw-bold text-success" style="font-size: 1.1rem;">
-                                                    <i class="fas fa-rupee-sign me-1"></i>{{ number_format($staff->total_reward_amount, 2) }}
+                                                    <i class="fas fa-star me-1"></i>{{ $staff->completed_referrals * 10 }} pts
                                                 </span>
                                             </td>
                                             <td class="text-center">
@@ -334,9 +320,8 @@
                                         <th style="width: 20%;">Referred User (Who Registered)</th>
                                         <th style="width: 12%;">Referral Code</th>
                                         <th style="width: 10%;" class="text-center">Status</th>
-                                        <th style="width: 12%;" class="text-center">Reward Points</th>
-                                        <th style="width: 13%;" class="text-center">Reward Amount</th>
-                                        <th style="width: 13%;" class="text-center">Completed At</th>
+                                        <th style="width: 15%;" class="text-center">Points</th>
+                                        <th style="width: 15%;" class="text-center">Completed At</th>
                                     </tr>
                                 </thead>
                                 <tbody>

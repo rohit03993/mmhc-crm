@@ -80,8 +80,8 @@
                         <strong>Phone:</strong> {{ $staff->phone }}
                     </div>
                     <div>
-                        <strong>Reward Points:</strong> 
-                        <span class="badge bg-primary">{{ $staff->reward_points ?? 0 }}</span>
+                        <strong>Staff Referral Points:</strong> 
+                        <span class="badge bg-primary">{{ ($referralStats['completed_referrals'] ?? 0) * 10 }} pts</span>
                     </div>
                 </div>
             </div>
@@ -138,17 +138,9 @@
         </div>
         <div class="col-md-3">
             <div class="stat-card info">
-                <div class="stat-value">{{ $referralStats['total_reward_points'] }}</div>
+                <div class="stat-value">{{ number_format($referralStats['completed_referrals'] * 10) }}</div>
                 <div class="stat-label">
-                    <i class="fas fa-gift me-2"></i>Reward Points
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card warning">
-                <div class="stat-value">₹{{ number_format($referralStats['total_reward_amount'], 2) }}</div>
-                <div class="stat-label">
-                    <i class="fas fa-rupee-sign me-2"></i>Reward Amount
+                    <i class="fas fa-gift me-2"></i>Points (1 ref = 10 pts)
                 </div>
             </div>
         </div>
@@ -204,10 +196,11 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <span class="fw-bold text-primary">{{ $referral->reward_points }}</span>
-                                            </td>
-                                            <td>
-                                                <span class="fw-bold text-success">₹{{ number_format($referral->reward_amount, 2) }}</span>
+                                                @if($referral->status === 'completed')
+                                                    <span class="fw-bold text-primary">10 pts</span>
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
                                             </td>
                                             <td>
                                                 @if($referral->completed_at)

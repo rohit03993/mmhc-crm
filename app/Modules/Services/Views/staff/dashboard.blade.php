@@ -285,7 +285,7 @@
             </div>
         </div>
 
-        <!-- 3. Staff Referral Earnings -->
+        <!-- 3. Staff Referrals (points only: 10 pts per referral; badge at 250 pts) -->
         <div class="col-12 col-md-6 col-lg-3">
             <div class="earnings-source-card earnings-staff-ref">
                 <div class="earnings-source-header">
@@ -296,7 +296,7 @@
                 </div>
                 <div class="earnings-source-body">
                     <div class="earnings-source-main">
-                        <div class="earnings-source-amount">₹{{ number_format($staffReferralEarnings['total_amount'], 2) }}</div>
+                        <div class="earnings-source-amount">{{ number_format($staffReferralEarnings['total_points']) }} pts</div>
                         <div class="earnings-source-label">{{ $staffReferralEarnings['total_referrals'] }} Referrals</div>
                     </div>
                     <div class="earnings-source-details">
@@ -306,15 +306,15 @@
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Points:</span>
-                            <span class="detail-value">{{ $staffReferralEarnings['total_points'] }}</span>
+                            <span class="detail-value">{{ number_format($staffReferralEarnings['total_points']) }}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">This Month:</span>
-                            <span class="detail-value text-success">₹{{ number_format($staffReferralEarnings['this_month'], 2) }}</span>
+                            <span class="detail-value text-success">{{ $staffReferralEarnings['this_month_points'] }} pts</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Rate:</span>
-                            <span class="detail-value">1 ref = ₹10</span>
+                            <span class="detail-value">1 ref = 10 pts</span>
                         </div>
                     </div>
                     <a href="{{ route('staff.staff-referrals.index') }}" class="btn btn-sm btn-outline-info w-100 mt-2">
@@ -364,6 +364,28 @@
         </div>
     </div>
 
+    <!-- Referral Champion Badge (earned at 250 staff referral points) -->
+    @if(!empty($staffReferralEarnings['badge_earned']))
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="referral-champion-badge-card">
+                <div class="d-flex flex-column flex-md-row align-items-center justify-content-center text-center text-md-start gap-3 p-4">
+                    <div class="referral-champion-badge-image-wrap">
+                        @if(file_exists(public_path('images/referral-champion-badge.png')))
+                            <img src="{{ asset('images/referral-champion-badge.png') }}" alt="Referral Champion Badge" class="referral-champion-badge-img">
+                        @else
+                            <div class="referral-champion-badge-placeholder"><i class="fas fa-award fa-4x text-white"></i></div>
+                        @endif
+                    </div>
+                    <div>
+                        <h5 class="mb-2 fw-bold text-dark">Referral Champion Badge Earned!</h5>
+                        <p class="mb-0 text-muted">You've reached 250 staff referral points (25+ referrals). Thank you for bringing more Nursing Warriors to the team.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Quick Links to Detailed Sections -->
     <div class="row g-3 mb-4">
@@ -1767,6 +1789,38 @@
 .total-earnings-subtitle {
     font-size: 0.85rem;
     opacity: 0.8;
+}
+
+/* Referral Champion Badge (250 staff referral points) */
+.referral-champion-badge-card {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+    border: 1px solid rgba(102, 126, 234, 0.25);
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.1);
+}
+
+.referral-champion-badge-image-wrap {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+    border-radius: 16px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.referral-champion-badge-img {
+    max-height: 100px;
+    width: auto;
+}
+
+.referral-champion-badge-placeholder {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Earnings Source Cards */

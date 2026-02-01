@@ -160,21 +160,6 @@ function showCopyFeedback() {
                     @endif
                 @endif
 
-                @if($paymentType === 'all' || $paymentType === 'staff_referral')
-                    @if($pendingPayments['staff_referral']['amount'] > 0)
-                        <div class="mb-3">
-                            <strong>Staff Referrals:</strong> ₹{{ number_format($pendingPayments['staff_referral']['amount'], 2) }}
-                            <br><small class="text-muted">({{ $pendingPayments['staff_referral']['count'] }} referrals)</small>
-                            @if(isset($pendingPayments['staff_referral']['meets_threshold']) && !$pendingPayments['staff_referral']['meets_threshold'])
-                                <div class="alert alert-warning alert-sm mt-2 mb-0 py-2">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    <strong>Threshold Not Reached:</strong> Amount is below ₹500 minimum threshold. You can still process this payment as admin.
-                                </div>
-                            @endif
-                        </div>
-                    @endif
-                @endif
-
                 @if($paymentType === 'all' || $paymentType === 'subscription_referral')
                     @if($pendingPayments['subscription_referral']['amount'] > 0)
                         <div class="mb-3">
@@ -196,9 +181,6 @@ function showCopyFeedback() {
                                     <br><small>₹{{ number_format($detail->total_staff_payout, 2) }}</small>
                                 @elseif($paymentType === 'patient_reward')
                                     {{ $detail->patient_name }} - {{ $detail->patient_phone }}
-                                    <br><small>₹{{ number_format($detail->reward_amount, 2) }}</small>
-                                @elseif($paymentType === 'staff_referral')
-                                    Referred: {{ $detail->referred->name ?? 'N/A' }}
                                     <br><small>₹{{ number_format($detail->reward_amount, 2) }}</small>
                                 @elseif($paymentType === 'subscription_referral')
                                     Subscription #{{ $detail->id }} - {{ $detail->plan->name ?? 'N/A' }}

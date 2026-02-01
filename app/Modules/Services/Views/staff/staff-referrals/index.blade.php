@@ -14,9 +14,9 @@
 </div>
 
 <div class="container-fluid px-3 py-4">
-    <!-- Stats Banner -->
+    <!-- Stats Banner (points only: 10 pts per referral) -->
     <div class="row g-3 mb-4">
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6">
             <div class="stats-card-modern bg-info">
                 <div class="stats-icon">
                     <i class="fas fa-user-friends"></i>
@@ -27,25 +27,14 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6">
             <div class="stats-card-modern bg-success">
                 <div class="stats-icon">
                     <i class="fas fa-star"></i>
                 </div>
                 <div class="stats-content">
-                    <div class="stats-value">{{ $referralStats['total_reward_points'] }}</div>
-                    <div class="stats-label">Total Points</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-md-4">
-            <div class="stats-card-modern bg-warning">
-                <div class="stats-icon">
-                    <i class="fas fa-rupee-sign"></i>
-                </div>
-                <div class="stats-content">
-                    <div class="stats-value">₹{{ number_format($referralStats['total_reward_amount'], 2) }}</div>
-                    <div class="stats-label">Total Earnings</div>
+                    <div class="stats-value">{{ number_format($staffReferralTotalPoints) }}</div>
+                    <div class="stats-label">Total Points (1 ref = {{ $pointsPerRef }} pts)</div>
                 </div>
             </div>
         </div>
@@ -60,7 +49,7 @@
                     <h5 class="mb-0">Your Staff Referral Link</h5>
                 </div>
                 <div class="referral-link-body">
-                    <p class="mb-3">Share this link with nurses and caregivers. When they register using your link, you earn <strong>1 point (₹10)</strong> per successful referral.</p>
+                    <p class="mb-3">Share this link with nurses and caregivers. When they register using your link, you earn <strong>{{ $pointsPerRef }} points</strong> per successful referral. At 250 points you earn the Referral Champion badge.</p>
                     <div class="input-group-modern">
                         <input type="text" 
                                class="form-control form-control-lg" 
@@ -112,8 +101,7 @@
                                 </div>
                                 @if($referral->status === 'completed')
                                 <div class="referral-entry-badge-modern">
-                                    <span class="badge-points">+{{ $referral->reward_points }} pts</span>
-                                    <span class="badge-amount">₹{{ number_format($referral->reward_amount, 2) }}</span>
+                                    <span class="badge-points">+{{ $pointsPerRef }} pts</span>
                                 </div>
                                 @endif
                             </div>
@@ -273,14 +261,6 @@
     border-radius: 20px;
     font-weight: 600;
     font-size: 0.9rem;
-    margin-bottom: 0.25rem;
-}
-
-.badge-amount {
-    display: block;
-    color: #28a745;
-    font-weight: 700;
-    font-size: 1rem;
 }
 
 .referral-entry-details-modern {

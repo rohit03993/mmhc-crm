@@ -97,19 +97,25 @@ class StaffDashboardController extends Controller
                 ->sum('reward_amount'),
         ];
         
-        // 3. STAFF REFERRAL EARNINGS (from referring other staff)
+        // 3. STAFF REFERRAL (points only: 10 pts per referral; badge at 250 pts)
         $referralService = app(ReferralService::class);
         $referralStats = $referralService->getReferralStats($user);
+        $staffReferralPointsPerRef = 10;
+        $staffReferralPoints = $referralStats['completed_referrals'] * $staffReferralPointsPerRef;
+        $staffReferralBadgeAtPoints = 250;
         $staffReferralEarnings = [
             'total_referrals' => $referralStats['completed_referrals'],
-            'total_points' => $referralStats['total_reward_points'],
+            'total_points' => $staffReferralPoints,
             'total_amount' => $referralStats['total_reward_amount'],
-            'this_month' => \App\Modules\Referrals\Models\Referral::where('referrer_id', $user->id)
+            'this_month_count' => \App\Modules\Referrals\Models\Referral::where('referrer_id', $user->id)
                 ->where('status', 'completed')
                 ->whereMonth('completed_at', now()->month)
                 ->whereYear('completed_at', now()->year)
-                ->sum('reward_amount'),
+                ->count(),
+            'this_month_points' => 0, // set below
+            'badge_earned' => $staffReferralPoints >= $staffReferralBadgeAtPoints,
         ];
+        $staffReferralEarnings['this_month_points'] = $staffReferralEarnings['this_month_count'] * $staffReferralPointsPerRef;
         
         // 4. SUBSCRIPTION REFERRAL EARNINGS (from referring patients to subscribe)
         $subscriptionReferralStats = \App\Modules\Plans\Models\Subscription::where('referrer_id', $user->id)
@@ -126,11 +132,10 @@ class StaffDashboardController extends Controller
             'this_month' => $subscriptionReferralStats->this_month_commission ?? 0.00,
         ];
         
-        // TOTAL OVERALL EARNINGS (sum of all 4 sources)
+        // TOTAL OVERALL EARNINGS (service + patient rewards + subscription only; staff referrals are points-only)
         $totalOverallEarnings = 
             $serviceRequestEarnings['total_approved'] + 
             $patientRewardEarnings['total_amount'] + 
-            $staffReferralEarnings['total_amount'] + 
             $subscriptionReferralEarnings['total_commission'];
         
         // Legacy earnings stats (for backward compatibility)
@@ -529,15 +534,22 @@ class StaffDashboardController extends Controller
     {
         $user = Auth::user();
         $referralService = app(ReferralService::class);
-        
+
         $referralLink = $referralService->getReferralLink($user);
         $referralStats = $referralService->getReferralStats($user);
+        $pointsPerRef = 10;
+        $staffReferralTotalPoints = $referralStats['completed_referrals'] * $pointsPerRef;
+        $badgeEarned = $staffReferralTotalPoints >= 250;
+
         $referrals = \App\Modules\Referrals\Models\Referral::where('referrer_id', $user->id)
             ->with('referred')
             ->latest()
             ->paginate(20);
-        
-        return view('services::staff.staff-referrals.index', compact('referralLink', 'referralStats', 'referrals', 'user'));
+
+        return view('services::staff.staff-referrals.index', compact(
+            'referralLink', 'referralStats', 'referrals', 'user',
+            'staffReferralTotalPoints', 'badgeEarned', 'pointsPerRef'
+        ));
     }
     
     /**

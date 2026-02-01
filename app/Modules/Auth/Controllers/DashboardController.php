@@ -538,11 +538,8 @@ class DashboardController extends Controller
             ->where('payment_processed', false)
             ->sum('reward_amount') ?? 0;
 
-        // 3. Staff Referral Earnings
-        $staffReferralEarnings = \App\Modules\Referrals\Models\Referral::where('referrer_id', $staff->id)
-            ->where('status', 'completed')
-            ->where('payment_processed', false)
-            ->sum('reward_amount') ?? 0;
+        // 3. Staff Referral – points only, not paid out (excluded from pending)
+        $staffReferralEarnings = 0;
 
         // 4. Subscription Referral Earnings
         $subscriptionReferralEarnings = \App\Modules\Plans\Models\Subscription::where('referrer_id', $staff->id)
@@ -550,12 +547,12 @@ class DashboardController extends Controller
             ->where('referral_payment_processed', false)
             ->sum('referral_commission_amount') ?? 0;
 
-        $total = $serviceEarnings + $patientRewardEarnings + $staffReferralEarnings + $subscriptionReferralEarnings;
+        $total = $serviceEarnings + $patientRewardEarnings + $subscriptionReferralEarnings;
 
         return [
             'service_request' => ['amount' => $serviceEarnings],
             'patient_reward' => ['amount' => $patientRewardEarnings],
-            'staff_referral' => ['amount' => $staffReferralEarnings],
+            'staff_referral' => ['amount' => 0],
             'subscription_referral' => ['amount' => $subscriptionReferralEarnings],
             'total' => $total,
         ];
