@@ -7,8 +7,15 @@ use Illuminate\Support\Str;
 
 class UserService
 {
+    /** Starting sequence number for Patient, Nurse, Caregiver (displayed as 022101) */
+    public const UNIQUE_ID_START_NUMBER = 22101;
+
     /**
-     * Generate unique ID for user based on role
+     * Generate unique ID for user based on role.
+     * Patient: P-UID-022101, P-UID-022102, ...
+     * Nurse: N-UID-022101, N-UID-022102, ...
+     * Caregiver: C-UID-022101, C-UID-022102, ...
+     * Admin: M-UID-000001, ... (unchanged)
      */
     public function generateUniqueId(string $role): string
     {
@@ -20,24 +27,28 @@ class UserService
             default => 'U-UID'
         };
 
-        // Get the highest existing number for this role
+        $startNumber = in_array($role, ['patient', 'nurse', 'caregiver'], true)
+            ? self::UNIQUE_ID_START_NUMBER
+            : 1;
+
+        // Get the highest existing number for this role (numeric part after prefix-)
         $maxId = User::where('role', $role)
                     ->where('unique_id', 'like', $prefix . '-%')
                     ->selectRaw('CAST(SUBSTRING(unique_id, ' . (strlen($prefix) + 2) . ') AS UNSIGNED) as id_num')
                     ->orderBy('id_num', 'desc')
                     ->first();
 
-        $nextNumber = $maxId ? $maxId->id_num + 1 : 1;
-        
+        $nextNumber = $maxId ? max($maxId->id_num + 1, $startNumber) : $startNumber;
+
         // Ensure uniqueness by checking if the ID already exists
         do {
-            $uniqueId = $prefix . '-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+            $uniqueId = $prefix . '-' . str_pad((string) $nextNumber, 6, '0', STR_PAD_LEFT);
             $exists = User::where('unique_id', $uniqueId)->exists();
             if ($exists) {
                 $nextNumber++;
             }
         } while ($exists);
-        
+
         return $uniqueId;
     }
 
