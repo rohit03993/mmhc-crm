@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionSettingsController extends Controller
 {
@@ -43,6 +44,11 @@ class SubscriptionSettingsController extends Controller
         try {
             // Read current config file
             $configPath = config_path('subscription.php');
+            if (!File::exists($configPath)) {
+                return redirect()->back()
+                    ->with('error', 'Subscription config file not found. Please ensure config/subscription.php exists.')
+                    ->withInput();
+            }
             $configContent = File::get($configPath);
             
             // Update GST rate
@@ -90,8 +96,14 @@ class SubscriptionSettingsController extends Controller
                 ->with('success', 'Subscription settings updated successfully!');
                 
         } catch (\Exception $e) {
+            Log::error('Subscription settings update failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return redirect()->back()
-                ->with('error', 'Failed to update settings: ' . $e->getMessage())
+                ->with('error', 'Unable to update settings. Please try again.')
                 ->withInput();
         }
     }

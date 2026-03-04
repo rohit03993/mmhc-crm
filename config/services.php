@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    /*
+    | AiSensy / Sensy WhatsApp Business API (OTP via WhatsApp)
+    | Create an Authentication template in AiSensy, then an API Campaign using it.
+    | destination = +91 followed by 10-digit Indian number.
+    | Use SENSY_API_URL for host, or AISENSY_BASE_URL for full endpoint URL.
+    */
+    'aisensy' => [
+        'api_key' => env('AISENSY_API_KEY'),
+        'campaign_name' => env('AISENSY_CAMPAIGN_NAME', ''),
+        'base_url' => env('AISENSY_BASE_URL') ?: (rtrim(env('SENSY_API_URL', 'https://backend.aisensy.com'), '/') . '/campaign/t1/api/v2'),
+    ],
+
 ];

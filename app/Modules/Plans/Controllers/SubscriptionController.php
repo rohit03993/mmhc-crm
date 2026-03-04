@@ -93,8 +93,7 @@ class SubscriptionController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            // Return error page instead of redirecting
-            return response('Error loading subscriptions: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine(), 500);
+            return response('Unable to load subscriptions. Please try again later.', 500);
         }
     }
 
@@ -277,8 +276,15 @@ class SubscriptionController extends Controller
             return redirect()->route('subscriptions.payment-confirmation', $subscription->id)
                 ->with('success', $message);
         } catch (\Exception $e) {
+            \Log::error('Create subscription failed', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->back()
-                ->with('error', 'Failed to create subscription: ' . $e->getMessage())
+                ->with('error', 'Something went wrong. Please try again.')
                 ->withInput();
         }
     }
@@ -530,10 +536,12 @@ class SubscriptionController extends Controller
             \Log::error('Payment screenshot upload error', [
                 'subscription_id' => $subscription->id ?? 'unknown',
                 'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
             return redirect()->back()
-                ->with('error', 'Failed to submit payment proof: ' . $e->getMessage())
+                ->with('error', 'Something went wrong. Please try again.')
                 ->withInput();
         }
     }
@@ -564,8 +572,15 @@ class SubscriptionController extends Controller
                 ->with('success', 'Payment verified and subscription activated successfully!');
 
         } catch (\Exception $e) {
+            \Log::error('Verify payment failed', [
+                'subscription_id' => $subscription->id,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->back()
-                ->with('error', 'Failed to verify payment: ' . $e->getMessage());
+                ->with('error', 'Something went wrong. Please try again.');
         }
     }
 
@@ -700,7 +715,7 @@ class SubscriptionController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response('Error loading screenshot: ' . $e->getMessage(), 500);
+            return response('Unable to load image. Please try again later.', 500);
         }
     }
 
@@ -729,8 +744,15 @@ class SubscriptionController extends Controller
                 ->with('success', 'Payment rejected. User will be notified.');
 
         } catch (\Exception $e) {
+            \Log::error('Reject payment failed', [
+                'subscription_id' => $subscription->id,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->back()
-                ->with('error', 'Failed to reject payment: ' . $e->getMessage());
+                ->with('error', 'Something went wrong. Please try again.');
         }
     }
 }

@@ -43,6 +43,12 @@ class SystemController extends Controller
                 ->withInput();
         }
 
+        if (config('app.env') === 'production') {
+            Log::warning('System reset blocked in production', ['admin_id' => Auth::id()]);
+            return redirect()->back()
+                ->with('error', 'System reset is disabled in production.');
+        }
+
         try {
             $result = $this->resetService->resetSystemData();
 
@@ -57,18 +63,24 @@ class SystemController extends Controller
                     ->with('success', 'System reset completed successfully! All user data has been deleted except admin account.')
                     ->with('reset_stats', $result);
             } else {
+                Log::warning('System reset returned not success', [
+                    'admin_id' => Auth::id(),
+                    'result_error' => $result['error'] ?? null,
+                ]);
                 return redirect()->back()
-                    ->with('error', 'Reset failed: ' . ($result['error'] ?? 'Unknown error'));
+                    ->with('error', 'Reset failed. Please try again or contact support.');
             }
         } catch (\Exception $e) {
             Log::error('System reset failed', [
                 'admin_id' => Auth::id(),
                 'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
             return redirect()->back()
-                ->with('error', 'Reset failed: ' . $e->getMessage());
+                ->with('error', 'Reset failed. Please try again or contact support.');
         }
     }
 }

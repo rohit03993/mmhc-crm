@@ -51,9 +51,11 @@ class SystemResetService
                 'timestamp' => now()->toDateTimeString(),
             ]);
 
-            // Disable foreign key checks temporarily to avoid constraint issues
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-            
+            // Disable foreign key checks temporarily (MySQL only)
+            if (DB::getDriverName() === 'mysql') {
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            }
+
             DB::beginTransaction();
 
             try {
@@ -113,8 +115,10 @@ class SystemResetService
                 DB::rollBack();
                 throw $e;
             } finally {
-                // Re-enable foreign key checks
-                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+                // Re-enable foreign key checks (MySQL only)
+                if (DB::getDriverName() === 'mysql') {
+                    DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+                }
             }
 
             $stats['success'] = true;

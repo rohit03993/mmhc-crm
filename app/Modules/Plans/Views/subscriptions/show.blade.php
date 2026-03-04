@@ -18,9 +18,9 @@
             <div class="subscription-detail-card">
                 <div class="subscription-detail-header">
                     <div>
-                        <h3 class="subscription-plan-name">{{ $subscription->plan->name }}</h3>
+                        <h3 class="subscription-plan-name">{{ $subscription->plan?->name ?? 'Unknown Plan' }}</h3>
                         <p class="subscription-members text-muted mb-2">
-                            <i class="fas fa-users me-1"></i> {{ $subscription->plan->members_included }}
+                            <i class="fas fa-users me-1"></i> {{ $subscription->plan?->members_included ?? '—' }}
                         </p>
                         <span class="subscription-badge badge-{{ $subscription->status_color }}">
                             {{ $subscription->status_display }}

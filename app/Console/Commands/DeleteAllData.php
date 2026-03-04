@@ -39,8 +39,10 @@ class DeleteAllData extends Command
         }
 
         try {
-            // Disable foreign key checks temporarily
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            // Disable foreign key checks temporarily (MySQL only)
+            if (DB::getDriverName() === 'mysql') {
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            }
 
             // Delete in correct order
             $this->info('Deleting daily services...');
@@ -69,8 +71,10 @@ class DeleteAllData extends Command
 
             return 0;
         } catch (\Exception $e) {
-            // Re-enable foreign key checks in case of error
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            // Re-enable foreign key checks in case of error (MySQL only)
+            if (DB::getDriverName() === 'mysql') {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            }
             $this->error('❌ Error: ' . $e->getMessage());
             $this->error($e->getTraceAsString());
             return 1;

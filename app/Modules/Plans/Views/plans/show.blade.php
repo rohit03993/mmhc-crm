@@ -65,7 +65,7 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <i class="fas fa-info-circle me-2"></i>
-                                        <strong>Current Subscription:</strong> {{ $activeSubscription->plan->name }}
+                                        <strong>Current Subscription:</strong> {{ $activeSubscription->plan?->name ?? 'Unknown Plan' }}
                                         <br>
                                         <small>Expires: {{ $activeSubscription->end_date->format('M d, Y') }} ({{ $activeSubscription->days_remaining }} days remaining)</small>
                                     </div>

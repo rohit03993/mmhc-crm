@@ -5,6 +5,7 @@ namespace App\Modules\Auth\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
 use App\Modules\Auth\Services\UserService;
+use App\Modules\Auth\Services\WhatsAppOtpService;
 use App\Modules\Referrals\Services\ReferralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,11 +18,13 @@ class AuthController extends Controller
 {
     protected $userService;
     protected $referralService;
+    protected $whatsAppOtpService;
 
-    public function __construct(UserService $userService, ReferralService $referralService)
+    public function __construct(UserService $userService, ReferralService $referralService, WhatsAppOtpService $whatsAppOtpService)
     {
         $this->userService = $userService;
         $this->referralService = $referralService;
+        $this->whatsAppOtpService = $whatsAppOtpService;
     }
 
     /**
@@ -63,6 +66,118 @@ class AuthController extends Controller
         return redirect()->back()
             ->withErrors(['email' => 'Invalid credentials'])
             ->withInput();
+    }
+
+    /**
+     * Send OTP to phone via WhatsApp (for phone login). Only for registered users.
+     */
+    public function sendLoginOtp(Request $request)
+    {
+        $phoneDigits = preg_replace('/\D/', '', (string) $request->input('phone', ''));
+        $validator = Validator::make(
+            ['phone' => $phoneDigits],
+            ['phone' => ['required', 'regex:/^[6-9][0-9]{9}$/']],
+            [
+                'phone.required' => 'Enter a 10-digit mobile number.',
+                'phone.regex' => 'Enter a valid 10-digit Indian mobile number.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('login_tab', 'phone');
+        }
+
+        $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
+        $user = User::where(function ($query) use ($normalizedPhone, $phoneDigits) {
+                $query->where('phone', $normalizedPhone)
+                      ->orWhere('phone', $phoneDigits);
+            })
+            ->where('is_active', true)
+            ->first();
+
+        if (!$user) {
+            return redirect()->back()
+                ->withErrors(['phone' => 'No account found with this number. Please register or use email login.'])
+                ->withInput()
+                ->with('login_tab', 'phone');
+        }
+
+        $result = $this->whatsAppOtpService->sendOtp($normalizedPhone);
+
+        if (!$result['success']) {
+            $message = $result['message'];
+            if (config('app.debug')) {
+                $message .= ' Check storage/logs/laravel.log for details.';
+            }
+            return redirect()->back()
+                ->withErrors(['phone' => $message])
+                ->withInput()
+                ->with('login_tab', 'phone');
+        }
+
+        return redirect()->back()
+            ->with('otp_sent', true)
+            ->with('otp_phone', $phoneDigits)
+            ->with('success_otp', $result['message'])
+            ->with('login_tab', 'phone');
+    }
+
+    /**
+     * Verify OTP and log in (phone login).
+     */
+    public function verifyLoginOtp(Request $request)
+    {
+        $phoneDigits = preg_replace('/\D/', '', (string) $request->input('phone', ''));
+        $validator = Validator::make(
+            ['phone' => $phoneDigits, 'otp' => $request->input('otp')],
+            [
+                'phone' => ['required', 'regex:/^[6-9][0-9]{9}$/'],
+                'otp' => ['required', 'string', 'size:6'],
+            ],
+            [
+                'phone.required' => 'Enter your mobile number.',
+                'phone.regex' => 'Enter a valid 10-digit Indian mobile number.',
+                'otp.required' => 'Enter the 6-digit OTP.',
+                'otp.size' => 'OTP must be 6 digits.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('login_tab', 'phone');
+        }
+
+        $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
+
+        if (!$this->whatsAppOtpService->verifyOtp($normalizedPhone, $request->input('otp'))) {
+            return redirect()->back()
+                ->withErrors(['otp' => 'Invalid or expired OTP. Please request a new one.'])
+                ->withInput()
+                ->with('login_tab', 'phone')
+                ->with('otp_phone', $phoneDigits);
+        }
+
+        $user = User::where(function ($query) use ($normalizedPhone, $phoneDigits) {
+                $query->where('phone', $normalizedPhone)
+                      ->orWhere('phone', $phoneDigits);
+            })
+            ->where('is_active', true)
+            ->first();
+        if (!$user) {
+            return redirect()->back()
+                ->withErrors(['otp' => 'Account not found. Please use email login or register.'])
+                ->with('login_tab', 'phone');
+        }
+
+        Auth::login($user, $request->boolean('remember'));
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('dashboard'));
     }
 
     /**

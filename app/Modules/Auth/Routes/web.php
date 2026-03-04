@@ -19,9 +19,11 @@ Route::middleware(['web'])->group(function () {
     // Authentication Routes
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-        Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+        Route::post('/login', [AuthController::class, 'login'])->name('login.post')->middleware('throttle:5,1');
+        Route::post('/send-login-otp', [AuthController::class, 'sendLoginOtp'])->name('send-login-otp')->middleware('throttle:5,1');
+        Route::post('/verify-login-otp', [AuthController::class, 'verifyLoginOtp'])->name('verify-login-otp')->middleware('throttle:10,1');
         Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-        Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+        Route::post('/register', [AuthController::class, 'register'])->name('register.post')->middleware('throttle:10,1');
         Route::get('/welcome-nursing-warrior', [AuthController::class, 'showWelcomeNursingWarrior'])->name('welcome.nursing-warrior')->middleware('auth');
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     });

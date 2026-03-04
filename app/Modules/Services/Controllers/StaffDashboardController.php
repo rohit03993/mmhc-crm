@@ -126,10 +126,10 @@ class StaffDashboardController extends Controller
             ->first();
         
         $subscriptionReferralEarnings = [
-            'total_referrals' => $subscriptionReferralStats->total_referrals ?? 0,
-            'active_referrals' => $subscriptionReferralStats->active_referrals ?? 0,
-            'total_commission' => $subscriptionReferralStats->total_commission ?? 0.00,
-            'this_month' => $subscriptionReferralStats->this_month_commission ?? 0.00,
+            'total_referrals' => optional($subscriptionReferralStats)->total_referrals ?? 0,
+            'active_referrals' => optional($subscriptionReferralStats)->active_referrals ?? 0,
+            'total_commission' => optional($subscriptionReferralStats)->total_commission ?? 0.00,
+            'this_month' => optional($subscriptionReferralStats)->this_month_commission ?? 0.00,
         ];
         
         // TOTAL OVERALL EARNINGS (service + patient rewards + subscription only; staff referrals are points-only)

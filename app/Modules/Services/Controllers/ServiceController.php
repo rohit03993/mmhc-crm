@@ -325,13 +325,8 @@ class ServiceController extends Controller
                 'error_trace' => $e->getTraceAsString()
             ]);
 
-            // Show more helpful error message in development, generic in production
-            $errorMessage = config('app.debug') 
-                ? 'Failed to create booking: ' . $e->getMessage()
-                : 'Failed to create booking. Please try again. If the problem persists, contact support.';
-
             return redirect()->back()
-                ->with('error', $errorMessage)
+                ->with('error', 'Something went wrong. Please try again.')
                 ->withInput();
         }
     }

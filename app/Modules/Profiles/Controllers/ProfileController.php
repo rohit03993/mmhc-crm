@@ -7,6 +7,7 @@ use App\Models\Core\User;
 use App\Modules\Profiles\Services\ProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -30,11 +31,9 @@ class ProfileController extends Controller
             
             return view('profiles::profile.index', compact('user', 'profile'));
         } catch (\Exception $e) {
-            // Fallback if profile service fails
-            $user = Auth::user();
-            $profile = null;
-            
-            return view('profiles::profile.index', compact('user', 'profile'));
+            Log::error('Profile load failed', ['user_id' => Auth::id(), 'error' => $e->getMessage()]);
+            return redirect()->route('dashboard')
+                ->with('error', 'Unable to load profile. Please try again.');
         }
     }
 
@@ -49,11 +48,9 @@ class ProfileController extends Controller
             
             return view('profiles::profile.edit', compact('user', 'profile'));
         } catch (\Exception $e) {
-            // Fallback if profile service fails
-            $user = Auth::user();
-            $profile = null;
-            
-            return view('profiles::profile.edit', compact('user', 'profile'));
+            Log::error('Profile load failed (edit)', ['user_id' => Auth::id(), 'error' => $e->getMessage()]);
+            return redirect()->route('dashboard')
+                ->with('error', 'Unable to load profile. Please try again.');
         }
     }
 
@@ -133,8 +130,20 @@ class ProfileController extends Controller
      */
     public function adminView(User $user)
     {
-        $profile = $this->profileService->getProfile($user);
-        
+        try {
+            $profile = $this->profileService->getProfile($user);
+        } catch (\Exception $e) {
+            Log::error('Admin profile view failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return redirect()->route('admin.profiles')
+                ->with('error', 'Unable to load profile. Please try again.');
+        }
+
         return view('profiles::admin.view', compact('user', 'profile'));
     }
 }

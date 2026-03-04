@@ -372,14 +372,14 @@ class DashboardController extends Controller
         $pendingSubscriptionPayments += $pendingSubscriptionsNoProof;
 
         // Pending service payments: Services where patient hasn't paid fully (unpaid balance)
-        $pendingServicePayments = \App\Modules\Services\Models\ServiceRequest::where('status', '!=', 'cancelled')
+        $pendingServicePayments = optional(\App\Modules\Services\Models\ServiceRequest::where('status', '!=', 'cancelled')
             ->where(function($query) {
                 // Service is assigned, in progress, or completed but payment not fully received
                 $query->whereIn('status', ['assigned', 'in_progress', 'completed', 'pending'])
                       ->whereRaw('COALESCE(total_amount, 0) > COALESCE(prepaid_amount, 0)');
             })
             ->selectRaw('SUM(GREATEST(0, COALESCE(total_amount, 0) - COALESCE(prepaid_amount, 0))) as pending')
-            ->first()->pending ?? 0;
+            ->first())->pending ?? 0;
 
         $totalPendingPayments = $pendingSubscriptionPayments + $pendingServicePayments;
         

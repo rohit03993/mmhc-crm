@@ -227,7 +227,7 @@
                         
                         <div class="app-marketplace-pricing">
                             <div class="app-price-label">Starting from</div>
-                            <div class="app-price-amount">₹{{ number_format($serviceTypes->first()->nurse_payout ?? 2000) }}/day</div>
+                            <div class="app-price-amount">₹{{ number_format($serviceTypes->first()?->nurse_payout ?? 2000) }}/day</div>
                         </div>
                     </div>
                     
@@ -325,7 +325,7 @@
                         
                         <div class="app-marketplace-pricing">
                             <div class="app-price-label">Starting from</div>
-                            <div class="app-price-amount">₹{{ number_format($serviceTypes->first()->caregiver_payout ?? 1500) }}/day</div>
+                            <div class="app-price-amount">₹{{ number_format($serviceTypes->first()?->caregiver_payout ?? 1500) }}/day</div>
                         </div>
                     </div>
                     

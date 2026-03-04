@@ -56,8 +56,8 @@ class DocumentService
     public function deleteDocument(Document $document): bool
     {
         // Delete file from storage
-        if (Storage::exists($document->file_path)) {
-            Storage::delete($document->file_path);
+        if (Storage::disk('public')->exists($document->file_path)) {
+            Storage::disk('public')->delete($document->file_path);
         }
 
         // Delete document record

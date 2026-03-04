@@ -26,7 +26,7 @@
             <div class="flex-grow-1">
                 <h6 class="mb-1">Active Subscription</h6>
                 <p class="mb-0">
-                    <strong>{{ $activeSubscription->plan->name ?? 'Unknown Plan' }}</strong> - 
+                    <strong>{{ $activeSubscription->plan?->name ?? 'Unknown Plan' }}</strong> - 
                     Expires on {{ $activeSubscription->end_date->format('M d, Y') }}
                     ({{ $activeSubscription->days_remaining }} days remaining)
                 </p>
@@ -106,7 +106,7 @@
                 <div class="subscription-header">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h5 class="subscription-plan-name mb-1">{{ $subscription->plan->name ?? 'Unknown Plan' }}</h5>
+                            <h5 class="subscription-plan-name mb-1">{{ $subscription->plan?->name ?? 'Unknown Plan' }}</h5>
                             @if($subscription->plan)
                             <p class="subscription-members text-muted small mb-0">
                                 <i class="fas fa-users me-1"></i> {{ $subscription->plan->members_included }}

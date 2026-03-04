@@ -60,8 +60,8 @@ class ProfileService
     {
         // Delete old avatar if exists
         $profile = $this->getProfile($user);
-        if ($profile->avatar_path && Storage::exists($profile->avatar_path)) {
-            Storage::delete($profile->avatar_path);
+        if ($profile->avatar_path && Storage::disk('public')->exists($profile->avatar_path)) {
+            Storage::disk('public')->delete($profile->avatar_path);
         }
 
         // Store new avatar
