@@ -232,13 +232,102 @@
                         
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link text-white {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('dashboard') }}">
+                                <a class="nav-link text-white {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') || request()->routeIs('academics.*') ? 'active' : '' }}" href="{{ auth()->user()->hasAcademicRole() ? route('academics.dashboard') : (auth()->user()->isAdmin() ? route('admin.dashboard') : route('dashboard')) }}">
                                     <i class="fas fa-home me-2"></i>
-                                    Dashboard
+                                    {{ auth()->user()->hasAcademicRole() ? 'Academics' : 'Dashboard' }}
                                 </a>
                             </li>
                             
-                            @if(!auth()->user()->isAdmin())
+                            @if(auth()->user()->hasAcademicRole())
+                            @if(auth()->user()->role === 'super_admin')
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.institutions.*') ? 'active' : '' }}" href="{{ route('academics.institutions.index') }}">
+                                    <i class="fas fa-university me-2"></i>
+                                    Institutions
+                                </a>
+                            </li>
+                            @endif
+                            @if(in_array(auth()->user()->role, ['super_admin', 'institution_admin']))
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.batches.*') ? 'active' : '' }}" href="{{ route('academics.batches.index') }}">
+                                    <i class="fas fa-layer-group me-2"></i>
+                                    Batches
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.subjects.*') ? 'active' : '' }}" href="{{ route('academics.subjects.index') }}">
+                                    <i class="fas fa-book me-2"></i>
+                                    Subjects
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.topics.*') ? 'active' : '' }}" href="{{ route('academics.topics.index') }}">
+                                    <i class="fas fa-list-ul me-2"></i>
+                                    Topics
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.assignments.*') ? 'active' : '' }}" href="{{ route('academics.assignments.index') }}">
+                                    <i class="fas fa-tasks me-2"></i>
+                                    Assignments
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.reports.*') ? 'active' : '' }}" href="{{ route('academics.reports.index') }}">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Reports
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.attendance.index') || request()->routeIs('academics.attendance.mark') ? 'active' : '' }}" href="{{ route('academics.attendance.index') }}">
+                                    <i class="fas fa-calendar-check me-2"></i>
+                                    Mark attendance
+                                </a>
+                            </li>
+                            @endif
+                            @if(auth()->user()->role === 'faculty')
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.topics.*') ? 'active' : '' }}" href="{{ route('academics.topics.index') }}">
+                                    <i class="fas fa-list-ul me-2"></i>
+                                    Topics
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.assignments.*') ? 'active' : '' }}" href="{{ route('academics.assignments.index') }}">
+                                    <i class="fas fa-tasks me-2"></i>
+                                    Assignments
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.reports.*') ? 'active' : '' }}" href="{{ route('academics.reports.index') }}">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Reports
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.attendance.index') || request()->routeIs('academics.attendance.mark') ? 'active' : '' }}" href="{{ route('academics.attendance.index') }}">
+                                    <i class="fas fa-calendar-check me-2"></i>
+                                    Mark attendance
+                                </a>
+                            </li>
+                            @endif
+                            @if(auth()->user()->role === 'student')
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.my-assignments') || request()->routeIs('academics.submit.*') ? 'active' : '' }}" href="{{ route('academics.my-assignments') }}">
+                                    <i class="fas fa-tasks me-2"></i>
+                                    My Assignments
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.attendance.my') ? 'active' : '' }}" href="{{ route('academics.attendance.my') }}">
+                                    <i class="fas fa-calendar-check me-2"></i>
+                                    My attendance
+                                </a>
+                            </li>
+                            @endif
+                            @endif
+                            
+                            @if(!auth()->user()->isAdmin() && !auth()->user()->hasAcademicRole())
                             <li class="nav-item">
                                 <a class="nav-link text-white {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.index') }}">
                                     <i class="fas fa-user me-2"></i>

@@ -45,6 +45,8 @@ return [
         'api_key' => env('AISENSY_API_KEY'),
         'campaign_name' => env('AISENSY_CAMPAIGN_NAME', ''),
         'base_url' => env('AISENSY_BASE_URL') ?: (rtrim(env('SENSY_API_URL', 'https://backend.aisensy.com'), '/') . '/campaign/t1/api/v2'),
+        // Campaign expects 1 param; same value (OTP) is used for body {{1}} and copy-code button {{1}}.
+        'template_param_count' => min(2, max(1, (int) env('AISENSY_TEMPLATE_PARAM_COUNT', 1))),
     ],
 
 ];

@@ -15,6 +15,11 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
+        // Redirect academic roles to academics module
+        if ($user->hasAcademicRole()) {
+            return redirect()->route('academics.dashboard');
+        }
+        
         // Redirect staff (nurses and caregivers) to their dedicated dashboard
         if ($user->isStaff()) {
             return redirect()->route('staff.dashboard');

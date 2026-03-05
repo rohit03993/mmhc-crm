@@ -28,7 +28,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Show login form
+     * Show login form (main: patients & caregivers).
      */
     public function showLogin()
     {
@@ -36,7 +36,24 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
 
-        return view('auth::login');
+        return view('auth::login', ['academicsLogin' => false]);
+    }
+
+    /**
+     * Show academics portal login (college admin, faculty, students).
+     * Same form; post-login redirect is already role-based to /academics.
+     */
+    public function showAcademicsLogin()
+    {
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user->hasAcademicRole()) {
+                return redirect()->route('academics.dashboard');
+            }
+            return redirect()->route('dashboard');
+        }
+
+        return view('auth::login', ['academicsLogin' => true]);
     }
 
     /**

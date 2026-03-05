@@ -33,9 +33,10 @@ class WhatsAppOtpService
         Cache::put(self::CACHE_PREFIX . $normalizedPhone, $otp, now()->addMinutes(self::OTP_TTL_MINUTES));
         Cache::put($rateKey, true, now()->addMinutes(self::RATE_LIMIT_MINUTES));
 
-        $sent = $this->sendViaApi($normalizedPhone, $otp);
-        if (!$sent) {
-            return ['success' => false, 'message' => 'Could not send OTP. Please try again or login with email.'];
+        $apiResult = $this->sendViaApi($normalizedPhone, $otp);
+        if (!$apiResult['success']) {
+            $message = $apiResult['message'] ?? 'Could not send OTP. Please try again or login with email.';
+            return ['success' => false, 'message' => $message];
         }
 
         return ['success' => true, 'message' => 'OTP sent to your WhatsApp.'];
@@ -68,9 +69,9 @@ class WhatsAppOtpService
 
     /**
      * Call AiSensy API to send WhatsApp template message with OTP.
-     * templateParams[0] = OTP code (match your template variable, e.g. {{1}}).
+     * Returns ['success' => bool, 'message' => string|null]. message is set on failure for UI.
      */
-    protected function sendViaApi(string $normalizedPhone, string $otp): bool
+    protected function sendViaApi(string $normalizedPhone, string $otp): array
     {
         $apiKey = config('services.aisensy.api_key');
         $campaignName = config('services.aisensy.campaign_name');
@@ -83,9 +84,10 @@ class WhatsAppOtpService
                 'campaign_name_value' => $campaignName ?: '(empty)',
                 'base_url' => $baseUrl,
             ]);
-            return false;
+            return ['success' => false, 'message' => 'WhatsApp OTP is not configured. Set AISENSY_API_KEY and AISENSY_CAMPAIGN_NAME in .env.'];
         }
 
+        // Campaign expects 1 param; same OTP is used for body {{1}} and copy-code button {{1}}.
         $payload = [
             'apiKey' => $apiKey,
             'campaignName' => $campaignName,
@@ -102,22 +104,34 @@ class WhatsAppOtpService
             ]);
             $response = Http::timeout(15)->post($baseUrl, $payload);
             if ($response->successful()) {
-                return true;
+                return ['success' => true, 'message' => null];
+            }
+
+            $body = $response->body();
+            $apiMessage = null;
+            if ($body) {
+                $decoded = json_decode($body, true);
+                if (isset($decoded['message']) && is_string($decoded['message'])) {
+                    $apiMessage = $decoded['message'];
+                }
             }
             Log::warning('WhatsApp OTP: API returned non-2xx', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $body,
                 'base_url' => $baseUrl,
                 'phone_last4' => substr($normalizedPhone, -4),
             ]);
-            return false;
+            $userMessage = $apiMessage
+                ? 'Could not send OTP: ' . $apiMessage
+                : 'Could not send OTP. Please try again or login with email.';
+            return ['success' => false, 'message' => $userMessage];
         } catch (\Throwable $e) {
             Log::error('WhatsApp OTP: request exception', [
                 'message' => $e->getMessage(),
                 'base_url' => $baseUrl,
                 'phone_last4' => substr($normalizedPhone, -4),
             ]);
-            return false;
+            return ['success' => false, 'message' => 'Could not send OTP. Please try again or login with email.'];
         }
     }
 }

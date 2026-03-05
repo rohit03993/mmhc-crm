@@ -70,6 +70,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{{ route('auth.academics-login') }}" title="College admin, faculty & students">
+                            <i class="fas fa-graduation-cap me-1"></i>
+                            Academics
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{{ route('auth.register') }}">
                             <i class="fas fa-user-plus me-1"></i>
                             Register

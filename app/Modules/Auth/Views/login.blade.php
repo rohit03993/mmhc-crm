@@ -1,6 +1,6 @@
 @extends('auth::layout')
 
-@section('title', 'Login - MMHC CRM')
+@section('title', ($academicsLogin ?? false) ? 'Academics login - MMHC CRM' : 'Login - MMHC CRM')
 
 @section('head')
 <style>
@@ -347,8 +347,15 @@
     <div class="login-card">
         <div class="login-card-header">
             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MED Miracle Health Care' }}" class="brand-logo">
-            <h2>Welcome Back</h2>
-            <p>Sign in to your account to continue</p>
+            @if(!empty($academicsLogin))
+                <h2>Academics portal</h2>
+                <p>Sign in for college admin, faculty & students. You'll go to the Academics dashboard.</p>
+                <p class="small text-muted mt-2 mb-0">Patients or caregivers? <a href="{{ route('auth.login') }}">Use main login</a>.</p>
+            @else
+                <h2>Welcome Back</h2>
+                <p>Sign in to your account to continue.</p>
+                <p class="small text-muted mt-2 mb-0">College admin, faculty or students? <a href="{{ route('auth.academics-login') }}">Academics login</a>.</p>
+            @endif
         </div>
 
         <div class="login-card-body">

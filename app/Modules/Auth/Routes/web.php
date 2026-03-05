@@ -19,6 +19,7 @@ Route::middleware(['web'])->group(function () {
     // Authentication Routes
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+        Route::get('/academics-login', [AuthController::class, 'showAcademicsLogin'])->name('academics-login');
         Route::post('/login', [AuthController::class, 'login'])->name('login.post')->middleware('throttle:5,1');
         Route::post('/send-login-otp', [AuthController::class, 'sendLoginOtp'])->name('send-login-otp')->middleware('throttle:5,1');
         Route::post('/verify-login-otp', [AuthController::class, 'verifyLoginOtp'])->name('verify-login-otp')->middleware('throttle:10,1');

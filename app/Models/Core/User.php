@@ -36,6 +36,7 @@ class User extends Authenticatable
         'reward_points',
         'upi_id',
         'qr_code_path',
+        'academic_institution_id',
     ];
 
     /**
@@ -107,6 +108,14 @@ class User extends Authenticatable
     public function isStaff()
     {
         return in_array($this->role, ['nurse', 'caregiver']);
+    }
+
+    /**
+     * Check if user has an academic module role (redirect to /academics after login).
+     */
+    public function hasAcademicRole(): bool
+    {
+        return in_array($this->role, ['super_admin', 'institution_admin', 'faculty', 'student']);
     }
 
     /**
@@ -206,6 +215,40 @@ class User extends Authenticatable
     public function staffPayments()
     {
         return $this->hasMany(\App\Modules\Payments\Models\StaffPayment::class, 'staff_id');
+    }
+
+    /**
+     * Academic institution (for institution_admin, faculty, student)
+     */
+    public function academicInstitution()
+    {
+        return $this->belongsTo(\App\Modules\Academics\Models\Institution::class, 'academic_institution_id');
+    }
+
+    /**
+     * Batches this user is assigned to (as student or faculty)
+     */
+    public function academicBatches()
+    {
+        return $this->belongsToMany(\App\Modules\Academics\Models\Batch::class, 'academic_batch_users', 'user_id', 'batch_id')
+            ->withPivot('type')
+            ->withTimestamps();
+    }
+
+    /**
+     * Academic assignment submissions (as student)
+     */
+    public function academicSubmissions()
+    {
+        return $this->hasMany(\App\Modules\Academics\Models\Submission::class, 'user_id');
+    }
+
+    /**
+     * Academic attendance records (as student)
+     */
+    public function academicAttendances()
+    {
+        return $this->hasMany(\App\Modules\Academics\Models\Attendance::class, 'user_id');
     }
 
     /**
