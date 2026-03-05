@@ -35,6 +35,8 @@ class AcademicDemoSeeder extends Seeder
             ]
         );
 
+        $defaultLocation = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
+
         // 2. Super Admin (academics)
         $superAdmin = User::firstOrCreate(
             ['email' => 'academic.super@themmhc.com'],
@@ -46,6 +48,7 @@ class AcademicDemoSeeder extends Seeder
                 'unique_id' => 'ACAD-SA-001',
                 'is_active' => true,
                 'email_verified_at' => now(),
+                'location' => $defaultLocation,
             ]
         );
         DB::table('users')->where('id', $superAdmin->id)->update(['password' => Hash::make($password)]);
@@ -62,6 +65,7 @@ class AcademicDemoSeeder extends Seeder
                 'academic_institution_id' => $institution->id,
                 'is_active' => true,
                 'email_verified_at' => now(),
+                'location' => $defaultLocation,
             ]
         );
         $instAdmin->update(['academic_institution_id' => $institution->id]);
@@ -80,6 +84,7 @@ class AcademicDemoSeeder extends Seeder
                 'qualification' => 'M.Sc Nursing',
                 'is_active' => true,
                 'email_verified_at' => now(),
+                'location' => $defaultLocation,
             ]
         );
         $faculty1->update(['academic_institution_id' => $institution->id]);
@@ -97,6 +102,7 @@ class AcademicDemoSeeder extends Seeder
                 'qualification' => 'M.Sc Anatomy',
                 'is_active' => true,
                 'email_verified_at' => now(),
+                'location' => $defaultLocation,
             ]
         );
         $faculty2->update(['academic_institution_id' => $institution->id]);
@@ -123,6 +129,7 @@ class AcademicDemoSeeder extends Seeder
                     'academic_institution_id' => $institution->id,
                     'is_active' => true,
                     'email_verified_at' => now(),
+                    'location' => $defaultLocation,
                 ]
             );
             $user->update(['academic_institution_id' => $institution->id]);
