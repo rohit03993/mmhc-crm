@@ -3,19 +3,21 @@
 namespace App\Modules\Academics\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Academics\Models\Batch;
+use App\Modules\Academics\Models\Institution;
 use App\Modules\Academics\Services\AcademicScoreService;
 use Illuminate\Support\Facades\Auth;
 
 class AcademicsDashboardController extends Controller
 {
     /**
-     * Academics landing page (role-based content later).
+     * Academics dashboard – role-based counts, student numbers, report links.
      */
     public function index()
     {
         $user = Auth::user();
-        $institutionsCount = \App\Modules\Academics\Models\Institution::count();
-        $batchesQuery = \App\Modules\Academics\Models\Batch::query();
+        $institutionsCount = Institution::count();
+        $batchesQuery = Batch::query();
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             $batchesQuery->forInstitution((int) $user->academic_institution_id);
         }
@@ -45,6 +47,9 @@ class AcademicsDashboardController extends Controller
         $fpi = 0;
         $icr = 0;
         $institutionsWithIcr = collect();
+        $totalStudentsCount = 0;
+        $institutionStudentsCount = 0;
+        $myStudentsCount = 0;
 
         if ($user->role === 'student') {
             $myAssignmentsQuery = \App\Modules\Academics\Models\Assignment::whereHas('topic.subject.batch.students', fn ($q) => $q->where('users.id', $user->id));
@@ -54,14 +59,22 @@ class AcademicsDashboardController extends Controller
             $spi = AcademicScoreService::getSpi($user);
         } elseif ($user->role === 'faculty') {
             $fpi = AcademicScoreService::getFpi($user);
+            $myStudentsCount = $this->facultyStudentsCount($user->id);
         } elseif ($user->role === 'institution_admin' && $user->academic_institution_id) {
-            $institution = \App\Modules\Academics\Models\Institution::find($user->academic_institution_id);
+            $institution = Institution::find($user->academic_institution_id);
             if ($institution) {
                 $icr = AcademicScoreService::getIcr($institution);
+                $institutionStudentsCount = $this->institutionStudentsCount($institution->id);
             }
         } elseif ($user->role === 'super_admin') {
-            $institutionsWithIcr = \App\Modules\Academics\Models\Institution::all()->map(function ($inst) {
-                return ['id' => $inst->id, 'name' => $inst->name, 'icr' => AcademicScoreService::getIcr($inst)];
+            $totalStudentsCount = $this->totalStudentsCount();
+            $institutionsWithIcr = Institution::all()->map(function ($inst) {
+                return [
+                    'id' => $inst->id,
+                    'name' => $inst->name,
+                    'icr' => AcademicScoreService::getIcr($inst),
+                    'students' => $this->institutionStudentsCount($inst->id),
+                ];
             });
         }
 
@@ -78,6 +91,46 @@ class AcademicsDashboardController extends Controller
             'fpi' => $fpi,
             'icr' => $icr,
             'institutionsWithIcr' => $institutionsWithIcr,
+            'totalStudentsCount' => $totalStudentsCount,
+            'institutionStudentsCount' => $institutionStudentsCount,
+            'myStudentsCount' => $myStudentsCount,
         ]);
+    }
+
+    protected function totalStudentsCount(): int
+    {
+        return (int) \DB::table('academic_batch_users')
+            ->where('type', 'student')
+            ->selectRaw('COUNT(DISTINCT user_id) as c')
+            ->value('c');
+    }
+
+    protected function institutionStudentsCount(int $institutionId): int
+    {
+        $batchIds = Batch::where('institution_id', $institutionId)->pluck('id');
+        if ($batchIds->isEmpty()) {
+            return 0;
+        }
+        return (int) \DB::table('academic_batch_users')
+            ->where('type', 'student')
+            ->whereIn('batch_id', $batchIds)
+            ->selectRaw('COUNT(DISTINCT user_id) as c')
+            ->value('c');
+    }
+
+    protected function facultyStudentsCount(int $facultyUserId): int
+    {
+        $batchIds = \DB::table('academic_batch_users')
+            ->where('user_id', $facultyUserId)
+            ->where('type', 'faculty')
+            ->pluck('batch_id');
+        if ($batchIds->isEmpty()) {
+            return 0;
+        }
+        return (int) \DB::table('academic_batch_users')
+            ->where('type', 'student')
+            ->whereIn('batch_id', $batchIds)
+            ->selectRaw('COUNT(DISTINCT user_id) as c')
+            ->value('c');
     }
 }

@@ -4,14 +4,14 @@
 @section('page-title', $title ?? 'Report')
 
 @section('content')
-<div class="container-fluid py-3 no-print">
+<div class="container-fluid py-3 py-md-4 no-print">
     @php
-        $query = request()->only(['type', 'institution_id', 'batch_id']);
+        $query = request()->only(['type', 'institution_id', 'batch_id', 'subject_id']);
         $downloadUrl = route('academics.reports.download', $query);
     @endphp
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap gap-2 mb-4">
         <h2 class="h5 mb-0">{{ $title ?? 'Report' }}</h2>
-        <div class="d-flex gap-2">
+        <div class="d-flex flex-wrap gap-2">
             <a href="{{ $downloadUrl }}" class="btn btn-outline-success"><i class="fas fa-download me-1"></i>Download CSV</a>
             <button type="button" class="btn btn-outline-secondary" onclick="window.print();"><i class="fas fa-print me-1"></i>Print / Save as PDF</button>
             <a href="{{ route('academics.reports.index') }}" class="btn btn-outline-secondary">Back to reports</a>
@@ -19,8 +19,50 @@
     </div>
 </div>
 
+@if(($reportType ?? '') === 'student_submission' && isset($reportInstitutions))
+<div class="container-fluid py-2 no-print">
+    <form method="GET" action="{{ route('academics.reports.show') }}" class="card shadow-sm mb-3">
+        <div class="card-body">
+            <input type="hidden" name="type" value="student_submission">
+            <div class="row g-2 align-items-end">
+                <div class="col-12 col-md-3">
+                    <label for="report_institution_id" class="form-label small mb-0">College</label>
+                    <select name="institution_id" id="report_institution_id" class="form-select form-select-sm">
+                        <option value="">All institutions</option>
+                        @foreach($reportInstitutions as $inst)
+                            <option value="{{ $inst->id }}" {{ request('institution_id') == $inst->id ? 'selected' : '' }}>{{ $inst->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label for="report_batch_id" class="form-label small mb-0">Batch</label>
+                    <select name="batch_id" id="report_batch_id" class="form-select form-select-sm">
+                        <option value="">All batches</option>
+                        @foreach($reportBatches as $b)
+                            <option value="{{ $b->id }}" {{ request('batch_id') == $b->id ? 'selected' : '' }}>{{ $b->name }} ({{ $b->institution->name ?? '—' }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label for="report_subject_id" class="form-label small mb-0">Subject</label>
+                    <select name="subject_id" id="report_subject_id" class="form-select form-select-sm">
+                        <option value="">All subjects</option>
+                        @foreach($reportSubjects as $sub)
+                            <option value="{{ $sub->id }}" {{ request('subject_id') == $sub->id ? 'selected' : '' }}>{{ $sub->name }} ({{ $sub->batch->name ?? '—' }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">Apply filters</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+@endif
+
 <div class="container-fluid py-3">
-    <div class="card">
+    <div class="card shadow-sm">
         <div class="card-body p-0">
             @if(empty($rows) || $rows->isEmpty())
                 <p class="text-muted p-4 mb-0">No data for this report with the selected filters.</p>
@@ -37,14 +79,27 @@
                         <tbody>
                             @foreach($rows as $row)
                             <tr>
-                                @foreach($row as $cell)
-                                    <td>{{ $cell }}</td>
+                                @foreach($row as $index => $cell)
+                                    <td>
+                                        @if(($reportType ?? '') === 'student_submission' && $index === 0)
+                                            <a href="{{ route('academics.reports.student', $row[7] ?? $cell) }}" class="text-primary fw-medium text-decoration-none">{{ $cell }}</a>
+                                        @elseif(($reportType ?? '') === 'student_submission' && $index === 7)
+                                            <a href="{{ route('academics.reports.student', $cell) }}" class="btn btn-sm btn-outline-primary">View full report</a>
+                                        @else
+                                            {{ $cell }}
+                                        @endif
+                                    </td>
                                 @endforeach
                             </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
+                @if(isset($paginator) && $paginator->hasPages())
+                <div class="p-3 border-top">
+                    {{ $paginator->withQueryString()->links() }}
+                </div>
+                @endif
             @endif
         </div>
     </div>

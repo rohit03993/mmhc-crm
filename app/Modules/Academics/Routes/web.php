@@ -81,6 +81,7 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::get('/', [ReportController::class, 'index'])->name('index');
         Route::get('/show', [ReportController::class, 'show'])->name('show');
         Route::get('/download', [ReportController::class, 'download'])->name('download');
+        Route::get('/student/{user}', [ReportController::class, 'studentReport'])->name('student')->whereNumber('user');
     });
 
     // Attendance: Mark (Super Admin, Institution Admin, Faculty)

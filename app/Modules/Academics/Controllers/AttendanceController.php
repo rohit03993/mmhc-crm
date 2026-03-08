@@ -5,6 +5,7 @@ namespace App\Modules\Academics\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Academics\Models\Attendance;
 use App\Modules\Academics\Models\Batch;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
@@ -97,7 +98,7 @@ class AttendanceController extends Controller
         $batch = Batch::findOrFail($validated['batch_id']);
         $this->authorizeBatch($batch);
         $date = $validated['date'];
-        $studentIds = $batch->students()->pluck('id')->toArray();
+        $studentIds = $batch->students()->pluck('users.id')->toArray();
         Attendance::where('batch_id', $batch->id)->where('date', $date)->delete();
         foreach ($validated['attendance'] as $userId => $status) {
             if (! in_array((int) $userId, $studentIds, true)) {
@@ -115,32 +116,84 @@ class AttendanceController extends Controller
             ->with('success', 'Attendance saved for ' . $date . '.');
     }
 
-    /** Student: view my attendance. */
-    public function myAttendance()
+    /** Student: view my attendance. Daily-wise stats for selected period. */
+    public function myAttendance(Request $request)
     {
         $user = auth()->user();
-        $attendances = Attendance::where('user_id', $user->id)
+        $period = $request->get('period', 'this_month');
+        if (! in_array($period, ['this_month', 'last_month', 'all'], true)) {
+            $period = 'this_month';
+        }
+        $dateRange = $this->attendanceDateRange($period);
+        $start = Carbon::parse($dateRange['start']);
+        $end = Carbon::parse($dateRange['end']);
+        $totalDays = $start->diffInDays($end) + 1;
+
+        $attendanceQuery = Attendance::where('user_id', $user->id)
             ->with('batch')
-            ->orderByDesc('date')
-            ->paginate(20);
-        $stats = $this->studentAttendanceStats($user->id);
-        return view('academics::attendance.my', compact('attendances', 'stats'));
+            ->whereBetween('date', [$dateRange['start'], $dateRange['end']])
+            ->orderByDesc('date');
+        $attendanceRows = $attendanceQuery->get();
+        $page = (int) $request->get('page', 1);
+        $perPage = 20;
+        $attendances = new \Illuminate\Pagination\LengthAwarePaginator(
+            $attendanceRows->forPage($page, $perPage)->values(),
+            $attendanceRows->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        $byDay = $attendanceRows->groupBy(fn ($r) => $r->date->format('Y-m-d'));
+        $presentDays = 0;
+        $leaveDays = 0;
+        for ($i = 0; $i <= $start->diffInDays($end); $i++) {
+            $day = $start->copy()->addDays($i)->format('Y-m-d');
+            $records = $byDay->get($day, collect());
+            if ($records->contains('status', Attendance::STATUS_PRESENT)) {
+                $presentDays++;
+            } elseif ($records->contains('status', Attendance::STATUS_LEAVE)) {
+                $leaveDays++;
+            }
+        }
+        $absentDays = $totalDays - $presentDays - $leaveDays;
+        $stats = [
+            'total' => $totalDays,
+            'present' => $presentDays,
+            'absent' => $absentDays,
+            'leave' => $leaveDays,
+            'percentage' => $totalDays > 0 ? (int) round(($presentDays / $totalDays) * 100) : 0,
+        ];
+
+        return view('academics::attendance.my', [
+            'attendances' => $attendances,
+            'stats' => $stats,
+            'currentPeriod' => $period,
+            'periodLabel' => $dateRange['label'],
+        ]);
     }
 
-    protected function studentAttendanceStats(int $userId): array
+    /** @return array{start: string, end: string, label: string} */
+    protected function attendanceDateRange(string $period): array
     {
-        $rows = Attendance::where('user_id', $userId)->get();
-        $total = $rows->count();
-        $present = $rows->where('status', Attendance::STATUS_PRESENT)->count();
-        $absent = $rows->where('status', Attendance::STATUS_ABSENT)->count();
-        $leave = $rows->where('status', Attendance::STATUS_LEAVE)->count();
-        $pct = $total > 0 ? (int) round(($present / $total) * 100) : 0;
-        return [
-            'total' => $total,
-            'present' => $present,
-            'absent' => $absent,
-            'leave' => $leave,
-            'percentage' => $pct,
-        ];
+        $now = now();
+        if ($period === 'this_month') {
+            return [
+                'start' => $now->copy()->startOfMonth()->format('Y-m-d'),
+                'end' => $now->copy()->format('Y-m-d'),
+                'label' => $now->format('F Y') . ' (this month)',
+            ];
+        }
+        if ($period === 'last_month') {
+            $last = $now->copy()->subMonth();
+            return [
+                'start' => $last->startOfMonth()->format('Y-m-d'),
+                'end' => $last->endOfMonth()->format('Y-m-d'),
+                'label' => $last->format('F Y') . ' (last month)',
+            ];
+        }
+        $end = $now->format('Y-m-d');
+        $start = $now->copy()->subYear()->startOfMonth()->format('Y-m-d');
+        return ['start' => $start, 'end' => $end, 'label' => 'Last 12 months'];
     }
 }

@@ -5,13 +5,23 @@
 
 @section('content')
 <div class="container-fluid py-3">
+    @if(isset($periodLabel))
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <p class="text-muted small mb-0">Attendance ({{ $periodLabel }})</p>
+        <div class="btn-group btn-group-sm" role="group">
+            <a href="{{ route('academics.attendance.my', ['period' => 'this_month']) }}" class="btn {{ ($currentPeriod ?? 'this_month') === 'this_month' ? 'btn-primary' : 'btn-outline-secondary' }}">This month</a>
+            <a href="{{ route('academics.attendance.my', ['period' => 'last_month']) }}" class="btn {{ ($currentPeriod ?? '') === 'last_month' ? 'btn-primary' : 'btn-outline-secondary' }}">Last month</a>
+            <a href="{{ route('academics.attendance.my', ['period' => 'all']) }}" class="btn {{ ($currentPeriod ?? '') === 'all' ? 'btn-primary' : 'btn-outline-secondary' }}">All time</a>
+        </div>
+    </div>
+    @endif
     @if(isset($stats))
     <div class="row g-3 mb-4">
         <div class="col-6 col-md">
             <div class="card bg-light">
                 <div class="card-body text-center">
                     <div class="h4 mb-0">{{ $stats['total'] }}</div>
-                    <small class="text-muted">Total sessions</small>
+                    <small class="text-muted">Days</small>
                 </div>
             </div>
         </div>
