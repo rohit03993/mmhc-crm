@@ -19,7 +19,7 @@
     </div>
 </div>
 
-@if(($reportType ?? '') === 'student_submission' && isset($reportInstitutions))
+@if(($reportType ?? '') === 'student_submission' && (isset($reportInstitutions) || isset($reportBatches)))
 <div class="container-fluid py-2 no-print">
     <form method="GET" action="{{ route('academics.reports.show') }}" class="card shadow-sm mb-3">
         <div class="card-body">
@@ -39,16 +39,7 @@
                     <select name="batch_id" id="report_batch_id" class="form-select form-select-sm">
                         <option value="">All batches</option>
                         @foreach($reportBatches as $b)
-                            <option value="{{ $b->id }}" {{ request('batch_id') == $b->id ? 'selected' : '' }}>{{ $b->name }} ({{ $b->institution->name ?? '—' }})</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-12 col-md-3">
-                    <label for="report_subject_id" class="form-label small mb-0">Subject</label>
-                    <select name="subject_id" id="report_subject_id" class="form-select form-select-sm">
-                        <option value="">All subjects</option>
-                        @foreach($reportSubjects as $sub)
-                            <option value="{{ $sub->id }}" {{ request('subject_id') == $sub->id ? 'selected' : '' }}>{{ $sub->name }} ({{ $sub->batch->name ?? '—' }})</option>
+                            <option value="{{ $b->id }}" data-institution-id="{{ $b->institution_id ?? '' }}" {{ request('batch_id') == $b->id ? 'selected' : '' }}>{{ $b->name }} ({{ $b->institution->name ?? '—' }})</option>
                         @endforeach
                     </select>
                 </div>
@@ -58,6 +49,22 @@
             </div>
         </div>
     </form>
+    <script>
+    (function() {
+        var col = document.getElementById('report_institution_id');
+        var batch = document.getElementById('report_batch_id');
+        if (!col || !batch) return;
+        function filterBatches() {
+            var instId = col.value || '';
+            [].slice.call(batch.options).forEach(function(opt) {
+                if (opt.value === '') { opt.style.display = ''; return; }
+                opt.style.display = (!instId || opt.getAttribute('data-institution-id') === instId) ? '' : 'none';
+            });
+        }
+        col.addEventListener('change', filterBatches);
+        filterBatches();
+    })();
+    </script>
 </div>
 @endif
 

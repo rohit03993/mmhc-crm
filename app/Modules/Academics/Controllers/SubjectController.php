@@ -3,18 +3,17 @@
 namespace App\Modules\Academics\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Core\User;
 use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Subject;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SubjectController extends Controller
 {
     protected function scopeBatches()
     {
         $user = auth()->user();
-        if ($user->role === 'super_admin') {
-            return Batch::with('institution');
-        }
         return Batch::with('institution')->forInstitution((int) $user->academic_institution_id);
     }
 
@@ -59,7 +58,11 @@ class SubjectController extends Controller
         $this->authorizeBatch($subject->batch_id);
         $subject->load(['batch.institution', 'faculty']);
         $batches = $this->scopeBatches()->active()->orderBy('name')->get();
-        $facultyAvailable = $subject->batch->faculty()->orderBy('name')->get();
+        $institutionId = (int) $subject->batch->institution_id;
+        $facultyAvailable = User::where('role', 'faculty')
+            ->where('academic_institution_id', $institutionId)
+            ->orderBy('name')
+            ->get();
         return view('academics::subjects.edit', compact('subject', 'batches', 'facultyAvailable'));
     }
 
@@ -88,12 +91,24 @@ class SubjectController extends Controller
     public function updateFaculty(Request $request, Subject $subject)
     {
         $this->authorizeBatch($subject->batch_id);
+        $institutionId = (int) $subject->batch->institution_id;
+        $allowedIds = User::where('role', 'faculty')
+            ->where('academic_institution_id', $institutionId)
+            ->pluck('id')
+            ->toArray();
         $request->validate([
             'faculty_ids' => 'nullable|array',
-            'faculty_ids.*' => 'exists:users,id',
+            'faculty_ids.*' => Rule::in($allowedIds),
         ]);
-        $facultyIds = $request->input('faculty_ids', []);
+        $facultyIds = array_values(array_intersect($request->input('faculty_ids', []), $allowedIds));
         $subject->faculty()->sync($facultyIds);
+
+        // Automatically add these faculty to the subject's batch so they appear in batch faculty list and counts
+        $batch = $subject->batch;
+        foreach ($facultyIds as $userId) {
+            $batch->users()->syncWithoutDetaching([$userId => ['type' => 'faculty']]);
+        }
+
         return redirect()->route('academics.subjects.edit', $subject)->with('success', 'Faculty assignment updated.');
     }
 

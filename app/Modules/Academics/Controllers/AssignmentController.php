@@ -14,9 +14,6 @@ class AssignmentController extends Controller
     protected function scopeSubjects()
     {
         $user = auth()->user();
-        if ($user->role === 'super_admin') {
-            return Subject::with('batch.institution')->active();
-        }
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             return Subject::with('batch.institution')->active()
                 ->whereHas('batch', fn ($q) => $q->where('institution_id', $user->academic_institution_id));

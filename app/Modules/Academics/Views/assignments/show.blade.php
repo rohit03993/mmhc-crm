@@ -39,7 +39,7 @@
                     </ul>
                 </div>
             @endif
-            @if(in_array(auth()->user()->role, ['super_admin', 'institution_admin', 'faculty']))
+            @if(in_array(auth()->user()->role, ['institution_admin', 'faculty']))
             <a href="{{ route('academics.assignments.submissions', $assignment) }}" class="btn btn-outline-info btn-sm">View submissions</a>
             @endif
             <a href="{{ route('academics.assignments.edit', $assignment) }}" class="btn btn-outline-primary btn-sm">Edit</a>

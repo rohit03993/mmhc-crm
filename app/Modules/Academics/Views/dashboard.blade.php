@@ -11,7 +11,7 @@
         @if(auth()->user()->role === 'super_admin')
             <p class="text-muted mb-0">Manage institutions and view all colleges’ progress and students.</p>
         @elseif(auth()->user()->role === 'institution_admin')
-            <p class="text-muted mb-0">Manage batches, subjects, and view your institution’s students and reports.</p>
+            <p class="text-muted mb-0">Manage batches, subjects, faculty, and view your institution’s students and reports.</p>
         @elseif(auth()->user()->role === 'faculty')
             <p class="text-muted mb-0">Manage your topics, assignments, and view your students and their reports.</p>
         @elseif(auth()->user()->role === 'student')
@@ -238,7 +238,7 @@
                 <div class="card-body text-center py-3">
                     <p class="mb-1 small text-muted">Batches</p>
                     <p class="h4 mb-0">{{ $batchesCount }}</p>
-                    <a href="{{ route('academics.batches.index') }}" class="btn btn-link btn-sm p-0 mt-1">Manage</a>
+                    <a href="{{ route('academics.reports.index') }}" class="btn btn-link btn-sm p-0 mt-1">Reports</a>
                 </div>
             </div>
         </div>
@@ -247,7 +247,7 @@
                 <div class="card-body text-center py-3">
                     <p class="mb-1 small text-muted">Subjects</p>
                     <p class="h4 mb-0">{{ $subjectsCount }}</p>
-                    <a href="{{ route('academics.subjects.index') }}" class="btn btn-link btn-sm p-0 mt-1">Manage</a>
+                    <a href="{{ route('academics.reports.index') }}" class="btn btn-link btn-sm p-0 mt-1">Reports</a>
                 </div>
             </div>
         </div>
@@ -256,7 +256,7 @@
                 <div class="card-body text-center py-3">
                     <p class="mb-1 small text-muted">Topics</p>
                     <p class="h4 mb-0">{{ $topicsCount }}</p>
-                    <a href="{{ route('academics.topics.index') }}" class="btn btn-link btn-sm p-0 mt-1">Manage</a>
+                    <a href="{{ route('academics.reports.index') }}" class="btn btn-link btn-sm p-0 mt-1">Reports</a>
                 </div>
             </div>
         </div>
@@ -265,7 +265,7 @@
                 <div class="card-body text-center py-3">
                     <p class="mb-1 small text-muted">Assignments</p>
                     <p class="h4 mb-0">{{ $assignmentsCount }}</p>
-                    <a href="{{ route('academics.assignments.index') }}" class="btn btn-link btn-sm p-0 mt-1">Manage</a>
+                    <a href="{{ route('academics.reports.index') }}" class="btn btn-link btn-sm p-0 mt-1">Reports</a>
                 </div>
             </div>
         </div>

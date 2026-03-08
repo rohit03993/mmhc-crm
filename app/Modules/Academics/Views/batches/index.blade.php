@@ -23,7 +23,7 @@
                                 <th>Institution</th>
                                 <th>Academic Year</th>
                                 <th>Students</th>
-                                <th>Faculty</th>
+                                <th title="Number of faculty assigned to this batch (Edit batch → Assign faculty to change)">Faculty</th>
                                 <th>Status</th>
                                 <th class="text-end">Actions</th>
                             </tr>
@@ -34,8 +34,8 @@
                                 <td>{{ $batch->name }}</td>
                                 <td>{{ $batch->institution->name ?? '—' }}</td>
                                 <td>{{ $batch->academic_year ?? '—' }}</td>
-                                <td>{{ $batch->students()->count() }}</td>
-                                <td>{{ $batch->faculty()->count() }}</td>
+                                <td>{{ $batch->students_count ?? 0 }}</td>
+                                <td>{{ $batch->faculty_count ?? 0 }}</td>
                                 <td>
                                     @if($batch->is_active)
                                         <span class="badge bg-success">Active</span>

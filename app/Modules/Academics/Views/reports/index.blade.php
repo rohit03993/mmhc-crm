@@ -46,7 +46,7 @@
                 </div>
                 @endif
                 @if($subjects->isNotEmpty())
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-4" id="subject_filter_wrapper" style="{{ request('type') === 'student_submission' ? 'display:none' : '' }}">
                     <label for="subject_id" class="form-label">Subject</label>
                     <select name="subject_id" id="subject_id" class="form-select">
                         <option value="">All subjects</option>
@@ -64,4 +64,17 @@
         </div>
     </div>
 </div>
+@if($subjects->isNotEmpty())
+<script>
+(function() {
+    var typeSel = document.getElementById('type');
+    var subjectWrap = document.getElementById('subject_filter_wrapper');
+    if (!typeSel || !subjectWrap) return;
+    function toggleSubject() {
+        subjectWrap.style.display = typeSel.value === 'student_submission' ? 'none' : '';
+    }
+    typeSel.addEventListener('change', toggleSubject);
+})();
+</script>
+@endif
 @endsection

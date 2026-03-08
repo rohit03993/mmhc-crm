@@ -98,7 +98,11 @@ class AttendanceController extends Controller
         $batch = Batch::findOrFail($validated['batch_id']);
         $this->authorizeBatch($batch);
         $date = $validated['date'];
-        $studentIds = $batch->students()->pluck('users.id')->toArray();
+        $studentIds = \DB::table('academic_batch_users')
+            ->where('batch_id', $batch->id)
+            ->where('type', 'student')
+            ->pluck('user_id')
+            ->toArray();
         Attendance::where('batch_id', $batch->id)->where('date', $date)->delete();
         foreach ($validated['attendance'] as $userId => $status) {
             if (! in_array((int) $userId, $studentIds, true)) {

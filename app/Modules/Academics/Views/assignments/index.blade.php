@@ -50,7 +50,7 @@
                                 <td>{{ count($a->attachments ?? []) }}</td>
                                 <td class="text-end">
                                     <a href="{{ route('academics.assignments.show', $a) }}" class="btn btn-sm btn-outline-secondary">View</a>
-                                    @if(in_array(auth()->user()->role, ['super_admin', 'institution_admin', 'faculty']))
+                                    @if(in_array(auth()->user()->role, ['institution_admin', 'faculty']))
                                     <a href="{{ route('academics.assignments.submissions', $a) }}" class="btn btn-sm btn-outline-info">Submissions</a>
                                     @endif
                                     <a href="{{ route('academics.assignments.edit', $a) }}" class="btn btn-sm btn-outline-secondary">Edit</a>

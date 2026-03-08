@@ -11,18 +11,8 @@
             <form action="{{ route('academics.batches.update', $batch) }}" method="POST">
                 @csrf
                 @method('PUT')
+                <input type="hidden" name="institution_id" value="{{ $batch->institution_id }}">
                 <div class="row g-3">
-                    @if(auth()->user()->role === 'super_admin')
-                    <div class="col-12">
-                        <label for="institution_id" class="form-label">Institution <span class="text-danger">*</span></label>
-                        <select name="institution_id" id="institution_id" class="form-select @error('institution_id') is-invalid @enderror" required>
-                            @foreach($institutions as $inst)
-                                <option value="{{ $inst->id }}" {{ old('institution_id', $batch->institution_id) == $inst->id ? 'selected' : '' }}>{{ $inst->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('institution_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    @endif
                     <div class="col-md-6">
                         <label for="name" class="form-label">Batch name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $batch->name) }}" required>
@@ -66,21 +56,31 @@
                 <div class="row g-4">
                     <div class="col-md-6">
                         <label class="form-label">Students in this batch</label>
-                        <select name="student_ids[]" class="form-select" multiple size="8">
-                            @foreach($studentsAvailable as $u)
-                                <option value="{{ $u->id }}" {{ $batch->students->contains('id', $u->id) ? 'selected' : '' }}>{{ $u->name }} ({{ $u->email }})</option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted">Ctrl/Cmd+click to select multiple</small>
+                        <div class="list-group list-group-flush border rounded" style="max-height: 280px; overflow-y: auto;">
+                            @forelse($studentsAvailable as $u)
+                                <label class="list-group-item list-group-item-action d-flex align-items-center gap-2 mb-0 cursor-pointer">
+                                    <input type="checkbox" name="student_ids[]" value="{{ $u->id }}" class="form-check-input flex-shrink-0" {{ $batch->students->contains('id', $u->id) ? 'checked' : '' }}>
+                                    <span class="flex-grow-1">{{ $u->name }}</span>
+                                    <small class="text-muted">{{ $u->email }}</small>
+                                </label>
+                            @empty
+                                <div class="list-group-item text-muted">No students available.</div>
+                            @endforelse
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Faculty in this batch</label>
-                        <select name="faculty_ids[]" class="form-select" multiple size="8">
-                            @foreach($facultyAvailable as $u)
-                                <option value="{{ $u->id }}" {{ $batch->faculty->contains('id', $u->id) ? 'selected' : '' }}>{{ $u->name }} ({{ $u->email }})</option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted">Ctrl/Cmd+click to select multiple</small>
+                        <div class="list-group list-group-flush border rounded" style="max-height: 280px; overflow-y: auto;">
+                            @forelse($facultyAvailable as $u)
+                                <label class="list-group-item list-group-item-action d-flex align-items-center gap-2 mb-0 cursor-pointer">
+                                    <input type="checkbox" name="faculty_ids[]" value="{{ $u->id }}" class="form-check-input flex-shrink-0" {{ $batch->faculty->contains('id', $u->id) ? 'checked' : '' }}>
+                                    <span class="flex-grow-1">{{ $u->name }}</span>
+                                    <small class="text-muted">{{ $u->email }}</small>
+                                </label>
+                            @empty
+                                <div class="list-group-item text-muted">No faculty in this institution. <a href="{{ route('academics.faculty.create') }}">Add faculty</a>.</div>
+                            @endforelse
+                        </div>
                     </div>
                 </div>
                 <div class="mt-3">

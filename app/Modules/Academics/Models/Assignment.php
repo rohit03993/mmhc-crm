@@ -38,7 +38,11 @@ class Assignment extends Model
         if (!$batch) {
             return [];
         }
-        return $batch->students()->pluck('users.id')->toArray();
+        return \DB::table('academic_batch_users')
+            ->where('batch_id', $batch->id)
+            ->where('type', 'student')
+            ->pluck('user_id')
+            ->toArray();
     }
 
     public function isPastDue(): bool

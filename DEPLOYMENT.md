@@ -232,15 +232,65 @@ tail -f /var/www/mmhc-crm/storage/logs/laravel.log
 - [ ] Cron jobs configured
 - [ ] Backup strategy in place
 
-## 🔄 Updates & Maintenance
+## 🔄 Pull Updates on VPS (After Pushing from Local)
 
-**To update the application:**
+Run these on the VPS in order (adjust path and branch if yours differ).
+
+**1. SSH into the VPS**
+```bash
+ssh user@your-vps-ip
+```
+
+**2. Go to the project**
 ```bash
 cd /var/www/mmhc-crm
+```
+(Use your actual path if different, e.g. `/var/www/html/mmhc-crm`.)
+
+**3. Put the app in maintenance (optional but recommended)**
+```bash
+php artisan down
+```
+
+**4. Pull latest code**
+```bash
 git pull origin main
+```
+(Use your branch name if not `main`, e.g. `git pull origin master`.)
+
+**5. Install/update PHP dependencies**
+```bash
 composer install --optimize-autoloader --no-dev
+```
+
+**6. Run migrations (new tables/columns)**
+```bash
 php artisan migrate --force
+```
+
+**7. Clear and rebuild caches**
+```bash
+php artisan config:clear
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+php artisan cache:clear
 ```
+
+**8. Bring the app back up**
+```bash
+php artisan up
+```
+
+**9. Fix permissions (if you see 500 or write errors)**
+```bash
+sudo chown -R www-data:www-data /var/www/mmhc-crm
+sudo chmod -R 775 /var/www/mmhc-crm/storage
+sudo chmod -R 775 /var/www/mmhc-crm/bootstrap/cache
+```
+
+**Optional (only when you need new demo/academic data):**
+```bash
+php artisan db:seed --class=AcademicDemoSeeder --force
+```
+(See `docs/academics-audit-and-server-checklist.md` for academics DB and migration notes.)

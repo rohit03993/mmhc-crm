@@ -49,23 +49,29 @@
     <div class="card">
         <div class="card-body">
             <h5 class="card-title mb-3">Assign faculty</h5>
-            <p class="text-muted small">Only faculty assigned to this batch can be assigned to the subject.</p>
+            <p class="text-muted small">Select who teaches this subject. All faculty belonging to this institution are listed. Add new faculty from <a href="{{ route('academics.faculty.index') }}">Faculty</a> if needed.</p>
             <form action="{{ route('academics.subjects.faculty.update', $subject) }}" method="POST">
                 @csrf
-                <div class="row g-3">
-                    <div class="col-12">
-                        <label class="form-label">Faculty for this subject</label>
-                        <select name="faculty_ids[]" class="form-select" multiple size="6">
+                <div class="col-12">
+                    @if($facultyAvailable->isEmpty())
+                        <p class="text-muted mb-0">No faculty in this institution yet. <a href="{{ route('academics.faculty.create') }}">Add faculty</a> first.</p>
+                    @else
+                        <div class="list-group list-group-flush border rounded">
                             @foreach($facultyAvailable as $u)
-                                <option value="{{ $u->id }}" {{ $subject->faculty->contains('id', $u->id) ? 'selected' : '' }}>{{ $u->name }} ({{ $u->email }})</option>
+                                <label class="list-group-item list-group-item-action d-flex align-items-center gap-2 mb-0 cursor-pointer">
+                                    <input type="checkbox" name="faculty_ids[]" value="{{ $u->id }}" class="form-check-input flex-shrink-0" {{ $subject->faculty->contains('id', $u->id) ? 'checked' : '' }}>
+                                    <span class="flex-grow-1">{{ $u->name }}</span>
+                                    <small class="text-muted">{{ $u->email }}</small>
+                                </label>
                             @endforeach
-                        </select>
-                        <small class="text-muted">Ctrl/Cmd+click to select multiple. If empty, assign faculty to the batch first.</small>
-                    </div>
+                        </div>
+                    @endif
                 </div>
+                @if($facultyAvailable->isNotEmpty())
                 <div class="mt-3">
                     <button type="submit" class="btn btn-primary">Update faculty</button>
                 </div>
+                @endif
             </form>
         </div>
     </div>

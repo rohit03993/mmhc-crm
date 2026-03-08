@@ -10,6 +10,7 @@ use App\Modules\Academics\Controllers\AssignmentController;
 use App\Modules\Academics\Controllers\AttendanceController;
 use App\Modules\Academics\Controllers\ReportController;
 use App\Modules\Academics\Controllers\SubmissionController;
+use App\Modules\Academics\Controllers\FacultyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,8 +31,8 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::delete('/{institution}', [InstitutionController::class, 'destroy'])->name('destroy');
     });
 
-    // Batch management (Super Admin + Institution Admin)
-    Route::middleware(['role:super_admin,institution_admin'])->prefix('batches')->name('batches.')->group(function () {
+    // Batch management (Institution Admin only – Super Admin does not create batches)
+    Route::middleware(['role:institution_admin'])->prefix('batches')->name('batches.')->group(function () {
         Route::get('/', [BatchController::class, 'index'])->name('index');
         Route::get('/create', [BatchController::class, 'create'])->name('create');
         Route::post('/', [BatchController::class, 'store'])->name('store');
@@ -41,8 +42,15 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::delete('/{batch}', [BatchController::class, 'destroy'])->name('destroy');
     });
 
-    // Subject management (Super Admin + Institution Admin)
-    Route::middleware(['role:super_admin,institution_admin'])->prefix('subjects')->name('subjects.')->group(function () {
+    // Faculty management (Institution Admin only – add faculty for their institution)
+    Route::middleware(['role:institution_admin'])->prefix('faculty')->name('faculty.')->group(function () {
+        Route::get('/', [FacultyController::class, 'index'])->name('index');
+        Route::get('/create', [FacultyController::class, 'create'])->name('create');
+        Route::post('/', [FacultyController::class, 'store'])->name('store');
+    });
+
+    // Subject management (Institution Admin only)
+    Route::middleware(['role:institution_admin'])->prefix('subjects')->name('subjects.')->group(function () {
         Route::get('/', [SubjectController::class, 'index'])->name('index');
         Route::get('/create', [SubjectController::class, 'create'])->name('create');
         Route::post('/', [SubjectController::class, 'store'])->name('store');
@@ -52,8 +60,8 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::delete('/{subject}', [SubjectController::class, 'destroy'])->name('destroy');
     });
 
-    // Topic management (Super Admin + Institution Admin + Faculty)
-    Route::middleware(['role:super_admin,institution_admin,faculty'])->prefix('topics')->name('topics.')->group(function () {
+    // Topic management (Institution Admin + Faculty)
+    Route::middleware(['role:institution_admin,faculty'])->prefix('topics')->name('topics.')->group(function () {
         Route::get('/', [TopicController::class, 'index'])->name('index');
         Route::get('/create', [TopicController::class, 'create'])->name('create');
         Route::post('/', [TopicController::class, 'store'])->name('store');
@@ -62,8 +70,8 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::delete('/{topic}', [TopicController::class, 'destroy'])->name('destroy');
     });
 
-    // Assignment management (Super Admin + Institution Admin + Faculty)
-    Route::middleware(['role:super_admin,institution_admin,faculty'])->prefix('assignments')->name('assignments.')->group(function () {
+    // Assignment management (Institution Admin + Faculty)
+    Route::middleware(['role:institution_admin,faculty'])->prefix('assignments')->name('assignments.')->group(function () {
         Route::get('/', [AssignmentController::class, 'index'])->name('index');
         Route::get('/create', [AssignmentController::class, 'create'])->name('create');
         Route::post('/', [AssignmentController::class, 'store'])->name('store');
@@ -84,8 +92,8 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::get('/student/{user}', [ReportController::class, 'studentReport'])->name('student')->whereNumber('user');
     });
 
-    // Attendance: Mark (Super Admin, Institution Admin, Faculty)
-    Route::middleware(['role:super_admin,institution_admin,faculty'])->prefix('attendance')->name('attendance.')->group(function () {
+    // Attendance: Mark (Institution Admin, Faculty – Super Admin does not mark attendance)
+    Route::middleware(['role:institution_admin,faculty'])->prefix('attendance')->name('attendance.')->group(function () {
         Route::get('/', [AttendanceController::class, 'index'])->name('index');
         Route::get('/mark', [AttendanceController::class, 'mark'])->name('mark');
         Route::post('/', [AttendanceController::class, 'store'])->name('store');

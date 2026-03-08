@@ -239,6 +239,7 @@
                             </li>
                             
                             @if(auth()->user()->hasAcademicRole())
+                            {{-- Super Admin: Institutions + Reports only (no batches, subjects, topics, assignments, attendance) --}}
                             @if(auth()->user()->role === 'super_admin')
                             <li class="nav-item">
                                 <a class="nav-link text-white {{ request()->routeIs('academics.institutions.*') ? 'active' : '' }}" href="{{ route('academics.institutions.index') }}">
@@ -246,8 +247,15 @@
                                     Institutions
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.reports.*') ? 'active' : '' }}" href="{{ route('academics.reports.index') }}">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Reports
+                                </a>
+                            </li>
                             @endif
-                            @if(in_array(auth()->user()->role, ['super_admin', 'institution_admin']))
+                            {{-- Institution Admin: Batches, Subjects, Topics, Assignments, Faculty, Reports, Mark attendance --}}
+                            @if(auth()->user()->role === 'institution_admin')
                             <li class="nav-item">
                                 <a class="nav-link text-white {{ request()->routeIs('academics.batches.*') ? 'active' : '' }}" href="{{ route('academics.batches.index') }}">
                                     <i class="fas fa-layer-group me-2"></i>
@@ -270,6 +278,12 @@
                                 <a class="nav-link text-white {{ request()->routeIs('academics.assignments.*') ? 'active' : '' }}" href="{{ route('academics.assignments.index') }}">
                                     <i class="fas fa-tasks me-2"></i>
                                     Assignments
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('academics.faculty.*') ? 'active' : '' }}" href="{{ route('academics.faculty.index') }}">
+                                    <i class="fas fa-chalkboard-teacher me-2"></i>
+                                    Faculty
                                 </a>
                             </li>
                             <li class="nav-item">

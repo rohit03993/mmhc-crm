@@ -187,13 +187,13 @@ class ReportController extends Controller
         $user = auth()->user();
         $this->applyScope($user, $institutionId, $batchId);
         $this->applySubjectScope($user, $subjectId);
+        $this->ensureSubjectBelongsToBatch($batchId, $subjectId);
 
         $data = $this->buildReportData($type, $institutionId, $batchId, $subjectId, $request, $user);
         $viewData = array_merge($data, ['reportType' => $type]);
-        if ($type === 'student_submission' && $user->role === 'super_admin') {
-            $viewData['reportInstitutions'] = Institution::orderBy('name')->get();
-            $viewData['reportBatches'] = Batch::with('institution')->orderBy('name')->get();
-            $viewData['reportSubjects'] = Subject::with('batch.institution')->orderBy('name')->get();
+        if ($type === 'student_submission') {
+            $viewData['reportInstitutions'] = $this->reportFilterInstitutions($user);
+            $viewData['reportBatches'] = $this->reportFilterBatches($user);
         }
         return view('academics::reports.show', $viewData);
     }
@@ -207,6 +207,7 @@ class ReportController extends Controller
         $user = auth()->user();
         $this->applyScope($user, $institutionId, $batchId);
         $this->applySubjectScope($user, $subjectId);
+        $this->ensureSubjectBelongsToBatch($batchId, $subjectId);
 
         $data = $this->buildReportData($type, $institutionId, $batchId, $subjectId, null, $user);
         $filename = 'academics_' . $type . '_' . date('Y-m-d') . '.csv';
@@ -257,6 +258,56 @@ class ReportController extends Controller
             ->all();
         $subject = Subject::find($subjectId);
         if (!$subject || !in_array((int) $subject->batch_id, array_map('intval', $facultyBatchIds), true)) {
+            $subjectId = null;
+        }
+    }
+
+    /** Institutions to show in Student Submission report filter (scoped by role). */
+    protected function reportFilterInstitutions($user): \Illuminate\Support\Collection
+    {
+        if ($user->role === 'super_admin') {
+            return Institution::orderBy('name')->get();
+        }
+        if ($user->role === 'institution_admin' && $user->academic_institution_id) {
+            return Institution::where('id', $user->academic_institution_id)->orderBy('name')->get();
+        }
+        if ($user->role === 'faculty') {
+            $batchIds = \DB::table('academic_batch_users')
+                ->where('user_id', $user->id)
+                ->where('type', 'faculty')
+                ->pluck('batch_id');
+            return Institution::whereIn('id', Batch::whereIn('id', $batchIds)->pluck('institution_id'))->orderBy('name')->get();
+        }
+        return collect();
+    }
+
+    /** Batches to show in Student Submission report filter (scoped by role). */
+    protected function reportFilterBatches($user): \Illuminate\Support\Collection
+    {
+        if ($user->role === 'super_admin') {
+            return Batch::with('institution')->orderBy('name')->get();
+        }
+        if ($user->role === 'institution_admin' && $user->academic_institution_id) {
+            return Batch::with('institution')->forInstitution((int) $user->academic_institution_id)->orderBy('name')->get();
+        }
+        if ($user->role === 'faculty') {
+            $batchIds = \DB::table('academic_batch_users')
+                ->where('user_id', $user->id)
+                ->where('type', 'faculty')
+                ->pluck('batch_id');
+            return Batch::with('institution')->whereIn('id', $batchIds)->orderBy('name')->get();
+        }
+        return collect();
+    }
+
+    /** When batch and subject are both set, subject must belong to that batch; otherwise clear subject to avoid wrong data. */
+    protected function ensureSubjectBelongsToBatch($batchId, &$subjectId): void
+    {
+        if (!$batchId || !$subjectId) {
+            return;
+        }
+        $subject = Subject::find($subjectId);
+        if (!$subject || (int) $subject->batch_id !== (int) $batchId) {
             $subjectId = null;
         }
     }
@@ -351,13 +402,6 @@ class ReportController extends Controller
                 if ($batchId) {
                     $studentIdsQuery->where('academic_batches.id', $batchId);
                 }
-                if ($subjectId) {
-                    $studentIdsQuery->whereExists(function ($q) use ($subjectId) {
-                        $q->select(\DB::raw(1))->from('academic_subjects')
-                            ->whereColumn('academic_subjects.batch_id', 'academic_batches.id')
-                            ->where('academic_subjects.id', $subjectId);
-                    });
-                }
                 $studentIds = $studentIdsQuery->pluck('user_id');
                 $studentsQuery = User::whereIn('id', $studentIds)->where('role', 'student')->orderBy('name');
                 $paginator = null;
@@ -373,10 +417,10 @@ class ReportController extends Controller
                 foreach ($students as $s) {
                     $batchQuery = $s->academicBatches()->with('institution');
                     if ($institutionId) {
-                        $batchQuery->where('institution_id', $institutionId);
+                        $batchQuery->where('academic_batches.institution_id', $institutionId);
                     }
                     if ($batchId) {
-                        $batchQuery->where('id', $batchId);
+                        $batchQuery->where('academic_batches.id', $batchId);
                     }
                     $studentBatches = $batchQuery->get();
                     $institutionNames = $studentBatches->pluck('institution.name')->unique()->filter()->join(', ') ?: '—';
@@ -388,9 +432,6 @@ class ReportController extends Controller
                     }
                     if ($batchId) {
                         $eligibleIds = Assignment::whereIn('id', $eligibleIds)->whereHas('topic.subject', fn ($q) => $q->where('batch_id', $batchId))->pluck('id')->toArray();
-                    }
-                    if ($subjectId) {
-                        $eligibleIds = Assignment::whereIn('id', $eligibleIds)->whereHas('topic.subject', fn ($q) => $q->where('id', $subjectId))->pluck('id')->toArray();
                     }
                     $submitted = empty($eligibleIds) ? 0 : Submission::where('user_id', $s->id)->whereIn('assignment_id', $eligibleIds)->count();
                     $total = count($eligibleIds);

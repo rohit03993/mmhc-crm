@@ -13,15 +13,17 @@ class BatchController extends Controller
     protected function scopeBatches()
     {
         $user = auth()->user();
-        if ($user->role === 'super_admin') {
-            return Batch::with('institution');
-        }
         return Batch::with('institution')->forInstitution((int) $user->academic_institution_id);
     }
 
     public function index()
     {
-        $batches = $this->scopeBatches()->orderBy('name')->paginate(15);
+        $table = (new Batch)->getTable();
+        $pivot = 'academic_batch_users';
+        $batches = $this->scopeBatches()
+            ->selectRaw("{$table}.*, (SELECT COUNT(*) FROM {$pivot} WHERE {$pivot}.batch_id = {$table}.id AND {$pivot}.type = ?) AS students_count, (SELECT COUNT(*) FROM {$pivot} WHERE {$pivot}.batch_id = {$table}.id AND {$pivot}.type = ?) AS faculty_count", ['student', 'faculty'])
+            ->orderBy('name')
+            ->paginate(15);
         return view('academics::batches.index', compact('batches'));
     }
 
@@ -65,6 +67,9 @@ class BatchController extends Controller
         }
         $studentsAvailable = User::where('role', 'student')->orderBy('name')->get();
         $facultyAvailable = User::where('role', 'faculty')->orderBy('name')->get();
+        if ($user->role === 'institution_admin' && $user->academic_institution_id) {
+            $facultyAvailable = $facultyAvailable->where('academic_institution_id', $user->academic_institution_id);
+        }
         return view('academics::batches.edit', compact('batch', 'institutions', 'studentsAvailable', 'facultyAvailable'));
     }
 
