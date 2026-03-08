@@ -143,7 +143,7 @@ Route::middleware(['auth'])->group(function () {
         
         // System Reset Routes (Danger Zone)
         Route::get('/system/reset', [\App\Modules\Auth\Controllers\SystemController::class, 'showResetPage'])->name('system.reset');
-        Route::post('/system/reset', [\App\Modules\Auth\Controllers\SystemController::class, 'resetSystem'])->name('system.reset');
+        Route::post('/system/reset', [\App\Modules\Auth\Controllers\SystemController::class, 'resetSystem'])->name('system.reset.store');
         
         // Service Management Routes
         Route::get('/service-requests', [\App\Modules\Services\Controllers\ServiceController::class, 'adminIndex'])->name('service-requests');

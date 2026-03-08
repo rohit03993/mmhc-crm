@@ -132,7 +132,7 @@
                     </div>
                     @endif
 
-                    <form action="{{ route('admin.system.reset') }}" method="POST" id="resetForm">
+                    <form action="{{ route('admin.system.reset.store') }}" method="POST" id="resetForm">
                         @csrf
 
                         <!-- Confirmation 1 -->
