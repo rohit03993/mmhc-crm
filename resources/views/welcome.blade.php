@@ -76,6 +76,45 @@
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         }
+
+        /* Achievements & Media: images from Admin → Achievements & Media only; large section */
+        .achievement-media-section {
+            margin-bottom: 4rem;
+        }
+        .achievement-media-inner {
+            width: 100%;
+        }
+        .achievement-media-carousel {
+            position: relative;
+            background: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: 1px solid #f3f4f6;
+            overflow: hidden;
+            min-height: 420px;
+            height: 520px;
+        }
+        .achievement-media-main-img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 0.5rem;
+        }
+        .achievement-media-thumb {
+            width: 100px;
+            height: 72px;
+            display: block;
+            background: #f3f4f6;
+        }
+        @media (min-width: 768px) {
+            .achievement-media-carousel { min-height: 480px; height: 560px; }
+            .achievement-media-thumb { width: 120px; height: 84px; }
+        }
+        @media (max-width: 767px) {
+            .achievement-media-carousel { min-height: 340px; height: 400px; }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -577,11 +616,11 @@
                 </div>
             </div>
 
-            <!-- Achievements & Media Coverage (carousel) -->
+            <!-- Achievements & Media Coverage: only images added in Admin → Achievements & Media (no logo) -->
             @if(isset($achievementMedia) && $achievementMedia->isNotEmpty())
-            <div id="achievement-media" class="mb-20 scroll-mt-24">
-                <h3 class="text-3xl font-bold text-gray-800 text-center mb-12">Achievements & Media Coverage</h3>
-                <div class="max-w-7xl mx-auto px-2"
+            <div id="achievement-media" class="achievement-media-section scroll-mt-24">
+                <h3 class="text-3xl font-bold text-gray-800 text-center mb-8">Achievements & Media Coverage</h3>
+                <div class="max-w-7xl mx-auto px-2 achievement-media-inner"
                      x-data="{
                          active: 0,
                          total: {{ $achievementMedia->count() }},
@@ -589,7 +628,7 @@
                          prev() { this.active = (this.active - 1 + this.total) % this.total }
                      }"
                      x-init="const advance = () => $data.next(); setInterval(advance, 5000)">
-                    <div class="relative bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 min-h-[420px] md:min-h-[520px] flex items-center">
+                    <div class="achievement-media-carousel">
                         @foreach($achievementMedia as $index => $item)
                         <div x-show="active === {{ $index }}"
                              x-transition:enter="transition ease-out duration-300"
@@ -598,23 +637,25 @@
                              x-transition:leave="transition ease-in duration-200"
                              x-transition:leave-start="opacity-100"
                              x-transition:leave-end="opacity-0"
-                             class="absolute inset-0 flex items-center justify-center p-4">
-                            <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#f3f4f6" width="400" height="300"/><text fill="#9ca3af" font-family="sans-serif" font-size="18" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">No image</text></svg>') }}" alt="{{ $item->caption ?? 'Achievement' }}" class="max-w-full max-h-[400px] md:max-h-[540px] w-auto h-auto object-contain rounded-lg">
+                             class="absolute inset-0 flex items-center justify-center p-3">
+                            <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#f3f4f6" width="400" height="300"/><text fill="#9ca3af" font-family="sans-serif" font-size="18" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">No image</text></svg>') }}" alt="{{ $item->caption ?? 'Achievement' }}" class="achievement-media-main-img">
                             @if($item->caption)
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-6 py-4 rounded-b-2xl">
-                                <p class="text-white font-medium text-center">{{ $item->caption }}</p>
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-2 rounded-b-2xl">
+                                <p class="text-white font-medium text-sm text-center">{{ $item->caption }}</p>
                             </div>
                             @endif
                         </div>
                         @endforeach
                     </div>
-                    <div class="flex items-center justify-center gap-4 mt-4">
+                    <div class="flex items-center justify-center gap-3 mt-4">
                         <button @click="prev()" class="p-2 rounded-full bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-600 transition" aria-label="Previous">
                             <i class="fas fa-chevron-left"></i>
                         </button>
-                        <div class="flex gap-2 items-center">
+                        <div class="flex gap-2 items-center flex-wrap justify-center">
                             @foreach($achievementMedia as $index => $item)
-                            <button @click="active = {{ $index }}" :class="active === {{ $index }} ? 'bg-blue-600 w-8' : 'bg-gray-300 w-2'" class="h-2 rounded-full transition-all" aria-label="Go to slide {{ $index + 1 }}"></button>
+                            <button @click="active = {{ $index }}" :class="active === {{ $index }} ? 'ring-2 ring-blue-600 ring-offset-1' : 'opacity-70 hover:opacity-100'" class="achievement-media-thumb rounded-lg overflow-hidden border border-gray-200 flex-shrink-0 transition" aria-label="Go to slide {{ $index + 1 }}">
+                                <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="60" viewBox="0 0 80 60"><rect fill="#f3f4f6" width="80" height="60"/></svg>') }}" alt="" class="w-full h-full object-cover pointer-events-none">
+                            </button>
                             @endforeach
                         </div>
                         <button @click="next()" class="p-2 rounded-full bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-600 transition" aria-label="Next">

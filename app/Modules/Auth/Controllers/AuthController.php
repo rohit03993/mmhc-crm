@@ -53,7 +53,8 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
 
-        return view('auth::login', ['academicsLogin' => true]);
+        $achievementMedia = \App\Models\AchievementMedia::ordered()->get();
+        return view('auth::login', ['academicsLogin' => true, 'achievementMedia' => $achievementMedia]);
     }
 
     /**

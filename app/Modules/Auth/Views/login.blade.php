@@ -339,176 +339,401 @@
             font-size: 1.5rem;
         }
     }
+
+    /* Academics portal: no page scroll, fit viewport, image on left */
+    body:has(.academics-login-wrapper),
+    html:has(.academics-login-wrapper) {
+        overflow: hidden !important;
+        height: 100% !important;
+    }
+    .academics-login-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 100vh;
+        max-height: 100vh;
+        display: flex;
+        background: #f8fafc;
+        z-index: 10;
+        overflow: hidden;
+    }
+    .academics-login-left {
+        flex: 0 0 50%;
+        background: linear-gradient(165deg, #1e3a5f 0%, #2d4a6f 50%, #1e3a5f 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 2rem;
+        min-height: 0;
+        overflow: hidden;
+    }
+    .academics-login-left-inner {
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .academics-left-featured {
+        background: rgba(255,255,255,0.08);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    .academics-left-slides {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+    }
+    .academics-left-slide {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        pointer-events: none;
+    }
+    .academics-left-slide.academics-slide-active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .academics-left-featured-img {
+        width: 100%;
+        height: 100%;
+        min-height: 38vh;
+        flex: 1;
+        object-fit: cover;
+        display: block;
+    }
+    .academics-left-featured-caption {
+        padding: 0.75rem 1rem;
+        color: #fff;
+        text-align: center;
+        flex-shrink: 0;
+    }
+    .academics-left-featured-caption .name { font-size: 1rem; font-weight: 700; display: block; }
+    .academics-left-featured-caption .sub { font-size: 0.8rem; opacity: 0.9; }
+    .academics-left-thumbs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .academics-left-thumb-card {
+        flex: 0 0 calc(25% - 0.5rem);
+        max-width: calc(25% - 0.5rem);
+        background: rgba(255,255,255,0.08);
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    }
+    .academics-thumb-btn {
+        cursor: pointer;
+        padding: 0;
+        border: none;
+        text-align: left;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .academics-thumb-btn:hover { transform: scale(1.03); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .academics-thumb-btn.active { border-color: rgba(255,255,255,0.8); box-shadow: 0 0 0 2px rgba(255,255,255,0.4); }
+    .academics-left-thumb-card img {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        display: block;
+    }
+    .academics-left-thumb-card .name {
+        padding: 0.5rem 0.35rem;
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-align: center;
+        line-height: 1.2;
+    }
+    @media (min-width: 992px) {
+        .academics-left-thumb-card img { aspect-ratio: 4/3; }
+        .academics-left-thumb-card { flex: 0 0 calc(25% - 0.5rem); max-width: calc(25% - 0.5rem); }
+    }
+    @media (max-width: 400px) {
+        .academics-left-thumb-card { flex: 0 0 calc(50% - 0.25rem); max-width: calc(50% - 0.25rem); }
+    }
+    .academics-login-left-img-wrap {
+        background: rgba(255,255,255,0.95);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 120px;
+        border: 2px solid rgba(255,255,255,0.3);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .academics-login-left-img { max-width: 100%; max-height: 22vh; width: auto; height: auto; object-fit: contain; display: block; }
+    .academics-login-left-img-placeholder { text-align: center; color: #1e3a5f; padding: 1rem; }
+    .academics-placeholder-icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; opacity: 0.9; }
+    .academics-placeholder-text { font-size: 1rem; font-weight: 600; }
+    .academics-hero-block {
+        color: #fff;
+        margin-bottom: 1.25rem;
+    }
+    .academics-hero-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.35rem;
+        letter-spacing: -0.02em;
+    }
+    .academics-hero-sub {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 1.25rem;
+    }
+    .academics-hero-desc {
+        font-size: 0.95rem;
+        line-height: 1.6;
+        opacity: 0.85;
+    }
+    .academics-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .academics-badge {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+        padding: 0.4rem 0.9rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .academics-login-right {
+        flex: 0 0 50%;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.25rem 2rem;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .academics-login-right-inner {
+        width: 100%;
+        max-width: 400px;
+        flex-shrink: 0;
+    }
+    .academics-logo {
+        max-width: 140px;
+        height: auto;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .academics-portal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.35rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 3px solid #0ea5e9;
+        display: inline-block;
+    }
+    .academics-portal-desc {
+        color: #64748b;
+        font-size: 0.875rem;
+        margin-bottom: 0.35rem;
+    }
+    .academics-main-login {
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+    }
+    .academics-main-login a {
+        color: #0ea5e9;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .academics-main-login a:hover { text-decoration: underline; }
+    .academics-form-wrap .login-tabs .nav-link.active {
+        background: #0ea5e9;
+        color: #fff;
+    }
+    .academics-form-wrap .btn-login {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.35);
+    }
+    .academics-form-wrap .btn-login:hover {
+        box-shadow: 0 6px 20px rgba(14, 165, 233, 0.45);
+    }
+    .academics-form-wrap .form-floating-modern input:focus {
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+    }
+    .academics-form-wrap .forgot-password-link { color: #0ea5e9; }
+    .academics-form-wrap .signup-link a { color: #0ea5e9; }
+    .academics-login-footer {
+        margin-top: 1.25rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e2e8f0;
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+    .academics-login-footer a {
+        color: #0ea5e9;
+        text-decoration: none;
+        margin-left: 0.5rem;
+    }
+    .academics-login-footer a:hover { text-decoration: underline; }
+    .academics-powered {
+        margin-top: 0.5rem;
+        margin-bottom: 0;
+    }
+    @media (max-width: 991px) {
+        .academics-login-wrapper { flex-direction: column; }
+        .academics-login-left { flex: none; min-height: 0; max-height: 50vh; padding: 1rem; overflow-y: auto; }
+        .academics-left-featured { flex: none; }
+        .academics-left-featured-img { min-height: 180px; height: 28vh; flex: none; }
+        .academics-left-thumb-card .name { font-size: 0.65rem; }
+        .academics-login-left-img-wrap { min-height: 90px; padding: 0.75rem; margin-bottom: 0.75rem; }
+        .academics-login-left-img { max-height: 16vh; }
+        .academics-hero-title { font-size: 1.35rem; }
+        .academics-hero-sub, .academics-hero-desc { font-size: 0.85rem; }
+        .academics-login-right { padding: 1rem 1.25rem; }
+    }
+    /* Fallback when :has() not supported - use JS to add class */
+    body.academics-login-page,
+    body.academics-login-page html { overflow: hidden !important; height: 100% !important; }
 </style>
 @endsection
 
 @section('content')
+@if(!empty($academicsLogin))
+{{-- Academics portal: Sharda-style two-column layout (presentation only; same form/functionality) --}}
+<div class="academics-login-wrapper">
+    <div class="academics-login-left">
+        <div class="academics-login-left-inner">
+            @if(isset($achievementMedia) && $achievementMedia->isNotEmpty())
+            {{-- Carousel: same images as Achievements & Media Coverage – slides one after another --}}
+            <div class="academics-left-featured" id="academicsLeftCarousel" data-total="{{ $achievementMedia->count() }}">
+                <div class="academics-left-slides">
+                    @foreach($achievementMedia as $index => $item)
+                    <div class="academics-left-slide {{ $index === 0 ? 'academics-slide-active' : '' }}" data-academics-slide="{{ $index }}">
+                        <img src="{{ storage_asset($item->image_path) ?? '#' }}" alt="{{ $item->caption ?? 'Achievement' }}" class="academics-left-featured-img" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22 viewBox=%220 0 400 200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22400%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 font-size=%2216%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22%3EAchievement%3C/text%3E%3C/svg%3E';">
+                        <div class="academics-left-featured-caption">
+                            <span class="name">{{ $item->caption ?? 'Achievements & Media' }}</span>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            <div class="academics-left-thumbs" id="academicsLeftThumbs">
+                @foreach($achievementMedia->take(6) as $index => $item)
+                <button type="button" class="academics-left-thumb-card academics-thumb-btn {{ $index === 0 ? 'active' : '' }}" data-academics-goto="{{ $index }}" aria-label="Go to slide {{ $index + 1 }}">
+                    <img src="{{ storage_asset($item->image_path) ?? '#' }}" alt="" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22100%22 height=%22100%22/%3E%3C/svg%3E';">
+                    <div class="name">{{ Str::limit($item->caption ?? 'Media', 12) }}</div>
+                </button>
+                @endforeach
+            </div>
+            @else
+            <div class="academics-login-left-img-wrap">
+                <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="academics-login-left-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <div class="academics-login-left-img-placeholder" style="display:none;" aria-hidden="true">
+                    <span class="academics-placeholder-icon"><i class="fas fa-graduation-cap"></i></span>
+                    <span class="academics-placeholder-text">Academic Portal</span>
+                </div>
+            </div>
+            <div class="academics-hero-block">
+                <h3 class="academics-hero-title">MeD Miracle Health Care</h3>
+                <p class="academics-hero-sub">Academic Portal</p>
+                <p class="academics-hero-desc">For college administrators, faculty &amp; students. Sign in to access your dashboard, assignments and reports.</p>
+            </div>
+            <div class="academics-badges">
+                <span class="academics-badge">Academic Portal</span>
+            </div>
+            @endif
+        </div>
+    </div>
+    <div class="academics-login-right">
+        <div class="academics-login-right-inner">
+            <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="academics-logo">
+            <h1 class="academics-portal-title">Academics portal</h1>
+            <p class="academics-portal-desc">Sign in for college admin, faculty &amp; students. You'll go to the Academics dashboard.</p>
+            <p class="academics-main-login">Patients or caregivers? <a href="{{ route('auth.login') }}">Use main login</a>.</p>
+            <div class="academics-form-wrap">
+                @include('auth::partials.login-form')
+            </div>
+            <footer class="academics-login-footer">
+                <span>©{{ date('Y') }}, MeD Miracle Academic Portal</span>
+                <a href="{{ url('/') }}">{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}</a>
+                <p class="academics-powered">Powered by <strong>MeD Miracle</strong></p>
+            </footer>
+        </div>
+    </div>
+</div>
+@else
 <div class="auth-page-wrapper">
     <div class="login-card">
         <div class="login-card-header">
             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MED Miracle Health Care' }}" class="brand-logo">
-            @if(!empty($academicsLogin))
-                <h2>Academics portal</h2>
-                <p>Sign in for college admin, faculty & students. You'll go to the Academics dashboard.</p>
-                <p class="small text-muted mt-2 mb-0">Patients or caregivers? <a href="{{ route('auth.login') }}">Use main login</a>.</p>
-            @else
-                <h2>Welcome Back</h2>
-                <p>Sign in to your account to continue.</p>
-                <p class="small text-muted mt-2 mb-0">College admin, faculty or students? <a href="{{ route('auth.academics-login') }}">Academics login</a>.</p>
-            @endif
+            <h2>Welcome Back</h2>
+            <p>Sign in to your account to continue.</p>
+            <p class="small text-muted mt-2 mb-0">College admin, faculty or students? <a href="{{ route('auth.academics-login') }}">Academics login</a>.</p>
         </div>
-
         <div class="login-card-body">
-            @if($errors->any())
-                <div class="alert-modern">
-                    <ul>
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-            @if(session('success_otp'))
-                <div class="alert alert-success py-2 small">{{ session('success_otp') }}</div>
-            @endif
-
-            <ul class="nav nav-pills nav-fill mb-3 login-tabs" id="loginTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link {{ (session('login_tab') !== 'phone') ? 'active' : '' }}" id="tab-email" data-bs-toggle="pill" data-bs-target="#pane-email" type="button" role="tab">Email</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link {{ (session('login_tab') === 'phone') ? 'active' : '' }}" id="tab-phone" data-bs-toggle="pill" data-bs-target="#pane-phone" type="button" role="tab">Phone (WhatsApp OTP)</button>
-                </li>
-            </ul>
-
-            <div class="tab-content" id="loginTabContent">
-                <div class="tab-pane fade {{ (session('login_tab') !== 'phone') ? 'show active' : '' }}" id="pane-email" role="tabpanel">
-                    <form method="POST" action="{{ route('auth.login.post') }}" id="loginForm">
-                        @csrf
-                        <div class="form-floating-modern">
-                            <label for="email">Email Address</label>
-                            <div style="position: relative;">
-                                <i class="fas fa-envelope input-icon"></i>
-                                <input type="email" 
-                                       class="form-control @error('email') is-invalid @enderror" 
-                                       id="email" 
-                                       name="email" 
-                                       value="{{ old('email') }}" 
-                                       placeholder="Enter your email address"
-                                       required 
-                                       autofocus>
-                            </div>
-                            @error('email')
-                                <div class="invalid-feedback d-block mt-1">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="form-floating-modern">
-                            <label for="password">Password</label>
-                            <div style="position: relative;">
-                                <i class="fas fa-lock input-icon"></i>
-                                <input type="password" 
-                                       class="form-control @error('password') is-invalid @enderror" 
-                                       id="password" 
-                                       name="password" 
-                                       placeholder="Enter your password"
-                                       required>
-                                <button type="button" class="password-toggle" onclick="togglePassword()">
-                                    <i class="fas fa-eye" id="passwordToggleIcon"></i>
-                                </button>
-                            </div>
-                            @error('password')
-                                <div class="invalid-feedback d-block mt-1">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="remember-me-container">
-                            <div class="form-check-modern">
-                                <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                                <label class="form-check-label" for="remember">Remember me</label>
-                            </div>
-                            <a href="#" class="forgot-password-link">Forgot Password?</a>
-                        </div>
-
-                        <button type="submit" class="btn btn-login">
-                            <i class="fas fa-sign-in-alt me-2"></i>
-                            Sign In
-                        </button>
-                    </form>
-                </div>
-
-                <div class="tab-pane fade {{ (session('login_tab') === 'phone') ? 'show active' : '' }}" id="pane-phone" role="tabpanel">
-                    @if(session('otp_sent'))
-                        <form method="POST" action="{{ route('auth.verify-login-otp') }}" id="verifyOtpForm">
-                            @csrf
-                            <input type="hidden" name="phone" value="{{ old('phone', session('otp_phone')) }}">
-                            <div class="form-floating-modern">
-                                <label for="otp">6-digit OTP (sent on WhatsApp)</label>
-                                <div style="position: relative;">
-                                    <i class="fas fa-key input-icon"></i>
-                                    <input type="text" 
-                                           inputmode="numeric" 
-                                           pattern="[0-9]{6}" 
-                                           maxlength="6"
-                                           class="form-control @error('otp') is-invalid @enderror" 
-                                           id="otp" 
-                                           name="otp" 
-                                           value="{{ old('otp') }}" 
-                                           placeholder="000000"
-                                           required 
-                                           autocomplete="one-time-code">
-                                </div>
-                                @error('otp')
-                                    <div class="invalid-feedback d-block mt-1">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <p class="small text-muted mb-2">Number: +91 {{ session('otp_phone') }}</p>
-                            <button type="submit" class="btn btn-login w-100">
-                                <i class="fas fa-check me-2"></i>Verify & Sign In
-                            </button>
-                            <a href="{{ route('auth.login') }}" class="btn btn-outline-secondary btn-sm w-100 mt-2">Use different number</a>
-                        </form>
-                    @else
-                        <form method="POST" action="{{ route('auth.send-login-otp') }}" id="phoneOtpForm">
-                            @csrf
-                            <div class="form-floating-modern">
-                                <label for="login_phone">Mobile Number</label>
-                                <div style="position: relative;">
-                                    <span class="input-icon" style="left: 14px;">+91</span>
-                                    <input type="tel" 
-                                           class="form-control @error('phone') is-invalid @enderror" 
-                                           id="login_phone" 
-                                           name="phone" 
-                                           value="{{ old('phone') }}" 
-                                           placeholder="9876543210"
-                                           maxlength="10"
-                                           pattern="[6-9][0-9]{9}"
-                                           required>
-                                </div>
-                                @error('phone')
-                                    <div class="invalid-feedback d-block mt-1">{{ $message }}</div>
-                                @enderror
-                                <small class="text-muted">OTP will be sent to this number on WhatsApp</small>
-                            </div>
-                            <button type="submit" class="btn btn-login w-100">
-                                <i class="fab fa-whatsapp me-2"></i>Send OTP on WhatsApp
-                            </button>
-                        </form>
-                    @endif
-                </div>
-            </div>
-
-            <div class="signup-link">
-                <p>
-                    Don't have an account? 
-                    <a href="{{ route('auth.register') }}">Sign up here</a>
-                </p>
-            </div>
+            @include('auth::partials.login-form')
         </div>
     </div>
 </div>
+@endif
 
 <script>
+(function() {
+    var w = document.querySelector('.academics-login-wrapper');
+    if (w) { document.body.classList.add('academics-login-page'); }
+})();
+
+(function() {
+    var carousel = document.getElementById('academicsLeftCarousel');
+    if (!carousel) return;
+    var slides = carousel.querySelectorAll('.academics-left-slide');
+    var total = slides.length;
+    if (total <= 1) return;
+    var current = 0;
+    var interval = 5000;
+
+    function goToSlide(index) {
+        current = (index + total) % total;
+        slides.forEach(function(s, i) {
+            s.classList.toggle('academics-slide-active', i === current);
+        });
+        var thumbs = document.querySelectorAll('#academicsLeftThumbs .academics-thumb-btn');
+        thumbs.forEach(function(t, i) {
+            t.classList.toggle('active', i === current);
+        });
+    }
+
+    var tid = setInterval(function() { goToSlide(current + 1); }, interval);
+
+    document.getElementById('academicsLeftThumbs') && document.getElementById('academicsLeftThumbs').addEventListener('click', function(e) {
+        var btn = e.target.closest('.academics-thumb-btn');
+        if (!btn || btn.getAttribute('data-academics-goto') === null) return;
+        goToSlide(parseInt(btn.getAttribute('data-academics-goto'), 10));
+        clearInterval(tid);
+        tid = setInterval(function() { goToSlide(current + 1); }, interval);
+    });
+})();
+
 function togglePassword() {
     const passwordInput = document.getElementById('password');
     const passwordToggleIcon = document.getElementById('passwordToggleIcon');
