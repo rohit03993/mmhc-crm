@@ -367,28 +367,34 @@
         justify-content: center;
         padding: 1.5rem 2rem;
         min-height: 0;
-        overflow: hidden;
+        overflow-y: auto;
+        overflow-x: hidden;
     }
     .academics-login-left-inner {
         width: 100%;
         max-width: 100%;
-        height: 100%;
+        min-height: min-content;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        gap: 1rem;
     }
     .academics-left-featured {
         background: rgba(255,255,255,0.08);
         border-radius: 12px;
         overflow: hidden;
-        margin-bottom: 1rem;
+        margin-bottom: 0;
         border: 1px solid rgba(255,255,255,0.2);
         box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-        flex: 1;
-        min-height: 0;
+        flex: 0 0 auto;
+        min-height: 52vh;
         display: flex;
         flex-direction: column;
         position: relative;
+    }
+    .academics-left-featured .academics-left-slides {
+        border-radius: 12px;
+        overflow: hidden;
     }
     .academics-left-slides {
         position: relative;
@@ -411,10 +417,12 @@
     .academics-left-featured-img {
         width: 100%;
         height: 100%;
-        min-height: 38vh;
+        min-height: 42vh;
         flex: 1;
-        object-fit: cover;
+        object-fit: contain;
+        object-position: center;
         display: block;
+        background: rgba(0,0,0,0.15);
     }
     .academics-left-featured-caption {
         padding: 0.75rem 1rem;
@@ -452,8 +460,10 @@
     .academics-left-thumb-card img {
         width: 100%;
         aspect-ratio: 1;
-        object-fit: cover;
+        object-fit: contain;
+        object-position: center;
         display: block;
+        background: rgba(0,0,0,0.1);
     }
     .academics-left-thumb-card .name {
         padding: 0.5rem 0.35rem;
@@ -464,8 +474,11 @@
         line-height: 1.2;
     }
     @media (min-width: 992px) {
-        .academics-left-thumb-card img { aspect-ratio: 4/3; }
+        .academics-left-thumb-card img { aspect-ratio: 4/3; object-fit: contain; }
         .academics-left-thumb-card { flex: 0 0 calc(25% - 0.5rem); max-width: calc(25% - 0.5rem); }
+    }
+    @media (max-width: 991px) {
+        .academics-left-thumb-card { flex: 0 0 calc(50% - 0.35rem); max-width: calc(50% - 0.35rem); }
     }
     @media (max-width: 400px) {
         .academics-left-thumb-card { flex: 0 0 calc(50% - 0.25rem); max-width: calc(50% - 0.25rem); }
@@ -600,16 +613,41 @@
         margin-bottom: 0;
     }
     @media (max-width: 991px) {
-        .academics-login-wrapper { flex-direction: column; }
-        .academics-login-left { flex: none; min-height: 0; max-height: 50vh; padding: 1rem; overflow-y: auto; }
-        .academics-left-featured { flex: none; }
-        .academics-left-featured-img { min-height: 180px; height: 28vh; flex: none; }
+        .academics-login-wrapper { flex-direction: column; overflow-y: auto; }
+        .academics-login-left {
+            flex: none;
+            order: 2;
+            min-height: 0;
+            max-height: none;
+            padding: 1rem;
+            overflow: visible;
+        }
+        .academics-login-right {
+            flex: none;
+            order: 1;
+            padding: 1.25rem 1rem;
+            min-height: 0;
+        }
+        .academics-left-featured { flex: none; min-height: 240px; }
+        .academics-left-featured-img {
+            min-height: 220px;
+            max-height: 55vh;
+            height: auto;
+            flex: none;
+            object-fit: contain;
+        }
+        .academics-left-thumbs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 0.75rem;
+        }
         .academics-left-thumb-card .name { font-size: 0.65rem; }
         .academics-login-left-img-wrap { min-height: 90px; padding: 0.75rem; margin-bottom: 0.75rem; }
         .academics-login-left-img { max-height: 16vh; }
         .academics-hero-title { font-size: 1.35rem; }
         .academics-hero-sub, .academics-hero-desc { font-size: 0.85rem; }
-        .academics-login-right { padding: 1rem 1.25rem; }
     }
     /* Fallback when :has() not supported - use JS to add class */
     body.academics-login-page,
