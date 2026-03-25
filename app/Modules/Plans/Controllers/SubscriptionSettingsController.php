@@ -42,59 +42,41 @@ class SubscriptionSettingsController extends Controller
         }
 
         try {
-            // Read current config file
+            $validated = $validator->validated();
             $configPath = config_path('subscription.php');
-            if (!File::exists($configPath)) {
-                return redirect()->back()
-                    ->with('error', 'Subscription config file not found. Please ensure config/subscription.php exists.')
-                    ->withInput();
-            }
-            $configContent = File::get($configPath);
-            
-            // Update GST rate
-            $configContent = preg_replace(
-                "/'gst_rate' => env\('SUBSCRIPTION_GST_RATE', [\d.]+\)/",
-                "'gst_rate' => env('SUBSCRIPTION_GST_RATE', {$request->gst_rate})",
-                $configContent
-            );
-            
-            // Update commission rate
-            $configContent = preg_replace(
-                "/'referral_commission_rate' => env\('SUBSCRIPTION_REFERRAL_COMMISSION_RATE', [\d.]+\)/",
-                "'referral_commission_rate' => env('SUBSCRIPTION_REFERRAL_COMMISSION_RATE', {$request->referral_commission_rate})",
-                $configContent
-            );
-            
-            // Update UPI ID
-            $configContent = preg_replace(
-                "/'upi_id' => env\('SUBSCRIPTION_UPI_ID', '[^']+'\)/",
-                "'upi_id' => env('SUBSCRIPTION_UPI_ID', '{$request->upi_id}')",
-                $configContent
-            );
-            
-            // Update merchant name
-            $configContent = preg_replace(
-                "/'upi_merchant_name' => env\('SUBSCRIPTION_UPI_MERCHANT_NAME', '[^']+'\)/",
-                "'upi_merchant_name' => env('SUBSCRIPTION_UPI_MERCHANT_NAME', '{$request->upi_merchant_name}')",
-                $configContent
-            );
-            
-            // Remove QR code line if it exists
-            $configContent = preg_replace(
-                "/\s*'qr_code' => env\('SUBSCRIPTION_QR_CODE', [^)]+\),?\s*\n?/",
-                "",
-                $configContent
-            );
-            
-            // Write updated config
+
+            // Build config content deterministically to avoid regex mismatches and malformed PHP.
+            $gstRate = (float) $validated['gst_rate'];
+            $referralRate = (float) $validated['referral_commission_rate'];
+            $upiId = var_export((string) $validated['upi_id'], true);
+            $merchantName = var_export((string) $validated['upi_merchant_name'], true);
+
+            $configContent = <<<PHP
+<?php
+
+return [
+    'gst_rate' => env('SUBSCRIPTION_GST_RATE', {$gstRate}),
+    'referral_commission_rate' => env('SUBSCRIPTION_REFERRAL_COMMISSION_RATE', {$referralRate}),
+    'upi_id' => env('SUBSCRIPTION_UPI_ID', {$upiId}),
+    'upi_merchant_name' => env('SUBSCRIPTION_UPI_MERCHANT_NAME', {$merchantName}),
+];
+
+PHP;
+
             File::put($configPath, $configContent);
-            
-            // Clear config cache
-            \Artisan::call('config:clear');
-            
+
+            // Cache clear should not block successful save if command is unavailable.
+            try {
+                \Artisan::call('config:clear');
+            } catch (\Throwable $cacheError) {
+                Log::warning('Subscription settings saved, but config cache clear failed', [
+                    'message' => $cacheError->getMessage(),
+                ]);
+            }
+
             return redirect()->back()
                 ->with('success', 'Subscription settings updated successfully!');
-                
+
         } catch (\Exception $e) {
             Log::error('Subscription settings update failed', [
                 'error' => $e->getMessage(),
