@@ -347,6 +347,74 @@
         </div>
     </section>
 
+    <!-- COMMUNITY PREVIEW SECTION -->
+    <section id="community-preview" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                    Latest From Our <span class="gradient-text">Community</span>
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Real updates from our care network. Login to view all posts, react, comment, and be part of the MMHC community.
+                </p>
+                @if(($communityPostsCount ?? 0) > 0)
+                    <p class="mt-3 text-sm font-semibold text-blue-700">
+                        {{ number_format($communityPostsCount) }}+ community posts and growing daily
+                    </p>
+                @endif
+            </div>
+
+            @if(isset($latestCommunityPosts) && $latestCommunityPosts->isNotEmpty())
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    @foreach($latestCommunityPosts as $post)
+                        <div class="bg-gray-50 rounded-2xl shadow-lg hover-lift p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="text-sm text-gray-500">
+                                    <span class="font-semibold text-gray-700">{{ $post->user->name ?? 'MMHC Member' }}</span>
+                                    <span class="mx-1">•</span>
+                                    <span>{{ ucfirst($post->post_type) }}</span>
+                                </div>
+                                <span class="text-xs text-gray-400">{{ $post->created_at->diffForHumans() }}</span>
+                            </div>
+
+                            @if($post->post_type === 'event')
+                                <div class="mb-3 text-sm font-semibold text-purple-700">
+                                    <i class="fas fa-calendar-alt mr-1"></i>{{ $post->event_title ?: 'Upcoming Community Event' }}
+                                </div>
+                            @endif
+
+                            @if($post->image_path)
+                                <img src="{{ storage_asset($post->image_path) }}" alt="Community post image" class="w-full h-40 object-cover rounded-lg mb-3">
+                            @endif
+
+                            <p class="text-gray-700 leading-relaxed">
+                                {{ \Illuminate\Support\Str::limit($post->content ?: 'Community update posted by MMHC team.', 150) }}
+                            </p>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="bg-gray-50 rounded-2xl p-10 text-center shadow-lg">
+                    <i class="fas fa-users text-4xl text-blue-500 mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">Community Feed is Live</h3>
+                    <p class="text-gray-600 max-w-2xl mx-auto">
+                        We are actively building conversations among patients, caregivers, and nursing warriors. Login to explore and participate.
+                    </p>
+                </div>
+            @endif
+
+            <div class="text-center mt-10">
+                <a href="{{ route('auth.login') }}" class="inline-block bg-gradient-to-r from-blue-600 to-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                    Login to View All Posts
+                </a>
+                <p class="text-sm text-gray-500 mt-3">
+                    New here?
+                    <a href="{{ route('auth.register') }}" class="text-blue-600 font-semibold hover:text-blue-700">Create account and join community</a>
+                </p>
+            </div>
+        </div>
+    </section>
+
     <!-- STAR PERFORMERS SECTION (Meet Our Expert Nursing Team) -->
     @if(isset($featuredTeam) && $featuredTeam->isNotEmpty())
     <section id="star-performers" class="py-20 bg-white">

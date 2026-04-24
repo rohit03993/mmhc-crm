@@ -232,9 +232,9 @@
                         
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link text-white {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') || request()->routeIs('academics.*') ? 'active' : '' }}" href="{{ auth()->user()->hasAcademicRole() ? route('academics.dashboard') : (auth()->user()->isAdmin() ? route('admin.dashboard') : route('dashboard')) }}">
+                                <a class="nav-link text-white {{ request()->routeIs('community.*') || request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') || request()->routeIs('academics.*') ? 'active' : '' }}" href="{{ auth()->user()->hasAcademicRole() ? route('academics.dashboard') : route('community.index') }}">
                                     <i class="fas fa-home me-2"></i>
-                                    {{ auth()->user()->hasAcademicRole() ? 'Academics' : 'Dashboard' }}
+                                    {{ auth()->user()->hasAcademicRole() ? 'Academics' : 'Community Hub' }}
                                 </a>
                             </li>
                             

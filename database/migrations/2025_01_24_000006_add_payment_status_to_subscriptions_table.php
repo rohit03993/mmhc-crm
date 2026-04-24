@@ -11,10 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('subscriptions', function (Blueprint $table) {
-            $table->boolean('referral_payment_processed')->default(false)->after('referral_commission_rate');
-            $table->timestamp('referral_payment_processed_at')->nullable()->after('referral_payment_processed');
-        });
+        if (!Schema::hasColumn('subscriptions', 'referral_payment_processed')) {
+            Schema::table('subscriptions', function (Blueprint $table) {
+                $table->boolean('referral_payment_processed')->default(false);
+            });
+        }
+
+        if (!Schema::hasColumn('subscriptions', 'referral_payment_processed_at')) {
+            Schema::table('subscriptions', function (Blueprint $table) {
+                $table->timestamp('referral_payment_processed_at')->nullable();
+            });
+        }
     }
 
     /**
@@ -22,9 +29,17 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('subscriptions', function (Blueprint $table) {
-            $table->dropColumn(['referral_payment_processed', 'referral_payment_processed_at']);
-        });
+        if (Schema::hasColumn('subscriptions', 'referral_payment_processed')) {
+            Schema::table('subscriptions', function (Blueprint $table) {
+                $table->dropColumn('referral_payment_processed');
+            });
+        }
+
+        if (Schema::hasColumn('subscriptions', 'referral_payment_processed_at')) {
+            Schema::table('subscriptions', function (Blueprint $table) {
+                $table->dropColumn('referral_payment_processed_at');
+            });
+        }
     }
 };
 

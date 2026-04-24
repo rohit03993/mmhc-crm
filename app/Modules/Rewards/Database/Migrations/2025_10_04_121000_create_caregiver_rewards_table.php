@@ -16,6 +16,8 @@ return new class extends Migration {
             $table->text('treatment_details')->nullable();
             $table->unsignedInteger('reward_points')->default(1);
             $table->decimal('reward_amount', 10, 2)->default(10.00);
+            $table->boolean('payment_processed')->default(false);
+            $table->timestamp('payment_processed_at')->nullable();
             $table->timestamps();
 
             $table->index('patient_phone');

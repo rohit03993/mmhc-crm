@@ -9,26 +9,48 @@ use App\Http\Controllers\Admin\FeaturedTeamController;
 use App\Http\Controllers\Admin\SiteSettingsController;
 use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\StorageController;
+use Illuminate\Support\Facades\Schema;
 
 // Serve storage/app/public via Laravel (query string so Nginx static regex doesn't match; no symlink/Nginx changes needed)
 Route::get('/storage', [StorageController::class, 'show'])->name('storage.serve');
 
-Route::get('/', function () {
+// Shared landing page data builder
+$buildLandingData = function (): array {
     $pageContent = \App\Models\PageContent::getAllSections();
     $healthcarePlans = \App\Modules\Plans\Models\Plan::active()->ordered()->get();
     $achievementMedia = \App\Models\AchievementMedia::ordered()->get();
     $featuredTeam = \App\Models\FeaturedTeam::ordered()->get();
     $testimonials = \App\Models\Testimonial::ordered()->get();
-    return view('welcome', compact('pageContent', 'healthcarePlans', 'achievementMedia', 'featuredTeam', 'testimonials'));
+
+    $latestCommunityPosts = collect();
+    $communityPostsCount = 0;
+
+    if (Schema::hasTable('community_posts')) {
+        $latestCommunityPosts = \App\Modules\Community\Models\CommunityPost::query()
+            ->with('user:id,name,role')
+            ->latest()
+            ->take(3)
+            ->get();
+        $communityPostsCount = \App\Modules\Community\Models\CommunityPost::count();
+    }
+
+    return compact(
+        'pageContent',
+        'healthcarePlans',
+        'achievementMedia',
+        'featuredTeam',
+        'testimonials',
+        'latestCommunityPosts',
+        'communityPostsCount'
+    );
+};
+
+Route::get('/', function () use ($buildLandingData) {
+    return view('welcome', $buildLandingData());
 });
 
-Route::get('/landing', function () {
-    $pageContent = \App\Models\PageContent::getAllSections();
-    $healthcarePlans = \App\Modules\Plans\Models\Plan::active()->ordered()->get();
-    $achievementMedia = \App\Models\AchievementMedia::ordered()->get();
-    $featuredTeam = \App\Models\FeaturedTeam::ordered()->get();
-    $testimonials = \App\Models\Testimonial::ordered()->get();
-    return view('welcome', compact('pageContent', 'healthcarePlans', 'achievementMedia', 'featuredTeam', 'testimonials'));
+Route::get('/landing', function () use ($buildLandingData) {
+    return view('welcome', $buildLandingData());
 })->name('landing');
 
 // Services module routes

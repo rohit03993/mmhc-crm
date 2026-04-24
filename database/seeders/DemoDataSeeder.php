@@ -18,6 +18,9 @@ class DemoDataSeeder extends Seeder
      */
     public function run(): void
     {
+        // users.location is NOT NULL POINT (spatial index migration); required on insert
+        $defaultPoint = DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
+
         // Create Admin User (if not exists)
         $admin = User::where('email', 'mantu@themmhc.com')
             ->orWhere('unique_id', 'M-UID-000001')
@@ -32,6 +35,7 @@ class DemoDataSeeder extends Seeder
                 'role' => 'admin',
                 'unique_id' => 'M-UID-000001',
                 'address' => 'Udgam Incubation Centre, Rohit Nagar, Phase 1, Bhopal 462023',
+                'location' => $defaultPoint,
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]);
@@ -56,6 +60,7 @@ class DemoDataSeeder extends Seeder
                 'qualification' => 'B.Sc Nursing',
                 'experience' => '5-10',
                 'address' => 'Sector 15, Noida, Uttar Pradesh 201301',
+                'location' => $defaultPoint,
                 'date_of_birth' => '1985-03-15',
                 'is_active' => true,
                 'email_verified_at' => now(),
@@ -83,6 +88,7 @@ class DemoDataSeeder extends Seeder
                 'qualification' => 'General Care',
                 'experience' => '3-5',
                 'address' => 'Village: Dumra, District: Patna, Bihar 801101',
+                'location' => $defaultPoint,
                 'date_of_birth' => '1985-12-03',
                 'is_active' => true,
                 'email_verified_at' => now(),
@@ -108,6 +114,7 @@ class DemoDataSeeder extends Seeder
                 'role' => 'patient',
                 'unique_id' => $patientUniqueId,
                 'address' => 'House No. 45, Gandhi Nagar, Patna, Bihar 800001',
+                'location' => $defaultPoint,
                 'date_of_birth' => '1965-03-10',
                 'is_active' => true,
                 'email_verified_at' => now(),

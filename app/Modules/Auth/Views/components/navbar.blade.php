@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg navbar-light top-navbar d-none d-md-flex">
     <div class="container-fluid">
-        <a class="navbar-brand" href="{{ route('dashboard') }}">
+        <a class="navbar-brand" href="{{ auth()->check() && !auth()->user()->hasAcademicRole() ? route('community.index') : route('dashboard') }}">
             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--nav">
             <span class="visually-hidden">{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}</span>
         </a>
@@ -13,9 +13,15 @@
             <ul class="navbar-nav me-auto">
                 @auth
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('dashboard') }}">
+                        <a class="nav-link" href="{{ auth()->user()->hasAcademicRole() ? route('dashboard') : route('community.index') }}">
                             <i class="fas fa-home me-1"></i>
-                            Dashboard
+                            {{ auth()->user()->hasAcademicRole() ? 'Dashboard' : 'Community' }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('community.index') }}">
+                            <i class="fas fa-users me-1"></i>
+                            Community
                         </a>
                     </li>
                     
@@ -45,8 +51,8 @@
                             <span class="badge bg-light text-dark ms-1">{{ auth()->user()->unique_id }}</span>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ route('dashboard') }}">
-                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            <li><a class="dropdown-item" href="{{ auth()->user()->hasAcademicRole() ? route('dashboard') : route('community.index') }}">
+                                <i class="fas fa-tachometer-alt me-2"></i>{{ auth()->user()->hasAcademicRole() ? 'Dashboard' : 'Community' }}
                             </a></li>
                             <li><a class="dropdown-item" href="{{ route('profile.index') }}">
                                 <i class="fas fa-user-cog me-2"></i>Profile Settings

@@ -11,10 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('upi_id')->nullable()->after('reward_points');
-            $table->string('qr_code_path')->nullable()->after('upi_id');
-        });
+        if (!Schema::hasColumn('users', 'upi_id')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('upi_id')->nullable();
+            });
+        }
+
+        if (!Schema::hasColumn('users', 'qr_code_path')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('qr_code_path')->nullable();
+            });
+        }
     }
 
     /**
@@ -22,9 +29,17 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['upi_id', 'qr_code_path']);
-        });
+        if (Schema::hasColumn('users', 'upi_id')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropColumn('upi_id');
+            });
+        }
+
+        if (Schema::hasColumn('users', 'qr_code_path')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropColumn('qr_code_path');
+            });
+        }
     }
 };
 

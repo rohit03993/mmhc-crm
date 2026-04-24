@@ -87,7 +87,7 @@ class WhatsAppOtpService
             return ['success' => false, 'message' => 'WhatsApp OTP is not configured. Set AISENSY_API_KEY and AISENSY_CAMPAIGN_NAME in .env.'];
         }
 
-        // Campaign expects 1 param; same OTP is used for body {{1}} and copy-code button {{1}}.
+        // AiSensy auth template: one variable {{1}} = 6-digit OTP (body; Copy code uses the same OTP from the template).
         $payload = [
             'apiKey' => $apiKey,
             'campaignName' => $campaignName,

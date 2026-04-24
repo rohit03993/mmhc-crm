@@ -11,10 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('service_requests', function (Blueprint $table) {
-            $table->boolean('staff_payment_processed')->default(false)->after('payment_processed_at');
-            $table->timestamp('staff_payment_processed_at')->nullable()->after('staff_payment_processed');
-        });
+        if (!Schema::hasColumn('service_requests', 'staff_payment_processed')) {
+            Schema::table('service_requests', function (Blueprint $table) {
+                $table->boolean('staff_payment_processed')->default(false);
+            });
+        }
+
+        if (!Schema::hasColumn('service_requests', 'staff_payment_processed_at')) {
+            Schema::table('service_requests', function (Blueprint $table) {
+                $table->timestamp('staff_payment_processed_at')->nullable();
+            });
+        }
     }
 
     /**
@@ -22,9 +29,17 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('service_requests', function (Blueprint $table) {
-            $table->dropColumn(['staff_payment_processed', 'staff_payment_processed_at']);
-        });
+        if (Schema::hasColumn('service_requests', 'staff_payment_processed')) {
+            Schema::table('service_requests', function (Blueprint $table) {
+                $table->dropColumn('staff_payment_processed');
+            });
+        }
+
+        if (Schema::hasColumn('service_requests', 'staff_payment_processed_at')) {
+            Schema::table('service_requests', function (Blueprint $table) {
+                $table->dropColumn('staff_payment_processed_at');
+            });
+        }
     }
 };
 

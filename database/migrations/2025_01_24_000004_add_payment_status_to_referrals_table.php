@@ -11,10 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('referrals', function (Blueprint $table) {
-            $table->boolean('payment_processed')->default(false)->after('completed_at');
-            $table->timestamp('payment_processed_at')->nullable()->after('payment_processed');
-        });
+        if (!Schema::hasColumn('referrals', 'payment_processed')) {
+            Schema::table('referrals', function (Blueprint $table) {
+                $table->boolean('payment_processed')->default(false);
+            });
+        }
+
+        if (!Schema::hasColumn('referrals', 'payment_processed_at')) {
+            Schema::table('referrals', function (Blueprint $table) {
+                $table->timestamp('payment_processed_at')->nullable();
+            });
+        }
     }
 
     /**
@@ -22,9 +29,17 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('referrals', function (Blueprint $table) {
-            $table->dropColumn(['payment_processed', 'payment_processed_at']);
-        });
+        if (Schema::hasColumn('referrals', 'payment_processed')) {
+            Schema::table('referrals', function (Blueprint $table) {
+                $table->dropColumn('payment_processed');
+            });
+        }
+
+        if (Schema::hasColumn('referrals', 'payment_processed_at')) {
+            Schema::table('referrals', function (Blueprint $table) {
+                $table->dropColumn('payment_processed_at');
+            });
+        }
     }
 };
 

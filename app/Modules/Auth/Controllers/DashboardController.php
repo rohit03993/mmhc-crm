@@ -24,77 +24,9 @@ class DashboardController extends Controller
         if ($user->hasAcademicRole()) {
             return redirect()->route('academics.dashboard');
         }
-        
-        // Redirect staff (nurses and caregivers) to their dedicated dashboard
-        if ($user->isStaff()) {
-            return redirect()->route('staff.dashboard');
-        }
-        
-        // Redirect admin to admin dashboard
-        if ($user->isAdmin()) {
-            return redirect()->route('admin.dashboard');
-        }
-        
-        // For patients, show regular dashboard with service requests (paginated - max 10 per page)
-        $serviceRequests = \App\Modules\Services\Models\ServiceRequest::where('patient_id', $user->id)
-            ->with(['serviceType', 'assignedStaff'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-        
-        // Get available staff for dashboard display (limit to 3 for mobile-friendly display)
-        // Sort by distance if patient has pincode
-        $availableNurses = \App\Models\Core\User::where('role', 'nurse')
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->limit(10)
-            ->get();
-        
-        $availableCaregivers = \App\Models\Core\User::where('role', 'caregiver')
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->limit(10)
-            ->get();
-        
-        // If patient has pincode, sort by distance
-        if ($user->isPatient() && $user->pincode) {
-            $availableNurses = \App\Modules\Auth\Services\LocationService::getNearbyStaff($user->pincode, 'nurse')->take(3);
-            $availableCaregivers = \App\Modules\Auth\Services\LocationService::getNearbyStaff($user->pincode, 'caregiver')->take(3);
-        } else {
-            $availableNurses = $availableNurses->take(3);
-            $availableCaregivers = $availableCaregivers->take(3);
-            
-            // Add null distance for consistency
-            $availableNurses = $availableNurses->map(function ($nurse) {
-                $nurse->distance_km = null;
-                return $nurse;
-            });
-            $availableCaregivers = $availableCaregivers->map(function ($caregiver) {
-                $caregiver->distance_km = null;
-                return $caregiver;
-            });
-        }
-        
-        // Get service types for pricing display
-        $serviceTypes = \App\Modules\Services\Models\ServiceType::getActiveServiceTypes();
-        
-        // Get subscription information
-        $subscriptionService = app(\App\Modules\Plans\Services\SubscriptionService::class);
-        $activeSubscription = $subscriptionService->getActiveSubscription($user);
-        $hasActiveSubscription = $subscriptionService->hasActiveSubscription($user);
-        
-        $data = [
-            'user' => $user,
-            'stats' => $this->getUserStats($user),
-            'recent_activity' => $this->getRecentActivity($user),
-            'recent_requests' => $serviceRequests, // Paginated collection (max 10 per page)
-            'available_nurses' => $availableNurses,
-            'available_caregivers' => $availableCaregivers,
-            'service_types' => $serviceTypes,
-            'active_subscription' => $activeSubscription,
-            'has_active_subscription' => $hasActiveSubscription,
-        ];
 
-        return view('auth::dashboard', $data);
+        // Community is the default first screen for all CRM roles.
+        return redirect()->route('community.index');
     }
 
     /**

@@ -15,6 +15,7 @@
 5. [Features & Functions (By Module)](#5-features--functions-by-module)
 6. [Important Concepts (Data & Business Logic)](#6-important-concepts-data--business-logic)
 7. [Quick Reference for Developers](#7-quick-reference-for-developers)
+8. [Academics Module (LMS)](#8-academics-module-lms)
 
 ---
 
@@ -72,7 +73,8 @@
 | **Patient** | End customer needing home care | Register, login, view dashboard, browse **staff**, **book** nurse/caregiver, view **my requests**, manage **profile** & **documents**, view/buy **plans** & **subscriptions**, submit payment proof, use referral links. |
 | **Nurse** | Licensed nurse | Login → **staff dashboard**, see **assigned bookings**, **accept/reject** bookings, **start/complete** services, view **earnings** (services + rewards + staff referrals + subscription referrals), set **payment settings** (UPI, QR), use **referral links**, submit **rewards** (patient details). |
 | **Caregiver** | Caregiver (non-nurse) | Same as Nurse from system’s perspective (same staff dashboard, bookings, payments, referrals, rewards). |
-| **Admin** | Back-office | **Users:** list, add, edit, view, toggle active, reset password, delete non-admins. **Service requests:** list, **assign** staff, approve payment. **Subscriptions:** list, view, **approve/reject**, **verify/reject payment**. **Plans:** CRUD. **Subscription settings:** GST, commission, UPI. **Payments:** list staff, **process payment** to staff (form + process). **Referrals:** list all, view by staff. **Rewards:** list. **Content:** page content, healthcare plans (landing), **achievement media**, **featured team**, **testimonials**, **site settings**. **System:** pending payments page, **system reset** (danger zone). |
+| **Admin** | Back-office | **Users:** list, add, edit, view, toggle active, reset password, delete non-admins. **Service requests:** list, **assign** staff, approve payment. **Subscriptions:** list, view, **approve/reject**, **verify/reject payment**. **Plans:** CRUD. **Subscription settings:** GST, commission, UPI. **Payments:** list staff, **process payment** to staff (form + process). **Referrals:** list all, view by staff. **Rewards:** list. **Content:** page content, healthcare plans (landing), **achievement media**, **featured team**, **testimonials**, **site settings**. **Academics:** institutions, faculty, batches, subjects, topics, assignments, attendance, reports. **System:** pending payments page, **system reset** (danger zone). |
+| **Academic Roles** | Institution-side users (faculty/students/academic admins) | Access Academics dashboard, curriculum (subjects/topics), assignments/submissions, attendance, and reports depending on role. |
 
 ---
 
@@ -173,6 +175,17 @@ These are used on the **welcome** page (`/` or `/landing`).
 - **Staff: Rewards** — Submit a form with patient details (name, phone, age, address, hospital, treatment, etc.) → **CaregiverReward** created; staff gets **reward points**.
 - **Admin: Rewards** — List reward submissions; can process payment for rewards (payment status, etc.).
 
+### Academics Module
+
+- **Academics dashboard** — Separate dashboard flow for academic roles (`hasAcademicRole()`).
+- **Institutions** — Create/edit/list institution entities used for organizing academic data.
+- **Faculty management** — Create and map faculty users for teaching and assignment workflows.
+- **Batches** — Batch creation and mapping for student grouping.
+- **Subjects & Topics** — Curriculum hierarchy (subject -> topic) with completion tracking support.
+- **Assignments & Submissions** — Assignment CRUD, student submissions, and faculty review views.
+- **Attendance** — Attendance marking and personal attendance views.
+- **Reports** — Student and aggregate academic reports for progress/performance.
+
 ### Admin-Only (Non-Module) Features
 
 - **Achievement media** — CRUD, reorder (move up/down). Shown on landing carousel.
@@ -210,10 +223,38 @@ These are used on the **welcome** page (`/` or `/landing`).
 | Change staff payment flow | `Modules\Payments\Controllers\StaffPaymentController`, `AdminPaymentController`, `StaffPayment` model |
 | Change referrals | `ReferralService`, `Referral` model, `AdminReferralController`, staff referral views |
 | Change rewards | `RewardController`, `RewardService`, `CaregiverReward` model |
+| Change academics (institutions/faculty/batches/subjects/topics/assignments/attendance/reports) | `app/Modules/Academics/Controllers/*`, `app/Modules/Academics/Models/*`, `app/Modules/Academics/Views/*`, `app/Modules/Academics/Routes/web.php` |
 | Change landing page content | `resources/views/welcome.blade.php`, `PageContent`, `AchievementMedia`, `FeaturedTeam`, `Testimonial`, admin controllers in `Http/Controllers/Admin` |
 | Change site logo/name | `SiteSettingsController`, `site_settings` table, views using site settings |
 | Add a new role or permission | `App\Core\Middleware\CheckRole`, route middleware `role:...`, User model `isAdmin`, `isNurse`, etc. |
 
 ---
+
+## 8. Academics Module (LMS)
+
+This codebase also includes an Academics/LMS capability under `app/Modules/Academics`.
+
+### Scope
+
+- Institution and faculty setup
+- Batch and student grouping
+- Subject/topic curriculum structure
+- Assignment publishing and submission lifecycle
+- Attendance tracking
+- Student and batch reporting
+
+### Entry Points
+
+- Controllers: `app/Modules/Academics/Controllers`
+- Models: `app/Modules/Academics/Models`
+- Views: `app/Modules/Academics/Views`
+- Routes: `app/Modules/Academics/Routes/web.php`
+- Provider: `app/Modules/Academics/Providers/AcademicsServiceProvider.php`
+
+### Notes for New Developers
+
+- Auth redirect already checks academic roles in dashboard routing.
+- Treat Academics as a parallel domain to CRM workflows (home-care + subscriptions), not a replacement.
+- Keep role and route checks strict when modifying mixed CRM + Academics navigation.
 
 **End of document.** Use this as the single place to understand what the CRM does, for both technical and non-technical readers.
