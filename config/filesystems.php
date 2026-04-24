@@ -83,7 +83,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | When false (default): use public/storage symlink (asset('storage/...')).
-    | When true (e.g. VPS with disable_symlinks): use Laravel route /storage?path=...
+    | When true (e.g. VPS with disable_symlinks): use Laravel route /media-file?path=...
     |
     */
 

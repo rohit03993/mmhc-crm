@@ -30,6 +30,24 @@
         </div>
     </div>
 
+    @if(isset($pinnedAnnouncements) && $pinnedAnnouncements->isNotEmpty())
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body">
+            <h5 class="mb-3"><i class="fas fa-bullhorn me-2 text-primary"></i>Pinned Announcements</h5>
+            <div class="list-group list-group-flush">
+                @foreach($pinnedAnnouncements as $announcement)
+                    <a href="#post-{{ $announcement->id }}" class="list-group-item list-group-item-action px-0">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div class="fw-semibold">{{ \Illuminate\Support\Str::limit($announcement->content ?: ($announcement->event_title ?: 'Announcement'), 120) }}</div>
+                            <small class="text-muted">{{ $announcement->created_at->diffForHumans() }}</small>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    @endif
+
     @if(auth()->user()->isAdmin() || auth()->user()->isNurse() || auth()->user()->isCaregiver())
     <div class="card mb-4 composer-card">
         <div class="card-body">
@@ -54,6 +72,18 @@
                         <label class="form-label">Message</label>
                         <textarea name="content" class="form-control" rows="3" placeholder="Share an update with the team...">{{ old('content') }}</textarea>
                     </div>
+                    @if(auth()->user()->isAdmin())
+                    <div class="col-md-3">
+                        <div class="form-check mt-4 pt-1">
+                            <input class="form-check-input" type="checkbox" value="1" name="is_pinned" id="isPinned">
+                            <label class="form-check-label" for="isPinned">Pin to top</label>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" value="1" name="is_announcement" id="isAnnouncement">
+                            <label class="form-check-label" for="isAnnouncement">Mark as announcement</label>
+                        </div>
+                    </div>
+                    @endif
                     <div class="col-md-6 d-none" id="imageField">
                         <label class="form-label">Image</label>
                         <input type="file" name="image" class="form-control" accept="image/*">

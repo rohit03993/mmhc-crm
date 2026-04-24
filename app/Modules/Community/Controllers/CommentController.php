@@ -5,11 +5,16 @@ namespace App\Modules\Community\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Community\Models\CommunityComment;
 use App\Modules\Community\Models\CommunityPost;
+use App\Modules\Community\Services\CommunityNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CommentController extends Controller
 {
+    public function __construct(
+        private CommunityNotificationService $notificationService
+    ) {}
+
     public function store(Request $request, CommunityPost $post)
     {
         $request->validate([
@@ -17,12 +22,18 @@ class CommentController extends Controller
             'parent_id' => 'nullable|exists:community_comments,id',
         ]);
 
-        CommunityComment::create([
+        $comment = CommunityComment::create([
             'post_id' => $post->id,
             'user_id' => Auth::id(),
             'parent_id' => $request->parent_id,
             'content' => $request->content,
         ]);
+
+        $this->notificationService->notifyComment(
+            Auth::user(),
+            $post,
+            str($comment->content)->limit(100)->toString()
+        );
 
         return redirect()->route('community.index', ['page' => $request->get('page')])
             ->with('success', 'Comment added.');

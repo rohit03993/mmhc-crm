@@ -44,6 +44,40 @@
             
             <ul class="navbar-nav">
                 @auth
+                    <li class="nav-item dropdown me-2">
+                        <a class="nav-link position-relative" href="#" id="communityNotificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell"></i>
+                            @if(($communityUnreadNotificationsCount ?? 0) > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    {{ $communityUnreadNotificationsCount > 9 ? '9+' : $communityUnreadNotificationsCount }}
+                                </span>
+                            @endif
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="communityNotificationDropdown" style="min-width: 320px;">
+                            <li class="dropdown-header d-flex justify-content-between align-items-center">
+                                <span>Community Notifications</span>
+                                <form method="POST" action="{{ route('community.notifications.read-all') }}">
+                                    @csrf
+                                    <button type="submit" class="btn btn-link btn-sm p-0">Mark all read</button>
+                                </form>
+                            </li>
+                            @forelse(($communityRecentNotifications ?? collect()) as $notification)
+                                <li>
+                                    <a class="dropdown-item small" href="{{ route('community.index') }}#post-{{ $notification->post_id }}">
+                                        <strong>{{ $notification->actor->name ?? 'Member' }}</strong>
+                                        @if($notification->type === 'comment')
+                                            commented on your post
+                                        @else
+                                            reacted ({{ $notification->meta['reaction_type'] ?? 'like' }}) on your post
+                                        @endif
+                                        <div class="text-muted">{{ $notification->created_at->diffForHumans() }}</div>
+                                    </a>
+                                </li>
+                            @empty
+                                <li><span class="dropdown-item-text text-muted small">No notifications yet.</span></li>
+                            @endforelse
+                        </ul>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user me-1"></i>

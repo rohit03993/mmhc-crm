@@ -19,6 +19,8 @@ class PostService
                 'eventInterests:id,post_id,user_id,status',
             ])
             ->withCount(['comments', 'reactions', 'eventInterests'])
+            ->orderByDesc('is_pinned')
+            ->orderByDesc('pinned_at')
             ->latest()
             ->paginate($perPage);
     }
@@ -28,6 +30,9 @@ class PostService
         $payload = [
             'user_id' => $user->id,
             'post_type' => $data['post_type'],
+            'is_pinned' => !empty($data['is_pinned']),
+            'is_announcement' => !empty($data['is_announcement']),
+            'pinned_at' => !empty($data['is_pinned']) ? now() : null,
             'content' => $data['content'] ?? null,
             'event_title' => $data['event_title'] ?? null,
             'event_date' => $data['event_date'] ?? null,

@@ -384,7 +384,11 @@
                             @endif
 
                             @if($post->image_path)
-                                <img src="{{ storage_asset($post->image_path) }}" alt="Community post image" class="w-full h-40 object-cover rounded-lg mb-3">
+                                @php
+                                    $homeCommunityImageUrl = storage_url($post->image_path) ?? storage_asset($post->image_path);
+                                    $homeCommunityFallback = 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="640" height="240"><rect width="100%" height="100%" fill="#f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#64748b" font-family="Arial" font-size="22">Image unavailable</text></svg>');
+                                @endphp
+                                <img src="{{ $homeCommunityImageUrl }}" alt="Community post image" class="w-full h-40 object-cover rounded-lg mb-3" onerror="this.onerror=null;this.src='{{ $homeCommunityFallback }}';">
                             @endif
 
                             <p class="text-gray-700 leading-relaxed">

@@ -20,6 +20,14 @@ class PostController extends Controller
     public function index()
     {
         $posts = $this->postService->getFeed(10);
+        $pinnedAnnouncements = CommunityPost::query()
+            ->where('is_pinned', true)
+            ->where('is_announcement', true)
+            ->latest('pinned_at')
+            ->latest('created_at')
+            ->limit(5)
+            ->get();
+
         $stats = [
             'posts' => CommunityPost::count(),
             'members' => User::where('is_active', true)->count(),
@@ -27,7 +35,7 @@ class PostController extends Controller
             'event_responses' => CommunityEventInterest::count(),
         ];
 
-        return view('community::feed.index', compact('posts', 'stats'));
+        return view('community::feed.index', compact('posts', 'stats', 'pinnedAnnouncements'));
     }
 
     public function store(Request $request)
@@ -40,6 +48,8 @@ class PostController extends Controller
             'event_title' => 'nullable|string|max:255',
             'event_date' => 'nullable|date|after_or_equal:today',
             'event_location' => 'nullable|string|max:255',
+            'is_pinned' => 'nullable|boolean',
+            'is_announcement' => 'nullable|boolean',
         ]);
 
         if (!in_array($user->role, ['admin', 'nurse', 'caregiver'])) {
@@ -69,9 +79,31 @@ class PostController extends Controller
             ]);
         }
 
-        $this->postService->createPost($user, $request->all());
+        $payload = $request->all();
+        if (!$user->isAdmin()) {
+            $payload['is_pinned'] = false;
+            $payload['is_announcement'] = false;
+        }
+
+        $this->postService->createPost($user, $payload);
 
         return redirect()->route('community.index')->with('success', 'Post created successfully.');
+    }
+
+    public function togglePin(CommunityPost $post)
+    {
+        $user = Auth::user();
+        if (!$user->isAdmin()) {
+            abort(403, 'Only admin can pin posts.');
+        }
+
+        $post->update([
+            'is_pinned' => !$post->is_pinned,
+            'pinned_at' => !$post->is_pinned ? now() : null,
+        ]);
+
+        return redirect()->route('community.index')
+            ->with('success', $post->is_pinned ? 'Post pinned to top.' : 'Post unpinned.');
     }
 
     public function destroy(CommunityPost $post)

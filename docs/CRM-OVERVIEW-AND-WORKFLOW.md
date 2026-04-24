@@ -52,7 +52,7 @@
 | **Database** | **MySQL** — the CRM is run on MySQL. Migrations live in `database/migrations`. (SQLite is not used; any SQLite-specific handling was intentionally skipped.) |
 | **Auth** | Laravel session-based auth; role-based access via custom middleware `role:admin`, `role:patient`, `role:nurse`, `role:caregiver` |
 | **Structure** | Modular: `app/Modules/{Auth, Services, Plans, Profiles, Payments, Referrals, Rewards}` + `app/Http/Controllers/Admin` for global admin (testimonials, featured team, page content, site settings) |
-| **Assets** | Images/files in `storage/app/public`; optional route `/storage?path=...` to serve when symlink not used |
+| **Assets** | Images/files in `storage/app/public`; optional route `/media-file?path=...` to serve when symlink not used |
 | **Queue** | Database queue driver (optional; used for background jobs if configured) |
 | **Config** | `.env` for keys/DB; `config/subscription.php` for GST, commission, UPI (editable by admin) |
 

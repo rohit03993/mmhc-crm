@@ -1,4 +1,4 @@
-<div class="card mb-4 border-0 shadow-sm">
+<div class="card mb-4 border-0 shadow-sm" id="post-{{ $post->id }}">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
@@ -6,7 +6,21 @@
                 <small class="text-muted">{{ ucfirst($post->user->role) }} • {{ $post->created_at->diffForHumans() }}</small>
             </div>
             <div class="d-flex align-items-center gap-2">
+                @if($post->is_pinned)
+                    <span class="badge rounded-pill text-bg-warning px-3"><i class="fas fa-thumbtack me-1"></i>Pinned</span>
+                @endif
+                @if($post->is_announcement)
+                    <span class="badge rounded-pill text-bg-info px-3"><i class="fas fa-bullhorn me-1"></i>Announcement</span>
+                @endif
                 <span class="badge rounded-pill text-bg-secondary px-3">{{ strtoupper($post->post_type) }}</span>
+                @if(auth()->user()->isAdmin())
+                <form method="POST" action="{{ route('community.posts.pin', $post) }}">
+                    @csrf
+                    <button class="btn btn-sm btn-outline-warning" title="{{ $post->is_pinned ? 'Unpin' : 'Pin' }}">
+                        <i class="fas fa-thumbtack"></i>
+                    </button>
+                </form>
+                @endif
                 @if(auth()->user()->isAdmin() || auth()->id() === $post->user_id)
                 <form method="POST" action="{{ route('community.posts.destroy', $post) }}" onsubmit="return confirm('Delete this post?')">
                     @csrf
@@ -22,7 +36,11 @@
         @endif
 
         @if($post->image_path)
-            <img src="{{ storage_asset($post->image_path) }}" alt="Post image" class="img-fluid rounded-3 mb-3" style="max-height: 460px; width: 100%; object-fit: cover;">
+            @php
+                $communityImageUrl = storage_url($post->image_path) ?? storage_asset($post->image_path);
+                $communityImageFallback = 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600"><rect width="100%" height="100%" fill="#f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#64748b" font-family="Arial" font-size="28">Image unavailable</text></svg>');
+            @endphp
+            <img src="{{ $communityImageUrl }}" alt="Post image" class="img-fluid rounded-3 mb-3" style="max-height: 460px; width: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='{{ $communityImageFallback }}';">
         @endif
 
         @if($post->post_type === 'event')
@@ -34,14 +52,26 @@
         @endif
 
         <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-            <form method="POST" action="{{ route('community.reactions.toggle', $post) }}">
-                @csrf
-                <input type="hidden" name="page" value="{{ request('page', 1) }}">
-                <button class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                    <i class="fas fa-thumbs-up me-1"></i>
-                    {{ $post->reactions->contains('user_id', auth()->id()) ? 'Unlike' : 'Like' }} ({{ $post->reactions_count }})
-                </button>
-            </form>
+            @php
+                $myReaction = optional($post->reactions->firstWhere('user_id', auth()->id()))->reaction_type;
+                $reactionCounts = $post->reactions->groupBy('reaction_type')->map->count();
+                $reactionOptions = [
+                    'like' => ['label' => 'Like', 'icon' => 'fa-thumbs-up'],
+                    'care' => ['label' => 'Care', 'icon' => 'fa-hand-holding-heart'],
+                    'support' => ['label' => 'Support', 'icon' => 'fa-hands-helping'],
+                    'celebrate' => ['label' => 'Celebrate', 'icon' => 'fa-star'],
+                ];
+            @endphp
+            @foreach($reactionOptions as $type => $option)
+                <form method="POST" action="{{ route('community.reactions.react', $post) }}">
+                    @csrf
+                    <input type="hidden" name="page" value="{{ request('page', 1) }}">
+                    <input type="hidden" name="reaction_type" value="{{ $type }}">
+                    <button class="btn btn-sm rounded-pill px-3 {{ $myReaction === $type ? 'btn-primary' : 'btn-outline-primary' }}">
+                        <i class="fas {{ $option['icon'] }} me-1"></i>{{ $option['label'] }} ({{ $reactionCounts[$type] ?? 0 }})
+                    </button>
+                </form>
+            @endforeach
 
             <span class="badge rounded-pill text-bg-light"><i class="fas fa-comment me-1"></i>{{ $post->comments_count }} comments</span>
 

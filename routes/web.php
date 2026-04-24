@@ -11,8 +11,8 @@ use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\StorageController;
 use Illuminate\Support\Facades\Schema;
 
-// Serve storage/app/public via Laravel (query string so Nginx static regex doesn't match; no symlink/Nginx changes needed)
-Route::get('/storage', [StorageController::class, 'show'])->name('storage.serve');
+// Serve storage/app/public via Laravel using a non-static path (avoids conflict with public/storage symlink directory)
+Route::get('/media-file', [StorageController::class, 'show'])->name('storage.serve');
 
 // Shared landing page data builder
 $buildLandingData = function (): array {

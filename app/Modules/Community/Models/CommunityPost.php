@@ -13,6 +13,9 @@ class CommunityPost extends Model
     protected $fillable = [
         'user_id',
         'post_type',
+        'is_pinned',
+        'is_announcement',
+        'pinned_at',
         'content',
         'image_path',
         'event_title',
@@ -22,6 +25,9 @@ class CommunityPost extends Model
 
     protected $casts = [
         'event_date' => 'datetime',
+        'pinned_at' => 'datetime',
+        'is_pinned' => 'boolean',
+        'is_announcement' => 'boolean',
     ];
 
     public function user()
