@@ -169,7 +169,8 @@
         </a>
     </div>
 
-    @if(count($pendingPayments) > 0)
+    <div id="pending-payments-section"></div>
+    @if($pendingPayments->count() > 0)
         @foreach($pendingPayments as $item)
             <div class="staff-card">
                 <div class="d-flex justify-content-between align-items-start mb-3">
@@ -244,6 +245,9 @@
                 </div>
             </div>
         @endforeach
+        <div class="mt-3">
+            {{ $pendingPayments->appends(['staff_page' => request('staff_page')])->fragment('pending-payments-section')->links() }}
+        </div>
     @else
         <div class="card">
             <div class="card-body text-center py-5">
@@ -255,7 +259,7 @@
     @endif
 
     <!-- All Staff Payment Actions -->
-    <div class="mt-4">
+    <div class="mt-4" id="all-staff-actions-section">
         <h5 class="mb-3">
             <i class="fas fa-users-cog me-2"></i>All Staff Payment Actions
         </h5>
@@ -292,6 +296,9 @@
                     </div>
                 </div>
             @endforeach
+            <div class="mt-3">
+                {{ $staffMembers->appends(['page' => request('page'), 'type' => request('type')])->fragment('all-staff-actions-section')->links() }}
+            </div>
         @endif
     </div>
 

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\Core\User;
 use App\Modules\Payments\Models\StaffPayment;
 use App\Modules\Services\Models\ServiceRequest;
@@ -29,9 +30,13 @@ class AdminPaymentController extends Controller
     public function index(Request $request)
     {
         $filterType = $request->get('type', 'all');
+        $pendingPage = max((int) $request->get('page', 1), 1);
+        $pendingPerPage = 5;
+        $staffPage = max((int) $request->get('staff_page', 1), 1);
+        $staffPerPage = 5;
         
         // Get all staff (nurses and caregivers)
-        $staffMembers = User::whereIn('role', ['nurse', 'caregiver'])
+        $allStaffMembers = User::whereIn('role', ['nurse', 'caregiver'])
             ->where('is_active', true)
             ->get();
 
@@ -40,7 +45,7 @@ class AdminPaymentController extends Controller
         $totalServiceQueue = 0;
         $staffPaymentOverview = [];
 
-        foreach ($staffMembers as $staff) {
+        foreach ($allStaffMembers as $staff) {
             $payments = $this->calculatePendingPayments($staff);
             $serviceQueueAmount = ServiceRequest::where('assigned_staff_id', $staff->id)
                 ->whereIn('status', ['assigned', 'in_progress', 'completed'])
@@ -84,6 +89,31 @@ class AdminPaymentController extends Controller
         if ($filterType === 'staff_referral') {
             $pendingPayments = [];
         }
+
+        $pendingPaymentsCollection = collect(array_values($pendingPayments));
+        $pendingPayments = new LengthAwarePaginator(
+            $pendingPaymentsCollection->forPage($pendingPage, $pendingPerPage)->values(),
+            $pendingPaymentsCollection->count(),
+            $pendingPerPage,
+            $pendingPage,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+                'pageName' => 'page',
+            ]
+        );
+
+        $staffMembers = new LengthAwarePaginator(
+            $allStaffMembers->forPage($staffPage, $staffPerPage)->values(),
+            $allStaffMembers->count(),
+            $staffPerPage,
+            $staffPage,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+                'pageName' => 'staff_page',
+            ]
+        );
 
         $recentPayments = StaffPayment::with(['staff', 'admin'])
             ->when($filterType !== 'all', function ($query) use ($filterType) {
