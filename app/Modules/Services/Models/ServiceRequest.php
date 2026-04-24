@@ -111,7 +111,8 @@ class ServiceRequest extends Model
      * CRITICAL FIX #5: Valid status transitions state machine
      */
     private static $validTransitions = [
-        'pending' => ['assigned', 'cancelled'],
+        'pending' => ['assigned', 'pending_approval', 'cancelled'],
+        'pending_approval' => ['assigned', 'pending', 'cancelled'],
         'assigned' => ['in_progress', 'cancelled'],
         'in_progress' => ['completed', 'cancelled'],
         'completed' => [], // Terminal state - cannot change

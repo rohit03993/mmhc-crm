@@ -31,7 +31,7 @@ class StaffDashboardController extends Controller
             ->orderBy('start_date', 'desc')
             ->paginate(10);
         
-        // Calculate missing payouts for services
+        // Calculate missing payouts for display only (no write during dashboard reads).
         foreach ($assignedServices as $service) {
             // Ensure relationships are loaded
             if (!$service->relationLoaded('assignedStaff')) {
@@ -44,7 +44,7 @@ class StaffDashboardController extends Controller
             if (!$service->total_staff_payout && $service->assignedStaff && $service->serviceType) {
                 $dailyStaffPayout = $user->isNurse() ? $service->serviceType->nurse_payout : $service->serviceType->caregiver_payout;
                 $totalStaffPayout = $service->duration_days * $dailyStaffPayout;
-                $service->update(['total_staff_payout' => $totalStaffPayout]);
+                $service->total_staff_payout = $totalStaffPayout;
             }
         }
         
@@ -68,20 +68,37 @@ class StaffDashboardController extends Controller
             ->get();
         
         $serviceRequestEarnings = [
-            'total_approved' => $allServicesData->whereNotNull('admin_approved_at')->sum('total_staff_payout'),
+            // Count as paid only after admin approval AND payout processing.
+            'total_approved' => $allServicesData
+                ->whereNotNull('admin_approved_at')
+                ->filter(function ($service) {
+                    return (bool) $service->staff_payment_processed;
+                })
+                ->sum('total_staff_payout'),
             'pending_approval' => $allServicesData->where('status', 'completed')->whereNull('admin_approved_at')->sum('total_staff_payout'),
+            'approved_unpaid' => $allServicesData
+                ->whereNotNull('admin_approved_at')
+                ->filter(function ($service) {
+                    return !(bool) $service->staff_payment_processed;
+                })
+                ->sum('total_staff_payout'),
             'upcoming' => ServiceRequest::where('assigned_staff_id', $user->id)
                 ->whereIn('status', ['assigned', 'in_progress'])
                 ->whereNotNull('total_staff_payout')
                 ->sum('total_staff_payout'),
             'this_month' => $allServicesData->whereNotNull('admin_approved_at')
                 ->filter(function($service) {
-                    if (!$service->admin_approved_at) return false;
+                    if (!$service->admin_approved_at || !(bool) $service->staff_payment_processed) return false;
                     $approvedDate = $service->admin_approved_at;
                     return $approvedDate->month === now()->month && $approvedDate->year === now()->year;
                 })
                 ->sum('total_staff_payout'),
-            'total_count' => $allServicesData->whereNotNull('admin_approved_at')->count(),
+            'total_count' => $allServicesData
+                ->whereNotNull('admin_approved_at')
+                ->filter(function ($service) {
+                    return (bool) $service->staff_payment_processed;
+                })
+                ->count(),
         ];
         
         // 2. PATIENT REWARD EARNINGS (from submitting patient details)
@@ -413,9 +430,9 @@ class StaffDashboardController extends Controller
                 'staff_approved_at' => now(),
             ]);
 
-            // Update daily services status from 'pending' to 'scheduled'
+            // Ensure booking rows are in scheduled state after acceptance.
             DailyService::where('service_request_id', $serviceRequest->id)
-                ->where('status', 'pending')
+                ->whereIn('status', ['pending', 'scheduled'])
                 ->update(['status' => 'scheduled']);
 
             DB::commit();
@@ -476,9 +493,9 @@ class StaffDashboardController extends Controller
                 'staff_rejection_reason' => $request->rejection_reason,
             ]);
 
-            // Delete pending daily services
+            // Remove non-final daily rows created during pending approval to prevent duplicates on reassign.
             DailyService::where('service_request_id', $serviceRequest->id)
-                ->where('status', 'pending')
+                ->whereIn('status', ['pending', 'scheduled', 'in_progress'])
                 ->delete();
 
             DB::commit();

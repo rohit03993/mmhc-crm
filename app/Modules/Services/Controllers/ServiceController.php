@@ -640,21 +640,22 @@ class ServiceController extends Controller
                     break;
             }
 
-            // Set status based on service request status
-            // Note: daily_services status enum only allows: scheduled, in_progress, completed, cancelled
-            $dailyStatus = 'scheduled'; // Use 'scheduled' for pending_approval requests
-
-            DailyService::create([
-                'service_request_id' => $serviceRequest->id,
-                'staff_id' => $staff->id,
-                'service_date' => $date,
-                'start_time' => $startTime,
-                'end_time' => $endTime,
-                'patient_charge' => $serviceType->patient_charge,
-                'staff_payout' => $staffPayout,
-                'platform_profit' => $serviceType->patient_charge - $staffPayout,
-                'status' => $dailyStatus,
-            ]);
+            // Keep one daily row per service request date to avoid duplicates on reassign/recreate flows.
+            DailyService::updateOrCreate(
+                [
+                    'service_request_id' => $serviceRequest->id,
+                    'service_date' => $date,
+                ],
+                [
+                    'staff_id' => $staff->id,
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    'patient_charge' => $serviceType->patient_charge,
+                    'staff_payout' => $staffPayout,
+                    'platform_profit' => $serviceType->patient_charge - $staffPayout,
+                    'status' => 'scheduled',
+                ]
+            );
         }
     }
 }

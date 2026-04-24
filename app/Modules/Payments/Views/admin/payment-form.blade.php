@@ -229,6 +229,12 @@ function showCopyFeedback() {
 
         <!-- Payment Form -->
         <div class="col-md-7">
+            @if(!$canAutoSettle)
+                <div class="alert alert-warning mb-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No auto-settle pending amount found for this category right now. You can still record this payment manually.
+                </div>
+            @endif
             <!-- Payment Instructions -->
             <div class="alert alert-info mb-3">
                 <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i><strong>Payment Process:</strong></h6>
@@ -273,10 +279,19 @@ function showCopyFeedback() {
                                    class="form-control" 
                                    step="0.01" 
                                    min="0.01"
-                                   value="{{ $paymentType === 'all' ? number_format($pendingPayments['total'], 2, '.', '') : number_format($pendingPayments[$paymentType]['amount'], 2, '.', '') }}"
+                                   value="{{ $paymentType === 'all' ? number_format($pendingPayments['total'], 2, '.', '') : number_format(($pendingPayments[$paymentType]['amount'] ?? 0), 2, '.', '') }}"
                                    required>
                             <small class="text-muted">Enter the amount you paid to the staff member</small>
                         </div>
+
+                        @if(!$canAutoSettle)
+                        <div class="mb-3 form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="manualPaymentCheck" name="manual_payment">
+                            <label class="form-check-label" for="manualPaymentCheck">
+                                Record as manual payment (history only, does not auto-settle pending items)
+                            </label>
+                        </div>
+                        @endif
 
                         <div class="mb-3">
                             <label class="form-label">Transaction ID <span class="text-danger">*</span></label>

@@ -527,7 +527,7 @@
                                 <div class="earnings-main">
                                     <span class="earnings-label">Potential Earnings</span>
                                     <span class="earnings-amount earnings-pending-approval">
-                                        ₹{{ number_format($service->total_staff_payout ?? ($service->serviceType->patient_charge * $service->duration_days)) }}
+                                        ₹{{ number_format($service->total_staff_payout ?? (($service->assignedStaff && $service->assignedStaff->isNurse() ? $service->serviceType->nurse_payout : $service->serviceType->caregiver_payout) * $service->duration_days)) }}
                                     </span>
                                 </div>
                                 <div class="alert alert-warning mb-2 p-2" style="font-size: 0.85rem; border-radius: 8px;">
@@ -538,7 +538,7 @@
                                 <div class="earnings-main">
                                     <span class="earnings-label">Projected Earnings</span>
                                     <span class="earnings-amount earnings-projected">
-                                        ₹{{ number_format($service->total_staff_payout ?? ($service->serviceType->patient_charge * $service->duration_days)) }}
+                                        ₹{{ number_format($service->total_staff_payout ?? (($service->assignedStaff && $service->assignedStaff->isNurse() ? $service->serviceType->nurse_payout : $service->serviceType->caregiver_payout) * $service->duration_days)) }}
                                     </span>
                                 </div>
                             @endif
@@ -549,7 +549,7 @@
                                         @if($service->total_staff_payout)
                                             ₹{{ number_format($service->total_staff_payout / $service->duration_days) }}/day
                                         @else
-                                            ₹{{ number_format($service->serviceType->patient_charge / $service->duration_days) }}/day
+                                            ₹{{ number_format(($service->assignedStaff && $service->assignedStaff->isNurse() ? $service->serviceType->nurse_payout : $service->serviceType->caregiver_payout)) }}/day
                                         @endif
                                     </strong>
                                 </div>

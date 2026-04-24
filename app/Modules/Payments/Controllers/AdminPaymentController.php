@@ -13,11 +13,15 @@ use App\Modules\Services\Models\ServiceRequest;
 use App\Modules\Rewards\Models\CaregiverReward;
 use App\Modules\Referrals\Models\Referral;
 use App\Modules\Plans\Models\Subscription;
-use App\Modules\Rewards\Services\RewardService;
+use App\Modules\Payments\Services\StaffPayoutService;
 
 class AdminPaymentController extends Controller
 {
     const MINIMUM_WITHDRAWAL = 500;
+    
+    public function __construct(
+        private StaffPayoutService $staffPayoutService
+    ) {}
 
     /**
      * Show admin payment management dashboard
@@ -33,9 +37,29 @@ class AdminPaymentController extends Controller
 
         $pendingPayments = [];
         $totalPending = 0;
+        $totalServiceQueue = 0;
+        $staffPaymentOverview = [];
 
         foreach ($staffMembers as $staff) {
             $payments = $this->calculatePendingPayments($staff);
+            $serviceQueueAmount = ServiceRequest::where('assigned_staff_id', $staff->id)
+                ->whereIn('status', ['assigned', 'in_progress', 'completed'])
+                ->whereNotNull('total_staff_payout')
+                ->where('total_staff_payout', '>', 0)
+                ->where(function ($query) {
+                    $query->where('staff_payment_processed', false)
+                        ->orWhereNull('staff_payment_processed');
+                })
+                ->sum('total_staff_payout') ?? 0;
+
+            $staffPaymentOverview[$staff->id] = [
+                'payable_now_total' => (float) $payments['total'],
+                'service_payable_now' => (float) $payments['service_request']['amount'],
+                'service_queue_total' => (float) $serviceQueueAmount,
+                'patient_reward' => (float) $payments['patient_reward']['amount'],
+                'subscription_referral' => (float) $payments['subscription_referral']['amount'],
+            ];
+            $totalServiceQueue += (float) $serviceQueueAmount;
             
             if ($payments['total'] > 0) {
                 $pendingPayments[] = [
@@ -61,7 +85,28 @@ class AdminPaymentController extends Controller
             $pendingPayments = [];
         }
 
-        return view('payments::admin.index', compact('pendingPayments', 'totalPending', 'filterType'));
+        $recentPayments = StaffPayment::with(['staff', 'admin'])
+            ->when($filterType !== 'all', function ($query) use ($filterType) {
+                return $query->where('payment_type', $filterType);
+            })
+            ->orderBy('paid_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        $totalPaidOverall = StaffPayment::when($filterType !== 'all', function ($query) use ($filterType) {
+            return $query->where('payment_type', $filterType);
+        })->sum('amount');
+
+        return view('payments::admin.index', compact(
+            'pendingPayments',
+            'totalPending',
+            'filterType',
+            'recentPayments',
+            'totalPaidOverall',
+            'staffMembers',
+            'staffPaymentOverview',
+            'totalServiceQueue'
+        ));
     }
 
     /**
@@ -85,13 +130,22 @@ class AdminPaymentController extends Controller
         
         $pendingPayments = $this->calculatePendingPayments($staff);
         $paymentDetails = $this->getPaymentDetails($staff, $paymentType);
+        $selectedTypePending = (float) ($pendingPayments[$paymentType]['amount'] ?? 0);
+        $canAutoSettle = $selectedTypePending > 0;
         
         // Ensure paymentDetails is always a collection
         if (!$paymentDetails) {
             $paymentDetails = collect();
         }
 
-        return view('payments::admin.payment-form', compact('staff', 'pendingPayments', 'paymentType', 'paymentDetails'));
+        return view('payments::admin.payment-form', compact(
+            'staff',
+            'pendingPayments',
+            'paymentType',
+            'paymentDetails',
+            'selectedTypePending',
+            'canAutoSettle'
+        ));
     }
     
     /**
@@ -99,12 +153,10 @@ class AdminPaymentController extends Controller
      */
     public function history(Request $request)
     {
-        $admin = Auth::user();
         $filterType = $request->get('type', 'all');
         $filterStaff = $request->get('staff', 'all');
         
         $query = StaffPayment::with(['staff', 'admin'])
-            ->where('admin_id', $admin->id)
             ->orderBy('paid_at', 'desc');
         
         // Filter by payment type
@@ -126,7 +178,7 @@ class AdminPaymentController extends Controller
             ->get();
         
         // Calculate totals
-        $totalPaid = StaffPayment::where('admin_id', $admin->id)
+        $totalPaid = StaffPayment::query()
             ->when($filterType !== 'all', function($q) use ($filterType) {
                 return $q->where('payment_type', $filterType);
             })
@@ -149,6 +201,7 @@ class AdminPaymentController extends Controller
             'transaction_id' => 'required|string|max:255',
             'notes' => 'nullable|string',
             'payment_screenshot' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'manual_payment' => 'nullable|boolean',
         ], [
             'transaction_id.required' => 'Transaction ID is required. Please enter the transaction ID from your payment app.',
             'payment_screenshot.required' => 'Payment screenshot is required. Please upload the payment confirmation screenshot.',
@@ -156,6 +209,16 @@ class AdminPaymentController extends Controller
 
         $staff = User::findOrFail($staffId);
         $admin = Auth::user();
+        $requestedAmount = (float) $request->amount;
+        $isManualPayment = (bool) $request->boolean('manual_payment');
+        $pendingPayments = $this->calculatePendingPayments($staff);
+        $maxPayableForType = (float) ($pendingPayments[$request->payment_type]['amount'] ?? 0);
+
+        if (!$isManualPayment && $requestedAmount - $maxPayableForType > 0.0001) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Entered amount exceeds payable pending amount for this category.');
+        }
 
         // Handle screenshot upload
         $screenshotPath = null;
@@ -163,23 +226,29 @@ class AdminPaymentController extends Controller
             $screenshotPath = $request->file('payment_screenshot')->store('payment-screenshots', 'public');
         }
 
-        // Create payment record
-        $payment = StaffPayment::create([
-            'staff_id' => $staff->id,
-            'admin_id' => $admin->id,
-            'payment_type' => $request->payment_type,
-            'amount' => $request->amount,
-            'transaction_id' => $request->transaction_id,
-            'notes' => $request->notes,
-            'payment_screenshot' => $screenshotPath,
-            'paid_at' => now(),
-        ]);
+        DB::transaction(function () use ($staff, $admin, $request, $requestedAmount, $screenshotPath) {
+            StaffPayment::create([
+                'staff_id' => $staff->id,
+                'admin_id' => $admin->id,
+                'payment_type' => $request->payment_type,
+                'amount' => $requestedAmount,
+                'transaction_id' => $request->transaction_id,
+                'notes' => $request->notes,
+                'payment_screenshot' => $screenshotPath,
+                'paid_at' => now(),
+            ]);
 
-        // Mark related records as paid
-        $this->markAsPaid($staff, $request->payment_type, $request->amount);
+            // Mark related records only for auto-settlement flow.
+            if (!$isManualPayment) {
+                $this->markAsPaid($staff, $request->payment_type, $requestedAmount);
+            }
+        });
 
         return redirect()->route('admin.payments.index')
-            ->with('success', "Payment of ₹{$request->amount} processed successfully for {$staff->name}.");
+            ->with('success', $isManualPayment
+                ? "Manual payment of ₹{$request->amount} recorded successfully for {$staff->name}."
+                : "Payment of ₹{$request->amount} processed successfully for {$staff->name}."
+            );
     }
 
     /**
@@ -187,61 +256,9 @@ class AdminPaymentController extends Controller
      */
     private function calculatePendingPayments(User $staff)
     {
-        $rewardService = app(RewardService::class);
-
-        // 1. Service Request Earnings (completed and approved, but not paid)
-        $serviceEarnings = ServiceRequest::where('assigned_staff_id', $staff->id)
-            ->where('status', 'completed')
-            ->whereNotNull('admin_approved_at')
-            ->where('staff_payment_processed', false)
-            ->sum('total_staff_payout') ?? 0;
-
-        // 2. Patient Reward Earnings (show all, not just >= ₹500 for admin)
-        $totalRewardPoints = $staff->reward_points ?? 0;
-        $totalRewardAmount = $rewardService->calculateRewardAmount($totalRewardPoints);
-        $patientRewardEarnings = CaregiverReward::where('user_id', $staff->id)
-            ->where('payment_processed', false)
-            ->sum('reward_amount') ?? 0;
-
-        // 3. Staff Referral – points only, not paid out (excluded from payments)
-        $staffReferralEarnings = 0;
-
-        // 4. Subscription Referral Earnings
-        $subscriptionReferralEarnings = Subscription::where('referrer_id', $staff->id)
-            ->where('status', 'active')
-            ->where('referral_payment_processed', false)
-            ->sum('referral_commission_amount') ?? 0;
-
-        return [
-            'service_request' => [
-                'amount' => $serviceEarnings,
-                'count' => ServiceRequest::where('assigned_staff_id', $staff->id)
-                    ->where('status', 'completed')
-                    ->whereNotNull('admin_approved_at')
-                    ->where('staff_payment_processed', false)
-                    ->count(),
-            ],
-            'patient_reward' => [
-                'amount' => $patientRewardEarnings,
-                'count' => $patientRewardEarnings > 0 ? CaregiverReward::where('user_id', $staff->id)
-                    ->where('payment_processed', false)
-                    ->count() : 0,
-                'meets_threshold' => $patientRewardEarnings >= self::MINIMUM_WITHDRAWAL,
-            ],
-            'staff_referral' => [
-                'amount' => 0,
-                'count' => 0,
-                'meets_threshold' => false,
-            ],
-            'subscription_referral' => [
-                'amount' => $subscriptionReferralEarnings,
-                'count' => Subscription::where('referrer_id', $staff->id)
-                    ->where('status', 'active')
-                    ->where('referral_payment_processed', false)
-                    ->count(),
-            ],
-            'total' => $serviceEarnings + $patientRewardEarnings + $staffReferralEarnings + $subscriptionReferralEarnings,
-        ];
+        $payments = $this->staffPayoutService->calculatePendingPayments($staff);
+        $payments['patient_reward']['meets_threshold'] = $payments['patient_reward']['amount'] >= self::MINIMUM_WITHDRAWAL;
+        return $payments;
     }
 
     /**
@@ -251,18 +268,14 @@ class AdminPaymentController extends Controller
     {
         switch ($paymentType) {
             case 'service_request':
-                return ServiceRequest::where('assigned_staff_id', $staff->id)
-                    ->where('status', 'completed')
-                    ->whereNotNull('admin_approved_at')
-                    ->where('staff_payment_processed', false)
+                return $this->staffPayoutService
+                    ->pendingServiceRequestQuery($staff->id)
                     ->with(['patient', 'serviceType'])
                     ->get();
 
             case 'patient_reward':
                 // Admin can see all unpaid rewards, regardless of threshold
-                return CaregiverReward::where('user_id', $staff->id)
-                    ->where('payment_processed', false)
-                    ->get();
+                return $this->staffPayoutService->pendingPatientRewardQuery($staff->id)->get();
 
             case 'staff_referral':
                 // Admin can see all unpaid referrals, regardless of threshold
@@ -273,9 +286,8 @@ class AdminPaymentController extends Controller
                     ->get();
 
             case 'subscription_referral':
-                return Subscription::where('referrer_id', $staff->id)
-                    ->where('status', 'active')
-                    ->where('referral_payment_processed', false)
+                return $this->staffPayoutService
+                    ->pendingSubscriptionReferralQuery($staff->id)
                     ->with(['user', 'plan'])
                     ->get();
 
@@ -289,77 +301,95 @@ class AdminPaymentController extends Controller
      */
     private function markAsPaid(User $staff, $paymentType, $amount)
     {
+        $remaining = (float) $amount;
+        $epsilon = 0.0001;
+
         switch ($paymentType) {
             case 'service_request':
-                // Mark all unpaid completed services as paid (up to the amount)
-                $services = ServiceRequest::where('assigned_staff_id', $staff->id)
-                    ->where('status', 'completed')
-                    ->whereNotNull('admin_approved_at')
-                    ->where('staff_payment_processed', false)
+                $services = $this->staffPayoutService
+                    ->pendingServiceRequestQuery($staff->id)
+                    ->lockForUpdate()
                     ->orderBy('admin_approved_at')
+                    ->orderBy('id')
                     ->get();
 
-                $remaining = $amount;
                 foreach ($services as $service) {
-                    if ($remaining <= 0) break;
+                    $payout = (float) ($service->total_staff_payout ?? 0);
+                    if ($payout <= 0 || $remaining + $epsilon < $payout) {
+                        continue;
+                    }
                     $service->update([
                         'staff_payment_processed' => true,
                         'staff_payment_processed_at' => now(),
                     ]);
-                    $remaining -= $service->total_staff_payout;
+                    $remaining -= $payout;
                 }
                 break;
 
             case 'patient_reward':
-                $rewards = CaregiverReward::where('user_id', $staff->id)
-                    ->where('payment_processed', false)
+                $rewards = $this->staffPayoutService
+                    ->pendingPatientRewardQuery($staff->id)
+                    ->lockForUpdate()
                     ->orderBy('created_at')
+                    ->orderBy('id')
                     ->get();
 
-                $remaining = $amount;
                 foreach ($rewards as $reward) {
-                    if ($remaining <= 0) break;
+                    $rewardAmount = (float) ($reward->reward_amount ?? 0);
+                    if ($rewardAmount <= 0 || $remaining + $epsilon < $rewardAmount) {
+                        continue;
+                    }
                     $reward->update([
                         'payment_processed' => true,
                         'payment_processed_at' => now(),
                     ]);
-                    $remaining -= $reward->reward_amount;
+                    $remaining -= $rewardAmount;
                 }
                 break;
 
             case 'staff_referral':
                 $referrals = Referral::where('referrer_id', $staff->id)
                     ->where('status', 'completed')
-                    ->where('payment_processed', false)
+                    ->where(function ($query) {
+                        $query->where('payment_processed', false)
+                            ->orWhereNull('payment_processed');
+                    })
+                    ->lockForUpdate()
                     ->orderBy('completed_at')
+                    ->orderBy('id')
                     ->get();
 
-                $remaining = $amount;
                 foreach ($referrals as $referral) {
-                    if ($remaining <= 0) break;
+                    $rewardAmount = (float) ($referral->reward_amount ?? 0);
+                    if ($rewardAmount <= 0 || $remaining + $epsilon < $rewardAmount) {
+                        continue;
+                    }
                     $referral->update([
                         'payment_processed' => true,
                         'payment_processed_at' => now(),
                     ]);
-                    $remaining -= $referral->reward_amount;
+                    $remaining -= $rewardAmount;
                 }
                 break;
 
             case 'subscription_referral':
-                $subscriptions = Subscription::where('referrer_id', $staff->id)
-                    ->where('status', 'active')
-                    ->where('referral_payment_processed', false)
+                $subscriptions = $this->staffPayoutService
+                    ->pendingSubscriptionReferralQuery($staff->id)
+                    ->lockForUpdate()
                     ->orderBy('created_at')
+                    ->orderBy('id')
                     ->get();
 
-                $remaining = $amount;
                 foreach ($subscriptions as $subscription) {
-                    if ($remaining <= 0) break;
+                    $commissionAmount = (float) ($subscription->referral_commission_amount ?? 0);
+                    if ($commissionAmount <= 0 || $remaining + $epsilon < $commissionAmount) {
+                        continue;
+                    }
                     $subscription->update([
                         'referral_payment_processed' => true,
                         'referral_payment_processed_at' => now(),
                     ]);
-                    $remaining -= $subscription->referral_commission_amount;
+                    $remaining -= $commissionAmount;
                 }
                 break;
         }

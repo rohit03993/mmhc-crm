@@ -5,9 +5,14 @@ namespace App\Modules\Auth\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Modules\Payments\Services\StaffPayoutService;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private StaffPayoutService $staffPayoutService
+    ) {}
+
     /**
      * Show user dashboard
      */
@@ -529,38 +534,7 @@ class DashboardController extends Controller
      */
     protected function calculatePendingPaymentsForStaff($staff)
     {
-        $rewardService = app(\App\Modules\Rewards\Services\RewardService::class);
-
-        // 1. Service Request Earnings (completed and approved, but not paid)
-        $serviceEarnings = \App\Modules\Services\Models\ServiceRequest::where('assigned_staff_id', $staff->id)
-            ->where('status', 'completed')
-            ->whereNotNull('admin_approved_at')
-            ->where('staff_payment_processed', false)
-            ->sum('total_staff_payout') ?? 0;
-
-        // 2. Patient Reward Earnings
-        $patientRewardEarnings = \App\Modules\Rewards\Models\CaregiverReward::where('user_id', $staff->id)
-            ->where('payment_processed', false)
-            ->sum('reward_amount') ?? 0;
-
-        // 3. Staff Referral – points only, not paid out (excluded from pending)
-        $staffReferralEarnings = 0;
-
-        // 4. Subscription Referral Earnings
-        $subscriptionReferralEarnings = \App\Modules\Plans\Models\Subscription::where('referrer_id', $staff->id)
-            ->where('status', 'active')
-            ->where('referral_payment_processed', false)
-            ->sum('referral_commission_amount') ?? 0;
-
-        $total = $serviceEarnings + $patientRewardEarnings + $subscriptionReferralEarnings;
-
-        return [
-            'service_request' => ['amount' => $serviceEarnings],
-            'patient_reward' => ['amount' => $patientRewardEarnings],
-            'staff_referral' => ['amount' => 0],
-            'subscription_referral' => ['amount' => $subscriptionReferralEarnings],
-            'total' => $total,
-        ];
+        return $this->staffPayoutService->calculatePendingPayments($staff);
     }
 
     /**

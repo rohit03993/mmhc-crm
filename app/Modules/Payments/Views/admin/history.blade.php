@@ -128,6 +128,9 @@
                         </small>
                     </div>
                     <div class="col-md-3">
+                        <small class="text-muted d-block mb-1">
+                            <strong>Processed By:</strong> {{ $payment->admin->name ?? 'Admin' }}
+                        </small>
                         @if($payment->transaction_id)
                             <small class="d-block mb-1">
                                 <strong>Transaction ID:</strong> {{ $payment->transaction_id }}
