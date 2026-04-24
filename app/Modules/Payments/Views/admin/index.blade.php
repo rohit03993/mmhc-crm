@@ -119,6 +119,49 @@
         margin-bottom: 0.75rem;
         box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     }
+    /* Scoped pagination fixes: prevent oversized arrows/icons from global CSS leakage */
+    .pagination-wrap nav[role="navigation"] {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+    .pagination-wrap nav[role="navigation"] svg {
+        width: 14px !important;
+        height: 14px !important;
+        min-width: 14px !important;
+        min-height: 14px !important;
+        max-width: 14px !important;
+        max-height: 14px !important;
+    }
+    .pagination-wrap nav[role="navigation"] > div:first-child {
+        display: none;
+    }
+    .pagination-wrap nav[role="navigation"] > div:last-child > span,
+    .pagination-wrap nav[role="navigation"] > div:last-child > a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid #dbe2ea;
+        background: #fff;
+        color: #334155;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1;
+        margin: 0 3px;
+        padding: 0 10px;
+        text-decoration: none;
+    }
+    .pagination-wrap nav[role="navigation"] > div:last-child > span[aria-current="page"] {
+        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        color: #fff;
+        border-color: transparent;
+    }
+    .pagination-wrap nav[role="navigation"] > div:last-child > a:hover {
+        background: #f1f5f9;
+    }
 </style>
 @endsection
 
@@ -245,7 +288,7 @@
                 </div>
             </div>
         @endforeach
-        <div class="mt-3">
+        <div class="mt-3 pagination-wrap">
             {{ $pendingPayments->appends(['staff_page' => request('staff_page')])->fragment('pending-payments-section')->links() }}
         </div>
     @else
@@ -296,7 +339,7 @@
                     </div>
                 </div>
             @endforeach
-            <div class="mt-3">
+            <div class="mt-3 pagination-wrap">
                 {{ $staffMembers->appends(['page' => request('page'), 'type' => request('type')])->fragment('all-staff-actions-section')->links() }}
             </div>
         @endif
