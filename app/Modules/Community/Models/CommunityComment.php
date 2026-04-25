@@ -31,5 +31,10 @@ class CommunityComment extends Model
     {
         return $this->belongsTo(self::class, 'parent_id');
     }
+
+    public function replies()
+    {
+        return $this->hasMany(self::class, 'parent_id')->latest();
+    }
 }
 

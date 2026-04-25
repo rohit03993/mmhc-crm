@@ -15,6 +15,7 @@ class PostService
             ->with([
                 'user:id,name,role,unique_id',
                 'comments.user:id,name,role,unique_id',
+                'comments.replies.user:id,name,role,unique_id',
                 'reactions:id,post_id,user_id,reaction_type',
                 'eventInterests:id,post_id,user_id,status',
             ])

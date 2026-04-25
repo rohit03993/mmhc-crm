@@ -10,6 +10,7 @@ use App\Modules\Community\Models\CommunityReaction;
 use App\Modules\Community\Services\PostService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
@@ -115,6 +116,79 @@ class PostController extends Controller
 
         $post->delete();
         return redirect()->route('community.index')->with('success', 'Post deleted successfully.');
+    }
+
+    public function update(Request $request, CommunityPost $post)
+    {
+        $user = Auth::user();
+        if (!$user->isAdmin() && $post->user_id !== $user->id) {
+            abort(403, 'You are not allowed to edit this post.');
+        }
+
+        $request->validate([
+            'content' => 'nullable|string|max:3000',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+            'remove_image' => 'nullable|boolean',
+            'event_title' => 'nullable|string|max:255',
+            'event_date' => 'nullable|date|after_or_equal:today',
+            'event_location' => 'nullable|string|max:255',
+            'is_pinned' => 'nullable|boolean',
+            'is_announcement' => 'nullable|boolean',
+        ]);
+
+        if ($post->post_type === 'text' && blank($request->content)) {
+            return redirect()->route('community.index', ['page' => $request->get('page')])
+                ->withErrors(['content' => 'Text post content is required.']);
+        }
+
+        if ($post->post_type === 'event') {
+            $request->validate([
+                'event_title' => 'required|string|max:255',
+                'event_date' => 'required|date|after_or_equal:today',
+                'event_location' => 'required|string|max:255',
+                'content' => 'required|string|max:3000',
+            ]);
+        }
+
+        $removeImage = $request->boolean('remove_image');
+        if ($post->post_type === 'image' && $removeImage && !$request->hasFile('image')) {
+            return redirect()->route('community.index', ['page' => $request->get('page')])
+                ->withErrors(['image' => 'Image post must have an image. Upload a new one before removing the current image.']);
+        }
+
+        if ($removeImage && !empty($post->image_path)) {
+            Storage::disk('public')->delete($post->image_path);
+            $post->image_path = null;
+        }
+
+        if ($request->hasFile('image')) {
+            if (!empty($post->image_path)) {
+                Storage::disk('public')->delete($post->image_path);
+            }
+            $post->image_path = $request->file('image')->store('community/posts', 'public');
+        }
+
+        $post->content = $request->input('content');
+        $post->event_title = $post->post_type === 'event' ? $request->input('event_title') : null;
+        $post->event_date = $post->post_type === 'event' ? $request->input('event_date') : null;
+        $post->event_location = $post->post_type === 'event' ? $request->input('event_location') : null;
+
+        if ($user->isAdmin()) {
+            $wasPinned = (bool) $post->is_pinned;
+            $post->is_pinned = $request->boolean('is_pinned');
+            $post->is_announcement = $request->boolean('is_announcement');
+            if ($post->is_pinned && !$wasPinned) {
+                $post->pinned_at = now();
+            }
+            if (!$post->is_pinned) {
+                $post->pinned_at = null;
+            }
+        }
+
+        $post->save();
+
+        return redirect()->route('community.index', ['page' => $request->get('page')])
+            ->with('success', 'Post updated successfully.');
     }
 }
 

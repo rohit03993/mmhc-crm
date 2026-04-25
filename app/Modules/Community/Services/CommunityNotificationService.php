@@ -37,5 +37,20 @@ class CommunityNotificationService
             'meta' => ['comment_preview' => $commentPreview],
         ]);
     }
+
+    public function notifyEventInterest(User $actor, CommunityPost $post, string $status): void
+    {
+        if ($post->user_id === $actor->id) {
+            return;
+        }
+
+        CommunityNotification::create([
+            'recipient_user_id' => $post->user_id,
+            'actor_user_id' => $actor->id,
+            'post_id' => $post->id,
+            'type' => 'event_interest',
+            'meta' => ['status' => $status],
+        ]);
+    }
 }
 

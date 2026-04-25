@@ -5,11 +5,16 @@ namespace App\Modules\Community\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Community\Models\CommunityEventInterest;
 use App\Modules\Community\Models\CommunityPost;
+use App\Modules\Community\Services\CommunityNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class EventController extends Controller
 {
+    public function __construct(
+        private CommunityNotificationService $notificationService
+    ) {}
+
     public function setInterest(Request $request, CommunityPost $post)
     {
         if ($post->post_type !== 'event') {
@@ -35,6 +40,8 @@ class EventController extends Controller
             ['post_id' => $post->id, 'user_id' => $userId],
             ['status' => $status]
         );
+
+        $this->notificationService->notifyEventInterest(Auth::user(), $post, $status);
 
         return redirect()->route('community.index', ['page' => $request->get('page')])->with('success', 'Event response updated.');
     }

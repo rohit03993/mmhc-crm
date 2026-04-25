@@ -63,15 +63,21 @@
                             </li>
                             @forelse(($communityRecentNotifications ?? collect()) as $notification)
                                 <li>
-                                    <a class="dropdown-item small" href="{{ route('community.index') }}#post-{{ $notification->post_id }}">
-                                        <strong>{{ $notification->actor->name ?? 'Member' }}</strong>
-                                        @if($notification->type === 'comment')
-                                            commented on your post
-                                        @else
-                                            reacted ({{ $notification->meta['reaction_type'] ?? 'like' }}) on your post
-                                        @endif
-                                        <div class="text-muted">{{ $notification->created_at->diffForHumans() }}</div>
-                                    </a>
+                                    <form method="POST" action="{{ route('community.notifications.open', $notification) }}">
+                                        @csrf
+                                        <input type="hidden" name="page" value="{{ request('page', 1) }}">
+                                        <button type="submit" class="dropdown-item small text-start w-100 border-0 bg-transparent @if(is_null($notification->read_at)) fw-semibold @endif">
+                                            <strong>{{ $notification->actor->name ?? 'Member' }}</strong>
+                                            @if($notification->type === 'comment')
+                                                commented on your post
+                                            @elseif($notification->type === 'event_interest')
+                                                responded <strong>{{ $notification->meta['status'] ?? 'interested' }}</strong> to your event
+                                            @else
+                                                reacted ({{ $notification->meta['reaction_type'] ?? 'like' }}) on your post
+                                            @endif
+                                            <div class="text-muted">{{ $notification->created_at->diffForHumans() }}</div>
+                                        </button>
+                                    </form>
                                 </li>
                             @empty
                                 <li><span class="dropdown-item-text text-muted small">No notifications yet.</span></li>
