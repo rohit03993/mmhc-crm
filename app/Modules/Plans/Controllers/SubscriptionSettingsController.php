@@ -4,9 +4,9 @@ namespace App\Modules\Plans\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class SubscriptionSettingsController extends Controller
 {
@@ -16,11 +16,10 @@ class SubscriptionSettingsController extends Controller
     public function index()
     {
         $gstRate = config('subscription.gst_rate', 18.00);
-        $commissionRate = config('subscription.referral_commission_rate', 5.00);
         $upiId = config('subscription.upi_id', 'mmhc@paytm');
         $merchantName = config('subscription.upi_merchant_name', 'MMHC');
-        
-        return view('plans::admin.settings.index', compact('gstRate', 'commissionRate', 'upiId', 'merchantName'));
+
+        return view('plans::admin.settings.index', compact('gstRate', 'upiId', 'merchantName'));
     }
 
     /**
@@ -30,7 +29,6 @@ class SubscriptionSettingsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'gst_rate' => 'required|numeric|min:0|max:100',
-            'referral_commission_rate' => 'required|numeric|min:0|max:100',
             'upi_id' => 'required|string|max:255',
             'upi_merchant_name' => 'required|string|max:255',
         ]);
@@ -47,7 +45,6 @@ class SubscriptionSettingsController extends Controller
 
             // Build config content deterministically to avoid regex mismatches and malformed PHP.
             $gstRate = (float) $validated['gst_rate'];
-            $referralRate = (float) $validated['referral_commission_rate'];
             $upiId = var_export((string) $validated['upi_id'], true);
             $merchantName = var_export((string) $validated['upi_merchant_name'], true);
 
@@ -56,7 +53,6 @@ class SubscriptionSettingsController extends Controller
 
 return [
     'gst_rate' => env('SUBSCRIPTION_GST_RATE', {$gstRate}),
-    'referral_commission_rate' => env('SUBSCRIPTION_REFERRAL_COMMISSION_RATE', {$referralRate}),
     'upi_id' => env('SUBSCRIPTION_UPI_ID', {$upiId}),
     'upi_merchant_name' => env('SUBSCRIPTION_UPI_MERCHANT_NAME', {$merchantName}),
 ];
@@ -84,10 +80,10 @@ PHP;
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return redirect()->back()
                 ->with('error', 'Unable to update settings. Please try again.')
                 ->withInput();
         }
     }
 }
-

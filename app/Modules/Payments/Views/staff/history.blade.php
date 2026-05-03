@@ -68,6 +68,14 @@
                     </div>
                     <div class="col-md-4 text-end">
                         <div class="payment-amount">₹{{ number_format($payment->amount, 2) }}</div>
+                        @if($payment->payment_mode)
+                            <small class="text-muted d-block">
+                                Mode: {{ strtoupper($payment->payment_mode) }}
+                                @if($payment->gateway_status)
+                                    • Status: {{ strtoupper($payment->gateway_status) }}
+                                @endif
+                            </small>
+                        @endif
                         @if($payment->transaction_id)
                             <small class="text-muted">
                                 <i class="fas fa-receipt me-1"></i>{{ $payment->transaction_id }}

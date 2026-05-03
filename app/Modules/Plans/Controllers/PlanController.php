@@ -28,7 +28,7 @@ class PlanController extends Controller
             // If plans table doesn't exist or error, return empty collection
             $plans = collect([]);
         }
-        
+
         return view('plans::plans.index', compact('plans'));
     }
 
@@ -37,10 +37,10 @@ class PlanController extends Controller
      */
     public function show(Plan $plan)
     {
-        if (!$plan->is_active) {
+        if (! $plan->is_active) {
             abort(404);
         }
-        
+
         return view('plans::plans.show', compact('plan'));
     }
 
@@ -49,8 +49,8 @@ class PlanController extends Controller
      */
     public function adminIndex()
     {
-        $plans = Plan::ordered()->paginate(15);
-        
+        $plans = Plan::ordered()->paginate(10);
+
         return view('plans::admin.plans.index', compact('plans'));
     }
 
@@ -193,7 +193,7 @@ class PlanController extends Controller
         foreach ($enabledOptions as $frequency => $enabled) {
             if ($enabled && isset($paymentOptions[$frequency])) {
                 $option = $paymentOptions[$frequency];
-                
+
                 // Build the option data
                 $processedOptions[$frequency] = [
                     'price' => (float) ($option['price'] ?? 0),
@@ -203,16 +203,16 @@ class PlanController extends Controller
 
                 // Add years data for non-monthly options
                 if ($frequency !== 'monthly') {
-                    $processedOptions[$frequency]['payable_years'] = isset($option['payable_years']) && $option['payable_years'] !== '' 
-                        ? (float) $option['payable_years'] 
+                    $processedOptions[$frequency]['payable_years'] = isset($option['payable_years']) && $option['payable_years'] !== ''
+                        ? (float) $option['payable_years']
                         : null;
-                    $processedOptions[$frequency]['care_benefits_years'] = isset($option['care_benefits_years']) && $option['care_benefits_years'] !== '' 
-                        ? (float) $option['care_benefits_years'] 
+                    $processedOptions[$frequency]['care_benefits_years'] = isset($option['care_benefits_years']) && $option['care_benefits_years'] !== ''
+                        ? (float) $option['care_benefits_years']
                         : null;
                 }
             }
         }
 
-        return !empty($processedOptions) ? $processedOptions : null;
+        return ! empty($processedOptions) ? $processedOptions : null;
     }
 }

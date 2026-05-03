@@ -1,6 +1,16 @@
 @extends('auth::layout')
 
 @section('content')
+@php
+    $paymentProvider = $subscription->payment_provider ?: (($subscription->payment_screenshot || $subscription->transaction_id) ? 'manual' : null);
+    $gatewayMethod = strtolower((string) data_get($subscription->gateway_payload, 'method', ''));
+    $paymentModeLabel = match (true) {
+        $paymentProvider === 'razorpay' && $gatewayMethod !== '' => strtoupper($gatewayMethod),
+        $paymentProvider === 'razorpay' => 'ONLINE',
+        $paymentProvider === 'manual' => 'MANUAL PROOF',
+        default => 'N/A',
+    };
+@endphp
 <div class="container-fluid px-3 py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -60,6 +70,54 @@
                             </strong>
                         </div>
                     </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6 col-md-3">
+                            <small class="text-muted d-block">Payment Provider</small>
+                            <span class="badge rounded-pill {{ $paymentProvider === 'razorpay' ? 'bg-info text-dark' : 'bg-secondary text-white' }}">
+                                {{ strtoupper((string) ($paymentProvider ?: 'N/A')) }}
+                            </span>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <small class="text-muted d-block">Payment Mode</small>
+                            <span class="badge rounded-pill bg-light text-dark border">
+                                {{ $paymentModeLabel }}
+                            </span>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <small class="text-muted d-block">Gateway Status</small>
+                            <span class="badge rounded-pill {{ in_array($subscription->gateway_status, ['captured', 'processed']) ? 'bg-success' : 'bg-warning text-dark' }}">
+                                {{ ucfirst((string) ($subscription->gateway_status ?: 'N/A')) }}
+                            </span>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <small class="text-muted d-block">Transaction ID</small>
+                            <strong class="small text-break">{{ $subscription->transaction_id ?: 'N/A' }}</strong>
+                        </div>
+                    </div>
+
+                    @if($subscription->payment_provider === 'razorpay' || $subscription->razorpay_order_id || $subscription->razorpay_payment_id)
+                    <div class="pmt-meta-box">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <small class="text-muted d-block">Razorpay Order ID</small>
+                                <code class="pmt-code">{{ $subscription->razorpay_order_id ?: 'N/A' }}</code>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <small class="text-muted d-block">Razorpay Payment ID</small>
+                                <code class="pmt-code">{{ $subscription->razorpay_payment_id ?: 'N/A' }}</code>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <small class="text-muted d-block">Webhook Event ID</small>
+                                <code class="pmt-code">{{ $subscription->razorpay_event_id ?: 'N/A' }}</code>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <small class="text-muted d-block">Webhook Received At</small>
+                                <strong>{{ $subscription->webhook_received_at ? $subscription->webhook_received_at->format('M d, Y h:i A') : 'N/A' }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
 
                     <div class="row g-3">
                         <div class="col-6 col-md-4">
@@ -313,6 +371,25 @@
 
 .subscription-actions {
     text-align: center;
+}
+
+.pmt-meta-box {
+    margin-bottom: 1rem;
+    padding: 0.9rem 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
+.pmt-code {
+    display: inline-block;
+    width: 100%;
+    padding: 0.35rem 0.45rem;
+    border-radius: 6px;
+    background: #eef2ff;
+    color: #1e293b;
+    white-space: normal;
+    word-break: break-all;
 }
 </style>
 

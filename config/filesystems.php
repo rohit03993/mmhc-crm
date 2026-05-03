@@ -87,6 +87,6 @@ return [
     |
     */
 
-    'serve_via_laravel' => env('SERVE_STORAGE_VIA_LARAVEL', false),
+    'serve_via_laravel' => env('SERVE_STORAGE_VIA_LARAVEL', true),
 
 ];

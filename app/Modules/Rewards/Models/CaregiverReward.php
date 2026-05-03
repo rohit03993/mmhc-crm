@@ -11,6 +11,7 @@ class CaregiverReward extends Model
         'user_id',
         'patient_name',
         'patient_phone',
+        'patient_email',
         'patient_age',
         'patient_address',
         'patient_pincode',
@@ -18,8 +19,25 @@ class CaregiverReward extends Model
         'treatment_details',
         'reward_points',
         'reward_amount',
+        'verification_status',
+        'verification_otp_hash',
+        'verification_otp_expires_at',
+        'verification_otp_attempts',
+        'verification_otp_sent_at',
+        'verification_otp_sent_to',
+        'verified_at',
         'payment_processed',
         'payment_processed_at',
+    ];
+
+    protected $casts = [
+        'verification_otp_expires_at' => 'datetime',
+        'verification_otp_sent_at' => 'datetime',
+        'verified_at' => 'datetime',
+        'verification_otp_attempts' => 'integer',
+        'payment_processed' => 'boolean',
+        'payment_processed_at' => 'datetime',
+        'reward_amount' => 'decimal:2',
     ];
 
     public function user(): BelongsTo
@@ -27,4 +45,3 @@ class CaregiverReward extends Model
         return $this->belongsTo(\App\Models\Core\User::class);
     }
 }
-

@@ -10,7 +10,8 @@ class InstitutionController extends Controller
 {
     public function index()
     {
-        $institutions = Institution::orderBy('name')->paginate(15);
+        $institutions = Institution::orderBy('name')->paginate(10);
+
         return view('academics::institutions.index', compact('institutions'));
     }
 
@@ -32,6 +33,7 @@ class InstitutionController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
 
         Institution::create($validated);
+
         return redirect()->route('academics.institutions.index')
             ->with('success', 'Institution created successfully.');
     }
@@ -45,7 +47,7 @@ class InstitutionController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:50|unique:academic_institutions,code,' . $institution->id,
+            'code' => 'nullable|string|max:50|unique:academic_institutions,code,'.$institution->id,
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
@@ -54,6 +56,7 @@ class InstitutionController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
 
         $institution->update($validated);
+
         return redirect()->route('academics.institutions.index')
             ->with('success', 'Institution updated successfully.');
     }
@@ -61,6 +64,7 @@ class InstitutionController extends Controller
     public function destroy(Institution $institution)
     {
         $institution->delete();
+
         return redirect()->route('academics.institutions.index')
             ->with('success', 'Institution deleted successfully.');
     }

@@ -12,11 +12,22 @@
         box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     }
     .staff-payment-info {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background: linear-gradient(135deg, #e8f1fb 0%, #dce9f7 100%);
+        color: #1e3a5f;
+        border: 1px solid #c5d7ef;
         border-radius: 12px;
         padding: 1.5rem;
         margin-bottom: 1.5rem;
+    }
+    .staff-payment-info .text-muted { color: #4a6589 !important; }
+    .payment-record-submit {
+        background-color: #198754;
+        border-color: #198754;
+        font-weight: 600;
+    }
+    .payment-record-submit:hover {
+        background-color: #157347;
+        border-color: #146c43;
     }
     .qr-code-preview {
         max-width: 200px;
@@ -86,6 +97,23 @@ function copyUPIId(upiId) {
     }
 }
 
+function initAdminPaymentCategorySelect() {
+    const sel = document.getElementById('adminPaymentCategorySelect');
+    if (!sel) {
+        return;
+    }
+    const baseUrl = sel.getAttribute('data-form-base-url');
+    if (!baseUrl) {
+        return;
+    }
+    sel.addEventListener('change', function () {
+        if (!this.value) {
+            return;
+        }
+        window.location.assign(baseUrl + '?type=' + encodeURIComponent(this.value));
+    });
+}
+
 function showCopyFeedback() {
     // Create a temporary toast notification
     const toast = document.createElement('div');
@@ -98,10 +126,38 @@ function showCopyFeedback() {
         toast.remove();
     }, 2000);
 }
+
+document.addEventListener('DOMContentLoaded', initAdminPaymentCategorySelect);
+
+function toggleAdminPaymentModeFields() {
+    const mode = document.getElementById('paymentModeSelect')?.value || 'manual';
+    const txn = document.getElementById('transaction_id');
+    const screenshot = document.getElementById('payment_screenshot');
+    const manualFields = document.querySelectorAll('.manual-only-field');
+    const gatewayHint = document.getElementById('gatewayModeHint');
+
+    const isManual = mode === 'manual';
+    manualFields.forEach(el => el.style.display = isManual ? '' : 'none');
+    if (txn) txn.required = isManual;
+    if (screenshot) screenshot.required = isManual;
+    if (gatewayHint) gatewayHint.style.display = isManual ? 'none' : '';
+}
+
+document.addEventListener('DOMContentLoaded', toggleAdminPaymentModeFields);
 </script>
 @endsection
 
 @section('content')
+@php
+    $paymentTypeLabels = [
+        'service_request' => 'Services',
+        'patient_reward' => 'Patient rewards',
+        'staff_referral' => 'Staff referrals',
+        'subscription_referral' => 'Subscription referrals',
+    ];
+    $suggestedAmountStr = $selectedTypePending >= 0.01 ? number_format($selectedTypePending, 2, '.', '') : '';
+    $upiPrefillAmount = max(0.01, (float) ($pendingPayments[$paymentType]['amount'] ?? 0));
+@endphp
 <div class="container-fluid px-3 px-md-4 py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">
@@ -123,7 +179,7 @@ function showCopyFeedback() {
             </div>
             <div class="col-md-6 text-end">
                 <div class="h3 mb-0">₹{{ number_format($pendingPayments['total'], 2) }}</div>
-                <small>Total Pending</small>
+                <small class="text-muted">Total pending (all categories)</small>
             </div>
         </div>
     </div>
@@ -136,7 +192,7 @@ function showCopyFeedback() {
                     <i class="fas fa-info-circle me-2"></i>Payment Details
                 </h5>
                 
-                @if($paymentType === 'all' || $paymentType === 'service_request')
+                @if($paymentType === 'service_request')
                     @if($pendingPayments['service_request']['amount'] > 0)
                         <div class="mb-3">
                             <strong>Service Requests:</strong> ₹{{ number_format($pendingPayments['service_request']['amount'], 2) }}
@@ -145,7 +201,7 @@ function showCopyFeedback() {
                     @endif
                 @endif
 
-                @if($paymentType === 'all' || $paymentType === 'patient_reward')
+                @if($paymentType === 'patient_reward')
                     @if($pendingPayments['patient_reward']['amount'] > 0)
                         <div class="mb-3">
                             <strong>Patient Rewards:</strong> ₹{{ number_format($pendingPayments['patient_reward']['amount'], 2) }}
@@ -160,13 +216,31 @@ function showCopyFeedback() {
                     @endif
                 @endif
 
-                @if($paymentType === 'all' || $paymentType === 'subscription_referral')
+                @if($paymentType === 'staff_referral')
+                    @if($pendingPayments['staff_referral']['amount'] > 0)
+                        <div class="mb-3">
+                            <strong>Staff Referrals:</strong> ₹{{ number_format($pendingPayments['staff_referral']['amount'], 2) }}
+                            <br><small class="text-muted">({{ $pendingPayments['staff_referral']['count'] }} entries)</small>
+                        </div>
+                    @endif
+                @endif
+
+                @if($paymentType === 'subscription_referral')
                     @if($pendingPayments['subscription_referral']['amount'] > 0)
                         <div class="mb-3">
                             <strong>Subscription Referrals:</strong> ₹{{ number_format($pendingPayments['subscription_referral']['amount'], 2) }}
                             <br><small class="text-muted">({{ $pendingPayments['subscription_referral']['count'] }} subscriptions)</small>
                         </div>
                     @endif
+                @endif
+
+                @if(
+                    ($paymentType === 'service_request' && (float) $pendingPayments['service_request']['amount'] < 0.01)
+                    || ($paymentType === 'patient_reward' && (float) $pendingPayments['patient_reward']['amount'] < 0.01)
+                    || ($paymentType === 'staff_referral' && (float) $pendingPayments['staff_referral']['amount'] < 0.01)
+                    || ($paymentType === 'subscription_referral' && (float) $pendingPayments['subscription_referral']['amount'] < 0.01)
+                )
+                    <p class="text-muted small mb-0">No payable items in this category right now. You can still record a manual payment below.</p>
                 @endif
 
                 <hr>
@@ -183,8 +257,27 @@ function showCopyFeedback() {
                                     {{ $detail->patient_name }} - {{ $detail->patient_phone }}
                                     <br><small>₹{{ number_format($detail->reward_amount, 2) }}</small>
                                 @elseif($paymentType === 'subscription_referral')
-                                    Subscription #{{ $detail->id }} - {{ $detail->plan->name ?? 'N/A' }}
-                                    <br><small>₹{{ number_format($detail->referral_commission_amount, 2) }}</small>
+                                    @if(isset($detail->final_amount))
+                                        Subscription #{{ $detail->source_id }}
+                                        @if($detail->sourceSubscription && $detail->sourceSubscription->plan)
+                                            - {{ $detail->sourceSubscription->plan->name }}
+                                        @endif
+                                        <br><small>₹{{ number_format($detail->final_amount, 2) }}</small>
+                                    @else
+                                        Subscription #{{ $detail->id }} - {{ $detail->plan->name ?? 'N/A' }}
+                                        <br><small>₹{{ number_format($detail->referral_commission_amount, 2) }}</small>
+                                    @endif
+                                @elseif($paymentType === 'staff_referral')
+                                    @if(isset($detail->final_amount))
+                                        Referral #{{ $detail->source_id }}
+                                        <br><small>₹{{ number_format($detail->final_amount, 2) }}</small>
+                                    @else
+                                        Referral #{{ $detail->id }}
+                                        @if($detail->referred)
+                                            - {{ $detail->referred->name }}
+                                        @endif
+                                        <br><small>₹{{ number_format($detail->reward_amount, 2) }}</small>
+                                    @endif
                                 @endif
                             </li>
                         @endforeach
@@ -214,7 +307,7 @@ function showCopyFeedback() {
                         <i class="fas fa-mobile-alt me-2"></i>{{ $staff->upi_id }}
                     </div>
                     <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-success btn-sm" onclick="openUPIForStaff('{{ $staff->upi_id }}', {{ $paymentType === 'all' ? $pendingPayments['total'] : $pendingPayments[$paymentType]['amount'] }}, '{{ $staff->name }}')">
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="openUPIForStaff(@json($staff->upi_id), {{ $upiPrefillAmount }}, @json($staff->name))">
                             <i class="fas fa-external-link-alt me-2"></i>Open UPI App
                         </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copyUPIId('{{ $staff->upi_id }}')">
@@ -224,6 +317,27 @@ function showCopyFeedback() {
                 @else
                     <p class="text-muted text-center">No UPI ID provided</p>
                 @endif
+
+                <hr>
+                <form action="{{ route('admin.payments.staff.upi.update', ['staff' => $staff->id]) }}" method="POST" class="mt-3">
+                    @csrf
+                    <label class="form-label"><strong>Set / Update staff UPI (Admin)</strong></label>
+                    <div class="input-group">
+                        <input type="text"
+                               name="upi_id"
+                               class="form-control"
+                               value="{{ old('upi_id', $staff->upi_id) }}"
+                               placeholder="example@bank"
+                               required>
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-save me-1"></i>Save UPI
+                        </button>
+                    </div>
+                    @error('upi_id')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
+                    @enderror
+                    <small class="text-muted">This UPI will be visible in staff account and used for Razorpay payout.</small>
+                </form>
             </div>
         </div>
 
@@ -239,97 +353,110 @@ function showCopyFeedback() {
             <div class="alert alert-info mb-3">
                 <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i><strong>Payment Process:</strong></h6>
                 <ol class="mb-0 ps-3">
-                    <li><strong>Step 1:</strong> Make the payment to the staff member using their UPI ID or QR code shown above</li>
-                    <li><strong>Step 2:</strong> After payment is successful, note down the <strong>Transaction ID</strong> from your payment app</li>
-                    <li><strong>Step 3:</strong> Take a <strong>screenshot</strong> of the payment confirmation</li>
-                    <li><strong>Step 4:</strong> Fill in the form below with payment details and submit</li>
+                    <li><strong>Razorpay payout:</strong> System initiates direct payout to staff UPI and records payout status.</li>
+                    <li><strong>Manual payout:</strong> Admin pays externally and uploads transaction proof for full audit trail.</li>
+                    <li><strong>Auto-settlement:</strong> Pending items are marked settled after successful processing/recording.</li>
                 </ol>
             </div>
 
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-money-check me-2"></i>Record Payment Details (After Payment Made)
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom py-3">
+                    <h5 class="mb-0 text-dark">
+                        <i class="fas fa-money-check me-2 text-primary"></i>Record payment (after you have paid the staff)
                     </h5>
                 </div>
                 <div class="card-body">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" for="adminPaymentCategorySelect">Payment category</label>
+                        <select id="adminPaymentCategorySelect"
+                                class="form-select form-select-lg"
+                                autocomplete="off"
+                                data-form-base-url="{{ route('admin.payments.form', ['staff' => $staff->id]) }}">
+                            @foreach($allowedTypes as $t)
+                                @php $pendingForType = (float) ($pendingPayments[$t]['amount'] ?? 0); @endphp
+                                <option value="{{ $t }}" @selected($paymentType === $t)>
+                                    {{ $paymentTypeLabels[$t] ?? $t }}
+                                    — ₹{{ number_format($pendingForType, 2) }}@if($pendingForType < 0.01) (no pending)@endif
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted d-block mt-1">Changing category reloads this page and updates the item list and suggested amount for that category.</small>
+                    </div>
+
                     <form action="{{ route('admin.payments.process', $staff->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        
-                        @if($paymentType === 'all')
+                        <input type="hidden" name="payment_type" value="{{ $paymentType }}">
+
+                        <div class="mb-3">
+                            <label class="form-label">Payment mode <span class="text-danger">*</span></label>
+                            <select name="payment_mode" id="paymentModeSelect" class="form-select" onchange="toggleAdminPaymentModeFields()">
+                                <option value="razorpayx" @selected(old('payment_mode', 'razorpayx') === 'razorpayx') {{ !$razorpayXEnabled ? 'disabled' : '' }}>
+                                    Razorpay UPI payout (direct to staff)
+                                </option>
+                                @if($manualPayoutEnabled)
+                                    <option value="manual" @selected(old('payment_mode') === 'manual')>
+                                        Manual payout (with transaction proof)
+                                    </option>
+                                @endif
+                            </select>
+                            <small id="gatewayModeHint" class="text-muted">Razorpay payout requires valid RazorpayX credentials and staff UPI.</small>
+                        </div>
+
+                        @if(!$razorpayXEnabled)
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Razorpay payout is not available right now. Configure `RAZORPAYX_*` credentials.
+                            </div>
+                        @elseif(!$staff->upi_id)
                             <div class="alert alert-warning">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                Please select a specific payment category to process payment.
+                                Staff UPI is missing for Razorpay payout. Add staff UPI below or use manual mode (if enabled).
                             </div>
-                        @else
-                            <input type="hidden" name="payment_type" value="{{ $paymentType }}">
-                        @endif
-
-                        @if($paymentType !== 'all')
-                        <div class="mb-3">
-                            <label class="form-label">Payment Type</label>
-                            <input type="text" class="form-control" value="{{ ucfirst(str_replace('_', ' ', $paymentType)) }}" readonly>
-                        </div>
                         @endif
 
                         <div class="mb-3">
-                            <label class="form-label">Amount Paid (₹) <span class="text-danger">*</span></label>
-                            <input type="number" 
-                                   name="amount" 
-                                   class="form-control" 
-                                   step="0.01" 
+                            <label class="form-label">Amount paid (₹) <span class="text-danger">*</span></label>
+                            <input type="number"
+                                   name="amount"
+                                   class="form-control form-control-lg"
+                                   step="0.01"
                                    min="0.01"
-                                   value="{{ $paymentType === 'all' ? number_format($pendingPayments['total'], 2, '.', '') : number_format(($pendingPayments[$paymentType]['amount'] ?? 0), 2, '.', '') }}"
+                                   value="{{ old('amount', $suggestedAmountStr) }}"
                                    required>
-                            <small class="text-muted">Enter the amount you paid to the staff member</small>
+                            <small class="text-muted">Suggested from pending total for <strong>{{ $paymentTypeLabels[$paymentType] ?? $paymentType }}</strong>; you may edit before submit.</small>
                         </div>
 
-                        @if(!$canAutoSettle)
-                        <div class="mb-3 form-check">
-                            <input class="form-check-input" type="checkbox" value="1" id="manualPaymentCheck" name="manual_payment">
-                            <label class="form-check-label" for="manualPaymentCheck">
-                                Record as manual payment (history only, does not auto-settle pending items)
-                            </label>
-                        </div>
-                        @endif
-
-                        <div class="mb-3">
+                        <div class="mb-3 manual-only-field">
                             <label class="form-label">Transaction ID <span class="text-danger">*</span></label>
-                            <input type="text" 
-                                   name="transaction_id" 
-                                   class="form-control" 
-                                   placeholder="Enter transaction ID from payment app"
-                                   required>
-                            <small class="text-muted"><strong>Required:</strong> Enter the transaction ID/reference number from your payment app (UPI, Bank, etc.)</small>
+                            <input type="text"
+                                   name="transaction_id"
+                                   id="transaction_id"
+                                   class="form-control"
+                                   value="{{ old('transaction_id') }}"
+                                   placeholder="Enter transaction ID from payment app">
+                            <small class="text-muted">Required for manual payout mode.</small>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Payment Confirmation Screenshot <span class="text-danger">*</span></label>
-                            <input type="file" 
-                                   name="payment_screenshot" 
-                                   class="form-control" 
-                                   accept="image/*"
-                                   required>
-                            <small class="text-muted"><strong>Required:</strong> Upload screenshot of payment confirmation from your payment app</small>
+                        <div class="mb-3 manual-only-field">
+                            <label class="form-label">Payment confirmation screenshot <span class="text-danger">*</span></label>
+                            <input type="file"
+                                   name="payment_screenshot"
+                                   id="payment_screenshot"
+                                   class="form-control"
+                                   accept="image/*">
+                            <small class="text-muted">Required for manual payout mode.</small>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-4">
                             <label class="form-label">Notes</label>
-                            <textarea name="notes" class="form-control" rows="3" placeholder="Any additional notes about this payment (optional)..."></textarea>
+                            <textarea name="notes" class="form-control" rows="3" placeholder="Any additional notes about this payment (optional)...">{{ old('notes') }}</textarea>
                         </div>
 
-                        @if($paymentType !== 'all')
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-check-circle me-2"></i>Record Payment & Mark as Paid
+                            <button type="submit" class="btn btn-lg text-white payment-record-submit">
+                                <i class="fas fa-check-circle me-2"></i>Record payment &amp; mark as paid
                             </button>
                         </div>
-                        @else
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            Please use the category-specific payment buttons from the main payments page to process payments.
-                        </div>
-                        @endif
                     </form>
                 </div>
             </div>

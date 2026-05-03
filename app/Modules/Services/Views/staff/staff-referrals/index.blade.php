@@ -14,7 +14,15 @@
 </div>
 
 <div class="container-fluid px-3 py-4">
-    <!-- Stats Banner (points only: 10 pts per referral) -->
+    <div class="row mb-3">
+        <div class="col-12 text-end">
+            <a href="{{ route('staff.incentives.index') }}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-chart-line me-1"></i>View All Incentive Details
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Banner (₹100 base per referral + incentive logic) -->
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-6">
             <div class="stats-card-modern bg-info">
@@ -30,11 +38,11 @@
         <div class="col-12 col-md-6">
             <div class="stats-card-modern bg-success">
                 <div class="stats-icon">
-                    <i class="fas fa-star"></i>
+                    <i class="fas fa-rupee-sign"></i>
                 </div>
                 <div class="stats-content">
-                    <div class="stats-value">{{ number_format($staffReferralTotalPoints) }}</div>
-                    <div class="stats-label">Total Points (1 ref = {{ $pointsPerRef }} pts)</div>
+                    <div class="stats-value">₹{{ number_format($staffReferralTotalAmount, 2) }}</div>
+                    <div class="stats-label">Total Incentive (base: ₹{{ number_format($basePerRef, 0) }} per referral)</div>
                 </div>
             </div>
         </div>
@@ -49,7 +57,7 @@
                     <h5 class="mb-0">Your Staff Referral Link</h5>
                 </div>
                 <div class="referral-link-body">
-                    <p class="mb-3">Share this link with nurses and caregivers. When they register using your link, you earn <strong>{{ $pointsPerRef }} points</strong> per successful referral. At 250 points you earn the Referral Champion badge.</p>
+                    <p class="mb-3">Share this link with nurses and caregivers. Referral stays <strong>pending</strong> until OTP verification by the referred staff. After verification, base <strong>₹{{ number_format($basePerRef, 0) }}</strong> and final incentive logic (growth/DtA) are unlocked.</p>
                     <div class="input-group-modern">
                         <input type="text" 
                                class="form-control form-control-lg" 
@@ -63,7 +71,7 @@
                         </button>
                     </div>
                     <small class="text-muted d-block mt-2">
-                        <i class="fas fa-info-circle me-1"></i>You can share this link multiple times. Each successful registration earns you rewards.
+                        <i class="fas fa-info-circle me-1"></i>You can share this link multiple times. Reward is credited only after OTP verification.
                     </small>
                 </div>
             </div>
@@ -94,17 +102,28 @@
                                     </div>
                                     <div class="referral-entry-meta">
                                         <span class="badge bg-secondary me-2">Code: {{ $referral->referral_code }}</span>
-                                        <span class="badge bg-{{ $referral->status === 'completed' ? 'success' : ($referral->status === 'pending' ? 'warning' : 'secondary') }}">
-                                            {{ ucfirst($referral->status) }}
+                                        @php
+                                            $verificationStatus = $referral->verification_status ?? ($referral->status === 'completed' ? 'verified' : 'pending');
+                                        @endphp
+                                        <span class="badge bg-{{ $verificationStatus === 'verified' ? 'success' : ($verificationStatus === 'pending' ? 'warning text-dark' : 'secondary') }}">
+                                            {{ ucfirst($verificationStatus) }}
                                         </span>
                                     </div>
                                 </div>
-                                @if($referral->status === 'completed')
+                                @if($verificationStatus === 'verified')
                                 <div class="referral-entry-badge-modern">
-                                    <span class="badge-points">+{{ $pointsPerRef }} pts</span>
+                                    <span class="badge-points">Base ₹{{ number_format($basePerRef, 0) }}</span>
                                 </div>
                                 @endif
                             </div>
+                            @if($verificationStatus !== 'verified')
+                                <div class="referral-entry-details-modern mb-2">
+                                    <div class="detail-row">
+                                        <i class="fas fa-shield-alt me-2 text-warning"></i>
+                                        <span>OTP verification is pending on referred staff mobile. Incentive will be credited only after OTP verification.</span>
+                                    </div>
+                                </div>
+                            @endif
                             @if($referral->completed_at)
                             <div class="referral-entry-details-modern">
                                 <div class="detail-row">

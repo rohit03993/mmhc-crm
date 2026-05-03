@@ -706,7 +706,7 @@
         <div class="academics-login-right-inner">
             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="academics-logo">
             <h1 class="academics-portal-title">Academics portal</h1>
-            <p class="academics-portal-desc">Sign in for college admin, faculty &amp; students. You'll go to the Academics dashboard.</p>
+            <p class="academics-portal-desc">Sign in for college admin, faculty &amp; students. Same secure login system, role-based dashboard redirect.</p>
             <p class="academics-main-login">Patients or caregivers? <a href="{{ route('auth.login') }}">Use main login</a>.</p>
             <div class="academics-form-wrap">
                 @include('auth::partials.login-form')
@@ -726,7 +726,7 @@
             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MED Miracle Health Care' }}" class="brand-logo">
             <h2>Welcome Back</h2>
             <p>Sign in to your account to continue.</p>
-            <p class="small text-muted mt-2 mb-0">College admin, faculty or students? <a href="{{ route('auth.academics-login') }}">Academics login</a>.</p>
+            <p class="small text-muted mt-2 mb-0">College admin, faculty or students? <a href="{{ route('auth.academics-login') }}">Academics portal view</a> (same account login).</p>
         </div>
         <div class="login-card-body">
             @include('auth::partials.login-form')

@@ -4,10 +4,20 @@ namespace App\Modules\Profiles\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
+use App\Modules\Incentives\Models\IncentiveLedger;
+use App\Modules\Payments\Models\StaffPayment;
+use App\Modules\Payments\Services\StaffPayoutService;
+use App\Modules\Plans\Models\Subscription;
 use App\Modules\Profiles\Services\ProfileService;
+use App\Modules\Referrals\Models\Referral;
+use App\Modules\Rewards\Models\CaregiverReward;
+use App\Modules\Services\Models\ServiceRequest;
+use App\Modules\Services\Services\StaffIncentiveDetailsDataService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -28,10 +38,11 @@ class ProfileController extends Controller
         try {
             $user = Auth::user();
             $profile = $this->profileService->getProfile($user);
-            
+
             return view('profiles::profile.index', compact('user', 'profile'));
         } catch (\Exception $e) {
             Log::error('Profile load failed', ['user_id' => Auth::id(), 'error' => $e->getMessage()]);
+
             return redirect()->route('dashboard')
                 ->with('error', 'Unable to load profile. Please try again.');
         }
@@ -45,10 +56,31 @@ class ProfileController extends Controller
         try {
             $user = Auth::user();
             $profile = $this->profileService->getProfile($user);
-            
-            return view('profiles::profile.edit', compact('user', 'profile'));
+            $effectivePhone = (string) ($user->pending_phone ?: $user->phone ?? '');
+            $phoneDigits = preg_replace('/\D+/', '', $effectivePhone);
+            $phoneForInput = strlen($phoneDigits) >= 10 ? substr($phoneDigits, -10) : $phoneDigits;
+            $emailForInput = (string) ($user->pending_email ?: $user->email ?? '');
+            $pendingContactTarget = null;
+            if (! empty($user->contact_update_channel)) {
+                if ($user->contact_update_channel === 'email' && ! empty($user->pending_email)) {
+                    $pendingContactTarget = 'Email: '.$this->maskEmail((string) $user->pending_email);
+                } elseif ($user->contact_update_channel === 'mobile' && ! empty($user->pending_phone)) {
+                    $pendingContactTarget = 'Mobile: '.$this->maskPhone((string) $user->pending_phone);
+                }
+            }
+            $latestContactOtpDestination = (string) ($user->contact_update_otp_sent_to ?? '');
+
+            return view('profiles::profile.edit', compact(
+                'user',
+                'profile',
+                'phoneForInput',
+                'emailForInput',
+                'pendingContactTarget',
+                'latestContactOtpDestination'
+            ));
         } catch (\Exception $e) {
             Log::error('Profile load failed (edit)', ['user_id' => Auth::id(), 'error' => $e->getMessage()]);
+
             return redirect()->route('dashboard')
                 ->with('error', 'Unable to load profile. Please try again.');
         }
@@ -60,10 +92,11 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $user = Auth::user();
-        
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
+            'phone' => ['required', 'regex:/^[0-9]{10}$/'],
+            'email' => 'required|email|max:255|unique:users,email,'.$user->id,
             'address' => 'nullable|string|max:500',
             'date_of_birth' => 'nullable|date|before:today',
             'bio' => 'nullable|string|max:1000',
@@ -79,14 +112,226 @@ class ProfileController extends Controller
         }
 
         $profileData = $request->only([
-            'name', 'phone', 'address', 'date_of_birth', 'bio', 
-            'experience_years', 'specialization', 'availability_status'
+            'name', 'address', 'date_of_birth', 'bio',
+            'experience_years', 'specialization', 'availability_status',
         ]);
+        $profileData['phone'] = (string) $user->phone;
 
         $this->profileService->updateProfile($user, $profileData);
 
-        return redirect()->route('profile.index')
-            ->with('success', 'Profile updated successfully!');
+        $requestedEmail = trim((string) $request->input('email'));
+        $requestedPhone = (string) $request->input('phone');
+        $normalizedRequestedPhone = $this->normalizeIndianPhone($requestedPhone);
+        if (! $normalizedRequestedPhone) {
+            return redirect()->back()->withErrors(['phone' => 'Enter a valid 10-digit Indian mobile number.'])->withInput();
+        }
+
+        $effectiveCurrentEmail = (string) ($user->pending_email ?: $user->email ?? '');
+        $effectiveCurrentPhone = $this->normalizeIndianPhone((string) ($user->pending_phone ?: $user->phone ?? ''));
+        $emailChanged = strcasecmp($requestedEmail, $effectiveCurrentEmail) !== 0;
+        $phoneChanged = $effectiveCurrentPhone !== $normalizedRequestedPhone;
+        if ($emailChanged && $phoneChanged) {
+            return redirect()->back()
+                ->withErrors(['email' => 'Please update either email or phone at one time for OTP verification.'])
+                ->withInput();
+        }
+
+        if (! $emailChanged && ! $phoneChanged) {
+            return redirect()->route('profile.index')->with('success', 'Profile updated successfully!');
+        }
+
+        if ($emailChanged && User::query()->where('id', '!=', $user->id)->where('email', $requestedEmail)->exists()) {
+            return redirect()->back()->withErrors(['email' => 'This email is already in use.'])->withInput();
+        }
+        if ($phoneChanged && User::query()->where('id', '!=', $user->id)->where('phone', $normalizedRequestedPhone)->exists()) {
+            return redirect()->back()->withErrors(['phone' => 'This phone number is already in use.'])->withInput();
+        }
+
+        $channel = $emailChanged ? 'email' : 'mobile';
+        $destination = $emailChanged ? $requestedEmail : $normalizedRequestedPhone;
+
+        // Industry-style lane switch: update pending contact lane first, then send OTP.
+        // This ensures user can switch from email->mobile (or mobile->email) even when first send attempt fails.
+        $user->forceFill([
+            // Only keep one contact verification lane active at a time.
+            'pending_email' => $emailChanged ? $requestedEmail : null,
+            'pending_phone' => $phoneChanged ? $normalizedRequestedPhone : null,
+            'contact_update_channel' => $channel,
+            'contact_update_otp_hash' => null,
+            'contact_update_otp_expires_at' => null,
+            'contact_update_otp_attempts' => 0,
+            'contact_update_otp_sent_to' => null,
+            'contact_update_otp_sent_at' => null,
+            'contact_update_verified_at' => null,
+        ])->save();
+
+        // If referral verification is pending, clear old OTP destination so user resends to updated contact.
+        Referral::query()
+            ->where('referred_id', $user->id)
+            ->where('status', 'pending')
+            ->where('verification_status', 'pending')
+            ->update([
+                'verification_otp_hash' => null,
+                'verification_otp_expires_at' => null,
+                'verification_otp_attempts' => 0,
+                'verification_otp_sent_to' => null,
+                'verification_otp_sent_at' => null,
+            ]);
+
+        $send = $this->sendContactUpdateOtp($channel, $destination);
+        if (! ($send['success'] ?? false)) {
+            return redirect()->route('profile.edit')
+                ->with('error', ($send['message'] ?? 'Could not send OTP.').' Pending contact lane is updated. Please click Resend OTP.');
+        }
+
+        $user->forceFill([
+            'contact_update_otp_hash' => Hash::make((string) $send['otp']),
+            'contact_update_otp_expires_at' => now()->addMinutes(5),
+            'contact_update_otp_attempts' => 0,
+            'contact_update_otp_sent_to' => (string) ($send['sent_to'] ?? ''),
+            'contact_update_otp_sent_at' => now(),
+        ])->save();
+
+        return redirect()->route('profile.edit')
+            ->with('success', 'Profile details saved. OTP sent to '.($channel === 'email' ? 'new email' : 'new mobile').' for contact verification. Previous pending contact verification (if any) is replaced.');
+    }
+
+    public function verifyContactUpdateOtp(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate([
+            'otp_code' => ['required', 'digits:6'],
+        ]);
+
+        if (! $user->contact_update_channel || (! $user->pending_email && ! $user->pending_phone)) {
+            return redirect()->back()->with('error', 'No pending contact verification found.');
+        }
+        if (! $user->contact_update_otp_hash || ! $user->contact_update_otp_expires_at) {
+            return redirect()->back()->with('error', 'OTP is not sent yet. Please click Resend OTP.');
+        }
+        if (now()->greaterThan($user->contact_update_otp_expires_at)) {
+            return redirect()->back()->with('error', 'OTP expired. Please resend OTP.');
+        }
+        if ((int) $user->contact_update_otp_attempts >= 3) {
+            return redirect()->back()->with('error', 'Maximum OTP attempts reached. Please resend OTP.');
+        }
+        if (! Hash::check((string) $request->otp_code, (string) $user->contact_update_otp_hash)) {
+            $user->increment('contact_update_otp_attempts');
+            $remaining = max(0, 3 - (int) $user->fresh()->contact_update_otp_attempts);
+
+            return redirect()->back()->with('error', $remaining > 0 ? "Invalid OTP. {$remaining} attempt(s) left." : 'Invalid OTP. No attempts left.');
+        }
+
+        $updates = [
+            'contact_update_verified_at' => now(),
+            'contact_update_otp_hash' => null,
+            'contact_update_otp_expires_at' => null,
+            'contact_update_otp_attempts' => 0,
+            'contact_update_otp_sent_to' => null,
+            'contact_update_otp_sent_at' => null,
+            'contact_update_channel' => null,
+        ];
+        if (! empty($user->pending_email)) {
+            $updates['email'] = $user->pending_email;
+        }
+        if (! empty($user->pending_phone)) {
+            $updates['phone'] = $user->pending_phone;
+        }
+        $updates['pending_email'] = null;
+        $updates['pending_phone'] = null;
+        $user->forceFill($updates)->save();
+
+        return redirect()->route('profile.index')->with('success', 'Contact updated and verified successfully.');
+    }
+
+    public function resendContactUpdateOtp()
+    {
+        $user = Auth::user();
+        if (! $user->contact_update_channel || (! $user->pending_email && ! $user->pending_phone)) {
+            return redirect()->back()->with('error', 'No pending contact update found.');
+        }
+        if ($user->contact_update_otp_sent_at && $user->contact_update_otp_sent_at->gt(now()->subMinutes(15))) {
+            return redirect()->back()->with('error', 'Please wait 15 minutes before resending OTP.');
+        }
+
+        $channel = (string) $user->contact_update_channel;
+        $destination = $channel === 'email' ? (string) $user->pending_email : (string) $user->pending_phone;
+        $send = $this->sendContactUpdateOtp($channel, $destination);
+        if (! ($send['success'] ?? false)) {
+            return redirect()->back()->with('error', $send['message'] ?? 'Could not resend OTP.');
+        }
+
+        $user->forceFill([
+            'contact_update_otp_hash' => Hash::make((string) $send['otp']),
+            'contact_update_otp_expires_at' => now()->addMinutes(5),
+            'contact_update_otp_attempts' => 0,
+            'contact_update_otp_sent_to' => (string) ($send['sent_to'] ?? ''),
+            'contact_update_otp_sent_at' => now(),
+        ])->save();
+
+        return redirect()->back()->with('success', 'OTP resent to pending '.($channel === 'email' ? 'email' : 'mobile').'.');
+    }
+
+    private function sendContactUpdateOtp(string $channel, string $destination): array
+    {
+        $otp = (string) random_int(100000, 999999);
+        if ($channel === 'mobile') {
+            $send = app(\App\Modules\Auth\Services\WhatsAppOtpService::class)->sendCustomOtp($destination, $otp);
+            if (! ($send['success'] ?? false)) {
+                return ['success' => false, 'message' => $send['message'] ?? 'Could not send OTP to mobile.'];
+            }
+
+            return ['success' => true, 'otp' => $otp, 'sent_to' => 'Mobile: '.$this->maskPhone($destination)];
+        }
+
+        try {
+            Mail::raw(
+                "Your MMHC contact update OTP is: {$otp}. It expires in 5 minutes.",
+                function ($message) use ($destination) {
+                    $message->to($destination)->subject('MMHC Contact Update OTP');
+                }
+            );
+        } catch (\Throwable $e) {
+            return ['success' => false, 'message' => 'Could not send OTP to email. Please check mail configuration.'];
+        }
+
+        return ['success' => true, 'otp' => $otp, 'sent_to' => 'Email: '.$this->maskEmail($destination)];
+    }
+
+    private function normalizeIndianPhone(string $phone): ?string
+    {
+        $digits = preg_replace('/\D+/', '', $phone);
+        if (! $digits) {
+            return null;
+        }
+        if (strlen($digits) === 10) {
+            return '91'.$digits;
+        }
+        if (strlen($digits) === 12 && str_starts_with($digits, '91')) {
+            return $digits;
+        }
+
+        return null;
+    }
+
+    private function maskPhone(string $normalizedPhone): string
+    {
+        return str_repeat('*', max(0, strlen($normalizedPhone) - 4)).substr($normalizedPhone, -4);
+    }
+
+    private function maskEmail(string $email): string
+    {
+        $parts = explode('@', $email);
+        if (count($parts) !== 2) {
+            return $email;
+        }
+        $name = $parts[0];
+        $domain = $parts[1];
+        if (strlen($name) <= 2) {
+            return str_repeat('*', strlen($name)).'@'.$domain;
+        }
+
+        return substr($name, 0, 2).str_repeat('*', max(0, strlen($name) - 2)).'@'.$domain;
     }
 
     /**
@@ -101,7 +346,7 @@ class ProfileController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid image file. Please upload a valid image (max 2MB).'
+                'message' => 'Invalid image file. Please upload a valid image (max 2MB).',
             ]);
         }
 
@@ -111,7 +356,7 @@ class ProfileController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Avatar uploaded successfully!',
-            'avatar_url' => Storage::url($avatarPath)
+            'avatar_url' => Storage::url($avatarPath),
         ]);
     }
 
@@ -120,8 +365,8 @@ class ProfileController extends Controller
      */
     public function adminIndex()
     {
-        $users = User::with('profile')->paginate(15);
-        
+        $users = User::with('profile')->withCount('documents')->paginate(10);
+
         return view('profiles::admin.index', compact('users'));
     }
 
@@ -140,10 +385,101 @@ class ProfileController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return redirect()->route('admin.profiles')
                 ->with('error', 'Unable to load profile. Please try again.');
         }
 
-        return view('profiles::admin.view', compact('user', 'profile'));
+        // Note: User has both a `documents` JSON column (cast) and a `documents()` relation — property access
+        // resolves to the column. Use an explicit query for uploaded Document models.
+        $profileDocuments = $user->documents()->orderByDesc('created_at')->get();
+        $profileStats = $this->buildAdminProfileStats($user);
+
+        $incentiveDetailsData = $user->isStaff()
+            ? app(StaffIncentiveDetailsDataService::class)->buildForStaff($user)
+            : null;
+
+        $staffPaymentPending = $user->isStaff()
+            ? app(StaffPayoutService::class)->calculatePendingPayments($user)
+            : null;
+        $staffPaymentHistory = $user->isStaff()
+            ? StaffPayment::query()
+                ->where('staff_id', $user->id)
+                ->latest('paid_at')
+                ->latest('id')
+                ->limit(20)
+                ->get()
+            : collect();
+
+        return view('profiles::admin.view', compact(
+            'user',
+            'profile',
+            'profileStats',
+            'profileDocuments',
+            'incentiveDetailsData',
+            'staffPaymentPending',
+            'staffPaymentHistory'
+        ));
+    }
+
+    /**
+     * Summary metrics for admin profile & stats page (lightweight counts / sums).
+     *
+     * @return array{staff: ?array<string, mixed>, patient: ?array<string, mixed>}
+     */
+    private function buildAdminProfileStats(User $user): array
+    {
+        $out = ['staff' => null, 'patient' => null];
+
+        if ($user->isStaff()) {
+            $base = ServiceRequest::query()->where('assigned_staff_id', $user->id);
+            $ledger = IncentiveLedger::query()->where('staff_id', $user->id);
+            $ledgerTotal = (float) (clone $ledger)->sum('final_amount');
+            $patientRewardsTotal = (float) CaregiverReward::query()
+                ->where('user_id', $user->id)
+                ->sum('reward_amount');
+            $out['staff'] = [
+                'services_total' => (clone $base)->count(),
+                'services_completed' => (clone $base)->where('status', 'completed')->count(),
+                'services_approved' => (clone $base)->whereNotNull('admin_approved_at')->count(),
+                'referrals_completed' => Referral::query()
+                    ->where('referrer_id', $user->id)
+                    ->where('status', 'completed')
+                    ->count(),
+                // Ledger only (services + subscription sale + referral ledger rows). Patient rewards are separate rows in caregiver_rewards.
+                'incentive_total' => $ledgerTotal,
+                'patient_rewards_total' => $patientRewardsTotal,
+                'combined_earnings' => $ledgerTotal + $patientRewardsTotal,
+                'incentive_unsettled' => (float) (clone $ledger)->where('payment_settled', false)->sum('final_amount'),
+                'incentive_service' => (float) IncentiveLedger::query()
+                    ->where('staff_id', $user->id)
+                    ->where('source_type', IncentiveLedger::SOURCE_SERVICE_REQUEST)
+                    ->sum('final_amount'),
+                'incentive_subscription' => (float) IncentiveLedger::query()
+                    ->where('staff_id', $user->id)
+                    ->where('source_type', IncentiveLedger::SOURCE_SUBSCRIPTION_SALE)
+                    ->sum('final_amount'),
+                'incentive_referral' => (float) IncentiveLedger::query()
+                    ->where('staff_id', $user->id)
+                    ->where('source_type', IncentiveLedger::SOURCE_REFERRAL)
+                    ->sum('final_amount'),
+                'subscription_sales_count' => Subscription::query()
+                    ->where('referrer_id', $user->id)
+                    ->count(),
+            ];
+        }
+
+        if ($user->isPatient()) {
+            $base = ServiceRequest::query()->where('patient_id', $user->id);
+            $out['patient'] = [
+                'services_total' => (clone $base)->count(),
+                'services_open' => (clone $base)->whereIn('status', ['pending', 'pending_approval', 'assigned', 'in_progress'])->count(),
+                'services_completed' => (clone $base)->where('status', 'completed')->count(),
+                'subscriptions_total' => $user->subscriptions()->count(),
+                'has_active_subscription' => $user->hasActiveSubscription(),
+            ];
+        }
+
+        return $out;
     }
 }

@@ -2,9 +2,9 @@
 
 namespace App\Models\Core;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Crypt;
 
 class User extends Authenticatable
@@ -17,7 +17,16 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'pending_email',
         'phone',
+        'pending_phone',
+        'contact_update_channel',
+        'contact_update_otp_hash',
+        'contact_update_otp_expires_at',
+        'contact_update_otp_attempts',
+        'contact_update_otp_sent_to',
+        'contact_update_otp_sent_at',
+        'contact_update_verified_at',
         'password',
         'plain_password',
         'role',
@@ -30,6 +39,7 @@ class User extends Authenticatable
         'date_of_birth',
         'qualification',
         'experience',
+        'experience_tier',
         'documents',
         'is_active',
         'email_verified_at',
@@ -58,6 +68,9 @@ class User extends Authenticatable
         'is_active' => 'boolean',
         'documents' => 'array',
         'reward_points' => 'integer',
+        'contact_update_otp_expires_at' => 'datetime',
+        'contact_update_otp_sent_at' => 'datetime',
+        'contact_update_verified_at' => 'datetime',
         // Note: 'location' is a spatial POINT column - do NOT cast it
         // Spatial columns must be handled as raw database values
     ];
@@ -254,14 +267,14 @@ class User extends Authenticatable
     /**
      * Get decrypted plain password (admin only - for viewing)
      * Returns null if password cannot be decrypted (old unencrypted records)
-     * 
+     *
      * Usage: $user->decrypted_password
      */
     public function getDecryptedPasswordAttribute()
     {
         $plainPassword = $this->attributes['plain_password'] ?? null;
-        
-        if (!$plainPassword) {
+
+        if (! $plainPassword) {
             return null;
         }
 
@@ -269,19 +282,17 @@ class User extends Authenticatable
             // Check if it's already encrypted (Laravel Crypt produces base64 strings with length > 60)
             // Encrypted values from Laravel's Crypt are typically long base64 strings
             if (strlen($plainPassword) > 60 && base64_decode($plainPassword, true) !== false) {
-                // Try to decrypt - if it fails, it might be an old unencrypted password
                 return Crypt::decryptString($plainPassword);
-            } else {
-                // Old unencrypted password - return as is for backward compatibility
-                // Migration will encrypt these later
-                return $plainPassword;
             }
-        } catch (\Exception $e) {
-            // If decryption fails, it might be an old unencrypted password
-            // Return the original value for backward compatibility
-            // Migration will encrypt these later
-            \Log::debug('Could not decrypt plain_password for user ' . $this->id . ': ' . $e->getMessage());
+
+            // Short legacy plaintext (pre-encryption migration), still stored as-is in DB
             return $plainPassword;
+        } catch (\Exception $e) {
+            // Wrong APP_KEY (e.g. production DB on local), corrupt payload, or algorithm mismatch —
+            // never return ciphertext to callers (would leak blob into admin UI).
+            \Log::debug('Could not decrypt plain_password for user '.$this->id.': '.$e->getMessage());
+
+            return null;
         }
     }
 
@@ -293,6 +304,7 @@ class User extends Authenticatable
     {
         if ($value === null || $value === '') {
             $this->attributes['plain_password'] = null;
+
             return;
         }
 
@@ -307,7 +319,7 @@ class User extends Authenticatable
                 $this->attributes['plain_password'] = Crypt::encryptString($value);
             } catch (\Exception $e) {
                 // If encryption fails, log error but don't break registration
-                \Log::error('Failed to encrypt plain_password: ' . $e->getMessage());
+                \Log::error('Failed to encrypt plain_password: '.$e->getMessage());
                 // Store as null to prevent plain text storage
                 $this->attributes['plain_password'] = null;
             }

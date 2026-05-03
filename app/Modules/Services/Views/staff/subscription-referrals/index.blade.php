@@ -14,6 +14,14 @@
 </div>
 
 <div class="container-fluid px-3 py-4">
+    <div class="row mb-3">
+        <div class="col-12 text-end">
+            <a href="{{ route('staff.incentives.index') }}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-chart-line me-1"></i>View All Incentive Details
+            </a>
+        </div>
+    </div>
+
     <!-- Stats Banner -->
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-4">
@@ -60,7 +68,7 @@
                     <h5 class="mb-0">Your Subscription Referral Link</h5>
                 </div>
                 <div class="referral-link-body">
-                    <p class="mb-3">Share this link with patients. When they subscribe using your link, you earn <strong>{{ config('subscription.referral_commission_rate', 5) }}% commission</strong> on the base subscription amount.</p>
+                    <p class="mb-3">Share this link with patients. When they subscribe using your link, your incentive is calculated from the active incentive rule set.</p>
                     <div class="input-group-modern">
                         <input type="text" 
                                class="form-control form-control-lg" 
@@ -108,7 +116,7 @@
                                 </div>
                                 <div class="subscription-entry-badge-modern">
                                     <span class="badge-commission">₹{{ number_format($subscription->referral_commission_amount, 2) }}</span>
-                                    <small class="text-muted d-block mt-1">{{ config('subscription.referral_commission_rate', 5) }}% commission</small>
+                                    <small class="text-muted d-block mt-1">Calculated from active incentive rules</small>
                                 </div>
                             </div>
                             <div class="subscription-entry-details-modern">

@@ -35,26 +35,6 @@
                             @enderror
                         </div>
                         
-                        <!-- Referral Commission Rate -->
-                        <div class="mb-4">
-                            <label for="referral_commission_rate" class="form-label">
-                                <i class="fas fa-handshake me-2 text-success"></i>Referral Commission Rate (%)
-                            </label>
-                            <input type="number" 
-                                   step="0.01" 
-                                   min="0" 
-                                   max="100"
-                                   class="form-control @error('referral_commission_rate') is-invalid @enderror" 
-                                   id="referral_commission_rate" 
-                                   name="referral_commission_rate" 
-                                   value="{{ old('referral_commission_rate', $commissionRate) }}"
-                                   required>
-                            <small class="text-muted">Commission rate for staff (nurse/caregiver) who refer patients to subscribe (default: 5%)</small>
-                            @error('referral_commission_rate')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        
                         <!-- UPI ID -->
                         <div class="mb-4">
                             <label for="upi_id" class="form-label">

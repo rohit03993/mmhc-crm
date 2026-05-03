@@ -14,6 +14,7 @@ class PaymentController extends Controller
     public function index()
     {
         $payments = auth()->user()->payments()->orderBy('created_at', 'desc')->paginate(10);
+
         return view('plans::payments.index', compact('payments'));
     }
 
@@ -67,8 +68,8 @@ class PaymentController extends Controller
     {
         $payments = Payment::with(['user', 'subscription.plan'])
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
-        
+            ->paginate(10);
+
         return view('plans::admin.payments.index', compact('payments'));
     }
 
@@ -78,6 +79,7 @@ class PaymentController extends Controller
     public function adminView(Payment $payment)
     {
         $payment->load(['user', 'subscription.plan']);
+
         return view('plans::admin.payments.view', compact('payment'));
     }
 
@@ -88,7 +90,7 @@ class PaymentController extends Controller
     {
         // Refund processing logic
         $payment->update(['status' => 'refunded']);
-        
+
         return redirect()->back()->with('success', 'Payment refunded successfully.');
     }
 }

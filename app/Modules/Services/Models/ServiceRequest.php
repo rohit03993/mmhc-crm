@@ -2,9 +2,9 @@
 
 namespace App\Modules\Services\Models;
 
+use App\Models\Core\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Core\User;
 
 class ServiceRequest extends Model
 {
@@ -40,6 +40,13 @@ class ServiceRequest extends Model
         'payment_processed_at',
         'staff_payment_processed',
         'staff_payment_processed_at',
+        'completion_otp_hash',
+        'completion_otp_expires_at',
+        'completion_otp_attempts',
+        'completion_otp_channel',
+        'completion_otp_sent_to',
+        'completion_otp_sent_at',
+        'completion_verified_at',
     ];
 
     protected $casts = [
@@ -54,6 +61,10 @@ class ServiceRequest extends Model
         'payment_processed_at' => 'datetime',
         'staff_payment_processed_at' => 'datetime',
         'staff_payment_processed' => 'boolean',
+        'completion_otp_expires_at' => 'datetime',
+        'completion_otp_sent_at' => 'datetime',
+        'completion_verified_at' => 'datetime',
+        'completion_otp_attempts' => 'integer',
         'total_amount' => 'decimal:2',
         'total_staff_payout' => 'decimal:2',
         'prepaid_amount' => 'decimal:2',
@@ -96,7 +107,7 @@ class ServiceRequest extends Model
      */
     public function isApprovedByAdmin()
     {
-        return !is_null($this->admin_approved_at);
+        return ! is_null($this->admin_approved_at);
     }
 
     /**
@@ -104,7 +115,7 @@ class ServiceRequest extends Model
      */
     public function isPaymentProcessed()
     {
-        return !is_null($this->payment_processed_at);
+        return ! is_null($this->payment_processed_at);
     }
 
     /**
@@ -125,6 +136,7 @@ class ServiceRequest extends Model
     public function canTransitionTo($newStatus)
     {
         $allowedStatuses = self::$validTransitions[$this->status] ?? [];
+
         return in_array($newStatus, $allowedStatuses);
     }
 
@@ -160,6 +172,7 @@ class ServiceRequest extends Model
         if ($this->serviceType && $this->duration_days) {
             return $this->serviceType->patient_charge * $this->duration_days;
         }
+
         return 0;
     }
 
@@ -168,7 +181,7 @@ class ServiceRequest extends Model
      */
     public function getFormattedTotalAmountAttribute()
     {
-        return '₹' . number_format($this->total_amount);
+        return '₹'.number_format($this->total_amount);
     }
 
     /**

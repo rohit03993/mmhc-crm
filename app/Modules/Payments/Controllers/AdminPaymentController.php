@@ -3,25 +3,26 @@
 namespace App\Modules\Payments\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Core\User;
+use App\Modules\Incentives\Models\IncentiveLedger;
+use App\Modules\Payments\Models\StaffPayment;
+use App\Modules\Payments\Services\RazorpayXService;
+use App\Modules\Payments\Services\StaffPayoutService;
+use App\Modules\Plans\Models\Subscription;
+use App\Modules\Referrals\Models\Referral;
+use App\Modules\Services\Models\ServiceRequest;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Pagination\LengthAwarePaginator;
-use App\Models\Core\User;
-use App\Modules\Payments\Models\StaffPayment;
-use App\Modules\Services\Models\ServiceRequest;
-use App\Modules\Rewards\Models\CaregiverReward;
-use App\Modules\Referrals\Models\Referral;
-use App\Modules\Plans\Models\Subscription;
-use App\Modules\Payments\Services\StaffPayoutService;
 
 class AdminPaymentController extends Controller
 {
     const MINIMUM_WITHDRAWAL = 500;
-    
+
     public function __construct(
-        private StaffPayoutService $staffPayoutService
+        private StaffPayoutService $staffPayoutService,
+        private RazorpayXService $razorpayXService
     ) {}
 
     /**
@@ -31,10 +32,10 @@ class AdminPaymentController extends Controller
     {
         $filterType = $request->get('type', 'all');
         $pendingPage = max((int) $request->get('page', 1), 1);
-        $pendingPerPage = 5;
+        $pendingPerPage = 10;
         $staffPage = max((int) $request->get('staff_page', 1), 1);
-        $staffPerPage = 5;
-        
+        $staffPerPage = 10;
+
         // Get all staff (nurses and caregivers)
         $allStaffMembers = User::whereIn('role', ['nurse', 'caregiver'])
             ->where('is_active', true)
@@ -65,7 +66,7 @@ class AdminPaymentController extends Controller
                 'subscription_referral' => (float) $payments['subscription_referral']['amount'],
             ];
             $totalServiceQueue += (float) $serviceQueueAmount;
-            
+
             if ($payments['total'] > 0) {
                 $pendingPayments[] = [
                     'staff' => $staff,
@@ -76,18 +77,15 @@ class AdminPaymentController extends Controller
         }
 
         // Sort by total pending amount (descending)
-        usort($pendingPayments, function($a, $b) {
+        usort($pendingPayments, function ($a, $b) {
             return $b['payments']['total'] <=> $a['payments']['total'];
         });
 
-        // Filter by type if specified (staff_referral excluded – points only)
-        if ($filterType !== 'all' && $filterType !== 'staff_referral') {
-            $pendingPayments = array_filter($pendingPayments, function($item) use ($filterType) {
+        // Filter by specific type if specified
+        if ($filterType !== 'all') {
+            $pendingPayments = array_filter($pendingPayments, function ($item) use ($filterType) {
                 return isset($item['payments'][$filterType]) && $item['payments'][$filterType]['amount'] > 0;
             });
-        }
-        if ($filterType === 'staff_referral') {
-            $pendingPayments = [];
         }
 
         $pendingPaymentsCollection = collect(array_values($pendingPayments));
@@ -116,16 +114,11 @@ class AdminPaymentController extends Controller
         );
 
         $recentPayments = StaffPayment::with(['staff', 'admin'])
-            ->when($filterType !== 'all', function ($query) use ($filterType) {
-                return $query->where('payment_type', $filterType);
-            })
             ->orderBy('paid_at', 'desc')
             ->limit(10)
             ->get();
 
-        $totalPaidOverall = StaffPayment::when($filterType !== 'all', function ($query) use ($filterType) {
-            return $query->where('payment_type', $filterType);
-        })->sum('amount');
+        $totalPaidOverall = StaffPayment::sum('amount');
 
         return view('payments::admin.index', compact(
             'pendingPayments',
@@ -145,26 +138,35 @@ class AdminPaymentController extends Controller
     public function showPaymentForm($staffId, Request $request)
     {
         $staff = User::findOrFail($staffId);
-        $paymentType = $request->get('type', 'all');
-        
-        // Don't allow 'all' type; staff_referral is points-only and not paid out
-        if ($paymentType === 'staff_referral') {
-            return redirect()->route('admin.payments.index')
-                ->with('info', 'Staff referrals are points-only and are not paid out.');
-        }
-        $allowedTypes = ['service_request', 'patient_reward', 'subscription_referral'];
-        if ($paymentType === 'all' || !in_array($paymentType, $allowedTypes)) {
-            return redirect()->route('admin.payments.index')
-                ->with('error', 'Please select a specific payment category.');
-        }
-        
+        $allowedTypes = ['service_request', 'patient_reward', 'staff_referral', 'subscription_referral'];
+
         $pendingPayments = $this->calculatePendingPayments($staff);
+        $paymentType = $request->query('type');
+
+        if ($paymentType === 'all' || ($paymentType !== null && $paymentType !== '' && ! in_array($paymentType, $allowedTypes, true))) {
+            return redirect()->route('admin.payments.index')
+                ->with('error', 'Please select a valid payment category.');
+        }
+
+        if ($paymentType === null || $paymentType === '') {
+            $paymentType = null;
+            foreach ($allowedTypes as $t) {
+                if ((float) ($pendingPayments[$t]['amount'] ?? 0) >= 0.01) {
+                    $paymentType = $t;
+                    break;
+                }
+            }
+            $paymentType ??= 'service_request';
+        }
+
         $paymentDetails = $this->getPaymentDetails($staff, $paymentType);
         $selectedTypePending = (float) ($pendingPayments[$paymentType]['amount'] ?? 0);
         $canAutoSettle = $selectedTypePending > 0;
-        
+        $razorpayXEnabled = $this->razorpayXService->isEnabled();
+        $manualPayoutEnabled = (bool) config('payments.staff_payout.manual_enabled', true);
+
         // Ensure paymentDetails is always a collection
-        if (!$paymentDetails) {
+        if (! $paymentDetails) {
             $paymentDetails = collect();
         }
 
@@ -174,10 +176,13 @@ class AdminPaymentController extends Controller
             'paymentType',
             'paymentDetails',
             'selectedTypePending',
-            'canAutoSettle'
+            'canAutoSettle',
+            'allowedTypes',
+            'razorpayXEnabled',
+            'manualPayoutEnabled'
         ));
     }
-    
+
     /**
      * Show payment history for admin
      */
@@ -185,38 +190,38 @@ class AdminPaymentController extends Controller
     {
         $filterType = $request->get('type', 'all');
         $filterStaff = $request->get('staff', 'all');
-        
+
         $query = StaffPayment::with(['staff', 'admin'])
             ->orderBy('paid_at', 'desc');
-        
+
         // Filter by payment type
         if ($filterType !== 'all') {
             $query->where('payment_type', $filterType);
         }
-        
+
         // Filter by staff
         if ($filterStaff !== 'all') {
             $query->where('staff_id', $filterStaff);
         }
-        
-        $payments = $query->paginate(20);
-        
+
+        $payments = $query->paginate(10);
+
         // Get all staff for filter dropdown
         $allStaff = User::whereIn('role', ['nurse', 'caregiver'])
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
-        
+
         // Calculate totals
         $totalPaid = StaffPayment::query()
-            ->when($filterType !== 'all', function($q) use ($filterType) {
+            ->when($filterType !== 'all', function ($q) use ($filterType) {
                 return $q->where('payment_type', $filterType);
             })
-            ->when($filterStaff !== 'all', function($q) use ($filterStaff) {
+            ->when($filterStaff !== 'all', function ($q) use ($filterStaff) {
                 return $q->where('staff_id', $filterStaff);
             })
             ->sum('amount');
-        
+
         return view('payments::admin.history', compact('payments', 'filterType', 'filterStaff', 'allStaff', 'totalPaid'));
     }
 
@@ -226,59 +231,140 @@ class AdminPaymentController extends Controller
     public function processPayment(Request $request, $staffId)
     {
         $request->validate([
-            'payment_type' => 'required|in:service_request,patient_reward,subscription_referral',
+            'payment_type' => 'required|in:service_request,patient_reward,staff_referral,subscription_referral',
             'amount' => 'required|numeric|min:0.01',
-            'transaction_id' => 'required|string|max:255',
+            'payment_mode' => 'required|in:manual,razorpayx',
+            'transaction_id' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
-            'payment_screenshot' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'manual_payment' => 'nullable|boolean',
-        ], [
-            'transaction_id.required' => 'Transaction ID is required. Please enter the transaction ID from your payment app.',
-            'payment_screenshot.required' => 'Payment screenshot is required. Please upload the payment confirmation screenshot.',
+            'payment_screenshot' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $staff = User::findOrFail($staffId);
         $admin = Auth::user();
         $requestedAmount = (float) $request->amount;
-        $isManualPayment = (bool) $request->boolean('manual_payment');
+        $paymentMode = $request->input('payment_mode', 'manual');
+        $manualPayoutEnabled = (bool) config('payments.staff_payout.manual_enabled', true);
         $pendingPayments = $this->calculatePendingPayments($staff);
         $maxPayableForType = (float) ($pendingPayments[$request->payment_type]['amount'] ?? 0);
 
-        if (!$isManualPayment && $requestedAmount - $maxPayableForType > 0.0001) {
+        if ($requestedAmount - $maxPayableForType > 0.0001) {
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Entered amount exceeds payable pending amount for this category.');
         }
 
-        // Handle screenshot upload
+        $usingRazorpayX = $paymentMode === 'razorpayx';
+        if ($usingRazorpayX && ! $this->razorpayXService->isEnabled()) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'RazorpayX payout is not enabled/configured. Use manual payout mode or configure RazorpayX.');
+        }
+
+        if ($usingRazorpayX && empty($staff->upi_id)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Staff UPI ID is missing. Ask staff/admin to add UPI in payment settings first.');
+        }
+
+        if (! $usingRazorpayX && ! $manualPayoutEnabled) {
+            $request->validate([
+                'payment_mode' => 'in:razorpayx',
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Manual payout is disabled. Please configure RazorpayX and staff UPI details.');
+        }
+
+        // Handle screenshot upload (manual mode)
         $screenshotPath = null;
-        if ($request->hasFile('payment_screenshot')) {
+        if (! $usingRazorpayX) {
+            $request->validate([
+                'transaction_id' => 'required|string|max:255',
+                'payment_screenshot' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+        }
+        if (! $usingRazorpayX && $request->hasFile('payment_screenshot')) {
             $screenshotPath = $request->file('payment_screenshot')->store('payment-screenshots', 'public');
         }
 
-        DB::transaction(function () use ($staff, $admin, $request, $requestedAmount, $screenshotPath) {
-            StaffPayment::create([
-                'staff_id' => $staff->id,
-                'admin_id' => $admin->id,
-                'payment_type' => $request->payment_type,
-                'amount' => $requestedAmount,
-                'transaction_id' => $request->transaction_id,
-                'notes' => $request->notes,
-                'payment_screenshot' => $screenshotPath,
-                'paid_at' => now(),
-            ]);
+        try {
+            DB::transaction(function () use ($staff, $admin, $request, $requestedAmount, $screenshotPath, $usingRazorpayX, $paymentMode) {
+                $gatewayPayload = null;
+                $gatewayStatus = null;
+                $gatewayReferenceId = null;
+                $transactionId = $request->transaction_id;
+                $provider = $usingRazorpayX ? 'razorpayx' : 'manual';
 
-            // Mark related records only for auto-settlement flow.
-            if (!$isManualPayment) {
-                $this->markAsPaid($staff, $request->payment_type, $requestedAmount);
-            }
-        });
+                if ($usingRazorpayX) {
+                    $gatewayReferenceId = 'staffpay_'.$staff->id.'_'.now()->timestamp;
+                    $gatewayPayload = $this->razorpayXService->createUpiPayout([
+                        'staff_name' => $staff->name,
+                        'staff_phone' => $staff->phone,
+                        'staff_email' => $staff->email,
+                        'staff_upi' => $staff->upi_id,
+                        'amount' => $requestedAmount,
+                        'reference_id' => $gatewayReferenceId,
+                        'narration' => ucfirst(str_replace('_', ' ', $request->payment_type)).' payout',
+                        'notes' => [
+                            'staff_id' => (string) $staff->id,
+                            'admin_id' => (string) $admin->id,
+                        ],
+                    ]);
+                    $gatewayStatus = $gatewayPayload['status'] ?? 'created';
+                    $transactionId = $gatewayPayload['utr'] ?? ($gatewayPayload['id'] ?? null);
+                }
+
+                $record = StaffPayment::create([
+                    'staff_id' => $staff->id,
+                    'admin_id' => $admin->id,
+                    'payment_type' => $request->payment_type,
+                    'amount' => $requestedAmount,
+                    'payment_provider' => $provider,
+                    'payment_mode' => $paymentMode,
+                    'gateway_status' => $gatewayStatus,
+                    'gateway_reference_id' => $gatewayReferenceId,
+                    'gateway_payload' => $gatewayPayload,
+                    'beneficiary_upi' => $staff->upi_id,
+                    'transaction_id' => $transactionId,
+                    'notes' => $request->notes,
+                    'payment_screenshot' => $screenshotPath,
+                    'paid_at' => now(),
+                ]);
+
+                if (! $usingRazorpayX || in_array($gatewayStatus, ['processed', 'processed_with_warning'], true)) {
+                    $this->markAsPaid($staff, $request->payment_type, $requestedAmount, $record->id);
+                }
+            });
+        } catch (\Throwable $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Payout failed: '.$e->getMessage().($manualPayoutEnabled ? ' You can switch to manual mode and record payout proof.' : ''));
+        }
 
         return redirect()->route('admin.payments.index')
-            ->with('success', $isManualPayment
-                ? "Manual payment of ₹{$request->amount} recorded successfully for {$staff->name}."
-                : "Payment of ₹{$request->amount} processed successfully for {$staff->name}."
-            );
+            ->with('success', $usingRazorpayX
+                ? "Razorpay payout initiated for {$staff->name}. Staff can track status in payment history."
+                : "Payment of ₹{$request->amount} processed successfully for {$staff->name}.");
+    }
+
+    /**
+     * Admin can update staff UPI to enable payout.
+     */
+    public function updateStaffUpi(Request $request, $staffId)
+    {
+        $request->validate([
+            'upi_id' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z0-9.\-]{2,128}$/'],
+        ], [
+            'upi_id.required' => 'UPI ID is required.',
+            'upi_id.regex' => 'Please enter a valid UPI ID format (example@bank or example@icici).',
+        ]);
+
+        $staff = User::whereIn('role', ['nurse', 'caregiver'])->findOrFail($staffId);
+        $staff->upi_id = trim((string) $request->upi_id);
+        $staff->save();
+
+        return redirect()->back()->with('success', 'Staff UPI ID updated successfully.');
     }
 
     /**
@@ -288,6 +374,7 @@ class AdminPaymentController extends Controller
     {
         $payments = $this->staffPayoutService->calculatePendingPayments($staff);
         $payments['patient_reward']['meets_threshold'] = $payments['patient_reward']['amount'] >= self::MINIMUM_WITHDRAWAL;
+
         return $payments;
     }
 
@@ -308,18 +395,46 @@ class AdminPaymentController extends Controller
                 return $this->staffPayoutService->pendingPatientRewardQuery($staff->id)->get();
 
             case 'staff_referral':
-                // Admin can see all unpaid referrals, regardless of threshold
-                return Referral::where('referrer_id', $staff->id)
+                $ledgers = $this->staffPayoutService
+                    ->pendingStaffReferralQuery($staff->id)
+                    ->get();
+                $ledgerReferralIds = $ledgers->pluck('source_id');
+                $legacy = Referral::query()
+                    ->where('referrer_id', $staff->id)
                     ->where('status', 'completed')
-                    ->where('payment_processed', false)
+                    ->where(function ($query) {
+                        $query->where('payment_processed', false)
+                            ->orWhereNull('payment_processed');
+                    })
+                    ->when($ledgerReferralIds->isNotEmpty(), function ($query) use ($ledgerReferralIds) {
+                        $query->whereNotIn('id', $ledgerReferralIds);
+                    })
                     ->with(['referred'])
                     ->get();
 
+                return $ledgers->values()->merge($legacy->values());
+
             case 'subscription_referral':
-                return $this->staffPayoutService
+                $ledgers = $this->staffPayoutService
                     ->pendingSubscriptionReferralQuery($staff->id)
-                    ->with(['user', 'plan'])
+                    ->with('sourceSubscription.plan')
                     ->get();
+                $ledgerSubIds = $ledgers->pluck('source_id');
+                $legacyQ = Subscription::query()
+                    ->where('referrer_id', $staff->id)
+                    ->where('status', 'active')
+                    ->where(function ($q) {
+                        $q->where('referral_payment_processed', false)
+                            ->orWhereNull('referral_payment_processed');
+                    })
+                    ->where(function ($q) use ($ledgerSubIds) {
+                        if ($ledgerSubIds->isNotEmpty()) {
+                            $q->whereNotIn('id', $ledgerSubIds);
+                        }
+                    });
+                $legacy = $legacyQ->with('plan', 'user')->get();
+
+                return $ledgers->values()->merge($legacy->values());
 
             default:
                 return collect();
@@ -329,7 +444,7 @@ class AdminPaymentController extends Controller
     /**
      * Mark related records as paid
      */
-    private function markAsPaid(User $staff, $paymentType, $amount)
+    private function markAsPaid(User $staff, $paymentType, $amount, ?int $staffPaymentId = null)
     {
         $remaining = (float) $amount;
         $epsilon = 0.0001;
@@ -352,6 +467,14 @@ class AdminPaymentController extends Controller
                         'staff_payment_processed' => true,
                         'staff_payment_processed_at' => now(),
                     ]);
+                    IncentiveLedger::query()
+                        ->where('source_type', IncentiveLedger::SOURCE_SERVICE_REQUEST)
+                        ->where('source_id', $service->id)
+                        ->update([
+                            'payment_settled' => true,
+                            'settled_at' => now(),
+                            'staff_payment_id' => $staffPaymentId,
+                        ]);
                     $remaining -= $payout;
                 }
                 break;
@@ -378,18 +501,51 @@ class AdminPaymentController extends Controller
                 break;
 
             case 'staff_referral':
-                $referrals = Referral::where('referrer_id', $staff->id)
+                $ledgers = $this->staffPayoutService
+                    ->pendingStaffReferralQuery($staff->id)
+                    ->lockForUpdate()
+                    ->orderBy('id')
+                    ->get();
+
+                foreach ($ledgers as $ledger) {
+                    $rewardAmount = (float) ($ledger->final_amount ?? 0);
+                    if ($rewardAmount <= 0 || $remaining + $epsilon < $rewardAmount) {
+                        continue;
+                    }
+                    $ledger->update([
+                        'payment_settled' => true,
+                        'settled_at' => now(),
+                        'staff_payment_id' => $staffPaymentId,
+                    ]);
+                    if ($ledger->source_id) {
+                        Referral::query()->where('id', $ledger->source_id)->update([
+                            'payment_processed' => true,
+                            'payment_processed_at' => now(),
+                        ]);
+                    }
+                    $remaining -= $rewardAmount;
+                }
+
+                $ledgerReferralIds = IncentiveLedger::query()
+                    ->where('staff_id', $staff->id)
+                    ->where('source_type', IncentiveLedger::SOURCE_REFERRAL)
+                    ->pluck('source_id');
+                $legacyReferrals = Referral::query()
+                    ->where('referrer_id', $staff->id)
                     ->where('status', 'completed')
                     ->where(function ($query) {
                         $query->where('payment_processed', false)
                             ->orWhereNull('payment_processed');
+                    })
+                    ->when($ledgerReferralIds->isNotEmpty(), function ($query) use ($ledgerReferralIds) {
+                        $query->whereNotIn('id', $ledgerReferralIds);
                     })
                     ->lockForUpdate()
                     ->orderBy('completed_at')
                     ->orderBy('id')
                     ->get();
 
-                foreach ($referrals as $referral) {
+                foreach ($legacyReferrals as $referral) {
                     $rewardAmount = (float) ($referral->reward_amount ?? 0);
                     if ($rewardAmount <= 0 || $remaining + $epsilon < $rewardAmount) {
                         continue;
@@ -403,14 +559,48 @@ class AdminPaymentController extends Controller
                 break;
 
             case 'subscription_referral':
-                $subscriptions = $this->staffPayoutService
+                $ledgers = $this->staffPayoutService
                     ->pendingSubscriptionReferralQuery($staff->id)
                     ->lockForUpdate()
-                    ->orderBy('created_at')
                     ->orderBy('id')
                     ->get();
 
-                foreach ($subscriptions as $subscription) {
+                foreach ($ledgers as $ledger) {
+                    $commissionAmount = (float) ($ledger->final_amount ?? 0);
+                    if ($commissionAmount <= 0 || $remaining + $epsilon < $commissionAmount) {
+                        continue;
+                    }
+                    $ledger->update([
+                        'payment_settled' => true,
+                        'settled_at' => now(),
+                        'staff_payment_id' => $staffPaymentId,
+                    ]);
+                    if ($ledger->source_id) {
+                        Subscription::query()->where('id', $ledger->source_id)->update([
+                            'referral_payment_processed' => true,
+                            'referral_payment_processed_at' => now(),
+                        ]);
+                    }
+                    $remaining -= $commissionAmount;
+                }
+
+                $ledgerSubIds = IncentiveLedger::query()
+                    ->where('staff_id', $staff->id)
+                    ->where('source_type', IncentiveLedger::SOURCE_SUBSCRIPTION_SALE)
+                    ->pluck('source_id');
+                $legacy = Subscription::query()
+                    ->where('referrer_id', $staff->id)
+                    ->where('status', 'active')
+                    ->where(function ($q) {
+                        $q->where('referral_payment_processed', false)
+                            ->orWhereNull('referral_payment_processed');
+                    })
+                    ->lockForUpdate()
+                    ->orderBy('created_at');
+                if ($ledgerSubIds->isNotEmpty()) {
+                    $legacy->whereNotIn('id', $ledgerSubIds);
+                }
+                foreach ($legacy->get() as $subscription) {
                     $commissionAmount = (float) ($subscription->referral_commission_amount ?? 0);
                     if ($commissionAmount <= 0 || $remaining + $epsilon < $commissionAmount) {
                         continue;
@@ -425,4 +615,3 @@ class AdminPaymentController extends Controller
         }
     }
 }
-

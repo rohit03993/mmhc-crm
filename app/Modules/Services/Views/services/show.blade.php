@@ -3,890 +3,526 @@
 @section('title', 'Service Request Details - MMHC CRM')
 
 @section('head')
-    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
 @endsection
 
+@php
+    $backUrl = auth()->user()->isAdmin()
+        ? route('admin.service-requests')
+        : route('services.my-requests');
+    $statusLabel = ucfirst(str_replace('_', ' ', $serviceRequest->status));
+    $statusClass = match ($serviceRequest->status) {
+        'pending' => 'sr-pill--warning',
+        'assigned' => 'sr-pill--info',
+        'in_progress' => 'sr-pill--primary',
+        'completed' => 'sr-pill--success',
+        default => 'sr-pill--muted',
+    };
+@endphp
+
 @section('content')
-<!-- Mobile App View for Service Details -->
-<div class="mobile-app-container">
-    <!-- App Header (Mobile Only) -->
-    <div class="app-header-mobile d-md-none">
-        <div class="app-header-content">
-            <div class="app-header-left">
-                <a href="{{ route('services.my-requests') }}" class="app-back-btn">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
-                <div>
-                    <div class="app-header-title">Service Details</div>
-                    <div class="app-header-subtitle">Request #{{ $serviceRequest->id }}</div>
-                </div>
-            </div>
+<div class="sr-detail">
+    {{-- Mobile top bar --}}
+    <div class="sr-detail__mobile-bar d-md-none">
+        <a href="{{ $backUrl }}" class="sr-detail__icon-btn" aria-label="Back">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div>
+            <div class="sr-detail__mobile-title">Request #{{ $serviceRequest->id }}</div>
+            <div class="sr-detail__mobile-sub">{{ $serviceRequest->serviceType->name }}</div>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="app-content">
-        <!-- Desktop Header -->
-        <div class="d-none d-md-flex justify-content-between align-items-center mb-4">
+    <div class="sr-detail__inner">
+        {{-- Page header (desktop) --}}
+        <div class="sr-detail__page-head d-none d-md-flex">
             <div>
-                <h2 class="text-primary">Service Request Details</h2>
-                <p class="text-muted">View your service request information</p>
+                <h1 class="sr-detail__h1">Service request</h1>
+                <p class="sr-detail__lede">
+                    <span class="text-muted">#{{ $serviceRequest->id }}</span>
+                    <span class="sr-detail__dot">·</span>
+                    {{ $serviceRequest->serviceType->name }}
+                </p>
             </div>
-            <a href="{{ route('services.my-requests') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Requests
+            <a href="{{ $backUrl }}" class="btn btn-light border shadow-sm rounded-pill px-4">
+                <i class="fas fa-arrow-left me-2"></i>Back to list
             </a>
         </div>
 
-        <!-- Status Card -->
-        <div class="app-status-card status-{{ $serviceRequest->status }}">
-            <div class="app-status-header">
-                <div class="app-status-icon">
-                    <i class="fas fa-{{ $serviceRequest->status === 'pending' ? 'clock' : ($serviceRequest->status === 'assigned' ? 'user-check' : ($serviceRequest->status === 'in_progress' ? 'play-circle' : 'check-circle')) }}"></i>
+        <div class="row g-4 align-items-start">
+            {{-- Main column --}}
+            <div class="col-lg-8">
+                {{-- Hero status + amount --}}
+                <div class="sr-card sr-card--hero mb-4">
+                    <div class="sr-hero__top">
+                        <div class="sr-hero__left">
+                            <div class="sr-hero__icon sr-hero__icon--{{ $serviceRequest->status }}">
+                                <i class="fas fa-{{ $serviceRequest->status === 'pending' ? 'clock' : ($serviceRequest->status === 'assigned' ? 'user-check' : ($serviceRequest->status === 'in_progress' ? 'play-circle' : 'check-circle')) }}"></i>
+                            </div>
+                            <div>
+                                <h2 class="sr-hero__title">{{ $serviceRequest->serviceType->name }}</h2>
+                                <span class="sr-pill {{ $statusClass }}">{{ $statusLabel }}</span>
+                            </div>
+                        </div>
+                        <div class="sr-hero__amount">
+                            <span class="sr-hero__amount-label">Total amount</span>
+                            <span class="sr-hero__amount-value">₹{{ number_format((float) $serviceRequest->total_amount, 0) }}</span>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="app-status-title">{{ $serviceRequest->serviceType->name }}</h3>
-                    <span class="app-status-badge">{{ ucfirst(str_replace('_', ' ', $serviceRequest->status)) }}</span>
-                </div>
-            </div>
-            <div class="app-status-amount">
-                <span>Total Amount</span>
-                <span>₹{{ number_format($serviceRequest->total_amount) }}</span>
-            </div>
-        </div>
 
-        <!-- Service Information -->
-        <div class="app-detail-section">
-            <div class="app-section-header">
-                <h3 class="app-section-title">
-                    <i class="fas fa-info-circle me-2"></i>Service Information
-                </h3>
-            </div>
-            
-            <div class="app-detail-grid">
-                <div class="app-detail-item">
-                    <div class="app-detail-label">Duration</div>
-                    <div class="app-detail-value">{{ $serviceRequest->duration_days }} days</div>
+                <div class="sr-card mb-4">
+                    <h3 class="sr-card__title"><i class="fas fa-info-circle me-2 text-primary"></i>Service information</h3>
+                    <div class="row g-3 g-md-4">
+                        <div class="col-6 col-md-3">
+                            <div class="sr-kv">
+                                <span class="sr-kv__label">Duration</span>
+                                <span class="sr-kv__val">{{ $serviceRequest->duration_days }} {{ $serviceRequest->duration_days == 1 ? 'day' : 'days' }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="sr-kv">
+                                <span class="sr-kv__label">Start date</span>
+                                <span class="sr-kv__val">{{ $serviceRequest->start_date->format('M d, Y') }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="sr-kv">
+                                <span class="sr-kv__label">End date</span>
+                                <span class="sr-kv__val">{{ $serviceRequest->end_date->format('M d, Y') }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="sr-kv">
+                                <span class="sr-kv__label">Staff type</span>
+                                <span class="sr-kv__val">{{ ucfirst($serviceRequest->preferred_staff_type) }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="app-detail-item">
-                    <div class="app-detail-label">Start Date</div>
-                    <div class="app-detail-value">{{ $serviceRequest->start_date->format('M d, Y') }}</div>
-                </div>
-                <div class="app-detail-item">
-                    <div class="app-detail-label">End Date</div>
-                    <div class="app-detail-value">{{ $serviceRequest->end_date->format('M d, Y') }}</div>
-                </div>
-                <div class="app-detail-item">
-                    <div class="app-detail-label">Staff Type</div>
-                    <div class="app-detail-value">{{ ucfirst($serviceRequest->preferred_staff_type) }}</div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Location & Contact -->
-        <div class="app-detail-section">
-            <div class="app-section-header">
-                <h3 class="app-section-title">
-                    <i class="fas fa-map-marker-alt me-2"></i>Location & Contact
-                </h3>
-            </div>
-            
-            <div class="app-detail-list">
-                <div class="app-detail-row">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <div>
-                        <div class="app-detail-label">Service Location</div>
-                        <div class="app-detail-value">{{ $serviceRequest->location }}</div>
+                <div class="sr-card mb-4">
+                    <h3 class="sr-card__title"><i class="fas fa-map-marker-alt me-2 text-danger"></i>Location &amp; contact</h3>
+                    <div class="sr-stack">
+                        <div class="sr-line">
+                            <i class="fas fa-map-marker-alt sr-line__icon"></i>
+                            <div>
+                                <span class="sr-kv__label d-block">Service location</span>
+                                <span class="sr-kv__val">{{ $serviceRequest->location }}</span>
+                            </div>
+                        </div>
+                        <div class="sr-line">
+                            <i class="fas fa-user sr-line__icon"></i>
+                            <div>
+                                <span class="sr-kv__label d-block">Contact person</span>
+                                <span class="sr-kv__val">{{ $serviceRequest->contact_person }}</span>
+                            </div>
+                        </div>
+                        <div class="sr-line">
+                            <i class="fas fa-phone sr-line__icon"></i>
+                            <div>
+                                <span class="sr-kv__label d-block">Contact phone</span>
+                                <span class="sr-kv__val">{{ $serviceRequest->contact_phone }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="app-detail-row">
-                    <i class="fas fa-user"></i>
-                    <div>
-                        <div class="app-detail-label">Contact Person</div>
-                        <div class="app-detail-value">{{ $serviceRequest->contact_person }}</div>
-                    </div>
-                </div>
-                <div class="app-detail-row">
-                    <i class="fas fa-phone"></i>
-                    <div>
-                        <div class="app-detail-label">Contact Phone</div>
-                        <div class="app-detail-value">{{ $serviceRequest->contact_phone }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Assigned Staff -->
-        @if($serviceRequest->assignedStaff)
-        <div class="app-staff-card">
-            <div class="app-section-header">
-                <h3 class="app-section-title">
-                    <i class="fas fa-user-md me-2"></i>Assigned Staff
-                </h3>
-            </div>
-            
-            <div class="app-staff-info">
-                <div class="app-staff-avatar {{ $serviceRequest->assignedStaff->isNurse() ? 'nurse' : 'caregiver' }}">
-                    <i class="fas fa-user-{{ $serviceRequest->assignedStaff->isNurse() ? 'nurse' : 'md' }}"></i>
-                </div>
-                <div class="app-staff-details">
-                    <h4 class="app-staff-name">{{ $serviceRequest->assignedStaff->name }}</h4>
-                    <div class="app-staff-badges">
-                        <span class="app-badge app-badge-{{ $serviceRequest->assignedStaff->isNurse() ? 'primary' : 'success' }}">
-                            {{ ucfirst($serviceRequest->assignedStaff->role) }}
-                        </span>
-                        <span class="app-badge app-badge-secondary">{{ $serviceRequest->assignedStaff->unique_id }}</span>
-                    </div>
-                    @if($serviceRequest->assignedStaff->qualification)
-                    <div class="app-staff-qual">
-                        <i class="fas fa-graduation-cap"></i>
-                        <span>{{ $serviceRequest->assignedStaff->qualification }}</span>
+                @if($serviceRequest->notes || $serviceRequest->special_requirements)
+                <div class="sr-card mb-4">
+                    <h3 class="sr-card__title"><i class="fas fa-sticky-note me-2 text-warning"></i>Additional information</h3>
+                    @if($serviceRequest->notes)
+                    <div class="sr-note mb-3">
+                        <span class="sr-kv__label d-block mb-1">Notes</span>
+                        <p class="sr-note__body mb-0">{{ $serviceRequest->notes }}</p>
                     </div>
                     @endif
-                    @if($serviceRequest->assignedStaff->experience)
-                    <div class="app-staff-exp">
-                        <i class="fas fa-briefcase"></i>
-                        <span>{{ $serviceRequest->assignedStaff->experience }} years exp.</span>
+                    @if($serviceRequest->special_requirements)
+                    <div class="sr-note">
+                        <span class="sr-kv__label d-block mb-1">Special requirements</span>
+                        <p class="sr-note__body mb-0">{{ $serviceRequest->special_requirements }}</p>
                     </div>
                     @endif
                 </div>
-            </div>
-        </div>
-        @endif
-
-        <!-- Notes & Requirements -->
-        @if($serviceRequest->notes || $serviceRequest->special_requirements)
-        <div class="app-detail-section">
-            <div class="app-section-header">
-                <h3 class="app-section-title">
-                    <i class="fas fa-sticky-note me-2"></i>Additional Information
-                </h3>
-            </div>
-            
-            @if($serviceRequest->notes)
-            <div class="app-note-item">
-                <div class="app-note-label">Notes</div>
-                <div class="app-note-content">{{ $serviceRequest->notes }}</div>
-            </div>
-            @endif
-            
-            @if($serviceRequest->special_requirements)
-            <div class="app-note-item">
-                <div class="app-note-label">Special Requirements</div>
-                <div class="app-note-content">{{ $serviceRequest->special_requirements }}</div>
-            </div>
-            @endif
-        </div>
-        @endif
-
-        <!-- Timeline -->
-        <div class="app-timeline-section">
-            <div class="app-section-header">
-                <h3 class="app-section-title">
-                    <i class="fas fa-history me-2"></i>Request Timeline
-                </h3>
-            </div>
-            
-            <div class="app-timeline">
-                <div class="app-timeline-item">
-                    <div class="app-timeline-marker primary"></div>
-                    <div class="app-timeline-content">
-                        <h6>Request Submitted</h6>
-                        <small>{{ $serviceRequest->created_at->format('M d, Y g:i A') }}</small>
-                    </div>
-                </div>
-                
-                @if($serviceRequest->assigned_at)
-                <div class="app-timeline-item">
-                    <div class="app-timeline-marker info"></div>
-                    <div class="app-timeline-content">
-                        <h6>Staff Assigned</h6>
-                        <small>{{ $serviceRequest->assigned_at->format('M d, Y g:i A') }}</small>
-                    </div>
-                </div>
                 @endif
-                
-                @if($serviceRequest->started_at)
-                <div class="app-timeline-item">
-                    <div class="app-timeline-marker warning"></div>
-                    <div class="app-timeline-content">
-                        <h6>Service Started</h6>
-                        <small>{{ $serviceRequest->started_at->format('M d, Y g:i A') }}</small>
-                    </div>
+
+                <div class="sr-card sr-card--timeline mb-4 mb-lg-0">
+                    <h3 class="sr-card__title"><i class="fas fa-stream me-2 text-info"></i>Request timeline</h3>
+                    <ul class="sr-timeline list-unstyled mb-0">
+                        <li class="sr-timeline__item">
+                            <span class="sr-timeline__dot sr-timeline__dot--primary"></span>
+                            <div>
+                                <strong class="sr-timeline__label">Request submitted</strong>
+                                <div class="sr-timeline__meta">{{ $serviceRequest->created_at->format('M d, Y g:i A') }}</div>
+                            </div>
+                        </li>
+                        @if($serviceRequest->assigned_at)
+                        <li class="sr-timeline__item">
+                            <span class="sr-timeline__dot sr-timeline__dot--info"></span>
+                            <div>
+                                <strong class="sr-timeline__label">Staff assigned</strong>
+                                <div class="sr-timeline__meta">{{ $serviceRequest->assigned_at->format('M d, Y g:i A') }}</div>
+                            </div>
+                        </li>
+                        @endif
+                        @if($serviceRequest->started_at)
+                        <li class="sr-timeline__item">
+                            <span class="sr-timeline__dot sr-timeline__dot--warning"></span>
+                            <div>
+                                <strong class="sr-timeline__label">Service started</strong>
+                                <div class="sr-timeline__meta">{{ $serviceRequest->started_at->format('M d, Y g:i A') }}</div>
+                            </div>
+                        </li>
+                        @endif
+                        @if($serviceRequest->completed_at)
+                        <li class="sr-timeline__item">
+                            <span class="sr-timeline__dot sr-timeline__dot--success"></span>
+                            <div>
+                                <strong class="sr-timeline__label">Service completed</strong>
+                                <div class="sr-timeline__meta">{{ $serviceRequest->completed_at->format('M d, Y g:i A') }}</div>
+                            </div>
+                        </li>
+                        @endif
+                    </ul>
                 </div>
-                @endif
-                
-                @if($serviceRequest->completed_at)
-                <div class="app-timeline-item">
-                    <div class="app-timeline-marker success"></div>
-                    <div class="app-timeline-content">
-                        <h6>Service Completed</h6>
-                        <small>{{ $serviceRequest->completed_at->format('M d, Y g:i A') }}</small>
-                    </div>
+
+                @if($serviceRequest->status === 'pending')
+                <div class="d-md-none mt-3">
+                    <button type="button" class="btn btn-warning w-100 rounded-3 py-3 fw-semibold" onclick="cancelRequest({{ $serviceRequest->id }})">
+                        <i class="fas fa-times me-2"></i>Cancel request
+                    </button>
                 </div>
                 @endif
             </div>
-        </div>
 
-        <!-- Actions -->
-        @if($serviceRequest->status === 'pending')
-        <div class="app-actions">
-            <button class="app-btn-warning" onclick="cancelRequest({{ $serviceRequest->id }})">
-                <i class="fas fa-times me-2"></i>Cancel Request
-            </button>
-        </div>
-        @endif
-    </div>
-
-    <!-- Bottom Navigation -->
-    @include('auth::components.bottom-nav')
-</div>
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Service Information</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Service Type</label>
-                                    <div class="fw-bold">{{ $serviceRequest->serviceType->name }}</div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Status</label>
-                                    <div>
-                                        <span class="badge 
-                                            @if($serviceRequest->status === 'pending') bg-warning
-                                            @elseif($serviceRequest->status === 'assigned') bg-info
-                                            @elseif($serviceRequest->status === 'in_progress') bg-primary
-                                            @elseif($serviceRequest->status === 'completed') bg-success
-                                            @else bg-secondary
-                                            @endif fs-6">
-                                            {{ ucfirst(str_replace('_', ' ', $serviceRequest->status)) }}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Duration</label>
-                                    <div class="fw-bold">{{ $serviceRequest->duration_days }} days</div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Total Amount</label>
-                                    <div class="fw-bold text-success fs-5">₹{{ number_format($serviceRequest->total_amount) }}</div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Start Date</label>
-                                    <div class="fw-bold">{{ $serviceRequest->start_date->format('M d, Y') }}</div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">End Date</label>
-                                    <div class="fw-bold">{{ $serviceRequest->end_date->format('M d, Y') }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Location & Contact -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Location & Contact</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Service Location</label>
-                                    <div class="fw-bold">{{ $serviceRequest->location }}</div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Contact Person</label>
-                                    <div class="fw-bold">{{ $serviceRequest->contact_person }}</div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Contact Phone</label>
-                                    <div class="fw-bold">{{ $serviceRequest->contact_phone }}</div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Preferred Staff Type</label>
-                                    <div class="fw-bold">{{ ucfirst($serviceRequest->preferred_staff_type) }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Notes & Requirements -->
-                    @if($serviceRequest->notes || $serviceRequest->special_requirements)
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Additional Information</h5>
-                        </div>
-                        <div class="card-body">
-                            @if($serviceRequest->notes)
-                            <div class="mb-3">
-                                <label class="form-label text-muted">Notes</label>
-                                <div class="fw-bold">{{ $serviceRequest->notes }}</div>
-                            </div>
-                            @endif
-                            @if($serviceRequest->special_requirements)
-                            <div class="mb-3">
-                                <label class="form-label text-muted">Special Requirements</label>
-                                <div class="fw-bold">{{ $serviceRequest->special_requirements }}</div>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-                    @endif
-                </div>
-
-                <!-- Sidebar -->
-                <div class="col-lg-4">
-                    <!-- Assigned Staff -->
+            {{-- Sidebar --}}
+            <div class="col-lg-4">
+                <div class="sr-sidebar">
                     @if($serviceRequest->assignedStaff)
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Assigned Staff</h5>
+                    <div class="sr-card mb-4">
+                        <h3 class="sr-card__title"><i class="fas fa-user-md me-2 text-success"></i>Assigned staff</h3>
+                        <div class="sr-staff">
+                            <div class="sr-staff__avatar {{ $serviceRequest->assignedStaff->isNurse() ? 'sr-staff__avatar--nurse' : 'sr-staff__avatar--caregiver' }}">
+                                <i class="fas fa-user-{{ $serviceRequest->assignedStaff->isNurse() ? 'nurse' : 'md' }}"></i>
+                            </div>
+                            <div class="sr-staff__body">
+                                <div class="sr-staff__name">{{ $serviceRequest->assignedStaff->name }}</div>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    <span class="badge rounded-pill {{ $serviceRequest->assignedStaff->isNurse() ? 'bg-primary' : 'bg-success' }}">
+                                        {{ ucfirst($serviceRequest->assignedStaff->role) }}
+                                    </span>
+                                    <span class="badge rounded-pill bg-light text-dark border">{{ $serviceRequest->assignedStaff->unique_id }}</span>
+                                </div>
+                                @if($serviceRequest->assignedStaff->qualification)
+                                <div class="sr-staff__meta">
+                                    <i class="fas fa-graduation-cap me-1 text-muted"></i>{{ $serviceRequest->assignedStaff->qualification }}
+                                </div>
+                                @endif
+                                @if($serviceRequest->assignedStaff->experience)
+                                <div class="sr-staff__meta">
+                                    <i class="fas fa-briefcase me-1 text-muted"></i>
+                                    @if(is_numeric($serviceRequest->assignedStaff->experience))
+                                        {{ $serviceRequest->assignedStaff->experience }} years experience
+                                    @else
+                                        {{ $serviceRequest->assignedStaff->experience }} experience
+                                    @endif
+                                </div>
+                                @endif
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div class="text-center mb-3">
-                                <i class="fas fa-user-{{ $serviceRequest->assignedStaff->isNurse() ? 'nurse' : 'md' }} fa-3x text-{{ $serviceRequest->assignedStaff->isNurse() ? 'info' : 'success' }}"></i>
-                            </div>
-                            <h6 class="text-center">{{ $serviceRequest->assignedStaff->name }}</h6>
-                            <div class="text-center mb-2">
-                                <span class="badge bg-{{ $serviceRequest->assignedStaff->isNurse() ? 'info' : 'success' }}">
-                                    {{ ucfirst($serviceRequest->assignedStaff->role) }}
-                                </span>
-                            </div>
-                            <div class="text-center text-muted small">
-                                ID: {{ $serviceRequest->assignedStaff->unique_id }}
-                            </div>
-                            @if($serviceRequest->assignedStaff->qualification)
-                            <div class="mt-2">
-                                <small class="text-muted">Qualification:</small>
-                                <div class="fw-bold">{{ $serviceRequest->assignedStaff->qualification }}</div>
-                            </div>
-                            @endif
-                            @if($serviceRequest->assignedStaff->experience)
-                            <div class="mt-2">
-                                <small class="text-muted">Experience:</small>
-                                <div class="fw-bold">{{ $serviceRequest->assignedStaff->experience }}</div>
-                            </div>
-                            @endif
-                        </div>
+                    </div>
+                    @else
+                    <div class="sr-card sr-card--muted mb-4">
+                        <h3 class="sr-card__title text-muted"><i class="fas fa-user-clock me-2"></i>Assigned staff</h3>
+                        <p class="mb-0 text-muted small">No staff assigned yet.</p>
                     </div>
                     @endif
 
-                    <!-- Timeline -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Request Timeline</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="timeline">
-                                <div class="timeline-item">
-                                    <div class="timeline-marker bg-primary"></div>
-                                    <div class="timeline-content">
-                                        <h6>Request Submitted</h6>
-                                        <small class="text-muted">{{ $serviceRequest->created_at->format('M d, Y g:i A') }}</small>
-                                    </div>
-                                </div>
-                                
-                                @if($serviceRequest->assigned_at)
-                                <div class="timeline-item">
-                                    <div class="timeline-marker bg-info"></div>
-                                    <div class="timeline-content">
-                                        <h6>Staff Assigned</h6>
-                                        <small class="text-muted">{{ $serviceRequest->assigned_at->format('M d, Y g:i A') }}</small>
-                                    </div>
-                                </div>
-                                @endif
-                                
-                                @if($serviceRequest->started_at)
-                                <div class="timeline-item">
-                                    <div class="timeline-marker bg-warning"></div>
-                                    <div class="timeline-content">
-                                        <h6>Service Started</h6>
-                                        <small class="text-muted">{{ $serviceRequest->started_at->format('M d, Y g:i A') }}</small>
-                                    </div>
-                                </div>
-                                @endif
-                                
-                                @if($serviceRequest->completed_at)
-                                <div class="timeline-item">
-                                    <div class="timeline-marker bg-success"></div>
-                                    <div class="timeline-content">
-                                        <h6>Service Completed</h6>
-                                        <small class="text-muted">{{ $serviceRequest->completed_at->format('M d, Y g:i A') }}</small>
-                                    </div>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Actions</h5>
-                        </div>
-                        <div class="card-body">
-                            @if($serviceRequest->status === 'pending')
-                            <button class="btn btn-warning btn-sm w-100 mb-2" onclick="cancelRequest({{ $serviceRequest->id }})">
-                                <i class="fas fa-times me-1"></i>Cancel Request
-                            </button>
-                            @endif
-                            
-                            <a href="{{ route('services.my-requests') }}" class="btn btn-outline-secondary btn-sm w-100">
-                                <i class="fas fa-arrow-left me-1"></i>Back to Requests
-                            </a>
-                        </div>
+                    <div class="sr-card">
+                        <h3 class="sr-card__title"><i class="fas fa-bolt me-2 text-secondary"></i>Actions</h3>
+                        @if($serviceRequest->status === 'pending')
+                        <button type="button" class="btn btn-outline-warning w-100 rounded-3 mb-2 fw-semibold" onclick="cancelRequest({{ $serviceRequest->id }})">
+                            <i class="fas fa-times me-2"></i>Cancel request
+                        </button>
+                        @endif
+                        <a href="{{ $backUrl }}" class="btn btn-outline-secondary w-100 rounded-3">
+                            <i class="fas fa-arrow-left me-2"></i>Back to list
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    @include('auth::components.bottom-nav')
 </div>
 
 <style>
-/* Mobile App Container */
-.mobile-app-container {
-    position: relative;
+.sr-detail {
+    --sr-surface: #ffffff;
+    --sr-page: #f1f5f9;
+    --sr-border: #e2e8f0;
+    --sr-text: #0f172a;
+    --sr-muted: #64748b;
+    background: var(--sr-page);
     min-height: 100vh;
-    background: #f5f7fa;
-    padding-bottom: 80px !important;
-    margin-top: 0;
+    margin: -0.5rem -1rem 0;
+    padding-bottom: 5rem;
 }
-
-/* App Header Styles */
-.app-header-mobile {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    padding: 12px 16px;
-    padding-top: max(12px, env(safe-area-inset-top));
+@media (min-width: 768px) {
+    .sr-detail { margin: 0; padding-bottom: 2rem; }
 }
-
-.app-header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.sr-detail__inner {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 1rem 1rem 2rem;
 }
-
-.app-header-left {
+@media (min-width: 768px) {
+    .sr-detail__inner { padding: 1.5rem 1.25rem 2rem; }
+}
+.sr-detail__mobile-bar {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #0f766e 0%, #0d9488 55%, #14b8a6 100%);
+    color: #fff;
 }
-
-.app-back-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+.sr-detail__icon-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 999px;
     background: rgba(255,255,255,0.2);
-    display: flex;
+    color: #fff;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    text-decoration: none;
-    font-size: 1.1rem;
 }
-
-.app-header-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    line-height: 1.2;
-}
-
-.app-header-subtitle {
-    font-size: 0.8rem;
-    opacity: 0.9;
-}
-
-/* App Content */
-.app-content {
-    padding: 16px;
-    padding-bottom: 90px !important;
-    margin-top: 0;
-}
-
-/* Status Card */
-.app-status-card {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.app-status-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 16px;
-}
-
-.app-status-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    color: white;
-}
-
-.app-status-card.status-pending .app-status-icon {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
-
-.app-status-card.status-assigned .app-status-icon {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-}
-
-.app-status-card.status-in_progress .app-status-icon {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.app-status-card.status-completed .app-status-icon {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-.app-status-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin: 0 0 4px 0;
-}
-
-.app-status-badge {
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: white;
-}
-
-.app-status-card.status-pending .app-status-badge {
-    background: #f59e0b;
-}
-
-.app-status-card.status-assigned .app-status-badge {
-    background: #3b82f6;
-}
-
-.app-status-card.status-in_progress .app-status-badge {
-    background: #667eea;
-}
-
-.app-status-card.status-completed .app-status-badge {
-    background: #10b981;
-}
-
-.app-status-amount {
-    display: flex;
+.sr-detail__mobile-title { font-weight: 700; font-size: 0.95rem; }
+.sr-detail__mobile-sub { font-size: 0.8rem; opacity: 0.9; }
+.sr-detail__page-head {
+    align-items: flex-start;
     justify-content: space-between;
-    align-items: center;
-    padding-top: 16px;
-    border-top: 1px solid #e9ecef;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
-
-.app-status-amount span:first-child {
-    font-size: 0.9rem;
-    color: #6c757d;
-}
-
-.app-status-amount span:last-child {
+.sr-detail__h1 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #28a745;
+    color: var(--sr-text);
+    margin: 0 0 0.25rem;
+    letter-spacing: -0.02em;
 }
-
-/* Detail Sections */
-.app-detail-section {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.app-section-header {
-    margin-bottom: 16px;
-}
-
-.app-section-title {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #2c3e50;
+.sr-detail__lede {
     margin: 0;
-    display: flex;
-    align-items: center;
-}
-
-.app-detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-}
-
-.app-detail-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.app-detail-label {
-    font-size: 0.75rem;
-    color: #6c757d;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-}
-
-.app-detail-value {
+    color: var(--sr-muted);
     font-size: 0.95rem;
-    font-weight: 600;
-    color: #2c3e50;
 }
+.sr-detail__dot { opacity: 0.5; }
 
-.app-detail-list {
+.sr-card {
+    background: var(--sr-surface);
+    border: 1px solid var(--sr-border);
+    border-radius: 1rem;
+    padding: 1.25rem 1.35rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.sr-card--hero {
+    border: none;
+    box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+}
+.sr-card--muted { background: #f8fafc; }
+.sr-card__title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--sr-text);
+    margin: 0 0 1rem;
+    letter-spacing: -0.01em;
+}
+.sr-card--timeline .sr-card__title { margin-bottom: 1.25rem; }
+
+.sr-hero__top {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 1.25rem;
 }
-
-.app-detail-row {
+@media (min-width: 576px) {
+    .sr-hero__top {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+}
+.sr-hero__left {
     display: flex;
-    align-items: start;
-    gap: 12px;
+    align-items: flex-start;
+    gap: 1rem;
 }
-
-.app-detail-row i {
-    width: 24px;
-    color: #667eea;
-    margin-top: 2px;
-}
-
-/* Staff Card */
-.app-staff-card {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.app-staff-info {
-    display: flex;
-    align-items: start;
-    gap: 16px;
-}
-
-.app-staff-avatar {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
+.sr-hero__icon {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    color: white;
+    color: #fff;
+    font-size: 1.35rem;
     flex-shrink: 0;
 }
-
-.app-staff-avatar.nurse {
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-}
-
-.app-staff-avatar.caregiver {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-}
-
-.app-staff-details {
-    flex: 1;
-}
-
-.app-staff-name {
-    font-size: 1rem;
+.sr-hero__icon--pending { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.sr-hero__icon--assigned { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.sr-hero__icon--in_progress { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+.sr-hero__icon--completed { background: linear-gradient(135deg, #10b981, #059669); }
+.sr-hero__icon--cancelled,
+.sr-hero__icon--rejected { background: linear-gradient(135deg, #64748b, #475569); }
+.sr-hero__title {
+    font-size: 1.2rem;
     font-weight: 700;
-    color: #2c3e50;
-    margin: 0 0 8px 0;
+    color: var(--sr-text);
+    margin: 0 0 0.5rem;
+    line-height: 1.25;
 }
-
-.app-staff-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 12px;
-}
-
-.app-badge {
-    padding: 4px 10px;
-    border-radius: 12px;
+.sr-pill {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
     font-size: 0.75rem;
     font-weight: 600;
-    color: white;
+    text-transform: capitalize;
+}
+.sr-pill--warning { background: #fef3c7; color: #92400e; }
+.sr-pill--info { background: #e0f2fe; color: #0369a1; }
+.sr-pill--primary { background: #eef2ff; color: #4338ca; }
+.sr-pill--success { background: #d1fae5; color: #047857; }
+.sr-pill--muted { background: #f1f5f9; color: #475569; }
+
+.sr-hero__amount {
+    text-align: left;
+    padding-top: 1rem;
+    border-top: 1px solid var(--sr-border);
+}
+@media (min-width: 576px) {
+    .sr-hero__amount {
+        text-align: right;
+        padding-top: 0;
+        border-top: none;
+        border-left: 1px solid var(--sr-border);
+        padding-left: 1.5rem;
+        min-width: 8.5rem;
+    }
+}
+.sr-hero__amount-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sr-muted);
+    margin-bottom: 0.35rem;
+}
+.sr-hero__amount-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #059669;
+    letter-spacing: -0.03em;
+    line-height: 1;
 }
 
-.app-badge-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.sr-kv__label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sr-muted);
 }
-
-.app-badge-success {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-}
-
-.app-badge-secondary {
-    background: #6c757d;
-}
-
-.app-staff-qual,
-.app-staff-exp {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    color: #6c757d;
-    margin-top: 8px;
-}
-
-.app-staff-qual i,
-.app-staff-exp i {
-    color: #667eea;
-}
-
-/* Notes */
-.app-note-item {
-    margin-bottom: 16px;
-}
-
-.app-note-item:last-child {
-    margin-bottom: 0;
-}
-
-.app-note-label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #6c757d;
-    margin-bottom: 8px;
-}
-
-.app-note-content {
-    font-size: 0.9rem;
-    color: #2c3e50;
-    line-height: 1.5;
-}
-
-/* Timeline */
-.app-timeline-section {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.app-timeline {
-    position: relative;
-    padding-left: 32px;
-}
-
-.app-timeline::before {
-    content: '';
-    position: absolute;
-    left: 11px;
-    top: 20px;
-    bottom: 0;
-    width: 2px;
-    background: #e9ecef;
-}
-
-.app-timeline-item {
-    position: relative;
-    margin-bottom: 20px;
-}
-
-.app-timeline-item:last-child {
-    margin-bottom: 0;
-}
-
-.app-timeline-marker {
-    position: absolute;
-    left: -32px;
-    top: 4px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: 3px solid white;
-    box-shadow: 0 0 0 2px #e9ecef;
-}
-
-.app-timeline-marker.primary {
-    background: #667eea;
-}
-
-.app-timeline-marker.info {
-    background: #3b82f6;
-}
-
-.app-timeline-marker.warning {
-    background: #f59e0b;
-}
-
-.app-timeline-marker.success {
-    background: #10b981;
-}
-
-.app-timeline-content h6 {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #2c3e50;
-    margin: 0 0 4px 0;
-}
-
-.app-timeline-content small {
-    font-size: 0.8rem;
-    color: #6c757d;
-}
-
-/* Actions */
-.app-actions {
-    margin-top: 16px;
-}
-
-.app-btn-warning {
-    width: 100%;
-    padding: 14px;
-    border-radius: 12px;
-    background: #f59e0b;
-    color: white;
-    border: none;
+.sr-kv__val {
+    display: block;
     font-size: 0.95rem;
     font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s ease;
+    color: var(--sr-text);
+    margin-top: 0.2rem;
 }
 
-.app-btn-warning:active {
-    transform: scale(0.98);
+.sr-stack { display: flex; flex-direction: column; gap: 1.1rem; }
+.sr-line {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+}
+.sr-line__icon {
+    color: #0d9488;
+    margin-top: 0.15rem;
+    width: 1.1rem;
+    text-align: center;
 }
 
-/* Desktop View */
-@media (min-width: 768px) {
-    .mobile-app-container {
-        padding-bottom: 0;
-    }
-    
-    .app-content {
-        padding: 24px;
-        padding-bottom: 24px;
-    }
-    
-    .app-detail-grid {
-        grid-template-columns: repeat(4, 1fr);
+.sr-note__body {
+    font-size: 0.95rem;
+    color: #334155;
+    line-height: 1.55;
+    background: #f8fafc;
+    border-radius: 0.65rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--sr-border);
+}
+
+.sr-timeline { position: relative; padding-left: 0.25rem; }
+.sr-timeline__item {
+    position: relative;
+    padding-left: 1.75rem;
+    padding-bottom: 1.35rem;
+}
+.sr-timeline__item:last-child { padding-bottom: 0; }
+.sr-timeline__item::before {
+    content: '';
+    position: absolute;
+    left: 0.45rem;
+    top: 1.35rem;
+    bottom: -0.25rem;
+    width: 2px;
+    background: var(--sr-border);
+}
+.sr-timeline__item:last-child::before { display: none; }
+.sr-timeline__dot {
+    position: absolute;
+    left: 0;
+    top: 0.2rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 999px;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px var(--sr-border);
+}
+.sr-timeline__dot--primary { background: #6366f1; }
+.sr-timeline__dot--info { background: #3b82f6; }
+.sr-timeline__dot--warning { background: #f59e0b; }
+.sr-timeline__dot--success { background: #10b981; }
+.sr-timeline__label { font-size: 0.92rem; color: var(--sr-text); }
+.sr-timeline__meta { font-size: 0.82rem; color: var(--sr-muted); margin-top: 0.15rem; }
+
+.sr-staff { display: flex; gap: 1rem; align-items: flex-start; }
+.sr-staff__avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+.sr-staff__avatar--nurse { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+.sr-staff__avatar--caregiver { background: linear-gradient(135deg, #0f766e, #14b8a6); }
+.sr-staff__name { font-weight: 700; font-size: 1.05rem; color: var(--sr-text); margin-bottom: 0.25rem; }
+.sr-staff__meta { font-size: 0.85rem; color: var(--sr-muted); margin-top: 0.35rem; }
+
+@media (min-width: 992px) {
+    .sr-sidebar {
+        position: sticky;
+        top: 5.5rem;
     }
 }
 </style>
@@ -894,7 +530,6 @@
 <script>
 function cancelRequest(requestId) {
     if (confirm('Are you sure you want to cancel this service request?')) {
-        // Here you would typically make an AJAX request to cancel the request
         alert('Request cancellation feature will be implemented soon.');
     }
 }

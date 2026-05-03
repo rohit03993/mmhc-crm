@@ -285,7 +285,7 @@
             </div>
         </div>
 
-        <!-- 3. Staff Referrals (points only: 10 pts per referral; badge at 250 pts) -->
+        <!-- 3. Staff Referrals (₹100 base per referral + incentive logic) -->
         <div class="col-12 col-md-6 col-lg-3">
             <div class="earnings-source-card earnings-staff-ref">
                 <div class="earnings-source-header">
@@ -296,7 +296,7 @@
                 </div>
                 <div class="earnings-source-body">
                     <div class="earnings-source-main">
-                        <div class="earnings-source-amount">{{ number_format($staffReferralEarnings['total_points']) }} pts</div>
+                        <div class="earnings-source-amount">₹{{ number_format($staffReferralEarnings['total_amount'], 2) }}</div>
                         <div class="earnings-source-label">{{ $staffReferralEarnings['total_referrals'] }} Referrals</div>
                     </div>
                     <div class="earnings-source-details">
@@ -306,15 +306,15 @@
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Points:</span>
-                            <span class="detail-value">{{ number_format($staffReferralEarnings['total_points']) }}</span>
+                            <span class="detail-value">₹{{ number_format($staffReferralEarnings['total_base_amount'], 2) }} base</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">This Month:</span>
-                            <span class="detail-value text-success">{{ $staffReferralEarnings['this_month_points'] }} pts</span>
+                            <span class="detail-value text-success">₹{{ number_format($staffReferralEarnings['this_month_amount'], 2) }}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">Rate:</span>
-                            <span class="detail-value">1 ref = 10 pts</span>
+                            <span class="detail-label">Base:</span>
+                            <span class="detail-value">₹100 / referral + slab logic</span>
                         </div>
                     </div>
                     <a href="{{ route('staff.staff-referrals.index') }}" class="btn btn-sm btn-outline-info w-100 mt-2">
@@ -353,7 +353,7 @@
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Commission:</span>
-                            <span class="detail-value">{{ config('subscription.referral_commission_rate', 5) }}%</span>
+                            <span class="detail-value">As per incentive rules</span>
                         </div>
                     </div>
                     <a href="{{ route('staff.subscription-referrals.index') }}" class="btn btn-sm btn-outline-success w-100 mt-2">
@@ -364,28 +364,19 @@
         </div>
     </div>
 
-    <!-- Referral Champion Badge (earned at 250 staff referral points) -->
-    @if(!empty($staffReferralEarnings['badge_earned']))
     <div class="row mb-4">
         <div class="col-12">
             <div class="referral-champion-badge-card">
                 <div class="d-flex flex-column flex-md-row align-items-center justify-content-center text-center text-md-start gap-3 p-4">
-                    <div class="referral-champion-badge-image-wrap">
-                        @if(file_exists(public_path('images/referral-champion-badge.png')))
-                            <img src="{{ asset('images/referral-champion-badge.png') }}" alt="Referral Champion Badge" class="referral-champion-badge-img">
-                        @else
-                            <div class="referral-champion-badge-placeholder"><i class="fas fa-award fa-4x text-white"></i></div>
-                        @endif
-                    </div>
+                    <div class="referral-champion-badge-placeholder"><i class="fas fa-award fa-3x text-white"></i></div>
                     <div>
-                        <h5 class="mb-2 fw-bold text-dark">Referral Champion Badge Earned!</h5>
-                        <p class="mb-0 text-muted">You've reached 250 staff referral points (25+ referrals). Thank you for bringing more Nursing Warriors to the team.</p>
+                        <h5 class="mb-2 fw-bold text-dark">Staff Referral Incentive Rule</h5>
+                        <p class="mb-0 text-muted">Each completed staff referral starts with ₹100 base and final payout follows incentive logic. Experience tier is not used for staff referrals.</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    @endif
 
     <!-- Quick Links to Detailed Sections -->
     <div class="row g-3 mb-4">
@@ -424,6 +415,22 @@
                     <h6>Subscription Referrals</h6>
                     <p class="mb-0">Refer patients to subscribe</p>
                     <small class="text-muted">{{ $subscriptionReferralEarnings['total_referrals'] }} subscriptions</small>
+                </div>
+                <i class="fas fa-chevron-right quick-link-arrow"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <a href="{{ route('staff.incentives.index') }}" class="quick-link-card">
+                <div class="quick-link-icon bg-primary">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="quick-link-content">
+                    <h6>My Incentive Details</h6>
+                    <p class="mb-0">See visit-wise service incentives, subscription referrals, and staff referral incentives in one place</p>
+                    <small class="text-muted">Detailed ledger with visit numbers</small>
                 </div>
                 <i class="fas fa-chevron-right quick-link-arrow"></i>
             </a>
@@ -633,9 +640,9 @@
                                 <i class="fas fa-play me-2"></i>Start Service
                             </button>
                             @elseif($service->status === 'in_progress')
-                            <button class="btn btn-action-warning" onclick="completeService({{ $service->id }})">
-                                <i class="fas fa-check me-2"></i>Mark Complete
-                            </button>
+                            <a href="{{ route('staff.service-details', $service) }}" class="btn btn-action-warning">
+                                <i class="fas fa-shield-check me-2"></i>Verify OTP & Complete
+                            </a>
                             @endif
                             @endif
                         </div>
@@ -2156,7 +2163,7 @@ function startService(serviceId) {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Service start feature will be implemented soon.');
+            alert('Failed to start service. Please retry. If issue persists, contact support.');
         });
     }
 }
@@ -2181,7 +2188,7 @@ function completeService(serviceId) {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Service completion feature will be implemented soon.');
+            alert('Failed to complete service. Please retry. If issue persists, contact support.');
         });
     }
 }

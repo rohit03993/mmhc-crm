@@ -418,7 +418,7 @@
                 <!-- Pagination -->
                 @if($recent_requests->hasPages())
                 <div class="app-pagination">
-                    {{ $recent_requests->links('pagination::bootstrap-4') }}
+                    {{ $recent_requests->links() }}
                 </div>
                 @endif
                     @else

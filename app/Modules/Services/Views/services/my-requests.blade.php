@@ -146,7 +146,7 @@
             
             <!-- Mobile-Friendly Pagination -->
             <div class="app-pagination">
-                {{ $serviceRequests->links('pagination::bootstrap-4') }}
+                {{ $serviceRequests->links() }}
             </div>
         @else
             <!-- Empty State -->

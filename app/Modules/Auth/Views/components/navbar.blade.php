@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg navbar-light top-navbar d-none d-md-flex">
     <div class="container-fluid">
-        <a class="navbar-brand" href="{{ auth()->check() && !auth()->user()->hasAcademicRole() ? route('community.index') : route('dashboard') }}">
+        <a class="navbar-brand" href="{{ route('dashboard') }}">
             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--nav">
             <span class="visually-hidden">{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}</span>
         </a>
@@ -13,17 +13,19 @@
             <ul class="navbar-nav me-auto">
                 @auth
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ auth()->user()->hasAcademicRole() ? route('dashboard') : route('community.index') }}">
+                        <a class="nav-link" href="{{ route('dashboard') }}">
                             <i class="fas fa-home me-1"></i>
-                            {{ auth()->user()->hasAcademicRole() ? 'Dashboard' : 'Community' }}
+                            Dashboard
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('community.index') }}">
-                            <i class="fas fa-users me-1"></i>
-                            Community
-                        </a>
-                    </li>
+                    @if(!auth()->user()->hasAcademicRole())
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('community.index') }}">
+                                <i class="fas fa-users me-1"></i>
+                                Community
+                            </a>
+                        </li>
+                    @endif
                     
                     @if(auth()->user()->isAdmin())
                         <li class="nav-item">
@@ -44,6 +46,7 @@
             
             <ul class="navbar-nav">
                 @auth
+                    @if(!auth()->user()->hasAcademicRole())
                     <li class="nav-item dropdown me-2">
                         <a class="nav-link position-relative" href="#" id="communityNotificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-bell"></i>
@@ -84,6 +87,7 @@
                             @endforelse
                         </ul>
                     </li>
+                    @endif
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user me-1"></i>
@@ -91,8 +95,8 @@
                             <span class="badge bg-light text-dark ms-1">{{ auth()->user()->unique_id }}</span>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ auth()->user()->hasAcademicRole() ? route('dashboard') : route('community.index') }}">
-                                <i class="fas fa-tachometer-alt me-2"></i>{{ auth()->user()->hasAcademicRole() ? 'Dashboard' : 'Community' }}
+                            <li><a class="dropdown-item" href="{{ route('dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </a></li>
                             <li><a class="dropdown-item" href="{{ route('profile.index') }}">
                                 <i class="fas fa-user-cog me-2"></i>Profile Settings

@@ -5,7 +5,6 @@ namespace App\Modules\Plans\Services;
 use App\Models\Core\User;
 use App\Modules\Plans\Models\Plan;
 use App\Modules\Plans\Models\Subscription;
-use Carbon\Carbon;
 
 class SubscriptionService
 {
@@ -18,18 +17,18 @@ class SubscriptionService
         $paymentOptions = $plan->payment_options ?? [];
         $selectedOption = $paymentOptions[$paymentFrequency] ?? null;
 
-        if (!$selectedOption) {
+        if (! $selectedOption) {
             throw new \Exception("Invalid payment frequency: {$paymentFrequency}");
         }
 
         $startDate = now();
-        
+
         // Calculate end date based on payment frequency
         // Total care = payable_years + care_benefits_years = 10 years
         $payableYears = $selectedOption['payable_years'] ?? 0;
         $careBenefitsYears = $selectedOption['care_benefits_years'] ?? 0;
         $totalYears = $payableYears + $careBenefitsYears;
-        
+
         // If total years is 0, default to monthly (30 days)
         if ($totalYears == 0) {
             $endDate = $startDate->copy()->addDays(30);
@@ -39,28 +38,24 @@ class SubscriptionService
 
         // Base amount (before GST)
         $baseAmount = $selectedOption['price'] ?? $plan->monthly_price ?? $plan->price;
-        
+
         // Calculate GST (18% on base amount)
         $gstRate = (float) config('subscription.gst_rate', 18.00);
         $gstAmount = ($baseAmount * $gstRate) / 100;
-        
+
         // Total amount (base + GST)
         $totalAmount = $baseAmount + $gstAmount;
-        
-        // Get referral commission rate (default 5%, editable by admin)
-        $commissionRate = (float) config('subscription.referral_commission_rate', 5.00);
+
         $referrerId = $data['referrer_id'] ?? null;
-        $commissionAmount = 0.00;
-        
-        // Calculate commission if referrer exists
         if ($referrerId) {
-            $referrer = \App\Models\Core\User::find($referrerId);
-            if ($referrer && ($referrer->isNurse() || $referrer->isCaregiver())) {
-                $commissionAmount = ($baseAmount * $commissionRate) / 100;
-            } else {
-                $referrerId = null; // Invalid referrer
+            $refUser = \App\Models\Core\User::find($referrerId);
+            if (! $refUser || (! $refUser->isNurse() && ! $refUser->isCaregiver())) {
+                $referrerId = null;
             }
         }
+
+        // Referral commission is finalized in rupees on payment verify (incentive engine + growth+DtA)
+        $commissionAmount = 0.00;
 
         return Subscription::create([
             'user_id' => $user->id,
@@ -79,7 +74,9 @@ class SubscriptionService
             'paid_amount' => 0.00,
             'payment_status' => 'pending',
             'referral_commission_amount' => $commissionAmount,
-            'referral_commission_rate' => $commissionRate,
+            'referral_base_amount' => null,
+            'referral_growth_percent' => null,
+            'referral_dta_percent' => null,
             'auto_renew' => $data['auto_renew'] ?? false,
             'notes' => $data['notes'] ?? null,
         ]);
@@ -152,7 +149,7 @@ class SubscriptionService
         $paymentOptions = $newPlan->payment_options ?? [];
         $selectedOption = $paymentOptions[$paymentFrequency] ?? null;
 
-        if (!$selectedOption) {
+        if (! $selectedOption) {
             throw new \Exception("Invalid payment frequency: {$paymentFrequency}");
         }
 
@@ -160,52 +157,46 @@ class SubscriptionService
         $remainingDays = max(0, now()->diffInDays($currentSubscription->end_date, false));
         $totalDays = $currentSubscription->start_date->diffInDays($currentSubscription->end_date);
         $usedDays = $totalDays - $remainingDays;
-        
+
         // Calculate prorated refund for current subscription (if downgrade)
         $currentDailyRate = $currentSubscription->total_amount / max(1, $totalDays);
         $refundAmount = $remainingDays * $currentDailyRate;
-        
+
         // New subscription amount
         $newBaseAmount = $selectedOption['price'] ?? $newPlan->monthly_price ?? $newPlan->price;
         $gstRate = (float) config('subscription.gst_rate', 18.00);
         $newGstAmount = ($newBaseAmount * $gstRate) / 100;
         $newTotalAmount = $newBaseAmount + $newGstAmount;
-        
+
         // Calculate amount to pay (new amount - refund)
         $amountToPay = max(0, $newTotalAmount - $refundAmount);
-        
+
         // Calculate new end date
         $payableYears = $selectedOption['payable_years'] ?? 0;
         $careBenefitsYears = $selectedOption['care_benefits_years'] ?? 0;
         $totalYears = $payableYears + $careBenefitsYears;
-        
+
         $startDate = now();
-        $endDate = $totalYears > 0 
-            ? $startDate->copy()->addYears($totalYears) 
+        $endDate = $totalYears > 0
+            ? $startDate->copy()->addYears($totalYears)
             : $startDate->copy()->addDays(30);
-        
+
         // Cancel current subscription
         $currentSubscription->update([
             'status' => 'cancelled',
-            'notes' => ($currentSubscription->notes ? $currentSubscription->notes . "\n\n" : '') . 
-                      "Cancelled due to upgrade/downgrade on " . now()->format('Y-m-d H:i:s') . 
-                      ". Prorated refund: ₹" . number_format($refundAmount, 2),
+            'notes' => ($currentSubscription->notes ? $currentSubscription->notes."\n\n" : '').
+                      'Cancelled due to upgrade/downgrade on '.now()->format('Y-m-d H:i:s').
+                      '. Prorated refund: ₹'.number_format($refundAmount, 2),
         ]);
-        
-        // Get referral commission
-        $commissionRate = (float) config('subscription.referral_commission_rate', 5.00);
+
         $referrerId = $currentSubscription->referrer_id ?? $data['referrer_id'] ?? null;
-        $commissionAmount = 0.00;
-        
         if ($referrerId) {
-            $referrer = \App\Models\Core\User::find($referrerId);
-            if ($referrer && ($referrer->isNurse() || $referrer->isCaregiver())) {
-                $commissionAmount = ($newBaseAmount * $commissionRate) / 100;
-            } else {
+            $refUser = \App\Models\Core\User::find($referrerId);
+            if (! $refUser || (! $refUser->isNurse() && ! $refUser->isCaregiver())) {
                 $referrerId = null;
             }
         }
-        
+
         // Create new subscription
         return Subscription::create([
             'user_id' => $currentSubscription->user_id,
@@ -223,13 +214,15 @@ class SubscriptionService
             'total_amount' => $newTotalAmount,
             'paid_amount' => 0.00,
             'payment_status' => 'pending',
-            'referral_commission_amount' => $commissionAmount,
-            'referral_commission_rate' => $commissionRate,
+            'referral_commission_amount' => 0.00,
+            'referral_base_amount' => null,
+            'referral_growth_percent' => null,
+            'referral_dta_percent' => null,
             'auto_renew' => $data['auto_renew'] ?? false,
-            'notes' => ($data['notes'] ?? '') . 
-                      "\nUpgraded from: {$currentSubscription->plan->name} (Subscription #{$currentSubscription->id})" .
-                      "\nProrated refund applied: ₹" . number_format($refundAmount, 2) .
-                      "\nAmount to pay: ₹" . number_format($amountToPay, 2),
+            'notes' => ($data['notes'] ?? '').
+                      "\nUpgraded from: {$currentSubscription->plan->name} (Subscription #{$currentSubscription->id})".
+                      "\nProrated refund applied: ₹".number_format($refundAmount, 2).
+                      "\nAmount to pay: ₹".number_format($amountToPay, 2),
             'previous_subscription_id' => $currentSubscription->id,
         ]);
     }
@@ -240,9 +233,9 @@ class SubscriptionService
     public function getUserSubscriptions(User $user)
     {
         return $user->subscriptions()
-                   ->with(['plan', 'payments'])
-                   ->orderBy('created_at', 'desc')
-                   ->get();
+            ->with(['plan', 'payments'])
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     /**
@@ -251,26 +244,26 @@ class SubscriptionService
     public function getAllSubscriptions(string $status = 'all')
     {
         $query = Subscription::with(['user', 'plan', 'approvedBy', 'paymentVerifiedBy']);
-        
+
         if ($status !== 'all') {
             if ($status === 'pending') {
                 // Show subscriptions with payment proof but not verified
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->where('status', 'pending')
-                      ->orWhere(function($q2) {
-                          $q2->where('payment_status', '!=', 'paid')
-                             ->where(function($q3) {
-                                 $q3->whereNotNull('payment_screenshot')
-                                    ->orWhereNotNull('transaction_id');
-                             });
-                      });
+                        ->orWhere(function ($q2) {
+                            $q2->where('payment_status', '!=', 'paid')
+                                ->where(function ($q3) {
+                                    $q3->whereNotNull('payment_screenshot')
+                                        ->orWhereNotNull('transaction_id');
+                                });
+                        });
                 });
             } else {
                 $query->where('status', $status);
             }
         }
-        
-        return $query->orderBy('created_at', 'desc')->paginate(20);
+
+        return $query->orderBy('created_at', 'desc')->paginate(10);
     }
 
     /**
@@ -293,13 +286,13 @@ class SubscriptionService
     public function checkExpiredSubscriptions(): int
     {
         $expiredCount = Subscription::where('status', 'active')
-                                  ->where('end_date', '<', now())
-                                  ->count();
+            ->where('end_date', '<', now())
+            ->count();
 
         if ($expiredCount > 0) {
             Subscription::where('status', 'active')
-                       ->where('end_date', '<', now())
-                       ->update(['status' => 'expired']);
+                ->where('end_date', '<', now())
+                ->update(['status' => 'expired']);
         }
 
         return $expiredCount;
@@ -311,9 +304,9 @@ class SubscriptionService
     public function getExpiringSubscriptions(int $days = 7)
     {
         return Subscription::active()
-                          ->whereBetween('end_date', [now(), now()->addDays($days)])
-                          ->with(['user', 'plan'])
-                          ->get();
+            ->whereBetween('end_date', [now(), now()->addDays($days)])
+            ->with(['user', 'plan'])
+            ->get();
     }
 
     /**
@@ -322,9 +315,9 @@ class SubscriptionService
     public function hasActiveSubscription(User $user): bool
     {
         return Subscription::where('user_id', $user->id)
-                          ->where('status', 'active')
-                          ->where('end_date', '>', now())
-                          ->exists();
+            ->where('status', 'active')
+            ->where('end_date', '>', now())
+            ->exists();
     }
 
     /**
@@ -333,11 +326,11 @@ class SubscriptionService
     public function getActiveSubscription(User $user): ?Subscription
     {
         return Subscription::where('user_id', $user->id)
-                          ->where('status', 'active')
-                          ->where('end_date', '>', now())
-                          ->with('plan')
-                          ->latest()
-                          ->first();
+            ->where('status', 'active')
+            ->where('end_date', '>', now())
+            ->with('plan')
+            ->latest()
+            ->first();
     }
 
     /**
@@ -355,6 +348,19 @@ class SubscriptionService
             'approved_at' => now(),
         ]);
 
+        $subscription->refresh();
+
+        if ($subscription->referrer_id) {
+            try {
+                app(\App\Modules\Incentives\Services\IncentiveCalculatorService::class)
+                    ->createOrUpdateSubscriptionSaleLedger($subscription);
+            } catch (\Throwable $e) {
+                \Log::error('Subscription incentive ledger: '.$e->getMessage(), [
+                    'subscription_id' => $subscription->id,
+                ]);
+            }
+        }
+
         return $subscription;
     }
 
@@ -367,7 +373,7 @@ class SubscriptionService
             'payment_status' => 'failed',
             'payment_verified_by' => $rejectedBy->id,
             'payment_verified_at' => now(),
-            'notes' => ($subscription->notes ? $subscription->notes . "\n\n" : '') . "Payment Rejected: {$reason}",
+            'notes' => ($subscription->notes ? $subscription->notes."\n\n" : '')."Payment Rejected: {$reason}",
         ]);
 
         return $subscription;

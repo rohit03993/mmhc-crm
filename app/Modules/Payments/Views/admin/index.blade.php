@@ -4,92 +4,81 @@
 
 @section('head')
 <style>
-    .payment-type-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
-    }
-    .payment-type-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-    }
-    .payment-type-badge {
-        padding: 0.4rem 0.8rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
     .staff-card {
         background: white;
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 1.5rem;
         margin-bottom: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 16px rgba(15, 23, 42, 0.06);
+        border: 1px solid #edf2f7;
     }
     .payment-breakdown {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
         gap: 1rem;
         margin-top: 1rem;
     }
     .breakdown-item {
-        background: #f8f9fa;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         padding: 1rem;
-        border-radius: 8px;
+        border-radius: 10px;
         text-align: center;
+        border: 1px solid #e5e7eb;
     }
     .breakdown-amount {
-        font-size: 1.5rem;
+        font-size: 1.35rem;
         font-weight: 700;
-        color: #2563eb;
+        color: #1e40af;
     }
     .breakdown-label {
         font-size: 0.85rem;
-        color: #6c757d;
+        color: #64748b;
         margin-top: 0.5rem;
     }
     .filter-tabs {
         display: flex;
         gap: 0.5rem;
         flex-wrap: wrap;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
     .filter-tab {
-        padding: 0.5rem 1rem;
+        padding: 0.55rem 1rem;
         border-radius: 20px;
         text-decoration: none;
         font-weight: 600;
         transition: all 0.3s;
+        border: 1px solid transparent;
+        font-size: 0.9rem;
     }
     .filter-tab.active {
         background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
         color: white;
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
     }
     .filter-tab:not(.active) {
-        background: #f8f9fa;
-        color: #6c757d;
+        background: #fff;
+        color: #475569;
+        border-color: #dbe2ea;
     }
     .total-pending-banner {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: linear-gradient(135deg, #1d4ed8 0%, #7c3aed 55%, #ec4899 100%);
         color: white;
-        padding: 1.5rem;
-        border-radius: 12px;
+        padding: 1.35rem 1.5rem;
+        border-radius: 14px;
         margin-bottom: 2rem;
         text-align: center;
+        box-shadow: 0 10px 24px rgba(76, 29, 149, 0.25);
     }
     .total-pending-amount {
-        font-size: 2.5rem;
+        font-size: 2.15rem;
         font-weight: 700;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.3rem;
     }
     .totals-row {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
         gap: 1rem;
-        margin-top: 0.75rem;
+        margin-top: 0.9rem;
     }
     .totals-item {
         background: rgba(255,255,255,0.16);
@@ -110,14 +99,52 @@
         border-radius: 12px;
         padding: 1.25rem;
         margin-bottom: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+        border: 1px solid #edf2f7;
     }
     .quick-pay-card {
         background: white;
         border-radius: 12px;
         padding: 1rem;
         margin-bottom: 0.75rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #edf2f7;
+    }
+    .quick-pill {
+        border-radius: 999px;
+        padding: 0.4rem 0.7rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .section-subtitle {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+    .guide-strip {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        margin-bottom: 1rem;
+        color: #334155;
+        font-size: 0.86rem;
+        box-shadow: 0 1px 8px rgba(15, 23, 42, 0.04);
+    }
+    .guide-strip i {
+        color: #2563eb;
+    }
+    .meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        padding: 0.2rem 0.55rem;
+        margin-top: 0.25rem;
     }
     /* Scoped pagination fixes: prevent oversized arrows/icons from global CSS leakage */
     .pagination-wrap nav[role="navigation"] {
@@ -162,15 +189,43 @@
     .pagination-wrap nav[role="navigation"] > div:last-child > a:hover {
         background: #f1f5f9;
     }
+    details.advanced-section {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+    }
+    details.advanced-section summary {
+        cursor: pointer;
+        font-weight: 700;
+        color: #1e293b;
+        list-style: none;
+    }
+    details.advanced-section summary::-webkit-details-marker {
+        display: none;
+    }
+    details.advanced-section summary:before {
+        content: "\f105";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        margin-right: 0.5rem;
+        color: #64748b;
+    }
+    details.advanced-section[open] summary:before {
+        content: "\f107";
+    }
 </style>
 @endsection
 
 @section('content')
 <div class="container-fluid px-3 px-md-4 py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">
-            <i class="fas fa-money-bill-wave me-2"></i>Staff Payment Management
-        </h2>
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-money-bill-wave me-2"></i>Staff Payment Management
+            </h2>
+            <div class="section-subtitle">Track pending payouts, process settlements, and review recent disbursements.</div>
+        </div>
         <a href="{{ route('admin.payments.history') }}" class="btn btn-outline-primary">
             <i class="fas fa-history me-1"></i>Payment History
         </a>
@@ -210,6 +265,12 @@
            class="filter-tab {{ $filterType === 'subscription_referral' ? 'active' : '' }}">
             Subscription Referrals
         </a>
+    </div>
+
+    <div class="guide-strip">
+        <i class="fas fa-circle-info me-2"></i>
+        <strong>Recommended flow:</strong> choose a filter tab, open payout for the staff card you want, process payment, then verify the entry in
+        <strong>Recent Processed Payments</strong>. Use quick-access section only when you need cross-staff actions.
     </div>
 
     <div id="pending-payments-section"></div>
@@ -262,16 +323,20 @@
 
                 <!-- Action Buttons -->
                 <div class="mt-3 d-flex gap-2 flex-wrap">
+                    <a href="{{ route('admin.payments.form', ['staff' => $item['staff']->id]) }}"
+                       class="btn btn-sm btn-outline-dark quick-pill">
+                        <i class="fas fa-arrow-up-right-from-square me-1"></i>Open Payout Form
+                    </a>
                     @if($item['payments']['service_request']['amount'] > 0)
                         <a href="{{ route('admin.payments.form', ['staff' => $item['staff']->id, 'type' => 'service_request']) }}" 
-                           class="btn btn-sm btn-primary">
-                            <i class="fas fa-money-bill me-1"></i>Pay Service Requests
+                           class="btn btn-sm btn-primary quick-pill">
+                            <i class="fas fa-money-bill me-1"></i>Services
                         </a>
                     @endif
                     @if($item['payments']['patient_reward']['amount'] > 0)
                         <a href="{{ route('admin.payments.form', ['staff' => $item['staff']->id, 'type' => 'patient_reward']) }}" 
-                           class="btn btn-sm btn-warning position-relative">
-                            <i class="fas fa-gift me-1"></i>Pay Patient Rewards
+                           class="btn btn-sm btn-warning position-relative quick-pill">
+                            <i class="fas fa-gift me-1"></i>Rewards
                             @if(isset($item['payments']['patient_reward']['meets_threshold']) && !$item['payments']['patient_reward']['meets_threshold'])
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" title="Below ₹500 threshold - Admin can still process payment">
                                     <i class="fas fa-info-circle"></i>
@@ -281,8 +346,8 @@
                     @endif
                     @if($item['payments']['subscription_referral']['amount'] > 0)
                         <a href="{{ route('admin.payments.form', ['staff' => $item['staff']->id, 'type' => 'subscription_referral']) }}" 
-                           class="btn btn-sm btn-success">
-                            <i class="fas fa-star me-1"></i>Pay Subscription Referrals
+                           class="btn btn-sm btn-success quick-pill">
+                            <i class="fas fa-star me-1"></i>Subscription
                         </a>
                     @endif
                 </div>
@@ -303,46 +368,48 @@
 
     <!-- All Staff Payment Actions -->
     <div class="mt-4" id="all-staff-actions-section">
-        <h5 class="mb-3">
-            <i class="fas fa-users-cog me-2"></i>All Staff Payment Actions
-        </h5>
-        @if(isset($staffMembers) && $staffMembers->count() > 0)
-            @foreach($staffMembers as $staff)
-                <div class="quick-pay-card">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
-                        <div>
-                            <strong>{{ $staff->name }}</strong>
-                            <small class="text-muted d-block">{{ ucfirst($staff->role) }} • {{ $staff->phone }}</small>
-                            @php
-                                $overview = $staffPaymentOverview[$staff->id] ?? null;
-                            @endphp
-                            @if($overview)
-                                <small class="text-muted d-block">
-                                    Payable Now: <strong>₹{{ number_format($overview['payable_now_total'] ?? 0, 2) }}</strong>
-                                    @if(($overview['service_queue_total'] ?? 0) > ($overview['service_payable_now'] ?? 0))
-                                        • Service Queue: <strong>₹{{ number_format($overview['service_queue_total'] ?? 0, 2) }}</strong>
+        <details class="advanced-section">
+            <summary><i class="fas fa-users-cog me-2"></i>Advanced: Quick Access Across All Staff</summary>
+            <div class="pt-3">
+                @if(isset($staffMembers) && $staffMembers->count() > 0)
+                    @foreach($staffMembers as $staff)
+                        <div class="quick-pay-card">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                                <div>
+                                    <strong>{{ $staff->name }}</strong>
+                                    <small class="text-muted d-block">{{ ucfirst($staff->role) }} • {{ $staff->phone }}</small>
+                                    @php
+                                        $overview = $staffPaymentOverview[$staff->id] ?? null;
+                                    @endphp
+                                    @if($overview)
+                                        <small class="text-muted d-block">
+                                            Payable Now: <strong>₹{{ number_format($overview['payable_now_total'] ?? 0, 2) }}</strong>
+                                            @if(($overview['service_queue_total'] ?? 0) > ($overview['service_payable_now'] ?? 0))
+                                                • Service Queue: <strong>₹{{ number_format($overview['service_queue_total'] ?? 0, 2) }}</strong>
+                                            @endif
+                                        </small>
                                     @endif
-                                </small>
-                            @endif
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a href="{{ route('admin.payments.form', ['staff' => $staff->id, 'type' => 'service_request']) }}" class="btn btn-sm btn-primary quick-pill">
+                                        Service ₹{{ number_format($overview['service_queue_total'] ?? 0, 0) }}
+                                    </a>
+                                    <a href="{{ route('admin.payments.form', ['staff' => $staff->id, 'type' => 'patient_reward']) }}" class="btn btn-sm btn-warning quick-pill">
+                                        Reward ₹{{ number_format($overview['patient_reward'] ?? 0, 0) }}
+                                    </a>
+                                    <a href="{{ route('admin.payments.form', ['staff' => $staff->id, 'type' => 'subscription_referral']) }}" class="btn btn-sm btn-success quick-pill">
+                                        Subscription ₹{{ number_format($overview['subscription_referral'] ?? 0, 0) }}
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <a href="{{ route('admin.payments.form', ['staff' => $staff->id, 'type' => 'service_request']) }}" class="btn btn-sm btn-primary">
-                                Service ₹{{ number_format($overview['service_queue_total'] ?? 0, 0) }}
-                            </a>
-                            <a href="{{ route('admin.payments.form', ['staff' => $staff->id, 'type' => 'patient_reward']) }}" class="btn btn-sm btn-warning">
-                                Reward ₹{{ number_format($overview['patient_reward'] ?? 0, 0) }}
-                            </a>
-                            <a href="{{ route('admin.payments.form', ['staff' => $staff->id, 'type' => 'subscription_referral']) }}" class="btn btn-sm btn-success">
-                                Subscription ₹{{ number_format($overview['subscription_referral'] ?? 0, 0) }}
-                            </a>
-                        </div>
+                    @endforeach
+                    <div class="mt-3 pagination-wrap">
+                        {{ $staffMembers->appends(['page' => request('page'), 'type' => request('type')])->fragment('all-staff-actions-section')->links() }}
                     </div>
-                </div>
-            @endforeach
-            <div class="mt-3 pagination-wrap">
-                {{ $staffMembers->appends(['page' => request('page'), 'type' => request('type')])->fragment('all-staff-actions-section')->links() }}
+                @endif
             </div>
-        @endif
+        </details>
     </div>
 
     <!-- Recent Processed Payments -->
@@ -376,6 +443,16 @@
                             <small class="text-muted d-block">
                                 {{ optional($payment->paid_at)->format('M d, Y h:i A') }}
                             </small>
+                            @if(!empty($payment->payment_mode))
+                                <span class="meta-chip">
+                                    <i class="fas fa-wallet"></i>{{ strtoupper($payment->payment_mode) }}
+                                </span>
+                            @endif
+                            @if(!empty($payment->gateway_status))
+                                <span class="meta-chip">
+                                    <i class="fas fa-signal"></i>{{ strtoupper($payment->gateway_status) }}
+                                </span>
+                            @endif
                             @if($payment->transaction_id)
                                 <small class="text-muted d-block">
                                     Txn: {{ $payment->transaction_id }}

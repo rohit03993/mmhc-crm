@@ -17,17 +17,21 @@ class DatabaseSeeder extends Seeder
 
         // Demo images for Achievements & Media carousel (landing page)
         $this->call(AchievementMediaSeeder::class);
-        
+
         // Seed Subscription Plans (for patient subscriptions)
         $this->call(SubscriptionPlansSeeder::class);
-        
+
         // Seed Service Types (required for service requests)
         $this->call(ServiceTypesSeeder::class);
-        
-        // Clean existing service requests data (optional - removes invalid references)
-        // $this->call(ResetServiceRequestsSeeder::class);
-        
+
         // Then seed demo data (nurses, caregivers, patients, service requests)
         $this->call(DemoDataSeeder::class);
+
+        // Academics demo users/data (institution admin, faculty, students)
+        $this->call(AcademicDemoSeeder::class);
+
+        $this->call(IncentiveRuleSetSeeder::class);
+        $this->call(IncentiveNetworkDemoSeeder::class);
+        $this->call(PaymentGatewayDemoSeeder::class);
     }
 }

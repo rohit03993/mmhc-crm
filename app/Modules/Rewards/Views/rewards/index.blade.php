@@ -30,6 +30,9 @@
         <!-- Desktop Header -->
         <div class="d-none d-md-block mb-4">
             <h2 class="mb-0">My Reward Entries</h2>
+            @if(!empty($pendingVerificationCount) && $pendingVerificationCount > 0)
+                <p class="text-warning mb-0 mt-1"><i class="fas fa-exclamation-triangle me-1"></i>{{ $pendingVerificationCount }} entries are pending OTP verification and not yet credited.</p>
+            @endif
         </div>
 
         <!-- Total Points Card - Mobile Optimized -->
@@ -87,8 +90,13 @@
                                     @endif
                                 </div>
                                 <div class="reward-entry-badge">
-                                    <span class="badge bg-success">+1 pt</span>
-                                    <small class="d-block text-success mt-1">₹{{ number_format($reward->reward_amount, 2) }}</small>
+                                    @if(($reward->verification_status ?? 'verified') === 'verified')
+                                        <span class="badge bg-success">+1 pt</span>
+                                        <small class="d-block text-success mt-1">₹{{ number_format($reward->reward_amount, 2) }}</small>
+                                    @else
+                                        <span class="badge bg-warning text-dark">Pending OTP</span>
+                                        <small class="d-block text-warning mt-1">Not credited yet</small>
+                                    @endif
                                 </div>
                             </div>
 
@@ -126,6 +134,13 @@
                                     <i class="fas fa-clock me-1"></i>
                                     {{ $reward->created_at->format('d M Y, h:i A') }}
                                 </div>
+                                @if(($reward->verification_status ?? 'verified') !== 'verified')
+                                <div class="mt-2 d-flex gap-2 flex-wrap">
+                                    <button class="btn btn-sm btn-outline-primary" type="button" onclick="sendOtp({{ $reward->id }}, 'mobile')">Send Mobile OTP</button>
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="sendOtp({{ $reward->id }}, 'email')">Send Email OTP</button>
+                                    <button class="btn btn-sm btn-success" type="button" onclick="verifyOtp({{ $reward->id }})">Verify OTP</button>
+                                </div>
+                                @endif
                             </div>
                         </div>
                     @endforeach
@@ -550,4 +565,36 @@
     }
 }
 </style>
+<script>
+function sendOtp(rewardId, channel) {
+    fetch(`/rewards/${rewardId}/send-otp`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ otp_channel: channel })
+    }).then(r => r.json()).then(data => {
+        alert(data.message || (data.success ? 'OTP sent.' : 'Failed to send OTP.'));
+        if (data.success) location.reload();
+    }).catch(() => alert('Failed to send OTP.'));
+}
+function verifyOtp(rewardId) {
+    const otp = prompt('Enter 6-digit OTP:');
+    if (!otp) return;
+    fetch(`/rewards/${rewardId}/verify-otp`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ otp_code: otp })
+    }).then(r => r.json()).then(data => {
+        alert(data.message || (data.success ? 'OTP verified.' : 'OTP verification failed.'));
+        if (data.success) location.reload();
+    }).catch(() => alert('Failed to verify OTP.'));
+}
+</script>
 @endsection

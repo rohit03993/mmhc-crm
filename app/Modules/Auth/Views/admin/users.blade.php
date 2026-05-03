@@ -39,71 +39,107 @@
 
     <!-- Users List -->
     <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-users me-2"></i>
-                    All Users
-                </h5>
-                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteNonAdminModal">
-                    <i class="fas fa-trash-alt me-2"></i>
-                    Delete All Non-Admin Users
-                </button>
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-white border-bottom py-3">
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <div class="flex-shrink-0">
+                        <h5 class="card-title mb-0 fw-bold">
+                            <i class="fas fa-users me-2 text-primary"></i>
+                            All users
+                        </h5>
+                        @if(($searchQuery ?? '') !== '')
+                            <small class="text-muted">{{ $users->total() }} {{ $users->total() === 1 ? 'match' : 'matches' }} for &ldquo;{{ \Illuminate\Support\Str::limit($searchQuery, 48) }}&rdquo;</small>
+                        @endif
+                    </div>
+                    <form id="umUserSearchForm" method="GET" action="{{ route('admin.users') }}" class="um-search flex-grow-1" style="min-width: 220px; max-width: 28rem;" role="search" aria-label="Search users">
+                        <div class="input-group input-group-sm shadow-sm rounded-pill overflow-hidden border bg-white">
+                            <span class="input-group-text border-0 bg-white text-muted ps-3"><i class="fas fa-search" aria-hidden="true"></i></span>
+                            <input type="search"
+                                   name="q"
+                                   id="umUserSearchInput"
+                                   class="form-control border-0 shadow-none"
+                                   placeholder="Name, email, phone, or unique ID…"
+                                   value="{{ $searchQuery ?? '' }}"
+                                   autocomplete="off"
+                                   inputmode="search"
+                                   aria-label="Search by name, email, or phone">
+                            @if(($searchQuery ?? '') !== '')
+                                <a href="{{ route('admin.users') }}" class="btn btn-link btn-sm text-decoration-none text-muted px-2 border-0">Clear</a>
+                            @endif
+                            <button type="submit" class="btn btn-primary px-3 rounded-0">Search</button>
+                        </div>
+                        <small class="text-muted d-block mt-1 ms-1">Tip: paste a 10-digit number or +91 number — spaces and dashes are ignored.</small>
+                    </form>
+                    <div class="ms-md-auto flex-shrink-0">
+                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#deleteNonAdminModal">
+                            <i class="fas fa-trash-alt me-2"></i>
+                            Delete all non-admin
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
+                    <table class="table table-hover align-middle mb-0 um-table">
+                        <thead class="table-light">
                             <tr>
-                                <th>Unique ID</th>
+                                <th class="text-nowrap ps-4">Unique ID</th>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Phone</th>
                                 <th>Role</th>
                                 <th>Status</th>
                                 <th>Created</th>
-                                <th>Actions</th>
+                                <th class="text-end pe-4">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($users as $user)
-                                <tr>
-                                    <td>
-                                        <span class="badge bg-secondary">{{ $user->unique_id }}</span>
+                                <tr class="um-table__row">
+                                    <td class="ps-4">
+                                        <a href="{{ route('admin.profiles.view', $user) }}" class="um-table__link um-table__id text-decoration-none">
+                                            <span class="badge rounded-pill bg-secondary">{{ $user->unique_id }}</span>
+                                        </a>
                                     </td>
-                                    <td>{{ $user->name }}</td>
-                                    <td>{{ $user->email }}</td>
-                                    <td>{{ $user->phone }}</td>
                                     <td>
-                                        <span class="badge 
+                                        <a href="{{ route('admin.profiles.view', $user) }}" class="um-table__link text-decoration-none">
+                                            <span class="fw-semibold text-dark d-block">{{ $user->name }}</span>
+                                            <span class="small text-muted">Profile &amp; stats</span>
+                                        </a>
+                                    </td>
+                                    <td class="text-muted small">{{ $user->email }}</td>
+                                    <td class="text-muted small">{{ $user->phone }}</td>
+                                    <td>
+                                        <span class="badge rounded-pill
                                             @if($user->role == 'admin') bg-danger
                                             @elseif($user->role == 'caregiver') bg-primary
-                                            @elseif($user->role == 'nurse') bg-info
+                                            @elseif($user->role == 'nurse') bg-info text-dark
                                             @else bg-success @endif">
                                             {{ ucfirst($user->role) }}
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge {{ $user->is_active ? 'bg-success' : 'bg-warning' }}">
+                                        <span class="badge rounded-pill {{ $user->is_active ? 'bg-success' : 'bg-warning text-dark' }}">
                                             {{ $user->is_active ? 'Active' : 'Inactive' }}
                                         </span>
                                     </td>
-                                    <td>{{ $user->created_at->format('M d, Y') }}</td>
-                                    <td>
+                                    <td class="text-muted small">{{ $user->created_at->format('M d, Y') }}</td>
+                                    <td class="text-end pe-4">
                                         <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-primary" 
-                                                    onclick="viewUser({{ $user->id }})"
-                                                    title="View">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-outline-warning" 
-                                                    onclick="editUser({{ $user->id }})"
-                                                    title="Edit">
+                                            @if(in_array($user->role, ['nurse', 'caregiver']))
+                                                <a class="btn btn-outline-success rounded-start-pill"
+                                                   href="{{ route('admin.staff.incentives', $user) }}"
+                                                   title="Full incentives">
+                                                    <i class="fas fa-chart-line"></i>
+                                                </a>
+                                            @endif
+                                            <a href="{{ route('admin.profiles.view', $user) }}" class="btn btn-outline-primary @if(!in_array($user->role, ['nurse', 'caregiver'])) rounded-start-pill @endif" title="Profile &amp; stats">
+                                                <i class="fas fa-id-card"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-warning" onclick="editUser({{ $user->id }})" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button class="btn btn-outline-{{ $user->is_active ? 'warning' : 'success' }}" 
-                                                    onclick="toggleUserStatus({{ $user->id }})"
-                                                    title="{{ $user->is_active ? 'Deactivate' : 'Activate' }}">
+                                            <button type="button" class="btn btn-outline-secondary rounded-end-pill" onclick="toggleUserStatus({{ $user->id }})" title="{{ $user->is_active ? 'Deactivate' : 'Activate' }}">
                                                 <i class="fas fa-{{ $user->is_active ? 'ban' : 'check' }}"></i>
                                             </button>
                                         </div>
@@ -111,25 +147,37 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted py-4">
-                                        <i class="fas fa-users fa-2x mb-2"></i><br>
-                                        No users found
+                                    <td colspan="8" class="text-center text-muted py-5">
+                                        <i class="fas fa-users fa-2x mb-2 opacity-50"></i><br>
+                                        @if(($searchQuery ?? '') !== '')
+                                            No users match &ldquo;{{ \Illuminate\Support\Str::limit($searchQuery, 60) }}&rdquo;. Try another name, email fragment, or phone digits.
+                                        @else
+                                            No users found
+                                        @endif
                                     </td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
-                
+
                 @if($users->hasPages())
-                    <div class="d-flex justify-content-center">
-                        {{ $users->links() }}
+                    <div class="d-flex justify-content-center p-3 border-top bg-light">
+                        {{ $users->withQueryString()->links() }}
                     </div>
                 @endif
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.um-table thead th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 700; border-bottom: 1px solid #e2e8f0; }
+.um-table__row:hover { background: #f8fafc; }
+.um-table__link:hover .fw-semibold { color: #0d9488 !important; text-decoration: underline; }
+.um-table__link:hover .um-table__id .badge { background-color: #0f766e !important; }
+.um-search .input-group-text { min-width: 2.25rem; justify-content: center; }
+</style>
 
 <!-- Create User Modal -->
 <div class="modal fade" id="createUserModal" tabindex="-1">
@@ -209,31 +257,6 @@
     </div>
 </div>
 
-<!-- View User Modal -->
-<div class="modal fade" id="viewUserModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-eye me-2"></i>
-                    User Details
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="viewUserContent">
-                <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Delete Non-Admin Users Confirmation Modal -->
 <div class="modal fade" id="deleteNonAdminModal" tabindex="-1">
     <div class="modal-dialog">
@@ -309,109 +332,6 @@
 </div>
 
 <script>
-// View User Function
-function viewUser(userId) {
-    const modal = new bootstrap.Modal(document.getElementById('viewUserModal'));
-    const content = document.getElementById('viewUserContent');
-    
-    content.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-    modal.show();
-    
-    fetch(`/admin/users/${userId}/view`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const user = data.user;
-                content.innerHTML = `
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <strong>Unique ID:</strong><br>
-                            <span class="badge bg-secondary">${user.unique_id}</span>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Status:</strong><br>
-                            <span class="badge ${user.is_active ? 'bg-success' : 'bg-warning'}">
-                                ${user.is_active ? 'Active' : 'Inactive'}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <strong>Full Name:</strong><br>
-                            ${user.name}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Email:</strong><br>
-                            ${user.email}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <strong>Phone:</strong><br>
-                            ${user.phone}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Role:</strong><br>
-                            <span class="badge bg-primary">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <strong>Date of Birth:</strong><br>
-                            ${user.date_of_birth || 'Not provided'}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Created:</strong><br>
-                            ${user.created_at}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <strong>Address:</strong><br>
-                            ${user.address || 'Not provided'}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Pincode:</strong><br>
-                            ${user.pincode || 'Not provided'}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <strong>Reward Points:</strong><br>
-                            ${user.reward_points || 0} points (₹${((user.reward_points || 0) * 10).toFixed(2)})
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <strong>Password:</strong><br>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="viewPassword" value="${user.plain_password || 'Not available'}" readonly>
-                                <button class="btn btn-outline-secondary" type="button" onclick="copyPassword('viewPassword')">
-                                    <i class="fas fa-copy"></i> Copy
-                                </button>
-                            </div>
-                            <small class="text-muted">This password is visible only to admin</small>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <button class="btn btn-warning btn-sm" onclick="resetUserPassword(${userId})">
-                                <i class="fas fa-key me-2"></i>Reset Password
-                            </button>
-                        </div>
-                    </div>
-                `;
-            } else {
-                content.innerHTML = '<div class="alert alert-danger">Failed to load user details.</div>';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            content.innerHTML = '<div class="alert alert-danger">An error occurred while loading user details.</div>';
-        });
-}
-
 // Edit User Function
 function editUser(userId) {
     const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
@@ -497,9 +417,11 @@ function editUser(userId) {
                     </div>
                     <div class="row">
                         <div class="col-md-12">
-                            <div class="alert alert-info">
+                            <div class="alert alert-info mb-0">
                                 <i class="fas fa-info-circle me-2"></i>
-                                Current Password: <strong>${user.plain_password || 'Not available'}</strong>
+                                ${user.plain_password
+                                    ? 'A password is already set. Leave the fields above blank to keep it, or enter a new password to replace it.'
+                                    : 'No readable stored password (either none was saved for admin view, or it was encrypted on another server — different APP_KEY). Set a new password above if you need to change it.'}
                             </div>
                         </div>
                     </div>
@@ -513,6 +435,29 @@ function editUser(userId) {
             content.innerHTML = '<div class="alert alert-danger">An error occurred while loading user details.</div>';
         });
 }
+
+// Debounced live search (GET): empty clears; 2+ chars submits after pause
+(function () {
+    const form = document.getElementById('umUserSearchForm');
+    const input = document.getElementById('umUserSearchInput');
+    if (!form || !input) {
+        return;
+    }
+    let timer;
+    const debounceMs = 420;
+    input.addEventListener('input', function () {
+        clearTimeout(timer);
+        const v = this.value.trim();
+        if (v.length === 0) {
+            timer = setTimeout(function () { form.submit(); }, debounceMs);
+            return;
+        }
+        if (v.length < 2) {
+            return;
+        }
+        timer = setTimeout(function () { form.submit(); }, debounceMs);
+    });
+})();
 
 // Toggle User Status Function
 function toggleUserStatus(userId) {
@@ -534,39 +479,5 @@ function toggleUserStatus(userId) {
     }
 }
 
-// Reset Password Function
-function resetUserPassword(userId) {
-    if (confirm('Are you sure you want to reset this user\'s password? A new random password will be generated.')) {
-        fetch(`/admin/users/${userId}/reset-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Password reset successfully! New password: ' + data.new_password);
-                // Update the password field in the view modal
-                document.getElementById('viewPassword').value = data.new_password;
-            } else {
-                alert('Failed to reset password.');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while resetting password.');
-        });
-    }
-}
-
-// Copy Password Function
-function copyPassword(inputId) {
-    const input = document.getElementById(inputId);
-    input.select();
-    document.execCommand('copy');
-    alert('Password copied to clipboard!');
-}
 </script>
 @endsection

@@ -2,8 +2,8 @@
 
 namespace App\Modules\Payments\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Core\User;
+use Illuminate\Database\Eloquent\Model;
 
 class StaffPayment extends Model
 {
@@ -12,6 +12,12 @@ class StaffPayment extends Model
         'admin_id',
         'payment_type',
         'amount',
+        'payment_provider',
+        'payment_mode',
+        'gateway_status',
+        'gateway_reference_id',
+        'gateway_payload',
+        'beneficiary_upi',
         'transaction_id',
         'notes',
         'payment_screenshot',
@@ -21,6 +27,7 @@ class StaffPayment extends Model
     protected $casts = [
         'amount' => 'decimal:2',
         'paid_at' => 'datetime',
+        'gateway_payload' => 'array',
     ];
 
     /**
@@ -55,4 +62,3 @@ class StaffPayment extends Model
         return $query->where('staff_id', $staffId);
     }
 }
-

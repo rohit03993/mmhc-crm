@@ -32,7 +32,7 @@ class ProfileService
     public function updateProfile(User $user, array $profileData): Profile
     {
         $profile = $this->getProfile($user);
-        
+
         // Update user basic info
         $user->update([
             'name' => $profileData['name'],
@@ -65,8 +65,8 @@ class ProfileService
         }
 
         // Store new avatar
-        $avatarPath = $avatarFile->store('avatars/' . $user->id, 'public');
-        
+        $avatarPath = $avatarFile->store('avatars/'.$user->id, 'public');
+
         // Update profile with new avatar path
         $profile->update(['avatar_path' => $avatarPath]);
 
@@ -80,7 +80,7 @@ class ProfileService
     {
         $requiredFields = ['bio', 'experience_years', 'specialization'];
         $userFields = ['name', 'email', 'phone', 'address'];
-        
+
         foreach ($requiredFields as $field) {
             if (empty($profile->$field)) {
                 return false;
@@ -105,10 +105,10 @@ class ProfileService
             'total_profiles' => Profile::count(),
             'complete_profiles' => Profile::complete()->count(),
             'incomplete_profiles' => Profile::incomplete()->count(),
-            'caregiver_profiles' => Profile::whereHas('user', function($query) {
+            'caregiver_profiles' => Profile::whereHas('user', function ($query) {
                 $query->where('role', 'caregiver');
             })->count(),
-            'patient_profiles' => Profile::whereHas('user', function($query) {
+            'patient_profiles' => Profile::whereHas('user', function ($query) {
                 $query->where('role', 'patient');
             })->count(),
         ];
@@ -117,23 +117,23 @@ class ProfileService
     /**
      * Search profiles
      */
-    public function searchProfiles(string $query, string $role = null)
+    public function searchProfiles(string $query, ?string $role = null)
     {
         $profiles = Profile::with('user');
 
         if ($role) {
-            $profiles->whereHas('user', function($q) use ($role) {
+            $profiles->whereHas('user', function ($q) use ($role) {
                 $q->where('role', $role);
             });
         }
 
         return $profiles->where(function ($q) use ($query) {
             $q->where('bio', 'like', "%{$query}%")
-              ->orWhere('specialization', 'like', "%{$query}%")
-              ->orWhereHas('user', function($userQuery) use ($query) {
-                  $userQuery->where('name', 'like', "%{$query}%")
-                           ->orWhere('email', 'like', "%{$query}%");
-              });
-        })->paginate(15);
+                ->orWhere('specialization', 'like', "%{$query}%")
+                ->orWhereHas('user', function ($userQuery) use ($query) {
+                    $userQuery->where('name', 'like', "%{$query}%")
+                        ->orWhere('email', 'like', "%{$query}%");
+                });
+        })->paginate(10);
     }
 }

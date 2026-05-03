@@ -355,9 +355,10 @@
                             <i class="fas fa-play me-2"></i>Start Service
                         </button>
                         @elseif($serviceRequest->status === 'in_progress')
-                        <button class="btn-action btn-action-complete w-100 mb-2" onclick="completeService({{ $serviceRequest->id }})">
-                            <i class="fas fa-check me-2"></i>Mark as Completed
+                        <button class="btn-action btn-action-complete w-100 mb-2" onclick="openCompletionOtpModal({{ $serviceRequest->id }})">
+                            <i class="fas fa-check me-2"></i>Verify OTP & Complete
                         </button>
+                        <small class="text-muted d-block mb-2">Completion requires patient OTP verification.</small>
                         @endif
                         
                         <a href="{{ route('staff.dashboard') }}" class="btn-action btn-action-secondary w-100">
@@ -365,6 +366,40 @@
                         </a>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Completion OTP Modal -->
+<div class="modal fade" id="completionOtpModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Verify Patient OTP</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-3">Send OTP to patient and enter it to complete this service.</p>
+                <div class="mb-3">
+                    <label class="form-label">Send OTP via</label>
+                    <select id="completionOtpChannel" class="form-select">
+                        <option value="mobile">Mobile / WhatsApp</option>
+                        <option value="email">Email</option>
+                    </select>
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    <button type="button" class="btn btn-outline-primary w-100" id="sendCompletionOtpBtn" onclick="sendCompletionOtp()">Send OTP</button>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Enter OTP</label>
+                    <input type="text" id="completionOtpInput" class="form-control" maxlength="6" placeholder="6-digit OTP">
+                </div>
+                <small class="text-muted" id="completionOtpHint">OTP expires in 5 minutes.</small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="verifyCompletionOtpBtn" onclick="verifyAndCompleteService()">Verify & Complete</button>
             </div>
         </div>
     </div>
@@ -847,6 +882,82 @@
 </style>
 
 <script>
+let activeCompletionServiceId = null;
+let completionOtpModal = null;
+
+function openCompletionOtpModal(serviceId) {
+    activeCompletionServiceId = serviceId;
+    if (!completionOtpModal) {
+        completionOtpModal = new bootstrap.Modal(document.getElementById('completionOtpModal'));
+    }
+    document.getElementById('completionOtpInput').value = '';
+    document.getElementById('completionOtpHint').textContent = 'OTP expires in 5 minutes.';
+    completionOtpModal.show();
+}
+
+function sendCompletionOtp() {
+    if (!activeCompletionServiceId) return;
+    const btn = document.getElementById('sendCompletionOtpBtn');
+    const channel = document.getElementById('completionOtpChannel').value;
+    const old = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
+    fetch(`/staff/service/${activeCompletionServiceId}/completion-otp`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ channel })
+    }).then(r => r.json()).then(data => {
+        if (!data.success) {
+            alert(data.message || 'Failed to send OTP');
+            return;
+        }
+        document.getElementById('completionOtpHint').textContent = `OTP sent to ${data.sent_to || 'patient'} via ${data.channel || channel}.`;
+    }).catch(() => {
+        alert('Failed to send OTP.');
+    }).finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = old;
+    });
+}
+
+function verifyAndCompleteService() {
+    if (!activeCompletionServiceId) return;
+    const otp = (document.getElementById('completionOtpInput').value || '').trim();
+    if (!/^\d{6}$/.test(otp)) {
+        alert('Please enter valid 6-digit OTP.');
+        return;
+    }
+    const btn = document.getElementById('verifyCompletionOtpBtn');
+    const old = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Verifying...';
+    fetch(`/staff/service/${activeCompletionServiceId}/complete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ otp_code: otp })
+    }).then(r => r.json()).then(data => {
+        if (!data.success) {
+            alert(data.message || 'OTP verification failed.');
+            return;
+        }
+        completionOtpModal.hide();
+        setTimeout(() => location.reload(), 300);
+    }).catch(() => {
+        alert('Failed to verify OTP.');
+    }).finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = old;
+    });
+}
+
 function startService(serviceId) {
     if (confirm('Are you sure you want to start this service?')) {
         // Show loading state
@@ -889,44 +1000,7 @@ function startService(serviceId) {
 }
 
 function completeService(serviceId) {
-    if (confirm('Are you sure you want to mark this service as completed?')) {
-        // Show loading state
-        const btn = event.target.closest('.btn-action-complete');
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Completing...';
-        
-        fetch(`/staff/service/${serviceId}/complete`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Show success message
-                btn.innerHTML = '<i class="fas fa-check me-2"></i>Completed!';
-                btn.classList.remove('btn-action-complete');
-                btn.classList.add('btn-action-secondary');
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
-            } else {
-                alert(data.message || 'Failed to complete service');
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while completing the service. Please try again.');
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-        });
-    }
+    openCompletionOtpModal(serviceId);
 }
 </script>
 @endsection

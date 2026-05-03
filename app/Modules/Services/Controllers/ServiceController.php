@@ -3,17 +3,18 @@
 namespace App\Modules\Services\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Services\Models\ServiceType;
-use App\Modules\Services\Models\ServiceRequest;
-use App\Modules\Services\Models\DailyService;
-use App\Modules\Services\Services\StaffAvailabilityService;
 use App\Models\Core\User;
+use App\Modules\Incentives\Services\IncentiveCalculatorService;
+use App\Modules\Services\Models\DailyService;
+use App\Modules\Services\Models\ServiceRequest;
+use App\Modules\Services\Models\ServiceType;
+use App\Modules\Services\Services\StaffAvailabilityService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator;
 
 class ServiceController extends Controller
 {
@@ -23,7 +24,7 @@ class ServiceController extends Controller
     public function index()
     {
         $serviceTypes = ServiceType::getActiveServiceTypes();
-        
+
         return view('services::services.index', compact('serviceTypes'));
     }
 
@@ -33,52 +34,52 @@ class ServiceController extends Controller
     public function bookStaff(User $staff)
     {
         // Verify staff is active and valid
-        if (!$staff->isStaff() || !$staff->is_active) {
+        if (! $staff->isStaff() || ! $staff->is_active) {
             return redirect()->route('staff.index')
                 ->with('error', 'Selected staff member is not available.');
         }
 
         $serviceTypes = ServiceType::getActiveServiceTypes();
         $user = Auth::user();
-        
+
         // Load staff profile for availability check
         $staff->load('profile');
-        
+
         // Check if user has active subscription
         $subscriptionService = app(\App\Modules\Plans\Services\SubscriptionService::class);
         $hasActiveSubscription = $subscriptionService->hasActiveSubscription($user);
         $activeSubscription = $subscriptionService->getActiveSubscription($user);
-        
+
         return view('services::services.book-staff', compact('serviceTypes', 'user', 'staff', 'hasActiveSubscription', 'activeSubscription'));
     }
 
     /**
      * Show service request form (Legacy - Redirected to One-Way Booking)
-     * 
+     *
      * NEW FLOW: Patients must select staff first, then book
      * This route now redirects to staff listing or direct booking
      */
     public function create(Request $request)
     {
         $user = Auth::user();
-        
+
         // If staff_id is provided, redirect to new direct booking route
         $selectedStaffId = $request->get('staff_id');
         $selectedStaffType = $request->get('staff_type');
-        
+
         if ($selectedStaffId && $selectedStaffType) {
             $staff = User::where('id', $selectedStaffId)
                 ->where('role', $selectedStaffType)
                 ->where('is_active', true)
                 ->first();
-            
+
             if ($staff) {
                 // Redirect to new direct booking route
                 return redirect()->route('book.staff', $staff)
                     ->with('info', 'Please select a service type and complete your booking.');
             }
         }
-        
+
         // No staff selected - redirect to staff listing (new one-way booking flow)
         return redirect()->route('staff.index')
             ->with('info', 'Please select a healthcare staff member first to book a service. This is our new streamlined booking process!');
@@ -92,7 +93,7 @@ class ServiceController extends Controller
         // Get service type to check if it's a single visit
         $serviceType = ServiceType::find($request->service_type_id);
         $isSingleVisit = $serviceType && $serviceType->duration_hours == 1;
-        
+
         // Validation rules
         $rules = [
             'service_type_id' => 'required|exists:service_types,id',
@@ -105,20 +106,20 @@ class ServiceController extends Controller
             'special_requirements' => 'nullable|string|max:1000',
             'preferred_staff_id' => 'nullable|exists:users,id', // Optional: specific staff selected
         ];
-        
+
         // Duration validation: Allow 1 day minimum for all services (removed 7-day lock-in)
         if ($isSingleVisit) {
             $rules['duration_days'] = 'required|integer|min:1|max:1'; // Single visit = 1 day only
         } else {
             $rules['duration_days'] = 'required|integer|min:1'; // Minimum 1 day (removed 7-day requirement)
         }
-        
+
         $messages = [
             'duration_days.min' => 'Duration must be at least 1 day.',
             'duration_days.max' => 'Single visit service is for 1 day only.',
             'contact_phone.regex' => 'Contact phone must be exactly 10 digits.',
         ];
-        
+
         $validator = Validator::make($request->all(), $rules, $messages);
 
         if ($validator->fails()) {
@@ -128,23 +129,23 @@ class ServiceController extends Controller
         }
 
         $serviceType = ServiceType::findOrFail($request->service_type_id);
-        
+
         // Additional null check after validation (defensive programming)
-        if (!$serviceType) {
+        if (! $serviceType) {
             return redirect()->back()
                 ->withErrors(['service_type_id' => 'Selected service type not found.'])
                 ->withInput();
         }
-        
+
         // Calculate end date
         $startDate = \Carbon\Carbon::parse($request->start_date);
         $endDate = $startDate->copy()->addDays($request->duration_days - 1);
-        
+
         // Check if patient has active subscription
         $patient = Auth::user();
         $subscriptionService = app(\App\Modules\Plans\Services\SubscriptionService::class);
         $hasActiveSubscription = $subscriptionService->hasActiveSubscription($patient);
-        
+
         // Calculate total amount (free for subscribers)
         $totalAmount = $hasActiveSubscription ? 0.00 : ($serviceType->patient_charge * $request->duration_days);
 
@@ -154,7 +155,7 @@ class ServiceController extends Controller
             $preferredStaff = User::find($request->preferred_staff_id);
             if ($preferredStaff && $preferredStaff->isStaff()) {
                 // Check if staff type matches preferred_staff_type
-                if ($request->preferred_staff_type === 'any' || 
+                if ($request->preferred_staff_type === 'any' ||
                     ($request->preferred_staff_type === 'nurse' && $preferredStaff->isNurse()) ||
                     ($request->preferred_staff_type === 'caregiver' && $preferredStaff->isCaregiver())) {
                     $preferredStaffId = $request->preferred_staff_id;
@@ -182,7 +183,7 @@ class ServiceController extends Controller
             'contact_phone' => $request->contact_phone,
         ]);
 
-        $successMessage = $hasActiveSubscription 
+        $successMessage = $hasActiveSubscription
             ? 'Service request submitted successfully! This service is FREE as you have an active subscription. Our team will contact you soon.'
             : 'Service request submitted successfully! Our team will contact you soon.';
 
@@ -196,14 +197,14 @@ class ServiceController extends Controller
     public function storeDirectBooking(Request $request, User $staff)
     {
         // Verify staff is active and valid
-        if (!$staff->isStaff() || !$staff->is_active) {
+        if (! $staff->isStaff() || ! $staff->is_active) {
             return redirect()->route('staff.index')
                 ->with('error', 'Selected staff member is not available.');
         }
 
         // Get service type
         $serviceType = ServiceType::find($request->service_type_id);
-        if (!$serviceType) {
+        if (! $serviceType) {
             return redirect()->back()
                 ->with('error', 'Selected service type not found.')
                 ->withInput();
@@ -242,7 +243,7 @@ class ServiceController extends Controller
         // Check staff availability
         $availabilityCheck = StaffAvailabilityService::checkAvailability($staff, $startDate, $endDate);
 
-        if (!$availabilityCheck['available']) {
+        if (! $availabilityCheck['available']) {
             // Get alternative staff
             $patient = Auth::user();
             $alternatives = StaffAvailabilityService::getAlternativeStaff(
@@ -264,11 +265,19 @@ class ServiceController extends Controller
         $patient = Auth::user();
         $subscriptionService = app(\App\Modules\Plans\Services\SubscriptionService::class);
         $hasActiveSubscription = $subscriptionService->hasActiveSubscription($patient);
-        
+
         // Calculate amounts
         $totalAmount = $hasActiveSubscription ? 0.00 : ($serviceType->patient_charge * $request->duration_days);
-        $dailyStaffPayout = $staff->isNurse() ? $serviceType->nurse_payout : $serviceType->caregiver_payout;
-        $totalStaffPayout = $request->duration_days * $dailyStaffPayout;
+        $totalStaffPayout = app(IncentiveCalculatorService::class)->estimateProvisionalServicePayout(
+            $staff,
+            $serviceType,
+            (int) $request->duration_days,
+            $hasActiveSubscription
+        );
+        if ($totalStaffPayout <= 0) {
+            $dailyStaffPayout = $staff->isNurse() ? $serviceType->nurse_payout : $serviceType->caregiver_payout;
+            $totalStaffPayout = $request->duration_days * $dailyStaffPayout;
+        }
 
         try {
             DB::beginTransaction();
@@ -289,7 +298,7 @@ class ServiceController extends Controller
                 'payment_status' => $hasActiveSubscription ? 'paid' : 'pending', // Mark as paid if subscribed
                 'status' => 'pending_approval', // Staff needs to accept
                 'assigned_at' => now(),
-                'notes' => ($request->notes ?? '') . ($hasActiveSubscription ? ' [FREE - Covered by Subscription]' : ''),
+                'notes' => ($request->notes ?? '').($hasActiveSubscription ? ' [FREE - Covered by Subscription]' : ''),
                 'special_requirements' => $request->special_requirements ?? null,
                 'location' => $request->location,
                 'contact_person' => $request->contact_person,
@@ -304,7 +313,7 @@ class ServiceController extends Controller
 
             DB::commit();
 
-            $successMessage = $hasActiveSubscription 
+            $successMessage = $hasActiveSubscription
                 ? 'Booking created successfully! This service is FREE as you have an active subscription. The staff member will be notified.'
                 : 'Booking created successfully! The staff member will be notified and can accept your booking request.';
 
@@ -313,7 +322,7 @@ class ServiceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             // Log detailed error for debugging
             Log::error('Direct booking failed', [
                 'staff_id' => $staff->id,
@@ -322,7 +331,7 @@ class ServiceController extends Controller
                 'error_message' => $e->getMessage(),
                 'error_file' => $e->getFile(),
                 'error_line' => $e->getLine(),
-                'error_trace' => $e->getTraceAsString()
+                'error_trace' => $e->getTraceAsString(),
             ]);
 
             return redirect()->back()
@@ -341,7 +350,7 @@ class ServiceController extends Controller
             ->with(['serviceType', 'assignedStaff'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
-        
+
         return view('services::services.my-requests', compact('serviceRequests'));
     }
 
@@ -351,12 +360,12 @@ class ServiceController extends Controller
     public function show(ServiceRequest $serviceRequest)
     {
         // Check if user owns this request or is admin
-        if ($serviceRequest->patient_id !== Auth::id() && !Auth::user()->isAdmin()) {
+        if ($serviceRequest->patient_id !== Auth::id() && ! Auth::user()->isAdmin()) {
             abort(403);
         }
 
         $serviceRequest->load(['serviceType', 'assignedStaff', 'dailyServices.staff']);
-        
+
         return view('services::services.show', compact('serviceRequest'));
     }
 
@@ -368,27 +377,27 @@ class ServiceController extends Controller
         // Get filter parameters
         $statusFilter = $request->get('status', 'all');
         $filterId = $request->get('filter'); // Specific ID filter from pending payments page
-        
+
         $query = ServiceRequest::with(['patient', 'serviceType', 'assignedStaff', 'preferredStaff', 'approvedBy']);
-        
+
         // Filter by status
         if ($statusFilter !== 'all') {
             if ($statusFilter === 'completed' && $request->get('filter') === 'completed') {
                 // Show completed requests that need approval
                 $query->where('status', 'completed')
-                      ->whereNull('admin_approved_at');
+                    ->whereNull('admin_approved_at');
             } else {
                 $query->where('status', $statusFilter);
             }
         }
-        
+
         // Filter by specific ID (from pending payments link)
         if ($filterId) {
             $query->where('id', $filterId);
         }
-        
-        $serviceRequests = $query->orderBy('created_at', 'desc')->paginate(15);
-        
+
+        $serviceRequests = $query->orderBy('created_at', 'desc')->paginate(10);
+
         $stats = [
             'total_requests' => ServiceRequest::count(),
             'pending_requests' => ServiceRequest::pending()->count(),
@@ -399,7 +408,7 @@ class ServiceController extends Controller
                 ->whereNull('admin_approved_at')
                 ->count(),
         ];
-        
+
         return view('services::admin.requests.index', compact('serviceRequests', 'stats', 'statusFilter', 'filterId'));
     }
 
@@ -411,9 +420,9 @@ class ServiceController extends Controller
         $availableStaff = User::whereIn('role', ['nurse', 'caregiver'])
             ->where('is_active', true)
             ->get();
-        
+
         $serviceRequest->load(['patient', 'serviceType', 'preferredStaff']);
-        
+
         return view('services::admin.requests.assign', compact('serviceRequest', 'availableStaff'));
     }
 
@@ -432,9 +441,9 @@ class ServiceController extends Controller
         }
 
         $staff = User::findOrFail($request->assigned_staff_id);
-        
+
         // Check if staff is available
-        if (!$staff->isStaff()) {
+        if (! $staff->isStaff()) {
             return redirect()->back()
                 ->with('error', 'Selected user is not a staff member.');
         }
@@ -443,22 +452,22 @@ class ServiceController extends Controller
         $overlappingServices = ServiceRequest::where('assigned_staff_id', $staff->id)
             ->where('id', '!=', $serviceRequest->id) // Exclude current service if reassigning
             ->whereIn('status', ['assigned', 'in_progress']) // Only check active services
-            ->where(function($query) use ($serviceRequest) {
+            ->where(function ($query) use ($serviceRequest) {
                 // Check if new service dates overlap with existing services
-                $query->where(function($q) use ($serviceRequest) {
+                $query->where(function ($q) use ($serviceRequest) {
                     // New service starts during existing service
                     $q->whereBetween('start_date', [$serviceRequest->start_date, $serviceRequest->end_date])
-                      ->orWhereBetween('end_date', [$serviceRequest->start_date, $serviceRequest->end_date])
-                      ->orWhere(function($subQ) use ($serviceRequest) {
-                          // New service completely contains existing service
-                          $subQ->where('start_date', '>=', $serviceRequest->start_date)
-                               ->where('end_date', '<=', $serviceRequest->end_date);
-                      })
-                      ->orWhere(function($subQ) use ($serviceRequest) {
-                          // Existing service completely contains new service
-                          $subQ->where('start_date', '<=', $serviceRequest->start_date)
-                               ->where('end_date', '>=', $serviceRequest->end_date);
-                      });
+                        ->orWhereBetween('end_date', [$serviceRequest->start_date, $serviceRequest->end_date])
+                        ->orWhere(function ($subQ) use ($serviceRequest) {
+                            // New service completely contains existing service
+                            $subQ->where('start_date', '>=', $serviceRequest->start_date)
+                                ->where('end_date', '<=', $serviceRequest->end_date);
+                        })
+                        ->orWhere(function ($subQ) use ($serviceRequest) {
+                            // Existing service completely contains new service
+                            $subQ->where('start_date', '<=', $serviceRequest->start_date)
+                                ->where('end_date', '>=', $serviceRequest->end_date);
+                        });
                 });
             })
             ->exists();
@@ -471,24 +480,35 @@ class ServiceController extends Controller
         // Load service type to ensure it exists before calculating payout
         $serviceRequest->load('serviceType');
         $serviceType = $serviceRequest->serviceType;
-        
-        if (!$serviceType) {
+
+        if (! $serviceType) {
             return redirect()->back()
                 ->with('error', 'Service type not found. Please contact support.');
         }
 
         // Removed prepayment requirement - admin can assign staff without payment barrier
 
-        // Calculate staff payout based on staff type and service type
-        $dailyStaffPayout = $staff->isNurse() ? $serviceType->nurse_payout : $serviceType->caregiver_payout;
-        $totalStaffPayout = $serviceRequest->duration_days * $dailyStaffPayout;
+        $subscriptionService = app(\App\Modules\Plans\Services\SubscriptionService::class);
+        $patient = $serviceRequest->patient;
+        $hasSub = $patient && $subscriptionService->hasActiveSubscription($patient);
+        $calc = app(IncentiveCalculatorService::class);
+        $totalStaffPayout = $calc->estimateProvisionalServicePayout(
+            $staff,
+            $serviceType,
+            (int) $serviceRequest->duration_days,
+            $hasSub
+        );
+        if ($totalStaffPayout <= 0) {
+            $dailyStaffPayout = $staff->isNurse() ? $serviceType->nurse_payout : $serviceType->caregiver_payout;
+            $totalStaffPayout = $serviceRequest->duration_days * $dailyStaffPayout;
+        }
 
         // CRITICAL FIX #3: Wrap in transaction for data integrity
         try {
             DB::beginTransaction();
 
             // CRITICAL FIX #5: Validate status transition
-            if (!$serviceRequest->canTransitionTo('assigned')) {
+            if (! $serviceRequest->canTransitionTo('assigned')) {
                 throw new \Exception("Cannot assign staff. Invalid status transition from '{$serviceRequest->status}' to 'assigned'.");
             }
 
@@ -513,10 +533,10 @@ class ServiceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Staff assignment failed: ' . $e->getMessage(), [
+            Log::error('Staff assignment failed: '.$e->getMessage(), [
                 'service_request_id' => $serviceRequest->id,
                 'staff_id' => $request->assigned_staff_id,
-                'error' => $e->getTraceAsString()
+                'error' => $e->getTraceAsString(),
             ]);
 
             return redirect()->back()
@@ -538,16 +558,30 @@ class ServiceController extends Controller
         // CRITICAL FIX #4: Use database locking to prevent race condition
         try {
             DB::beginTransaction();
-            
+
             // Lock the row for update to prevent concurrent approvals
             $serviceRequest = ServiceRequest::lockForUpdate()->findOrFail($serviceRequest->id);
 
             // Check if already approved (double-check after lock)
             if ($serviceRequest->isApprovedByAdmin()) {
                 DB::rollBack();
+
                 return redirect()->back()
                     ->with('info', 'Payment has already been approved by another admin.');
             }
+
+            $serviceRequest->load(['assignedStaff', 'serviceType', 'patient']);
+            $patient = $serviceRequest->patient;
+            $subSvc = app(\App\Modules\Plans\Services\SubscriptionService::class);
+            $isSub = $patient && $subSvc->hasActiveSubscription($patient);
+
+            app(IncentiveCalculatorService::class)
+                ->createOrUpdateServiceLedger(
+                    $serviceRequest->assignedStaff,
+                    $serviceRequest,
+                    $isSub
+                );
+            $serviceRequest->refresh();
 
             // Approve payment
             $serviceRequest->update([
@@ -560,7 +594,7 @@ class ServiceController extends Controller
             Log::info('Payment approved', [
                 'service_request_id' => $serviceRequest->id,
                 'approved_by' => Auth::id(),
-                'amount' => $serviceRequest->total_staff_payout
+                'amount' => $serviceRequest->total_staff_payout,
             ]);
 
             return redirect()->back()
@@ -568,10 +602,10 @@ class ServiceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Payment approval failed: ' . $e->getMessage(), [
+            Log::error('Payment approval failed: '.$e->getMessage(), [
                 'service_request_id' => $serviceRequest->id,
                 'approved_by' => Auth::id(),
-                'error' => $e->getTraceAsString()
+                'error' => $e->getTraceAsString(),
             ]);
 
             return redirect()->back()
@@ -586,36 +620,36 @@ class ServiceController extends Controller
     {
         // Only create daily services if status is 'assigned' or 'pending_approval'
         // For 'pending_approval', create them but mark as 'pending' status
-        if (!in_array($serviceRequest->status, ['assigned', 'pending_approval', 'in_progress'])) {
+        if (! in_array($serviceRequest->status, ['assigned', 'pending_approval', 'in_progress'])) {
             return; // Don't create daily services for pending/cancelled requests
         }
 
         // Ensure relationships are loaded
         $serviceRequest->load(['serviceType', 'assignedStaff']);
-        
+
         $startDate = $serviceRequest->start_date;
         $endDate = $serviceRequest->end_date;
         $serviceType = $serviceRequest->serviceType;
         $staff = $serviceRequest->assignedStaff;
 
         // Null checks before accessing properties
-        if (!$serviceType) {
+        if (! $serviceType) {
             throw new \Exception("Service type not found for service request #{$serviceRequest->id}");
         }
-        if (!$staff) {
+        if (! $staff) {
             throw new \Exception("Assigned staff not found for service request #{$serviceRequest->id}");
         }
 
         // Determine payout based on staff type
         $staffPayout = $staff->isNurse() ? $serviceType->nurse_payout : $serviceType->caregiver_payout;
-        
+
         // Calculate timing based on service type duration
         $durationHours = $serviceType->duration_hours;
 
         for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
             // Set start time (default 8 AM)
             $startTime = $date->copy()->setTime(8, 0);
-            
+
             // Calculate end time based on duration
             switch ($durationHours) {
                 case 24:

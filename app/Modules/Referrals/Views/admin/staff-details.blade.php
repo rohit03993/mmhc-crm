@@ -80,8 +80,8 @@
                         <strong>Phone:</strong> {{ $staff->phone }}
                     </div>
                     <div>
-                        <strong>Staff Referral Points:</strong> 
-                        <span class="badge bg-primary">{{ ($referralStats['completed_referrals'] ?? 0) * 10 }} pts</span>
+                        <strong>Staff Referral Incentive:</strong> 
+                        <span class="badge bg-primary">₹{{ number_format(($referralStats['total_reward_amount'] ?? 0), 2) }}</span>
                     </div>
                 </div>
             </div>
@@ -138,9 +138,9 @@
         </div>
         <div class="col-md-3">
             <div class="stat-card info">
-                <div class="stat-value">{{ number_format($referralStats['completed_referrals'] * 10) }}</div>
+                <div class="stat-value">₹{{ number_format(($referralStats['total_reward_amount'] ?? 0), 2) }}</div>
                 <div class="stat-label">
-                    <i class="fas fa-gift me-2"></i>Points (1 ref = 10 pts)
+                    <i class="fas fa-rupee-sign me-2"></i>Staff Referral Incentive
                 </div>
             </div>
         </div>
@@ -164,8 +164,8 @@
                                         <th>Referred User</th>
                                         <th>Role</th>
                                         <th>Status</th>
-                                        <th>Reward Points</th>
-                                        <th>Reward Amount</th>
+                                        <th>Base Amount</th>
+                                        <th>Referral Row Amount</th>
                                         <th>Completed At</th>
                                     </tr>
                                 </thead>
@@ -197,7 +197,7 @@
                                             </td>
                                             <td>
                                                 @if($referral->status === 'completed')
-                                                    <span class="fw-bold text-primary">10 pts</span>
+                                                    <span class="fw-bold text-primary">₹100 base + incentive logic</span>
                                                 @else
                                                     <span class="text-muted">—</span>
                                                 @endif

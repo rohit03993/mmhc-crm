@@ -3,11 +3,10 @@
 namespace App\Modules\Payments\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Payments\Models\StaffPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Core\User;
-use App\Modules\Payments\Models\StaffPayment;
 
 class StaffPaymentController extends Controller
 {
@@ -17,6 +16,7 @@ class StaffPaymentController extends Controller
     public function settings()
     {
         $user = Auth::user();
+
         return view('payments::staff.settings', compact('user'));
     }
 
@@ -59,9 +59,8 @@ class StaffPaymentController extends Controller
         $payments = StaffPayment::where('staff_id', $user->id)
             ->with('admin')
             ->orderBy('paid_at', 'desc')
-            ->paginate(20);
+            ->paginate(10);
 
         return view('payments::staff.history', compact('payments'));
     }
 }
-

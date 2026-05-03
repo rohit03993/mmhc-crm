@@ -2,8 +2,8 @@
 
 namespace App\Modules\Plans\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Core\User;
+use Illuminate\Database\Eloquent\Model;
 
 class Subscription extends Model
 {
@@ -26,13 +26,23 @@ class Subscription extends Model
         'total_amount',
         'paid_amount',
         'payment_status',
+        'payment_provider',
+        'gateway_status',
+        'gateway_payload',
+        'razorpay_order_id',
+        'razorpay_payment_id',
+        'razorpay_signature',
+        'razorpay_event_id',
+        'webhook_received_at',
         'payment_screenshot',
         'transaction_id',
         'payment_notes',
         'payment_verified_by',
         'payment_verified_at',
         'referral_commission_amount',
-        'referral_commission_rate',
+        'referral_base_amount',
+        'referral_growth_percent',
+        'referral_dta_percent',
         'referral_payment_processed',
         'referral_payment_processed_at',
         'auto_renew',
@@ -52,13 +62,17 @@ class Subscription extends Model
         'gst_rate' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
+        'gateway_payload' => 'array',
         'referral_commission_amount' => 'decimal:2',
-        'referral_commission_rate' => 'decimal:2',
+        'referral_base_amount' => 'decimal:2',
+        'referral_growth_percent' => 'decimal:4',
+        'referral_dta_percent' => 'decimal:4',
         'referral_payment_processed' => 'boolean',
         'referral_payment_processed_at' => 'datetime',
         'auto_renew' => 'boolean',
         'approved_at' => 'datetime',
         'payment_verified_at' => 'datetime',
+        'webhook_received_at' => 'datetime',
     ];
 
     /**
@@ -157,16 +171,14 @@ class Subscription extends Model
         return $this->end_date < now();
     }
 
-
-
     /**
      * Get total amount paid for this subscription
      */
     public function getTotalPaidAttribute()
     {
         return $this->payments()
-                    ->where('status', 'completed')
-                    ->sum('amount');
+            ->where('status', 'completed')
+            ->sum('amount');
     }
 
     /**
@@ -175,8 +187,8 @@ class Subscription extends Model
     public function getLastPaymentAttribute()
     {
         return $this->payments()
-                    ->orderBy('created_at', 'desc')
-                    ->first();
+            ->orderBy('created_at', 'desc')
+            ->first();
     }
 
     /**
@@ -184,11 +196,12 @@ class Subscription extends Model
      */
     public function getDaysRemainingAttribute()
     {
-        if (!$this->end_date) {
+        if (! $this->end_date) {
             return 0;
         }
-        
+
         $days = now()->diffInDays($this->end_date, false);
+
         return max(0, $days);
     }
 
@@ -197,7 +210,7 @@ class Subscription extends Model
      */
     public function getStatusColorAttribute()
     {
-        return match($this->status) {
+        return match ($this->status) {
             'active' => 'success',
             'pending' => 'warning',
             'expired' => 'danger',
@@ -211,7 +224,7 @@ class Subscription extends Model
      */
     public function getStatusDisplayAttribute()
     {
-        return match($this->status) {
+        return match ($this->status) {
             'active' => 'Active',
             'pending' => 'Pending',
             'expired' => 'Expired',

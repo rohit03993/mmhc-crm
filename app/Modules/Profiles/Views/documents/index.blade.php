@@ -250,7 +250,7 @@
                 
                 @if($documents->hasPages())
                     <div class="documents-pagination">
-                        {{ $documents->links('pagination::bootstrap-4') }}
+                        {{ $documents->links() }}
                     </div>
                 @endif
             @else

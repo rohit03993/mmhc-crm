@@ -39,6 +39,38 @@
             </div>
         @endif
 
+        @if(!empty($user->contact_update_channel))
+            <div class="app-alert app-alert-warning">
+                <i class="fas fa-shield-alt me-2"></i>
+                <div class="w-100">
+                    <div class="fw-semibold mb-1">Contact verification pending</div>
+                    <div class="small mb-2">
+                        Latest OTP destination:
+                        <strong>{{ $latestContactOtpDestination ?: ($pendingContactTarget ?: 'not sent yet') }}</strong>.
+                        Older OTPs are ignored automatically.
+                        @if(!empty($user->contact_update_otp_sent_at))
+                            <span class="text-muted">Sent {{ $user->contact_update_otp_sent_at->diffForHumans() }}.</span>
+                        @endif
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <form method="POST" action="{{ route('profile.verify-contact-otp') }}" class="d-flex gap-2 flex-wrap">
+                            @csrf
+                            <input type="text" name="otp_code" class="app-form-input" maxlength="6" placeholder="Enter 6-digit OTP" style="max-width: 180px;" required>
+                            <button type="submit" class="app-btn-submit" style="padding: 10px 14px; flex: unset;">
+                                <i class="fas fa-check-circle me-1"></i>Verify OTP
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ route('profile.resend-contact-otp') }}">
+                            @csrf
+                            <button type="submit" class="app-btn-secondary" style="padding: 10px 14px; flex: unset;">
+                                <i class="fas fa-paper-plane me-1"></i>Resend OTP
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <!-- Profile Form Card -->
         <div class="app-form-container">
             <form method="POST" action="{{ route('profile.update') }}">
@@ -78,7 +110,7 @@
                                class="app-form-input @error('phone') app-input-error @enderror" 
                                id="phone" 
                                name="phone" 
-                               value="{{ old('phone', $user->phone) }}" 
+                               value="{{ old('phone', $phoneForInput ?? $user->phone) }}" 
                                placeholder="Enter 10-digit phone number"
                                pattern="[0-9]{10}"
                                maxlength="10"
@@ -93,13 +125,16 @@
                             <i class="fas fa-envelope me-2"></i>Email Address
                         </label>
                         <input type="email" 
-                               class="app-form-input app-input-readonly" 
+                               class="app-form-input @error('email') app-input-error @enderror" 
                                id="email" 
-                               value="{{ $user->email }}" 
-                               readonly>
+                               name="email"
+                               value="{{ old('email', $emailForInput ?? $user->email) }}">
                         <div class="app-form-help">
-                            <i class="fas fa-info-circle me-1"></i>Email cannot be changed
+                            <i class="fas fa-info-circle me-1"></i>If you change email/phone, OTP will be sent instantly to the new contact for verification.
                         </div>
+                        @error('email')
+                            <div class="app-form-error">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="app-form-group">
@@ -344,6 +379,12 @@
     background: #fee2e2;
     color: #991b1b;
     border: 1px solid #fecaca;
+}
+
+.app-alert-warning {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde68a;
 }
 
 .app-form-actions {

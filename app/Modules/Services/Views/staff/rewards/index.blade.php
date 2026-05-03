@@ -14,6 +14,14 @@
 </div>
 
 <div class="container-fluid px-3 py-4">
+    <div class="row mb-3">
+        <div class="col-12 text-end">
+            <a href="{{ route('staff.incentives.index') }}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-chart-line me-1"></i>View All Incentive Details
+            </a>
+        </div>
+    </div>
+
     <!-- Stats Banner -->
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-4">
@@ -96,6 +104,9 @@
                                 <div class="reward-entry-badge-modern">
                                     <span class="badge-points">+{{ $reward->reward_points }} pts</span>
                                     <span class="badge-amount">₹{{ number_format($reward->reward_amount, 2) }}</span>
+                                    <span class="badge bg-{{ ($reward->verification_status ?? 'verified') === 'verified' ? 'success' : 'warning text-dark' }}">
+                                        {{ ucfirst($reward->verification_status ?? 'verified') }}
+                                    </span>
                                 </div>
                             </div>
                             <div class="reward-entry-details-modern">
@@ -115,6 +126,12 @@
                                     <i class="fas fa-clock me-2 text-muted"></i>
                                     <span>{{ $reward->created_at->format('M d, Y') }} • {{ $reward->created_at->diffForHumans() }}</span>
                                 </div>
+                                @if(($reward->verification_status ?? 'verified') !== 'verified')
+                                <div class="mt-2 d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="sendRewardOtp({{ $reward->id }})">Send OTP</button>
+                                    <button type="button" class="btn btn-sm btn-success" onclick="verifyRewardOtp({{ $reward->id }})">Verify OTP</button>
+                                </div>
+                                @endif
                             </div>
                         </div>
                     @endforeach
@@ -315,5 +332,35 @@
     }
 }
 </style>
+<script>
+function sendRewardOtp(rewardId) {
+    fetch(`/rewards/${rewardId}/send-otp`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        }
+    }).then(r => r.json()).then(data => {
+        alert(data.message || (data.success ? 'OTP sent' : 'Failed to send OTP'));
+        if (data.success) location.reload();
+    }).catch(() => alert('Failed to send OTP'));
+}
+function verifyRewardOtp(rewardId) {
+    const otp = prompt('Enter patient OTP (6 digits):');
+    if (!otp) return;
+    fetch(`/rewards/${rewardId}/verify-otp`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ otp_code: otp })
+    }).then(r => r.json()).then(data => {
+        alert(data.message || (data.success ? 'Verified' : 'Verification failed'));
+        if (data.success) location.reload();
+    }).catch(() => alert('Failed to verify OTP'));
+}
+</script>
 @endsection
 

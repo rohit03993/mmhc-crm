@@ -411,6 +411,19 @@
                             </div>
                         </a>
                         
+                        <a href="{{ route('admin.incentive-system.preview') }}" class="quick-action-btn">
+                            <div class="quick-action-icon bg-secondary">
+                                <i class="fas fa-sliders-h"></i>
+                            </div>
+                            <div class="quick-action-content">
+                                <div class="quick-action-title">Incentive system</div>
+                                <div class="quick-action-desc">Preview active rules (read-only)</div>
+                            </div>
+                            <div class="quick-action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </a>
+                        
                         <a href="{{ route('admin.page-content.index') }}" class="quick-action-btn">
                             <div class="quick-action-icon bg-warning">
                                 <i class="fas fa-edit"></i>

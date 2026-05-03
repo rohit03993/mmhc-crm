@@ -7,6 +7,7 @@ use App\Models\Core\User;
 use App\Modules\Auth\Services\UserService;
 use App\Modules\Auth\Services\WhatsAppOtpService;
 use App\Modules\Referrals\Services\ReferralService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,9 @@ use Illuminate\Support\Str;
 class AuthController extends Controller
 {
     protected $userService;
+
     protected $referralService;
+
     protected $whatsAppOtpService;
 
     public function __construct(UserService $userService, ReferralService $referralService, WhatsAppOtpService $whatsAppOtpService)
@@ -46,14 +49,12 @@ class AuthController extends Controller
     public function showAcademicsLogin()
     {
         if (Auth::check()) {
-            $user = Auth::user();
-            if ($user->hasAcademicRole()) {
-                return redirect()->route('academics.dashboard');
-            }
+            // Use unified role-based post-login router.
             return redirect()->route('dashboard');
         }
 
         $achievementMedia = \App\Models\AchievementMedia::ordered()->get();
+
         return view('auth::login', ['academicsLogin' => true, 'achievementMedia' => $achievementMedia]);
     }
 
@@ -77,7 +78,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->remember)) {
             $request->session()->regenerate();
-            
+
             return redirect()->intended(route('dashboard'));
         }
 
@@ -110,13 +111,13 @@ class AuthController extends Controller
 
         $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
         $user = User::where(function ($query) use ($normalizedPhone, $phoneDigits) {
-                $query->where('phone', $normalizedPhone)
-                      ->orWhere('phone', $phoneDigits);
-            })
+            $query->where('phone', $normalizedPhone)
+                ->orWhere('phone', $phoneDigits);
+        })
             ->where('is_active', true)
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->back()
                 ->withErrors(['phone' => 'No account found with this number. Please register or use email login.'])
                 ->withInput()
@@ -125,11 +126,12 @@ class AuthController extends Controller
 
         $result = $this->whatsAppOtpService->sendOtp($normalizedPhone);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             $message = $result['message'];
             if (config('app.debug')) {
                 $message .= ' Check storage/logs/laravel.log for details.';
             }
+
             return redirect()->back()
                 ->withErrors(['phone' => $message])
                 ->withInput()
@@ -172,7 +174,7 @@ class AuthController extends Controller
 
         $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
 
-        if (!$this->whatsAppOtpService->verifyOtp($normalizedPhone, $request->input('otp'))) {
+        if (! $this->whatsAppOtpService->verifyOtp($normalizedPhone, $request->input('otp'))) {
             return redirect()->back()
                 ->withErrors(['otp' => 'Invalid or expired OTP. Please request a new one.'])
                 ->withInput()
@@ -181,12 +183,12 @@ class AuthController extends Controller
         }
 
         $user = User::where(function ($query) use ($normalizedPhone, $phoneDigits) {
-                $query->where('phone', $normalizedPhone)
-                      ->orWhere('phone', $phoneDigits);
-            })
+            $query->where('phone', $normalizedPhone)
+                ->orWhere('phone', $phoneDigits);
+        })
             ->where('is_active', true)
             ->first();
-        if (!$user) {
+        if (! $user) {
             return redirect()->back()
                 ->withErrors(['otp' => 'Account not found. Please use email login or register.'])
                 ->with('login_tab', 'phone');
@@ -211,7 +213,7 @@ class AuthController extends Controller
         $referralCode = $request->get('ref');
         $referral = null;
         $referrer = null;
-        
+
         if ($referralCode) {
             $referral = $this->referralService->validateReferralCode($referralCode);
             if ($referral) {
@@ -235,7 +237,7 @@ class AuthController extends Controller
         // Normalize phone number for validation
         $phoneDigits = preg_replace('/\D/', '', $request->input('phone', ''));
         $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
-        
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -274,25 +276,25 @@ class AuthController extends Controller
 
         // Check if referral code is provided (from query string or form input)
         $referralCode = $request->get('ref') ?? $request->input('ref');
-        $isReferralRegistration = !empty($referralCode);
-        
+        $isReferralRegistration = ! empty($referralCode);
+
         // If referral code is provided, user must register as nurse or caregiver
         if ($isReferralRegistration) {
             // Validate that referral code exists and is valid
             $referral = $this->referralService->validateReferralCode($referralCode);
-            if (!$referral) {
+            if (! $referral) {
                 return redirect()->back()
                     ->withErrors(['ref' => 'Invalid or expired referral code.'])
                     ->withInput();
             }
-            
+
             // Validate role
             $validator->after(function ($validator) use ($request) {
-                if (!in_array($request->role, ['nurse', 'caregiver'])) {
+                if (! in_array($request->role, ['nurse', 'caregiver'])) {
                     $validator->errors()->add('role', 'You can only register as a nurse or caregiver using a referral link.');
                 }
             });
-            
+
             if ($validator->fails()) {
                 return redirect()->back()
                     ->withErrors($validator)
@@ -303,17 +305,17 @@ class AuthController extends Controller
 
         return DB::transaction(function () use ($request, $referralCode, $isReferralRegistration, $normalizedPhone) {
             $userData = $request->only(['name', 'email', 'password', 'role', 'date_of_birth', 'address', 'pincode']);
-            
+
             // Normalize and store phone number
             $userData['phone'] = $normalizedPhone;
-            
+
             // Store password (mutator will auto-encrypt plain_password)
             $userData['plain_password'] = $userData['password'];
             $userData['password'] = Hash::make($userData['password']);
-            
+
             // Generate unique ID based on role
             $userData['unique_id'] = $this->userService->generateUniqueId($userData['role']);
-            
+
             // Get pincode coordinates from pincode database
             $pincode = $request->input('pincode');
             $pincodeData = \App\Models\Pincode::findByPincode($pincode);
@@ -323,7 +325,7 @@ class AuthController extends Controller
                 $longitude = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
                 $userData['latitude'] = $latitude;
                 $userData['longitude'] = $longitude;
-                
+
                 // Set spatial POINT column for optimized queries
                 // Use sentinel POINT(0 0) if coordinates missing (required for NOT NULL constraint)
                 if ($latitude && $longitude) {
@@ -346,18 +348,18 @@ class AuthController extends Controller
             if (in_array($userData['role'], ['nurse', 'caregiver'])) {
                 // Store additional caregiver information
                 $caregiverData = $request->only(['qualification', 'experience']);
-                
+
                 // Handle document uploads
                 if ($request->hasFile('documents')) {
                     $documents = [];
                     foreach ($request->file('documents') as $file) {
-                        $filename = time() . '_' . $file->getClientOriginalName();
-                        $file->storeAs('caregiver_documents/' . $user->id, $filename, 'public');
+                        $filename = time().'_'.$file->getClientOriginalName();
+                        $file->storeAs('caregiver_documents/'.$user->id, $filename, 'public');
                         $documents[] = $filename;
                     }
                     $caregiverData['documents'] = $documents;
                 }
-                
+
                 // Store staff data in user's meta field or create a separate profile
                 $user->update([
                     'qualification' => $caregiverData['qualification'] ?? null,
@@ -369,14 +371,16 @@ class AuthController extends Controller
             // Process referral if referral code is provided
             if ($isReferralRegistration && $referralCode) {
                 $referralProcessed = $this->referralService->processReferral($referralCode, $user);
-                if ($referralProcessed) {
-                    // Referral processed successfully - reward points already awarded
+                if (! $referralProcessed) {
+                    $request->session()->flash('warning', 'Referral registration created, but OTP could not be sent right now. Please use Resend OTP on dashboard/welcome page.');
+                } else {
+                    $request->session()->flash('success', 'Referral detected. OTP sent to your mobile for referral verification.');
                 }
             }
 
             Auth::login($user);
 
-            $roleMessage = match($userData['role']) {
+            $roleMessage = match ($userData['role']) {
                 'nurse' => 'Nurse registration successful! Your documents are under review.',
                 'caregiver' => 'Caregiver registration successful! Your documents are under review.',
                 'patient' => 'Patient registration successful! Welcome to MMHC CRM.',
@@ -386,6 +390,7 @@ class AuthController extends Controller
             // Nurse/Caregiver: show Nursing Warrior welcome page with badge
             if (in_array($userData['role'], ['nurse', 'caregiver'])) {
                 $request->session()->put('nursing_warrior_just_registered', true);
+
                 return redirect()->route('auth.welcome.nursing-warrior');
             }
 
@@ -400,17 +405,25 @@ class AuthController extends Controller
      */
     public function showWelcomeNursingWarrior(Request $request)
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return redirect()->route('auth.login');
         }
         $user = Auth::user();
-        if (!in_array($user->role, ['nurse', 'caregiver'])) {
+        if (! in_array($user->role, ['nurse', 'caregiver'])) {
             return redirect()->route('dashboard');
         }
-        if (!$request->session()->pull('nursing_warrior_just_registered', false)) {
+        if (! $request->session()->pull('nursing_warrior_just_registered', false)) {
             return redirect()->route('dashboard');
         }
-        return view('auth::welcome-nursing-warrior');
+
+        $pendingReferralOtp = \App\Modules\Referrals\Models\Referral::query()
+            ->where('referred_id', $user->id)
+            ->where('status', 'pending')
+            ->where('verification_status', 'pending')
+            ->latest('id')
+            ->first();
+
+        return view('auth::welcome-nursing-warrior', compact('pendingReferralOtp'));
     }
 
     /**
@@ -428,11 +441,44 @@ class AuthController extends Controller
     /**
      * Manage users (Admin only)
      */
-    public function manageUsers()
+    public function manageUsers(Request $request)
     {
-        $users = User::paginate(15);
-        
-        return view('auth::admin.users', compact('users'));
+        $searchQuery = trim((string) $request->input('q', ''));
+
+        $users = User::query()
+            ->when($searchQuery !== '', fn ($query) => $this->applyAdminUserSearch($query, $searchQuery))
+            ->orderBy('name')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('auth::admin.users', compact('users', 'searchQuery'));
+    }
+
+    /**
+     * Filter users by name, email, phone (digits normalized), or unique ID when query looks like an ID.
+     */
+    private function applyAdminUserSearch(Builder $query, string $searchQuery): void
+    {
+        $digits = preg_replace('/\D/', '', $searchQuery);
+        if (strlen($digits) > 10 && str_starts_with($digits, '91')) {
+            $digits = substr($digits, -10);
+        }
+
+        $like = '%'.$searchQuery.'%';
+        $phoneLike = $digits !== '' ? '%'.$digits.'%' : null;
+
+        $query->where(function ($sub) use ($searchQuery, $like, $phoneLike) {
+            $sub->where('name', 'like', $like)
+                ->orWhere('email', 'like', $like);
+
+            if ($phoneLike !== null) {
+                $sub->orWhere('phone', 'like', $phoneLike);
+            }
+
+            if (str_contains(strtolower($searchQuery), 'uid')) {
+                $sub->orWhere('unique_id', 'like', $like);
+            }
+        });
     }
 
     /**
@@ -443,7 +489,7 @@ class AuthController extends Controller
         // Normalize phone number for validation
         $phoneDigits = preg_replace('/\D/', '', $request->input('phone', ''));
         $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
-        
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -476,14 +522,14 @@ class AuthController extends Controller
         }
 
         $userData = $request->only(['name', 'email', 'password', 'role', 'address', 'pincode']);
-        
+
         // Normalize and store phone number
         $userData['phone'] = $normalizedPhone;
-        
+
         // Store password (mutator will auto-encrypt plain_password)
         $userData['plain_password'] = $userData['password'];
         $userData['password'] = Hash::make($userData['password']);
-        
+
         // Get pincode coordinates from pincode database
         $pincode = $request->input('pincode');
         $pincodeData = \App\Models\Pincode::findByPincode($pincode);
@@ -493,7 +539,7 @@ class AuthController extends Controller
             $longitude = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
             $userData['latitude'] = $latitude;
             $userData['longitude'] = $longitude;
-            
+
             // Set spatial POINT column for optimized queries
             // Use sentinel POINT(0 0) if coordinates missing (required for NOT NULL constraint)
             if ($latitude && $longitude) {
@@ -509,7 +555,7 @@ class AuthController extends Controller
             // Use sentinel POINT(0 0) for missing coordinates (required for NOT NULL constraint)
             $userData['location'] = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
         }
-        
+
         $user = $this->userService->createUser($userData);
 
         return redirect()->route('admin.users')
@@ -523,10 +569,10 @@ class AuthController extends Controller
     {
         // Extract 10-digit phone for display
         $phoneDisplay = $this->userService->extractPhoneDigits($user->phone);
-        
+
         // Get decrypted password using accessor (admin only)
         $decryptedPassword = $user->decrypted_password;
-        
+
         return response()->json([
             'success' => true,
             'user' => [
@@ -543,7 +589,7 @@ class AuthController extends Controller
                 'created_at' => $user->created_at->format('M d, Y'),
                 'plain_password' => $decryptedPassword, // Use decrypted password accessor
                 'reward_points' => $user->reward_points ?? 0,
-            ]
+            ],
         ]);
     }
 
@@ -554,10 +600,10 @@ class AuthController extends Controller
     {
         // Extract 10-digit phone for display
         $phoneDisplay = $this->userService->extractPhoneDigits($user->phone);
-        
+
         // Get decrypted password using accessor (admin only)
         $decryptedPassword = $user->decrypted_password;
-        
+
         return response()->json([
             'success' => true,
             'user' => [
@@ -572,7 +618,7 @@ class AuthController extends Controller
                 'date_of_birth' => $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : null,
                 'is_active' => $user->is_active,
                 'plain_password' => $decryptedPassword, // Use decrypted password accessor
-            ]
+            ],
         ]);
     }
 
@@ -584,10 +630,10 @@ class AuthController extends Controller
         // Normalize phone number for validation
         $phoneDigits = preg_replace('/\D/', '', $request->input('phone', ''));
         $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
-        
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
             'phone' => [
                 'required',
                 'string',
@@ -618,21 +664,21 @@ class AuthController extends Controller
         }
 
         $updateData = $request->only(['name', 'email', 'role', 'address', 'date_of_birth', 'pincode']);
-        
+
         // Normalize and store phone number
         $updateData['phone'] = $normalizedPhone;
-        
+
         // Handle is_active field
         if ($request->has('is_active')) {
             $updateData['is_active'] = $request->is_active == '1' || $request->is_active === true || $request->is_active === 1;
         }
-        
+
         // Update password if provided (mutator will auto-encrypt plain_password)
         if ($request->filled('password')) {
             $updateData['password'] = Hash::make($request->password);
             $updateData['plain_password'] = $request->password;
         }
-        
+
         // Get pincode coordinates from pincode database
         $pincode = $request->input('pincode');
         $pincodeData = \App\Models\Pincode::findByPincode($pincode);
@@ -642,7 +688,7 @@ class AuthController extends Controller
             $longitude = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
             $updateData['latitude'] = $latitude;
             $updateData['longitude'] = $longitude;
-            
+
             // Set spatial POINT column for optimized queries
             // Use sentinel POINT(0 0) if coordinates missing (required for NOT NULL constraint)
             if ($latitude && $longitude) {
@@ -671,11 +717,11 @@ class AuthController extends Controller
     public function toggleUserStatus(User $user)
     {
         $user->update([
-            'is_active' => !$user->is_active
+            'is_active' => ! $user->is_active,
         ]);
 
         $status = $user->is_active ? 'activated' : 'deactivated';
-        
+
         return redirect()->route('admin.users')
             ->with('success', "User '{$user->name}' has been {$status} successfully!");
     }
@@ -687,7 +733,7 @@ class AuthController extends Controller
     {
         // Generate a random 8-character password
         $newPassword = Str::random(8);
-        
+
         $user->update([
             'password' => Hash::make($newPassword),
             'plain_password' => $newPassword, // Mutator will auto-encrypt
@@ -707,14 +753,14 @@ class AuthController extends Controller
     {
         $nonAdminCount = User::where('role', '!=', 'admin')->count();
         $adminCount = User::where('role', 'admin')->count();
-        
+
         if ($nonAdminCount === 0) {
             return redirect()->route('admin.users')
                 ->with('error', 'No non-admin users found to delete.');
         }
-        
+
         $deleted = $this->userService->deleteAllNonAdminUsers();
-        
+
         return redirect()->route('admin.users')
             ->with('success', "Successfully deleted {$deleted} non-admin user(s). {$adminCount} admin user(s) remain protected.");
     }

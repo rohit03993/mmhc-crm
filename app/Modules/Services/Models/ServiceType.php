@@ -13,6 +13,7 @@ class ServiceType extends Model
         'name',
         'description',
         'duration_hours',
+        'incentive_visit_kind',
         'patient_charge',
         'nurse_payout',
         'caregiver_payout',
@@ -32,7 +33,7 @@ class ServiceType extends Model
      */
     public function getFormattedPatientChargeAttribute()
     {
-        return '₹' . number_format($this->patient_charge);
+        return '₹'.number_format($this->patient_charge);
     }
 
     /**
@@ -40,7 +41,7 @@ class ServiceType extends Model
      */
     public function getFormattedNursePayoutAttribute()
     {
-        return '₹' . number_format($this->nurse_payout);
+        return '₹'.number_format($this->nurse_payout);
     }
 
     /**
@@ -48,7 +49,7 @@ class ServiceType extends Model
      */
     public function getFormattedCaregiverPayoutAttribute()
     {
-        return '₹' . number_format($this->caregiver_payout);
+        return '₹'.number_format($this->caregiver_payout);
     }
 
     /**
@@ -64,7 +65,7 @@ class ServiceType extends Model
      */
     public function getFormattedPlatformProfitAttribute()
     {
-        return '₹' . number_format($this->platform_profit);
+        return '₹'.number_format($this->platform_profit);
     }
 
     /**

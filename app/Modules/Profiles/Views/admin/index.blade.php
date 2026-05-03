@@ -44,16 +44,19 @@
                                                 </div>
                                             @endif
                                             <div>
-                                                <strong>{{ $user->name }}</strong>
-                                                <br>
-                                                <small class="text-muted">{{ $user->unique_id }}</small>
+                                                <a href="{{ route('admin.profiles.view', $user) }}" class="text-decoration-none text-dark">
+                                                    <strong class="d-block">{{ $user->name }}</strong>
+                                                    <small class="text-muted">{{ $user->unique_id }}</small>
+                                                    <span class="d-block small text-primary">Profile &amp; stats →</span>
+                                                </a>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="badge 
+                                        <span class="badge rounded-pill
                                             @if($user->role == 'admin') bg-danger
                                             @elseif($user->role == 'caregiver') bg-primary
+                                            @elseif($user->role == 'nurse') bg-info text-dark
                                             @else bg-success @endif">
                                             {{ ucfirst($user->role) }}
                                         </span>
@@ -78,8 +81,8 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge bg-info">
-                                            {{ $user->documents()->count() }} docs
+                                        <span class="badge bg-info rounded-pill">
+                                            {{ $user->documents_count ?? $user->documents()->count() }} docs
                                         </span>
                                     </td>
                                     <td>

@@ -16,8 +16,8 @@ class DocumentService
     public function getUserDocuments(User $user)
     {
         return Document::where('user_id', $user->id)
-                      ->orderBy('created_at', 'desc')
-                      ->paginate(10);
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
     }
 
     /**
@@ -28,11 +28,11 @@ class DocumentService
         // Generate unique filename
         $originalName = $file->getClientOriginalName();
         $extension = $file->getClientOriginalExtension();
-        $filename = Str::uuid() . '.' . $extension;
-        
+        $filename = Str::uuid().'.'.$extension;
+
         // Store file
         $filePath = $file->storeAs(
-            'documents/' . $user->id,
+            'documents/'.$user->id,
             $filename,
             'public'
         );
@@ -86,9 +86,9 @@ class DocumentService
     public function getDocumentsByType(string $type)
     {
         return Document::with('user')
-                      ->type($type)
-                      ->orderBy('created_at', 'desc')
-                      ->paginate(15);
+            ->type($type)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
     }
 
     /**
@@ -97,6 +97,7 @@ class DocumentService
     public function updateDocumentStatus(Document $document, string $status): Document
     {
         $document->update(['status' => $status]);
+
         return $document;
     }
 
@@ -106,15 +107,15 @@ class DocumentService
     public function getRecentDocuments(int $limit = 10)
     {
         return Document::with('user')
-                      ->orderBy('created_at', 'desc')
-                      ->limit($limit)
-                      ->get();
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
     }
 
     /**
      * Search documents
      */
-    public function searchDocuments(string $query, string $type = null)
+    public function searchDocuments(string $query, ?string $type = null)
     {
         $documents = Document::with('user');
 
@@ -124,11 +125,11 @@ class DocumentService
 
         return $documents->where(function ($q) use ($query) {
             $q->where('document_name', 'like', "%{$query}%")
-              ->orWhere('original_name', 'like', "%{$query}%")
-              ->orWhereHas('user', function($userQuery) use ($query) {
-                  $userQuery->where('name', 'like', "%{$query}%")
-                           ->orWhere('email', 'like', "%{$query}%");
-              });
-        })->orderBy('created_at', 'desc')->paginate(15);
+                ->orWhere('original_name', 'like', "%{$query}%")
+                ->orWhereHas('user', function ($userQuery) use ($query) {
+                    $userQuery->where('name', 'like', "%{$query}%")
+                        ->orWhere('email', 'like', "%{$query}%");
+                });
+        })->orderBy('created_at', 'desc')->paginate(10);
     }
 }

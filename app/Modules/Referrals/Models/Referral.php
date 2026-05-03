@@ -2,9 +2,9 @@
 
 namespace App\Modules\Referrals\Models;
 
+use App\Models\Core\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\Core\User;
 
 class Referral extends Model
 {
@@ -13,6 +13,13 @@ class Referral extends Model
         'referrer_id',
         'referred_id',
         'status',
+        'verification_status',
+        'verification_otp_hash',
+        'verification_otp_expires_at',
+        'verification_otp_attempts',
+        'verification_otp_sent_at',
+        'verification_otp_sent_to',
+        'verified_at',
         'reward_points',
         'reward_amount',
         'completed_at',
@@ -22,6 +29,10 @@ class Referral extends Model
 
     protected $casts = [
         'completed_at' => 'datetime',
+        'verification_otp_expires_at' => 'datetime',
+        'verification_otp_sent_at' => 'datetime',
+        'verified_at' => 'datetime',
+        'verification_otp_attempts' => 'integer',
         'payment_processed_at' => 'datetime',
         'reward_points' => 'integer',
         'reward_amount' => 'decimal:2',
@@ -95,4 +106,3 @@ class Referral extends Model
         return $query->where('referrer_id', $referrerId);
     }
 }
-

@@ -29,6 +29,15 @@
                         </div>
 
                         <div class="mb-3">
+                            <label class="form-label">OTP Verification Channel</label>
+                            <select name="otp_channel" id="otpChannel" class="form-select @error('otp_channel') is-invalid @enderror" required>
+                                <option value="mobile" {{ old('otp_channel', 'mobile') === 'mobile' ? 'selected' : '' }}>Mobile / WhatsApp OTP</option>
+                                <option value="email" {{ old('otp_channel') === 'email' ? 'selected' : '' }}>Email OTP</option>
+                            </select>
+                            @error('otp_channel')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label">Patient Mobile Number</label>
                             <div class="input-group">
                                 <span class="input-group-text">+91</span>
@@ -44,6 +53,14 @@
                             </div>
                             <small class="text-muted">Indian mobile numbers only. Each number can be submitted once.</small>
                             @error('patient_phone_digits')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3" id="patientEmailBlock">
+                            <label class="form-label">Patient Email (required for Email OTP)</label>
+                            <input type="email" name="patient_email" value="{{ old('patient_email') }}"
+                                   class="form-control @error('patient_email') is-invalid @enderror"
+                                   placeholder="patient@example.com">
+                            @error('patient_email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
                         <div class="mb-3">
@@ -112,5 +129,21 @@
             </div>
         </div>
     </div>
+    <script>
+        (function () {
+            const channel = document.getElementById('otpChannel');
+            const emailBlock = document.getElementById('patientEmailBlock');
+            function syncChannelUi() {
+                const isEmail = channel && channel.value === 'email';
+                if (emailBlock) {
+                    emailBlock.style.display = isEmail ? 'block' : 'none';
+                }
+            }
+            if (channel) {
+                channel.addEventListener('change', syncChannelUi);
+                syncChannelUi();
+            }
+        })();
+    </script>
 @endsection
 

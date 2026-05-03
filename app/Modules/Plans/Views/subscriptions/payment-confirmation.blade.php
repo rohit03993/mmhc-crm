@@ -70,6 +70,26 @@
                 <!-- UPI Payment Button (if not paid yet) -->
                 @if($subscription->payment_status !== 'paid')
                 <div class="payment-methods mb-4">
+                    @php
+                        $razorpayEnabled = (bool) config('payments.razorpay.enabled');
+                        $manualPaymentEnabled = (bool) config('payments.subscription.manual_enabled', true);
+                    @endphp
+
+                    @if($razorpayEnabled)
+                    <div class="payment-method-card text-center mb-3">
+                        <h6 class="mb-3"><i class="fas fa-credit-card me-2"></i>Pay Online (Razorpay)</h6>
+                        <button
+                            type="button"
+                            class="btn btn-success btn-lg w-100 mb-2"
+                            onclick="startRazorpayCheckout()"
+                        >
+                            <i class="fas fa-bolt me-2"></i>Pay Securely via Razorpay
+                        </button>
+                        <small class="text-muted d-block">Cards, UPI, Wallets and Netbanking supported</small>
+                    </div>
+                    @endif
+
+                    @if($manualPaymentEnabled)
                     <div class="payment-method-card text-center">
                         <h6 class="mb-3"><i class="fas fa-mobile-alt me-2"></i>Make Payment</h6>
                         <div class="upi-id-box">
@@ -98,6 +118,7 @@
                             </small>
                         </div>
                     </div>
+                    @endif
                 </div>
                 @endif
 
@@ -116,7 +137,7 @@
                         <i class="fas fa-arrow-left me-2"></i>Back to Subscription
                     </a>
                 </div>
-                @else
+                @elseif($manualPaymentEnabled)
                 <!-- Payment Submission Form -->
                 <div class="payment-submission">
                     <h5 class="section-title mb-3">
@@ -159,6 +180,10 @@
                             <i class="fas fa-paper-plane me-2"></i>Submit Payment Screenshot
                         </button>
                     </form>
+                </div>
+                @else
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Manual screenshot payment is disabled. Please use Razorpay online payment.
                 </div>
                 @endif
             </div>
@@ -516,6 +541,77 @@
 </style>
 
 <script>
+const razorpayEnabled = @json((bool) config('payments.razorpay.enabled'));
+
+async function startRazorpayCheckout() {
+    if (!razorpayEnabled) {
+        alert('Razorpay is not enabled in this environment.');
+        return;
+    }
+
+    try {
+        const orderResp = await fetch('{{ route('subscriptions.razorpay.order', $subscription) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({})
+        });
+        const orderData = await orderResp.json();
+
+        if (!orderResp.ok || !orderData.success) {
+            throw new Error(orderData.message || 'Failed to create Razorpay order.');
+        }
+
+        const options = {
+            key: orderData.key,
+            amount: orderData.amount,
+            currency: orderData.currency,
+            order_id: orderData.order_id,
+            name: 'MMHC',
+            description: 'Subscription Payment',
+            prefill: {
+                name: orderData.customer?.name || '',
+                email: orderData.customer?.email || '',
+                contact: orderData.customer?.contact || ''
+            },
+            handler: async function (response) {
+                await verifyRazorpayPayment(response);
+            }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function () {
+            alert('Payment failed or cancelled. You can retry or use screenshot upload.');
+        });
+        rzp.open();
+    } catch (error) {
+        console.error(error);
+        alert(error.message || 'Unable to start online payment right now.');
+    }
+}
+
+async function verifyRazorpayPayment(response) {
+    const verifyResp = await fetch('{{ route('subscriptions.razorpay.verify', $subscription) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(response)
+    });
+    const verifyData = await verifyResp.json();
+
+    if (!verifyResp.ok || !verifyData.success) {
+        throw new Error(verifyData.message || 'Payment verification failed.');
+    }
+
+    window.location.href = verifyData.redirect_url;
+}
+
 // Show popup to upload screenshot
 function showUploadPopup() {
     const popup = document.getElementById('uploadScreenshotPopup');
@@ -818,5 +914,8 @@ if (paymentForm) {
     });
 }
 </script>
+@if(config('payments.razorpay.enabled'))
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+@endif
 @endsection
 

@@ -83,6 +83,9 @@
                     <i class="fas fa-user"></i>
                 </div>
                 <h3 class="app-section-title">Profile Information</h3>
+                <a href="{{ route('profile.edit') }}" class="app-link-btn ms-auto">
+                    <i class="fas fa-pen me-1"></i>Update Email / Mobile
+                </a>
             </div>
             
             <div class="app-info-grid">
@@ -105,6 +108,7 @@
                     <div class="app-info-content">
                         <div class="app-info-label">Email</div>
                         <div class="app-info-value">{{ Str::limit($user->email, 25) }}</div>
+                        <a href="{{ route('profile.edit') }}" class="app-inline-edit-link">Change</a>
                     </div>
                 </div>
                 
@@ -116,6 +120,7 @@
                     <div class="app-info-content">
                         <div class="app-info-label">Phone</div>
                         <div class="app-info-value">{{ $user->phone ?? 'Not provided' }}</div>
+                        <a href="{{ route('profile.edit') }}" class="app-inline-edit-link">Change</a>
                     </div>
                 </div>
                 
@@ -569,6 +574,19 @@
     font-weight: 600;
     display: flex;
     align-items: center;
+}
+
+.app-inline-edit-link {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4f46e5;
+    text-decoration: none;
+}
+
+.app-inline-edit-link:hover {
+    text-decoration: underline;
 }
 
 /* Modern Profile Information Grid */

@@ -22,25 +22,28 @@ class AssignmentController extends Controller
             return Subject::with('batch.institution')->active()
                 ->whereHas('faculty', fn ($q) => $q->where('user_id', $user->id));
         }
+
         return Subject::with('batch.institution')->whereRaw('1 = 0');
     }
 
     protected function scopeTopics()
     {
         $subjectIds = $this->scopeSubjects()->pluck('id');
+
         return Topic::with(['subject.batch.institution'])->whereIn('subject_id', $subjectIds);
     }
 
     protected function scopeAssignments()
     {
         $topicIds = $this->scopeTopics()->pluck('id');
+
         return Assignment::with(['topic.subject.batch.institution'])->whereIn('topic_id', $topicIds);
     }
 
     protected function authorizeTopic(int $topicId): void
     {
         $allowedIds = $this->scopeTopics()->pluck('id')->toArray();
-        if (!in_array($topicId, $allowedIds)) {
+        if (! in_array($topicId, $allowedIds)) {
             abort(403, 'You cannot manage assignments for this topic.');
         }
     }
@@ -52,14 +55,16 @@ class AssignmentController extends Controller
         if ($topicId) {
             $query->where('topic_id', $topicId);
         }
-        $assignments = $query->orderBy('due_date')->orderBy('title')->paginate(15)->withQueryString();
+        $assignments = $query->orderBy('due_date')->orderBy('title')->paginate(10)->withQueryString();
         $topics = $this->scopeTopics()->orderBy('name')->get();
+
         return view('academics::assignments.index', compact('assignments', 'topics'));
     }
 
     public function create()
     {
         $topics = $this->scopeTopics()->orderBy('name')->get();
+
         return view('academics::assignments.create', compact('topics'));
     }
 
@@ -80,6 +85,7 @@ class AssignmentController extends Controller
             'due_date' => $validated['due_date'] ?? null,
         ]);
         $this->storeAttachments($assignment, $request->file('attachments'));
+
         return redirect()->route('academics.assignments.index')->with('success', 'Assignment created successfully.');
     }
 
@@ -87,6 +93,7 @@ class AssignmentController extends Controller
     {
         $this->authorizeTopic($assignment->topic_id);
         $assignment->load('topic.subject.batch.institution');
+
         return view('academics::assignments.show', compact('assignment'));
     }
 
@@ -95,6 +102,7 @@ class AssignmentController extends Controller
         $this->authorizeTopic($assignment->topic_id);
         $assignment->load('topic.subject.batch.institution');
         $topics = $this->scopeTopics()->orderBy('name')->get();
+
         return view('academics::assignments.edit', compact('assignment', 'topics'));
     }
 
@@ -116,6 +124,7 @@ class AssignmentController extends Controller
             'due_date' => $validated['due_date'] ?? null,
         ]);
         $this->storeAttachments($assignment, $request->file('attachments'));
+
         return redirect()->route('academics.assignments.index')->with('success', 'Assignment updated successfully.');
     }
 
@@ -124,6 +133,7 @@ class AssignmentController extends Controller
         $this->authorizeTopic($assignment->topic_id);
         $this->deleteAttachments($assignment);
         $assignment->delete();
+
         return redirect()->route('academics.assignments.index')->with('success', 'Assignment deleted successfully.');
     }
 
@@ -132,10 +142,11 @@ class AssignmentController extends Controller
         $this->authorizeTopic($assignment->topic_id);
         $attachments = $assignment->attachments ?? [];
         $file = $attachments[$index] ?? null;
-        if (!$file || !Storage::disk('public')->exists($file['path'] ?? '')) {
+        if (! $file || ! Storage::disk('public')->exists($file['path'] ?? '')) {
             abort(404);
         }
         $path = Storage::disk('public')->path($file['path']);
+
         return response()->download($path, $file['name'] ?? 'attachment');
     }
 
@@ -150,18 +161,19 @@ class AssignmentController extends Controller
         }
         $newAttachments = array_values(array_filter($attachments, fn ($_, $i) => $i !== $index, ARRAY_FILTER_USE_BOTH));
         $assignment->update(['attachments' => $newAttachments]);
+
         return redirect()->route('academics.assignments.edit', $assignment)->with('success', 'Attachment removed.');
     }
 
     protected function storeAttachments(Assignment $assignment, ?array $files): void
     {
-        if (!$files) {
+        if (! $files) {
             return;
         }
-        $dir = 'academic/assignments/' . $assignment->id;
+        $dir = 'academic/assignments/'.$assignment->id;
         $current = $assignment->attachments ?? [];
         foreach ($files as $file) {
-            if (!$file->isValid()) {
+            if (! $file->isValid()) {
                 continue;
             }
             $path = $file->storeAs($dir, $file->getClientOriginalName(), 'public');

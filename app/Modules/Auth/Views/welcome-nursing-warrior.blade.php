@@ -48,6 +48,27 @@
                 <p class="text-muted mb-4 fs-5">
                     You've earned this badge by joining MeD Miracle Health Care as {{ auth()->user()->role === 'nurse' ? 'a Nurse Warrior' : 'a Caregiver Warrior' }}. Thank you for being part of our mission to deliver compassionate care.
                 </p>
+                @if(!empty($pendingReferralOtp))
+                    <div class="alert alert-warning text-start mb-4">
+                        <div class="fw-semibold mb-2"><i class="fas fa-shield-alt me-1"></i>Referral OTP verification pending</div>
+                        <div class="small mb-2">Enter OTP sent to your mobile ({{ $pendingReferralOtp->verification_otp_sent_to ?: 'registered number' }}) to finalize referral verification and unlock referral earnings.</div>
+                        <form method="POST" action="{{ route('staff.referrals.verify-otp') }}" class="d-flex gap-2 flex-wrap">
+                            @csrf
+                            <input type="text" name="otp_code" class="form-control" maxlength="6" placeholder="Enter 6-digit OTP" required style="max-width: 220px;">
+                            <button type="submit" class="btn btn-sm btn-warning">Verify OTP</button>
+                        </form>
+                        <form method="POST" action="{{ route('staff.referrals.resend-otp') }}" class="mt-2">
+                            @csrf
+                            <div class="d-flex gap-2 flex-wrap align-items-center">
+                                <select name="otp_channel" class="form-select form-select-sm" style="max-width: 180px;" required>
+                                    <option value="mobile">Resend on Mobile</option>
+                                    <option value="email">Resend on Email</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Resend OTP</button>
+                            </div>
+                        </form>
+                    </div>
+                @endif
                 <a href="{{ route('dashboard') }}" class="btn btn-continue btn-primary text-white">
                     <i class="fas fa-arrow-right me-2"></i>Continue to Dashboard
                 </a>

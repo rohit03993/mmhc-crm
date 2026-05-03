@@ -243,7 +243,7 @@
             <!-- Pagination -->
             @if($nurses->hasPages())
             <div class="app-pagination">
-                {{ $nurses->appends(request()->query())->links('pagination::bootstrap-4') }}
+                {{ $nurses->appends(request()->query())->links() }}
             </div>
             @endif
             @else
@@ -341,7 +341,7 @@
             <!-- Pagination -->
             @if($caregivers->hasPages())
             <div class="app-pagination">
-                {{ $caregivers->appends(request()->query())->links('pagination::bootstrap-4') }}
+                {{ $caregivers->appends(request()->query())->links() }}
             </div>
             @endif
             @else

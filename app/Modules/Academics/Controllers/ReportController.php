@@ -5,12 +5,12 @@ namespace App\Modules\Academics\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
 use App\Modules\Academics\Models\Assignment;
+use App\Modules\Academics\Models\Attendance;
 use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Institution;
-use App\Modules\Academics\Models\Submission;
 use App\Modules\Academics\Models\Subject;
+use App\Modules\Academics\Models\Submission;
 use App\Modules\Academics\Models\Topic;
-use App\Modules\Academics\Models\Attendance;
 use App\Modules\Academics\Services\AcademicScoreService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -35,7 +35,7 @@ class ReportController extends Controller
                 ->where('academic_batch_users.type', 'student')
                 ->where('academic_batches.institution_id', $currentUser->academic_institution_id)
                 ->exists();
-            if (!$allowed) {
+            if (! $allowed) {
                 abort(403, 'You can only view students from your institution.');
             }
         } elseif ($currentUser->role === 'faculty') {
@@ -48,13 +48,13 @@ class ReportController extends Controller
                 ->where('type', 'student')
                 ->whereIn('batch_id', $facultyBatchIds)
                 ->exists();
-            if (!$allowed) {
+            if (! $allowed) {
                 abort(403, 'You can only view students in your batches.');
             }
         }
 
         $period = $request->get('period', 'this_month');
-        if (!in_array($period, ['this_month', 'last_month', 'all'], true)) {
+        if (! in_array($period, ['this_month', 'last_month', 'all'], true)) {
             $period = 'this_month';
         }
         $dateRange = $this->attendanceDateRange($period);
@@ -132,19 +132,21 @@ class ReportController extends Controller
             return [
                 'start' => $now->copy()->startOfMonth()->format('Y-m-d'),
                 'end' => $now->copy()->format('Y-m-d'),
-                'label' => $now->format('F Y') . ' (this month)',
+                'label' => $now->format('F Y').' (this month)',
             ];
         }
         if ($period === 'last_month') {
             $last = $now->copy()->subMonth();
+
             return [
                 'start' => $last->startOfMonth()->format('Y-m-d'),
                 'end' => $last->endOfMonth()->format('Y-m-d'),
-                'label' => $last->format('F Y') . ' (last month)',
+                'label' => $last->format('F Y').' (last month)',
             ];
         }
         $end = $now->format('Y-m-d');
         $start = $now->copy()->subYear()->startOfMonth()->format('Y-m-d');
+
         return [
             'start' => $start,
             'end' => $end,
@@ -175,6 +177,7 @@ class ReportController extends Controller
             $institutions = Institution::whereIn('id', $batches->pluck('institution_id'))->orderBy('name')->get();
             $subjects = Subject::with('batch.institution')->whereIn('batch_id', $batchIds)->orderBy('name')->get();
         }
+
         return view('academics::reports.index', compact('institutions', 'batches', 'subjects'));
     }
 
@@ -195,6 +198,7 @@ class ReportController extends Controller
             $viewData['reportInstitutions'] = $this->reportFilterInstitutions($user);
             $viewData['reportBatches'] = $this->reportFilterBatches($user);
         }
+
         return view('academics::reports.show', $viewData);
     }
 
@@ -210,7 +214,8 @@ class ReportController extends Controller
         $this->ensureSubjectBelongsToBatch($batchId, $subjectId);
 
         $data = $this->buildReportData($type, $institutionId, $batchId, $subjectId, null, $user);
-        $filename = 'academics_' . $type . '_' . date('Y-m-d') . '.csv';
+        $filename = 'academics_'.$type.'_'.date('Y-m-d').'.csv';
+
         return response()->streamDownload(function () use ($data, $type) {
             $out = fopen('php://output', 'w');
             $this->writeCsv($out, $type, $data);
@@ -222,6 +227,7 @@ class ReportController extends Controller
     {
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             $institutionId = $user->academic_institution_id;
+
             return;
         }
         if ($user->role === 'faculty') {
@@ -233,13 +239,14 @@ class ReportController extends Controller
             if (empty($facultyBatchIds)) {
                 $institutionId = null;
                 $batchId = null;
+
                 return;
             }
             $allowedInstitutionIds = Batch::whereIn('id', $facultyBatchIds)->distinct()->pluck('institution_id')->all();
-            if ($batchId !== null && $batchId !== '' && !in_array((int) $batchId, array_map('intval', $facultyBatchIds), true)) {
+            if ($batchId !== null && $batchId !== '' && ! in_array((int) $batchId, array_map('intval', $facultyBatchIds), true)) {
                 $batchId = null;
             }
-            if ($institutionId !== null && $institutionId !== '' && !in_array((int) $institutionId, array_map('intval', $allowedInstitutionIds), true)) {
+            if ($institutionId !== null && $institutionId !== '' && ! in_array((int) $institutionId, array_map('intval', $allowedInstitutionIds), true)) {
                 $institutionId = null;
             }
         }
@@ -248,7 +255,7 @@ class ReportController extends Controller
     /** For faculty: ensure subject_id belongs to one of their batches. */
     protected function applySubjectScope($user, &$subjectId): void
     {
-        if ($user->role !== 'faculty' || !$subjectId) {
+        if ($user->role !== 'faculty' || ! $subjectId) {
             return;
         }
         $facultyBatchIds = \DB::table('academic_batch_users')
@@ -257,7 +264,7 @@ class ReportController extends Controller
             ->pluck('batch_id')
             ->all();
         $subject = Subject::find($subjectId);
-        if (!$subject || !in_array((int) $subject->batch_id, array_map('intval', $facultyBatchIds), true)) {
+        if (! $subject || ! in_array((int) $subject->batch_id, array_map('intval', $facultyBatchIds), true)) {
             $subjectId = null;
         }
     }
@@ -276,8 +283,10 @@ class ReportController extends Controller
                 ->where('user_id', $user->id)
                 ->where('type', 'faculty')
                 ->pluck('batch_id');
+
             return Institution::whereIn('id', Batch::whereIn('id', $batchIds)->pluck('institution_id'))->orderBy('name')->get();
         }
+
         return collect();
     }
 
@@ -295,19 +304,21 @@ class ReportController extends Controller
                 ->where('user_id', $user->id)
                 ->where('type', 'faculty')
                 ->pluck('batch_id');
+
             return Batch::with('institution')->whereIn('id', $batchIds)->orderBy('name')->get();
         }
+
         return collect();
     }
 
     /** When batch and subject are both set, subject must belong to that batch; otherwise clear subject to avoid wrong data. */
     protected function ensureSubjectBelongsToBatch($batchId, &$subjectId): void
     {
-        if (!$batchId || !$subjectId) {
+        if (! $batchId || ! $subjectId) {
             return;
         }
         $subject = Subject::find($subjectId);
-        if (!$subject || (int) $subject->batch_id !== (int) $batchId) {
+        if (! $subject || (int) $subject->batch_id !== (int) $batchId) {
             $subjectId = null;
         }
     }
@@ -362,8 +373,10 @@ class ReportController extends Controller
                     $total = $topicQuery->count();
                     $completed = (clone $topicQuery)->where('is_completed', true)->count();
                     $fpi = $total > 0 ? (int) round(($completed / $total) * 100) : 0;
+
                     return [$f->name, $f->email, $total, $completed, $fpi];
                 });
+
                 return ['title' => 'Faculty Performance Report', 'rows' => $rows, 'headers' => ['Faculty', 'Email', 'Topics total', 'Topics completed', 'FPI %']];
 
             case 'topic_completion':
@@ -385,6 +398,7 @@ class ReportController extends Controller
                     $t->name,
                     $t->is_completed ? 'Completed' : 'Pending',
                 ]);
+
                 return ['title' => 'Topic Completion Report', 'rows' => $rows, 'headers' => ['Institution', 'Batch', 'Subject', 'Topic', 'Status']];
 
             case 'student_submission':
@@ -406,8 +420,8 @@ class ReportController extends Controller
                 $studentsQuery = User::whereIn('id', $studentIds)->where('role', 'student')->orderBy('name');
                 $paginator = null;
                 if ($request) {
-                    $perPage = (int) $request->get('per_page', 25);
-                    $perPage = max(1, min(100, $perPage));
+                    $perPage = (int) $request->get('per_page', 10);
+                    $perPage = max(1, min(10, $perPage));
                     $students = $studentsQuery->paginate($perPage)->withQueryString();
                     $paginator = $students;
                 } else {
@@ -442,6 +456,7 @@ class ReportController extends Controller
                 if ($paginator !== null) {
                     $result['paginator'] = $paginator;
                 }
+
                 return $result;
 
             case 'batch_progress':
@@ -451,6 +466,7 @@ class ReportController extends Controller
                     $total = $topicQuery->count();
                     $completed = (clone $topicQuery)->where('is_completed', true)->count();
                     $pct = $total > 0 ? (int) round(($completed / $total) * 100) : 0;
+
                     return [
                         $b->institution->name ?? '—',
                         $b->name,
@@ -459,6 +475,7 @@ class ReportController extends Controller
                         $pct,
                     ];
                 });
+
                 return ['title' => 'Batch Progress Report', 'rows' => $rows, 'headers' => ['Institution', 'Batch', 'Topics total', 'Topics completed', 'Progress %']];
         }
     }
@@ -467,7 +484,7 @@ class ReportController extends Controller
     {
         $headers = $data['headers'] ?? [];
         $rows = $data['rows'] ?? [];
-        if ($type === 'student_submission' && !empty($headers)) {
+        if ($type === 'student_submission' && ! empty($headers)) {
             $headers = array_slice($headers, 0, -1);
         }
         fputcsv($out, $headers);

@@ -21,6 +21,7 @@ class TopicController extends Controller
             return Subject::with('batch.institution')->active()
                 ->whereHas('faculty', fn ($q) => $q->where('user_id', $user->id));
         }
+
         return Subject::with('batch.institution')->whereRaw('1 = 0');
     }
 
@@ -28,6 +29,7 @@ class TopicController extends Controller
     protected function scopeTopics()
     {
         $subjectIds = $this->scopeSubjects()->pluck('id');
+
         return Topic::with(['subject.batch.institution'])->whereIn('subject_id', $subjectIds);
     }
 
@@ -38,14 +40,16 @@ class TopicController extends Controller
         if ($subjectId) {
             $query->where('subject_id', $subjectId);
         }
-        $topics = $query->orderBy('sort_order')->orderBy('name')->paginate(15)->withQueryString();
+        $topics = $query->orderBy('sort_order')->orderBy('name')->paginate(10)->withQueryString();
         $subjects = $this->scopeSubjects()->orderBy('name')->get();
+
         return view('academics::topics.index', compact('topics', 'subjects'));
     }
 
     public function create()
     {
         $subjects = $this->scopeSubjects()->orderBy('name')->get();
+
         return view('academics::topics.create', compact('subjects'));
     }
 
@@ -59,6 +63,7 @@ class TopicController extends Controller
         $this->authorizeSubject($validated['subject_id']);
         $validated['sort_order'] = (int) ($validated['sort_order'] ?? 0);
         Topic::create($validated);
+
         return redirect()->route('academics.topics.index')->with('success', 'Topic created successfully.');
     }
 
@@ -67,6 +72,7 @@ class TopicController extends Controller
         $this->authorizeSubject($topic->subject_id);
         $topic->load('subject.batch.institution');
         $subjects = $this->scopeSubjects()->orderBy('name')->get();
+
         return view('academics::topics.edit', compact('topic', 'subjects'));
     }
 
@@ -81,6 +87,7 @@ class TopicController extends Controller
         $this->authorizeSubject($validated['subject_id']);
         $validated['sort_order'] = (int) ($validated['sort_order'] ?? 0);
         $topic->update($validated);
+
         return redirect()->route('academics.topics.index')->with('success', 'Topic updated successfully.');
     }
 
@@ -88,13 +95,14 @@ class TopicController extends Controller
     {
         $this->authorizeSubject($topic->subject_id);
         $topic->delete();
+
         return redirect()->route('academics.topics.index')->with('success', 'Topic deleted successfully.');
     }
 
     protected function authorizeSubject(int $subjectId): void
     {
         $allowedIds = $this->scopeSubjects()->pluck('id')->toArray();
-        if (!in_array($subjectId, $allowedIds)) {
+        if (! in_array($subjectId, $allowedIds)) {
             abort(403, 'You cannot manage topics for this subject.');
         }
     }

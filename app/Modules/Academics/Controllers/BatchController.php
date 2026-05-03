@@ -3,9 +3,9 @@
 namespace App\Modules\Academics\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Core\User;
 use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Institution;
-use App\Models\Core\User;
 use Illuminate\Http\Request;
 
 class BatchController extends Controller
@@ -13,6 +13,7 @@ class BatchController extends Controller
     protected function scopeBatches()
     {
         $user = auth()->user();
+
         return Batch::with('institution')->forInstitution((int) $user->academic_institution_id);
     }
 
@@ -23,7 +24,8 @@ class BatchController extends Controller
         $batches = $this->scopeBatches()
             ->selectRaw("{$table}.*, (SELECT COUNT(*) FROM {$pivot} WHERE {$pivot}.batch_id = {$table}.id AND {$pivot}.type = ?) AS students_count, (SELECT COUNT(*) FROM {$pivot} WHERE {$pivot}.batch_id = {$table}.id AND {$pivot}.type = ?) AS faculty_count", ['student', 'faculty'])
             ->orderBy('name')
-            ->paginate(15);
+            ->paginate(10);
+
         return view('academics::batches.index', compact('batches'));
     }
 
@@ -34,6 +36,7 @@ class BatchController extends Controller
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             $institutions = $institutions->where('id', $user->academic_institution_id);
         }
+
         return view('academics::batches.create', compact('institutions'));
     }
 
@@ -53,6 +56,7 @@ class BatchController extends Controller
         }
         $validated['is_active'] = $request->boolean('is_active', true);
         Batch::create($validated);
+
         return redirect()->route('academics.batches.index')->with('success', 'Batch created successfully.');
     }
 
@@ -70,6 +74,7 @@ class BatchController extends Controller
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             $facultyAvailable = $facultyAvailable->where('academic_institution_id', $user->academic_institution_id);
         }
+
         return view('academics::batches.edit', compact('batch', 'institutions', 'studentsAvailable', 'facultyAvailable'));
     }
 
@@ -90,6 +95,7 @@ class BatchController extends Controller
         }
         $validated['is_active'] = $request->boolean('is_active', true);
         $batch->update($validated);
+
         return redirect()->route('academics.batches.index')->with('success', 'Batch updated successfully.');
     }
 
@@ -97,6 +103,7 @@ class BatchController extends Controller
     {
         $this->authorizeBatch($batch);
         $batch->delete();
+
         return redirect()->route('academics.batches.index')->with('success', 'Batch deleted successfully.');
     }
 
@@ -119,6 +126,7 @@ class BatchController extends Controller
             $sync[$id] = ['type' => 'faculty'];
         }
         $batch->users()->sync($sync);
+
         return redirect()->route('academics.batches.edit', $batch)->with('success', 'Assignments updated.');
     }
 

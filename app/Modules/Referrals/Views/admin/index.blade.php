@@ -140,9 +140,9 @@
         </div>
         <div class="col-md-4">
             <div class="stat-card info">
-                <div class="stat-value">{{ number_format($overallStats['completed_referrals'] * 10) }}</div>
+                <div class="stat-value">₹{{ number_format($overallStats['total_reward_amount'] ?? 0, 2) }}</div>
                 <div class="stat-label">
-                    <i class="fas fa-star me-2"></i>Total Points (1 ref = 10 pts)
+                    <i class="fas fa-rupee-sign me-2"></i>Total Staff Referral Incentive
                 </div>
             </div>
         </div>
@@ -163,7 +163,7 @@
                                 <p class="mb-0 opacity-75">
                                     {{ ucfirst($overallStats['top_referrer']->role) }} &middot; 
                                     {{ $overallStats['top_referrer']->completed_referrals }} completed referrals &middot; 
-                                    {{ $overallStats['top_referrer']->completed_referrals * 10 }} pts
+                                    ₹{{ number_format($overallStats['top_referrer']->total_reward_amount ?? 0, 2) }}
                                 </p>
                             </div>
                             <div class="col-md-4 text-md-end">
@@ -225,7 +225,7 @@
                                         <th style="width: 15%;">Referral Code</th>
                                         <th style="width: 10%;" class="text-center">Completed</th>
                                         <th style="width: 10%;" class="text-center">Pending</th>
-                                        <th style="width: 15%;" class="text-center">Points (1 ref = 10 pts)</th>
+                                        <th style="width: 15%;" class="text-center">Incentive Amount</th>
                                         <th style="width: 10%;" class="text-center">Actions</th>
                                     </tr>
                                 </thead>
@@ -273,7 +273,7 @@
                                             </td>
                                             <td class="text-center">
                                                 <span class="fw-bold text-primary" style="font-size: 1.1rem;">
-                                                    <i class="fas fa-star me-1"></i>{{ $staff->completed_referrals * 10 }} pts
+                                                    <i class="fas fa-rupee-sign me-1"></i>₹{{ number_format($staff->total_reward_amount ?? 0, 2) }}
                                                 </span>
                                             </td>
                                             <td class="text-center">
@@ -320,7 +320,7 @@
                                         <th style="width: 20%;">Referred User (Who Registered)</th>
                                         <th style="width: 12%;">Referral Code</th>
                                         <th style="width: 10%;" class="text-center">Status</th>
-                                        <th style="width: 15%;" class="text-center">Points</th>
+                                        <th style="width: 15%;" class="text-center">Incentive</th>
                                         <th style="width: 15%;" class="text-center">Completed At</th>
                                     </tr>
                                 </thead>
@@ -379,7 +379,7 @@
                                             </td>
                                             <td class="text-center">
                                                 <span class="fw-bold text-primary" style="font-size: 1.1rem;">
-                                                    <i class="fas fa-gift me-1"></i>{{ $referral->reward_points }}
+                                                    <i class="fas fa-rupee-sign me-1"></i>₹{{ number_format($referral->reward_amount ?? 0, 2) }}
                                                 </span>
                                             </td>
                                             <td class="text-center">

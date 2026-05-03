@@ -186,6 +186,58 @@
             border-bottom: 1px solid rgba(148, 163, 184, 0.25);
             margin-bottom: 1.5rem;
         }
+
+        /* Global readability baseline across CRM pages */
+        .main-content,
+        .main-content .card,
+        .main-content .card-body,
+        .main-content .card-header,
+        .main-content .table,
+        .main-content .table td,
+        .main-content .table th,
+        .main-content p,
+        .main-content span,
+        .main-content small,
+        .main-content div,
+        .main-content label,
+        .main-content h1,
+        .main-content h2,
+        .main-content h3,
+        .main-content h4,
+        .main-content h5,
+        .main-content h6 {
+            color: #1f2937;
+        }
+
+        .main-content .text-muted {
+            color: #6b7280 !important;
+        }
+
+        /* Preserve white text for intentional dark/gradient backgrounds */
+        .main-content .bg-dark,
+        .main-content .bg-primary,
+        .main-content .bg-secondary,
+        .main-content .bg-success,
+        .main-content .bg-danger,
+        .main-content .bg-info,
+        .main-content .bg-warning,
+        .main-content .bg-dark *,
+        .main-content .bg-primary *,
+        .main-content .bg-secondary *,
+        .main-content .bg-success *,
+        .main-content .bg-danger *,
+        .main-content .bg-info *,
+        .main-content .bg-warning *,
+        .main-content .referral-link-header,
+        .main-content .referral-link-header *,
+        .main-content .service-card-header,
+        .main-content .service-card-header *,
+        .main-content .total-earnings-banner,
+        .main-content .total-earnings-banner *,
+        .main-content [class*="bg-gradient"],
+        .main-content [class*="bg-gradient"] * {
+            color: #ffffff !important;
+        }
     </style>
     
     <style>
@@ -232,13 +284,19 @@
                         
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link text-white {{ request()->routeIs('community.*') || request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') || request()->routeIs('academics.*') ? 'active' : '' }}" href="{{ auth()->user()->hasAcademicRole() ? route('academics.dashboard') : route('community.index') }}">
+                                <a class="nav-link text-white {{ auth()->user()->hasAcademicRole() ? (request()->routeIs('academics.dashboard') ? 'active' : '') : ((request()->routeIs('community.*') || request()->routeIs('dashboard')) ? 'active' : '') }}" href="{{ auth()->user()->hasAcademicRole() ? route('academics.dashboard') : route('community.index') }}">
                                     <i class="fas fa-home me-2"></i>
                                     {{ auth()->user()->hasAcademicRole() ? 'Academics' : 'Community Hub' }}
                                 </a>
                             </li>
                             
                             @if(auth()->user()->hasAcademicRole())
+                            <li class="nav-item">
+                                <a class="nav-link text-white {{ request()->routeIs('community.*') ? 'active' : '' }}" href="{{ route('community.index') }}">
+                                    <i class="fas fa-users me-2"></i>
+                                    Community
+                                </a>
+                            </li>
                             {{-- Super Admin: Institutions + Reports only (no batches, subjects, topics, assignments, attendance) --}}
                             @if(auth()->user()->role === 'super_admin')
                             <li class="nav-item">
@@ -541,6 +599,13 @@
                                     </a>
                                 </li>
                                 
+                                <li class="nav-item mt-4 pt-3 border-top border-secondary">
+                                    <a class="nav-link text-white {{ request()->routeIs('admin.backups.*') ? 'active' : '' }}" href="{{ route('admin.backups.index') }}">
+                                        <i class="fas fa-database me-2"></i>
+                                        Site backups
+                                    </a>
+                                </li>
+
                                 <!-- Danger Zone - System Reset -->
                                 <li class="nav-item mt-4 pt-3 border-top border-danger">
                                     <a class="nav-link text-danger {{ request()->routeIs('admin.system.reset') ? 'active' : '' }}" href="{{ route('admin.system.reset') }}">
@@ -591,6 +656,126 @@
                             <i class="fas fa-exclamation-circle me-2"></i>
                             {{ session('error') }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+
+                    @if(!empty($hasPendingContactUpdate))
+                        <div class="alert alert-secondary app-alert" role="alert">
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap w-100">
+                                <div>
+                                    <div class="fw-semibold mb-1"><i class="fas fa-lock me-2"></i>Action required: verify your updated contact</div>
+                                    <div class="small">
+                                        You recently requested an email/mobile change. Please complete contact OTP verification first.
+                                        Until this is done, other OTP tasks (referral/reward/service) are temporarily paused to avoid mismatch.
+                                    </div>
+                                </div>
+                                <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-outline-dark">
+                                    <i class="fas fa-shield-check me-1"></i>Open Contact Verification
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($pendingReferralOtpBanner) && empty($hasPendingContactUpdate))
+                        <div class="alert alert-warning app-alert" role="alert">
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                <div>
+                                    <div class="fw-semibold mb-1"><i class="fas fa-shield-alt me-2"></i>Referral verification pending</div>
+                                    <div class="small">
+                                        Your referral onboarding is still pending OTP verification.
+                                        Last OTP destination:
+                                        <strong>{{ $pendingReferralOtpBanner->verification_otp_sent_to ?: 'not sent yet' }}</strong>.
+                                        Your referral reward is unlocked only after successful OTP verification.
+                                    </div>
+                                    @if(!empty($pendingReferralOtpContacts))
+                                        <div class="small mt-1 text-muted">
+                                            Registered mobile: <strong>{{ $pendingReferralOtpContacts['mobile'] ?? 'Not available' }}</strong>
+                                            &nbsp;|&nbsp;
+                                            Registered email: <strong>{{ $pendingReferralOtpContacts['email'] ?? 'Not available' }}</strong>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <form method="POST" action="{{ route('staff.referrals.verify-otp') }}" class="d-flex gap-2">
+                                        @csrf
+                                        <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="6-digit OTP" required style="width: 120px;">
+                                        <button type="submit" class="btn btn-sm btn-warning fw-semibold">Verify OTP</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('staff.referrals.resend-otp') }}" class="d-flex gap-2">
+                                        @csrf
+                                        <select name="otp_channel" class="form-select form-select-sm" style="min-width: 150px;" required>
+                                            <option value="mobile">Resend on Mobile</option>
+                                            <option value="email">Resend on Email</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-dark">Resend OTP</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($pendingRewardOtpBanner) && empty($hasPendingContactUpdate))
+                        <div class="alert alert-info app-alert" role="alert">
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                <div>
+                                    <div class="fw-semibold mb-1"><i class="fas fa-gift me-2"></i>Patient reward verification pending</div>
+                                    <div class="small">
+                                        Patient reward for <strong>{{ $pendingRewardOtpBanner->patient_name }}</strong> is pending OTP verification.
+                                        Credit is added only after OTP verification.
+                                        @if(!empty($pendingRewardOtpBanner->verification_otp_sent_to))
+                                            Last sent to: <strong>{{ $pendingRewardOtpBanner->verification_otp_sent_to }}</strong>.
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <form method="POST" action="{{ route('rewards.verify-otp-banner', $pendingRewardOtpBanner) }}" class="d-flex gap-2">
+                                        @csrf
+                                        <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="6-digit OTP" required style="width: 120px;">
+                                        <button type="submit" class="btn btn-sm btn-info text-white fw-semibold">Verify OTP</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('rewards.send-otp-banner', $pendingRewardOtpBanner) }}" class="d-flex gap-2">
+                                        @csrf
+                                        <select name="otp_channel" class="form-select form-select-sm" style="min-width: 150px;" required>
+                                            <option value="mobile">Resend on Mobile</option>
+                                            <option value="email" {{ empty($pendingRewardOtpBanner->patient_email) ? 'disabled' : '' }}>Resend on Email</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-info">Resend OTP</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($pendingServiceCompletionBanner) && empty($hasPendingContactUpdate))
+                        <div class="alert alert-primary app-alert" role="alert">
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                <div>
+                                    <div class="fw-semibold mb-1"><i class="fas fa-briefcase-medical me-2"></i>Service completion verification pending</div>
+                                    <div class="small">
+                                        Service #{{ $pendingServiceCompletionBanner->id }} for
+                                        <strong>{{ optional($pendingServiceCompletionBanner->patient)->name ?? 'patient' }}</strong>
+                                        requires OTP verification before completion is counted.
+                                        @if(!empty($pendingServiceCompletionBanner->completion_otp_sent_to))
+                                            Last sent to: <strong>{{ $pendingServiceCompletionBanner->completion_otp_sent_to }}</strong>.
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <form method="POST" action="{{ route('staff.service.complete-banner', $pendingServiceCompletionBanner) }}" class="d-flex gap-2">
+                                        @csrf
+                                        <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="6-digit OTP" required style="width: 120px;">
+                                        <button type="submit" class="btn btn-sm btn-primary fw-semibold">Verify & Complete</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('staff.service.completion-otp-banner', $pendingServiceCompletionBanner) }}" class="d-flex gap-2">
+                                        @csrf
+                                        <select name="otp_channel" class="form-select form-select-sm" style="min-width: 150px;" required>
+                                            <option value="mobile">Send to Mobile</option>
+                                            <option value="email">Send to Email</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Send OTP</button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     @endif
                     

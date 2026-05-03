@@ -14,6 +14,7 @@ class SubjectController extends Controller
     protected function scopeBatches()
     {
         $user = auth()->user();
+
         return Batch::with('institution')->forInstitution((int) $user->academic_institution_id);
     }
 
@@ -28,14 +29,16 @@ class SubjectController extends Controller
         if ($batchId) {
             $query->where('batch_id', $batchId);
         }
-        $subjects = $query->orderBy('name')->paginate(15)->withQueryString();
+        $subjects = $query->orderBy('name')->paginate(10)->withQueryString();
         $batches = $this->scopeBatches()->orderBy('name')->get();
+
         return view('academics::subjects.index', compact('subjects', 'batches'));
     }
 
     public function create()
     {
         $batches = $this->scopeBatches()->active()->orderBy('name')->get();
+
         return view('academics::subjects.create', compact('batches'));
     }
 
@@ -50,6 +53,7 @@ class SubjectController extends Controller
         $this->authorizeBatch($validated['batch_id']);
         $validated['is_active'] = $request->boolean('is_active', true);
         Subject::create($validated);
+
         return redirect()->route('academics.subjects.index')->with('success', 'Subject created successfully.');
     }
 
@@ -63,6 +67,7 @@ class SubjectController extends Controller
             ->where('academic_institution_id', $institutionId)
             ->orderBy('name')
             ->get();
+
         return view('academics::subjects.edit', compact('subject', 'batches', 'facultyAvailable'));
     }
 
@@ -78,6 +83,7 @@ class SubjectController extends Controller
         $this->authorizeBatch($validated['batch_id']);
         $validated['is_active'] = $request->boolean('is_active', true);
         $subject->update($validated);
+
         return redirect()->route('academics.subjects.index')->with('success', 'Subject updated successfully.');
     }
 
@@ -85,6 +91,7 @@ class SubjectController extends Controller
     {
         $this->authorizeBatch($subject->batch_id);
         $subject->delete();
+
         return redirect()->route('academics.subjects.index')->with('success', 'Subject deleted successfully.');
     }
 

@@ -16,29 +16,31 @@ class FacultyController extends Controller
     public function index()
     {
         $user = auth()->user();
-        if ($user->role !== 'institution_admin' || !$user->academic_institution_id) {
+        if ($user->role !== 'institution_admin' || ! $user->academic_institution_id) {
             abort(403, 'Only institution admins can manage faculty.');
         }
         $faculty = User::where('role', 'faculty')
             ->where('academic_institution_id', $user->academic_institution_id)
             ->orderBy('name')
-            ->paginate(20);
+            ->paginate(10);
+
         return view('academics::faculty.index', compact('faculty'));
     }
 
     public function create()
     {
         $user = auth()->user();
-        if ($user->role !== 'institution_admin' || !$user->academic_institution_id) {
+        if ($user->role !== 'institution_admin' || ! $user->academic_institution_id) {
             abort(403, 'Only institution admins can add faculty.');
         }
+
         return view('academics::faculty.create');
     }
 
     public function store(Request $request)
     {
         $user = auth()->user();
-        if ($user->role !== 'institution_admin' || !$user->academic_institution_id) {
+        if ($user->role !== 'institution_admin' || ! $user->academic_institution_id) {
             abort(403, 'Only institution admins can add faculty.');
         }
         $validated = $request->validate([
@@ -60,6 +62,7 @@ class FacultyController extends Controller
                 'location' => \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)"),
             ]);
         }
+
         return redirect()->route('academics.faculty.index')->with('success', 'Faculty added successfully. Assign them to batches via Batches → Edit batch.');
     }
 }

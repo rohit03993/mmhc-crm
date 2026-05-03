@@ -63,59 +63,74 @@
     @if(auth()->user()->isAdmin() || auth()->user()->isNurse() || auth()->user()->isCaregiver())
     <div class="card mb-3 composer-card community-surface-card" id="composerCard">
         <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="mb-0">Create Post</h5>
-                <small class="text-muted">Visible to all logged-in users</small>
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3 composer-head">
+                <div>
+                    <h5 class="mb-1 d-flex align-items-center gap-2">
+                        <span class="composer-icon"><i class="fas fa-pen-nib"></i></span>
+                        Create Post
+                    </h5>
+                    <p class="composer-subtitle mb-0">Share updates with your team in a cleaner, faster way.</p>
+                </div>
+                <small class="composer-audience">
+                    <i class="fas fa-eye me-1"></i>Visible to all logged-in users
+                </small>
             </div>
             <form method="POST" action="{{ route('community.posts.store') }}" enctype="multipart/form-data">
                 @csrf
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-3 col-lg-2">
-                        <label class="form-label">Type</label>
-                        <select name="post_type" id="postType" class="form-select" required onchange="togglePostFields()">
-                            <option value="text">Text</option>
-                            <option value="image">Image</option>
+                <div class="row g-3 align-items-end">
+                    <div class="col-12">
+                        <label class="form-label composer-label">Message</label>
+                        <textarea name="content" id="postContent" class="form-control composer-textarea" rows="3" placeholder="Share an update with the team...">{{ old('content') }}</textarea>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small class="text-muted">Tip: keep it short and actionable.</small>
+                            <small class="text-muted"><span id="postContentCount">0</span> chars</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-3">
+                        <label class="form-label composer-label">Type</label>
+                        <select name="post_type" id="postType" class="form-select composer-select" required onchange="togglePostFields()">
+                            <option value="text">Quick Text</option>
+                            <option value="image">Photo Update</option>
                             @if(auth()->user()->isAdmin())
-                                <option value="event">Event</option>
+                                <option value="event">Event Notice</option>
                             @endif
                         </select>
                     </div>
-                    <div class="col-md-9 col-lg-10">
-                        <label class="form-label">Message</label>
-                        <textarea name="content" class="form-control" rows="2" placeholder="Share an update with the team...">{{ old('content') }}</textarea>
-                    </div>
                     @if(auth()->user()->isAdmin())
-                    <div class="col-12 col-md-6 col-lg-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" name="is_pinned" id="isPinned">
-                            <label class="form-check-label" for="isPinned">Pin to top</label>
-                        </div>
-                        <div class="form-check mt-1">
-                            <input class="form-check-input" type="checkbox" value="1" name="is_announcement" id="isAnnouncement">
-                            <label class="form-check-label" for="isAnnouncement">Mark as announcement</label>
+                    <div class="col-12 col-md-8 col-lg-5">
+                        <div class="composer-switches">
+                            <div class="form-check composer-check">
+                                <input class="form-check-input" type="checkbox" value="1" name="is_pinned" id="isPinned">
+                                <label class="form-check-label" for="isPinned"><i class="fas fa-thumbtack me-1 text-danger"></i>Pin to top</label>
+                            </div>
+                            <div class="form-check composer-check">
+                                <input class="form-check-input" type="checkbox" value="1" name="is_announcement" id="isAnnouncement">
+                                <label class="form-check-label" for="isAnnouncement"><i class="fas fa-bullhorn me-1 text-primary"></i>Mark as announcement</label>
+                            </div>
                         </div>
                     </div>
                     @endif
                     <div class="col-md-6 col-lg-4 d-none" id="imageField">
-                        <label class="form-label">Image</label>
+                        <label class="form-label composer-label">Image</label>
                         <input type="file" name="image" class="form-control" accept="image/*">
                     </div>
                     <div class="col-md-4 d-none" id="eventTitleField">
-                        <label class="form-label">Event Title</label>
+                        <label class="form-label composer-label">Event Title</label>
                         <input type="text" name="event_title" class="form-control" value="{{ old('event_title') }}">
                     </div>
                     <div class="col-md-4 d-none" id="eventDateField">
-                        <label class="form-label">Event Date</label>
+                        <label class="form-label composer-label">Event Date</label>
                         <input type="datetime-local" name="event_date" class="form-control" value="{{ old('event_date') }}">
                     </div>
                     <div class="col-md-4 d-none" id="eventLocationField">
-                        <label class="form-label">Event Location</label>
+                        <label class="form-label composer-label">Event Location</label>
                         <input type="text" name="event_location" class="form-control" value="{{ old('event_location') }}">
                     </div>
                 </div>
-                <div class="mt-2">
+                <div class="mt-3 d-flex align-items-center justify-content-between gap-2 flex-wrap composer-actions">
+                    <span class="composer-hint"><i class="fas fa-shield-alt me-1"></i>Posts are visible only inside CRM.</span>
                     <button type="submit" class="btn btn-primary px-4 submit-post-btn">
-                        <i class="fas fa-paper-plane me-1"></i>Publish
+                        <i class="fas fa-paper-plane me-1"></i>Publish Post
                     </button>
                 </div>
             </form>
@@ -186,8 +201,79 @@
     .community-page .community-stat strong { font-size: 0.95rem; }
     .community-page .community-stat span { font-size: 0.75rem; opacity: 0.9; }
     .community-page .composer-card {
+        border-radius: 16px;
+        border: 1px solid #dbe7ff;
+        background:
+            radial-gradient(900px 140px at top right, rgba(59, 130, 246, 0.08), transparent 45%),
+            linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        box-shadow: 0 16px 30px rgba(30, 41, 59, 0.08) !important;
+    }
+    .community-page .composer-head {
+        padding: 0.2rem 0.15rem 0.75rem;
+        border-bottom: 1px dashed #dbe3f0;
+    }
+    .community-page .composer-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        color: #ffffff;
+        font-size: 0.88rem;
+        box-shadow: 0 6px 14px rgba(37, 99, 235, 0.28);
+    }
+    .community-page .composer-subtitle { color: #64748b; font-size: 0.83rem; }
+    .community-page .composer-audience {
+        color: #1e3a8a;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 999px;
+        padding: 0.28rem 0.68rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+    }
+    .community-page .composer-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 0.3rem;
+    }
+    .community-page .composer-select {
+        min-height: 44px;
+        font-weight: 600;
+        background: #ffffff;
+    }
+    .community-page .composer-textarea {
+        min-height: 104px;
+        border-radius: 12px !important;
+        font-size: 0.94rem;
+        line-height: 1.5;
+        padding: 0.72rem 0.8rem;
+        background: #ffffff;
+    }
+    .community-page .composer-switches {
+        background: linear-gradient(180deg, #f8fbff 0%, #f1f5f9 100%);
+        border: 1px solid #dbe3f0;
         border-radius: 12px;
-        border: 1px solid var(--community-border);
+        padding: 0.65rem 0.78rem;
+    }
+    .community-page .composer-check + .composer-check { margin-top: 0.28rem; }
+    .community-page .composer-check .form-check-label { font-weight: 500; color: #334155; }
+    .community-page .composer-actions { border-top: 1px solid #e2e8f0; padding-top: 0.85rem; }
+    .community-page #imageField,
+    .community-page #eventTitleField,
+    .community-page #eventDateField,
+    .community-page #eventLocationField {
+        transition: all 160ms ease;
+    }
+    .community-page .composer-hint {
+        font-size: 0.73rem;
+        color: #475569;
+        font-weight: 500;
     }
     .community-page .composer-card .form-control,
     .community-page .composer-card .form-select {
@@ -265,9 +351,11 @@
         background: #f8fafc;
     }
     .community-page .submit-post-btn {
-        min-height: 34px;
-        border-radius: 8px;
-        font-size: 0.875rem;
+        min-height: 40px;
+        border-radius: 999px;
+        font-size: 0.86rem;
+        font-weight: 700;
+        box-shadow: 0 8px 16px rgba(37, 99, 235, 0.28);
     }
     .community-page .floating-compose-btn {
         position: fixed;
@@ -353,6 +441,8 @@ document.addEventListener('DOMContentLoaded', togglePostFields);
 document.addEventListener('DOMContentLoaded', () => {
     const composeBtn = document.getElementById('floatingComposeBtn');
     const composerCard = document.getElementById('composerCard');
+    const contentInput = document.getElementById('postContent');
+    const contentCount = document.getElementById('postContentCount');
     if (composeBtn && composerCard) {
         composeBtn.addEventListener('click', () => {
             composerCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -361,6 +451,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 textarea.focus({ preventScroll: true });
             }
         });
+    }
+    if (contentInput && contentCount) {
+        const syncCount = () => { contentCount.textContent = String(contentInput.value.length); };
+        contentInput.addEventListener('input', syncCount);
+        syncCount();
     }
 });
 </script>

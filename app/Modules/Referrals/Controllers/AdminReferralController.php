@@ -3,11 +3,11 @@
 namespace App\Modules\Referrals\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Referrals\Services\ReferralService;
 use App\Models\Core\User;
+use App\Modules\Incentives\Models\IncentiveLedger;
 use App\Modules\Referrals\Models\Referral;
+use App\Modules\Referrals\Services\ReferralService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class AdminReferralController extends Controller
 {
@@ -28,33 +28,33 @@ class AdminReferralController extends Controller
             ->whereHas('referrals')
             ->withCount([
                 'referrals as total_referrals',
-                'referrals as completed_referrals' => function($query) {
+                'referrals as completed_referrals' => function ($query) {
                     $query->where('status', 'completed')->whereNotNull('referred_id');
                 },
-                'referrals as pending_referrals' => function($query) {
+                'referrals as pending_referrals' => function ($query) {
                     $query->where('status', 'pending')->whereNull('referred_id');
-                }
+                },
             ])
             ->get()
-            ->map(function($staff) {
-                // Calculate total reward points and amount for this staff
-                $totalPoints = Referral::where('referrer_id', $staff->id)
-                    ->where('status', 'completed')
-                    ->whereNotNull('referred_id')
-                    ->sum('reward_points');
-                
-                $totalAmount = Referral::where('referrer_id', $staff->id)
-                    ->where('status', 'completed')
-                    ->whereNotNull('referred_id')
-                    ->sum('reward_amount');
-                
+            ->map(function ($staff) {
+                // Staff referral incentives are ledger-based (fallback to referral rows if missing ledger).
+                $totalAmount = (float) IncentiveLedger::query()
+                    ->where('staff_id', $staff->id)
+                    ->where('source_type', IncentiveLedger::SOURCE_REFERRAL)
+                    ->sum('final_amount');
+                if ($totalAmount <= 0) {
+                    $totalAmount = (float) Referral::where('referrer_id', $staff->id)
+                        ->where('status', 'completed')
+                        ->whereNotNull('referred_id')
+                        ->sum('reward_amount');
+                }
+
                 // Get referral code using the service
                 $referralCode = $this->referralService->getOrCreateReferralCode($staff);
-                
-                $staff->total_reward_points = $totalPoints;
+
                 $staff->total_reward_amount = $totalAmount;
                 $staff->referral_code = $referralCode;
-                
+
                 return $staff;
             })
             ->sortByDesc('completed_referrals');
@@ -63,7 +63,7 @@ class AdminReferralController extends Controller
         $allReferrals = Referral::with(['referrer', 'referred'])
             ->whereNotNull('referred_id')
             ->orderBy('completed_at', 'desc')
-            ->paginate(20);
+            ->paginate(10);
 
         // Overall statistics
         $overallStats = [
@@ -75,12 +75,9 @@ class AdminReferralController extends Controller
             'pending_referrals' => Referral::where('status', 'pending')
                 ->whereNull('referred_id')
                 ->count(),
-            'total_reward_points' => Referral::where('status', 'completed')
-                ->whereNotNull('referred_id')
-                ->sum('reward_points'),
-            'total_reward_amount' => Referral::where('status', 'completed')
-                ->whereNotNull('referred_id')
-                ->sum('reward_amount'),
+            'total_reward_amount' => (float) IncentiveLedger::query()
+                ->where('source_type', IncentiveLedger::SOURCE_REFERRAL)
+                ->sum('final_amount'),
             'top_referrer' => $staffWithReferrals->first(),
         ];
 
@@ -93,7 +90,7 @@ class AdminReferralController extends Controller
                     ->whereNotNull('referred_id')
                     ->with(['referrer', 'referred'])
                     ->orderBy('completed_at', 'desc')
-                    ->paginate(20);
+                    ->paginate(10);
             }
         }
 
@@ -111,25 +108,25 @@ class AdminReferralController extends Controller
     public function showStaffReferrals(User $staff)
     {
         // Ensure user is staff
-        if (!$staff->isStaff()) {
+        if (! $staff->isStaff()) {
             abort(404, 'Staff member not found');
         }
 
         // Get staff referral statistics
         $referralStats = $this->referralService->getReferralStats($staff);
-        
+
         // Get referral history
         $referrals = Referral::where('referrer_id', $staff->id)
             ->whereNotNull('referred_id')
             ->with('referred')
             ->orderBy('completed_at', 'desc')
-            ->paginate(20);
+            ->paginate(10);
 
         // Get referral code using the service
         $referralCode = $this->referralService->getOrCreateReferralCode($staff);
-        
+
         $referralLink = route('auth.register', ['ref' => $referralCode]);
-        
+
         // Get first referral record for display
         $firstReferralRecord = Referral::where('referrer_id', $staff->id)
             ->where('referral_code', $referralCode)
