@@ -31,6 +31,60 @@ class ProfileController extends Controller
     }
 
     /**
+     * Active / recent subscription context for patient profile.
+     */
+    protected function getPatientSubscriptionSummary(User $user): ?array
+    {
+        if (! $user->isPatient()) {
+            return null;
+        }
+
+        $active = Subscription::query()
+            ->where('user_id', $user->id)
+            ->where('status', 'active')
+            ->where('end_date', '>', now())
+            ->with('plan')
+            ->orderByDesc('end_date')
+            ->first();
+
+        return [
+            'active' => $active,
+            'total_records' => (int) Subscription::where('user_id', $user->id)->count(),
+        ];
+    }
+
+    /**
+     * Document bucket counts for profile dashboard (aligned with upload types).
+     */
+    protected function getProfileDocumentCategoryCounts(User $user): array
+    {
+        if ($user->isPatient()) {
+            return [
+                'medical_group' => (int) $user->documents()->whereIn('document_type', ['medical_report', 'lab_report', 'past_medical_history'])->count(),
+                'aadhaar' => (int) $user->documents()->where('document_type', 'aadhaar_card')->count(),
+                'prescription' => (int) $user->documents()->where('document_type', 'prescription')->count(),
+                'insurance' => (int) $user->documents()->where('document_type', 'insurance_card')->count(),
+            ];
+        }
+
+        if ($user->isStaff()) {
+            return [
+                'certificate' => (int) $user->documents()->where('document_type', 'certificate')->count(),
+                'id_proof' => (int) $user->documents()->where('document_type', 'id_proof')->count(),
+                'medical_license' => (int) $user->documents()->where('document_type', 'medical_license')->count(),
+                'insurance' => (int) $user->documents()->where('document_type', 'insurance')->count(),
+            ];
+        }
+
+        return [
+            'certificate' => 0,
+            'id_proof' => 0,
+            'medical_license' => 0,
+            'insurance' => 0,
+        ];
+    }
+
+    /**
      * Show user profile
      */
     public function index()
@@ -38,8 +92,15 @@ class ProfileController extends Controller
         try {
             $user = Auth::user();
             $profile = $this->profileService->getProfile($user);
+            $subscriptionSummary = $this->getPatientSubscriptionSummary($user);
+            $documentCategoryCounts = $this->getProfileDocumentCategoryCounts($user);
 
-            return view('profiles::profile.index', compact('user', 'profile'));
+            return view('profiles::profile.index', compact(
+                'user',
+                'profile',
+                'subscriptionSummary',
+                'documentCategoryCounts'
+            ));
         } catch (\Exception $e) {
             Log::error('Profile load failed', ['user_id' => Auth::id(), 'error' => $e->getMessage()]);
 

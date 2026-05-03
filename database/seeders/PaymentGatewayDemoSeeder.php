@@ -36,6 +36,15 @@ class PaymentGatewayDemoSeeder extends Seeder
             $staff->update(['upi_id' => $staffUpi]);
         }
 
+        $planOptions = $plan->payment_options ?? [];
+        $monthly = is_array($planOptions) ? ($planOptions['monthly'] ?? null) : null;
+        $baseAmount = (float) ($monthly['price'] ?? $plan->monthly_price ?? 999.00);
+        $gstRate = 18.00;
+        $gstAmount = round(($baseAmount * $gstRate) / 100, 2);
+        $totalAmount = round($baseAmount + $gstAmount, 2);
+        $startDate = Carbon::today()->subDay();
+        $endDate = (clone $startDate)->copy()->addMonth();
+
         $subscription = Subscription::query()->updateOrCreate(
             ['notes' => 'DEMO_RAZORPAY_SUBSCRIPTION_SUCCESS'],
             [
@@ -44,15 +53,15 @@ class PaymentGatewayDemoSeeder extends Seeder
                 'referrer_id' => $staff->id,
                 'payment_frequency' => 'monthly',
                 'status' => 'active',
-                'start_date' => Carbon::today()->subDay(),
-                'end_date' => Carbon::today()->addMonth(),
-                'care_benefits_years' => 0,
-                'payable_years' => 1,
-                'base_amount' => 3000,
-                'gst_amount' => 540,
-                'gst_rate' => 18,
-                'total_amount' => 3540,
-                'paid_amount' => 3540,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'care_benefits_years' => (int) ($monthly['care_benefits_years'] ?? 0),
+                'payable_years' => (int) ($monthly['payable_years'] ?? 0),
+                'base_amount' => $baseAmount,
+                'gst_amount' => $gstAmount,
+                'gst_rate' => $gstRate,
+                'total_amount' => $totalAmount,
+                'paid_amount' => $totalAmount,
                 'payment_status' => 'paid',
                 'payment_provider' => 'razorpay',
                 'gateway_status' => 'captured',

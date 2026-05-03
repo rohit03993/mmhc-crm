@@ -44,7 +44,7 @@
                         </div>
                         <div class="col-6 col-md-4">
                             <small class="text-muted d-block">Status</small>
-                            <span class="badge badge-{{ $subscription->status_color }} fs-6">
+                            <span class="badge bg-{{ $subscription->status_color }} fs-6">
                                 {{ $subscription->status_display }}
                             </span>
                         </div>
@@ -134,12 +134,18 @@
                         </div>
                     </div>
 
-                    @if($subscription->payable_years > 0 || $subscription->care_benefits_years > 0)
-                    <div class="alert alert-info mt-3 mb-0">
-                        <i class="fas fa-gift me-2"></i>
-                        <strong>{{ $subscription->payable_years }} years payable</strong> + 
-                        <strong>{{ $subscription->care_benefits_years }} years extra</strong> = 
-                        <strong>{{ $subscription->payable_years + $subscription->care_benefits_years }} years total care coverage</strong>
+                    @include('plans::subscriptions.partials.enrolled-package-summary', ['subscription' => $subscription, 'variant' => 'admin'])
+
+                    @if($subscription->isDemoSeeded())
+                    <div class="border-top pt-3 mt-3">
+                        <h6 class="text-muted small text-uppercase mb-2">Demo data tools</h6>
+                        <p class="small text-muted mb-2 mb-md-3">This subscription is tagged as <strong>demo-seeded</strong> (notes marker). Resync overwrites base, GST, total, paid amount, care years, and end date from the current plan catalogue for its payment frequency — real customer rows are never affected by this action.</p>
+                        <form action="{{ route('admin.subscriptions.reconcile-demo-catalogue', $subscription) }}" method="POST" onsubmit="return confirm('Overwrite this demo subscription from the plan catalogue?');">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-sync-alt me-1"></i>Resync from plan catalogue (demo only)
+                            </button>
+                        </form>
                     </div>
                     @endif
                 </div>

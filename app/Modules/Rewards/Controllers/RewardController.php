@@ -3,9 +3,12 @@
 namespace App\Modules\Rewards\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Core\User;
 use App\Modules\Rewards\Models\CaregiverReward;
 use App\Modules\Rewards\Services\RewardService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -220,19 +223,124 @@ class RewardController extends Controller
     /**
      * Display a listing of rewards for admin overview.
      */
-    public function adminIndex()
+    public function adminIndex(Request $request)
     {
-        $rewards = CaregiverReward::with('user')
-            ->latest()
-            ->paginate(10);
+        $submissionsQuery = CaregiverReward::with('user')->latest();
 
-        $totalPoints = CaregiverReward::sum('reward_points');
-        $totalAmount = CaregiverReward::sum('reward_amount');
+        $selectedStaff = null;
+        if ($request->filled('user_id')) {
+            $selectedStaff = User::find((int) $request->user_id);
+            if ($selectedStaff && $selectedStaff->isStaff()) {
+                $submissionsQuery->where('user_id', $selectedStaff->id);
+            } else {
+                $selectedStaff = null;
+            }
+        }
+
+        $rewards = $submissionsQuery->paginate(15)->withQueryString();
+
+        $totalEntryCount = (int) CaregiverReward::count();
+        $totalPoints = (int) CaregiverReward::sum('reward_points');
+        $totalAmount = (float) CaregiverReward::sum('reward_amount');
+
+        $staffWithSubmissions = $this->buildStaffPatientRewardLeaderboard();
+        $rankByUserId = $staffWithSubmissions->mapWithKeys(fn ($user, $idx) => [$user->id => $idx + 1]);
+
+        $leaderboardPerPage = 15;
+        $leaderTotal = $staffWithSubmissions->count();
+        $lastLeaderPage = max(1, (int) ceil($leaderTotal / $leaderboardPerPage));
+        $leaderPage = min($lastLeaderPage, max(1, (int) $request->input('leaderboard_page', 1)));
+        $leaderboardPaginator = new LengthAwarePaginator(
+            $staffWithSubmissions->forPage($leaderPage, $leaderboardPerPage)->values(),
+            $leaderTotal,
+            $leaderboardPerPage,
+            $leaderPage,
+            [
+                'path' => $request->url(),
+                'pageName' => 'leaderboard_page',
+            ]
+        );
+        $leaderboardPaginator->withQueryString();
 
         return view('rewards::admin.index', [
             'rewards' => $rewards,
+            'totalEntryCount' => $totalEntryCount,
             'totalPoints' => $totalPoints,
             'totalAmount' => $totalAmount,
+            'staffWithSubmissions' => $staffWithSubmissions,
+            'leaderboardPaginator' => $leaderboardPaginator,
+            'rankByUserId' => $rankByUserId,
+            'topSubmitter' => $staffWithSubmissions->first(),
+            'selectedStaff' => $selectedStaff,
         ]);
+    }
+
+    /**
+     * Admin: per-staff patient reward detail (profile + history), similar to referral staff details.
+     */
+    public function adminStaffDetail(User $staff)
+    {
+        if (! $staff->isStaff()) {
+            abort(404, 'Staff member not found');
+        }
+
+        $leaderboard = $this->buildStaffPatientRewardLeaderboard();
+        $rankIdx = $leaderboard->search(fn ($u) => (int) $u->id === (int) $staff->id);
+        $leaderboardRank = $rankIdx !== false ? $rankIdx + 1 : null;
+
+        $uid = $staff->id;
+        $rewardStats = [
+            'submissions_count' => (int) CaregiverReward::where('user_id', $uid)->count(),
+            'verified_count' => (int) CaregiverReward::where('user_id', $uid)->where(function ($q) {
+                $q->where('verification_status', 'verified')->orWhereNull('verification_status');
+            })->count(),
+            'pending_count' => (int) CaregiverReward::where('user_id', $uid)->where('verification_status', 'pending')->count(),
+            'total_points' => (int) CaregiverReward::where('user_id', $uid)->sum('reward_points'),
+            'total_amount' => (float) CaregiverReward::where('user_id', $uid)->sum('reward_amount'),
+        ];
+
+        $rewards = CaregiverReward::query()
+            ->where('user_id', $staff->id)
+            ->latest()
+            ->paginate(15);
+
+        $adminFilterUrl = route('admin.rewards.index', ['user_id' => $staff->id]);
+
+        return view('rewards::admin.staff-details', [
+            'staff' => $staff,
+            'rewardStats' => $rewardStats,
+            'rewards' => $rewards,
+            'leaderboardRank' => $leaderboardRank,
+            'adminFilterUrl' => $adminFilterUrl,
+        ]);
+    }
+
+    /**
+     * Staff with at least one patient reward, sorted for leaderboard (₹ desc, points desc, name).
+     */
+    protected function buildStaffPatientRewardLeaderboard(): Collection
+    {
+        return User::query()
+            ->whereIn('role', ['nurse', 'caregiver'])
+            ->withCount(['caregiverRewards as submissions_count'])
+            ->withSum('caregiverRewards as patient_reward_points', 'reward_points')
+            ->withSum('caregiverRewards as patient_reward_amount', 'reward_amount')
+            ->having('submissions_count', '>', 0)
+            ->get()
+            ->sort(function ($a, $b) {
+                $va = (float) ($a->patient_reward_amount ?? 0);
+                $vb = (float) ($b->patient_reward_amount ?? 0);
+                if ($va !== $vb) {
+                    return $vb <=> $va;
+                }
+                $pa = (int) ($a->patient_reward_points ?? 0);
+                $pb = (int) ($b->patient_reward_points ?? 0);
+                if ($pa !== $pb) {
+                    return $pb <=> $pa;
+                }
+
+                return strcasecmp((string) $a->name, (string) $b->name);
+            })
+            ->values();
     }
 }

@@ -8,6 +8,7 @@ use App\Modules\Incentives\Models\IncentiveLedger;
 use App\Modules\Referrals\Models\Referral;
 use App\Modules\Referrals\Services\ReferralService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class AdminReferralController extends Controller
 {
@@ -23,7 +24,7 @@ class AdminReferralController extends Controller
      */
     public function index(Request $request)
     {
-        // Get all staff members (nurses and caregivers) who have referrals
+        // All staff (nurses/caregivers) with referrals, ranked by incentive (full list for stats + filter dropdown).
         $staffWithReferrals = User::whereIn('role', ['nurse', 'caregiver'])
             ->whereHas('referrals')
             ->withCount([
@@ -57,7 +58,38 @@ class AdminReferralController extends Controller
 
                 return $staff;
             })
-            ->sortByDesc('completed_referrals');
+            // Rank by total incentive (highest first), then completed count, then name. Reindex for Blade $loop order.
+            ->sort(function ($a, $b) {
+                $ta = (float) ($a->total_reward_amount ?? 0);
+                $tb = (float) ($b->total_reward_amount ?? 0);
+                if ($ta !== $tb) {
+                    return $tb <=> $ta;
+                }
+                $ca = (int) $a->completed_referrals;
+                $cb = (int) $b->completed_referrals;
+                if ($ca !== $cb) {
+                    return $cb <=> $ca;
+                }
+
+                return strcasecmp((string) $a->name, (string) $b->name);
+            })
+            ->values();
+
+        $staffPerformancePerPage = 15;
+        $staffTotal = $staffWithReferrals->count();
+        $lastStaffPage = max(1, (int) ceil($staffTotal / $staffPerformancePerPage));
+        $staffPerformancePage = min($lastStaffPage, max(1, (int) $request->input('staff_page', 1)));
+        $staffPerformancePaginator = new LengthAwarePaginator(
+            $staffWithReferrals->forPage($staffPerformancePage, $staffPerformancePerPage)->values(),
+            $staffTotal,
+            $staffPerformancePerPage,
+            $staffPerformancePage,
+            [
+                'path' => $request->url(),
+                'pageName' => 'staff_page',
+            ]
+        );
+        $staffPerformancePaginator->withQueryString();
 
         // Get all referrals with details
         $allReferrals = Referral::with(['referrer', 'referred'])
@@ -96,6 +128,7 @@ class AdminReferralController extends Controller
 
         return view('referrals::admin.index', compact(
             'staffWithReferrals',
+            'staffPerformancePaginator',
             'allReferrals',
             'overallStats',
             'selectedStaff'

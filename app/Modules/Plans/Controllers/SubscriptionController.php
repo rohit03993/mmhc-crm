@@ -9,6 +9,7 @@ use App\Modules\Plans\Models\Subscription;
 use App\Modules\Plans\Services\RazorpayService;
 use App\Modules\Plans\Services\SubscriptionService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -61,9 +62,20 @@ class SubscriptionController extends Controller
             try {
                 $activeSubscription = $subscriptions->where('status', 'active')
                     ->where('end_date', '>', now())
+                    ->sortByDesc('end_date')
                     ->first();
             } catch (\Exception $e) {
                 \Log::error('Error getting active subscription', ['error' => $e->getMessage()]);
+            }
+
+            $pendingSubscription = null;
+            try {
+                $pendingSubscription = $subscriptions
+                    ->filter(fn ($s) => $s->status === 'pending')
+                    ->sortByDesc('created_at')
+                    ->first();
+            } catch (\Exception $e) {
+                \Log::error('Error getting pending subscription', ['error' => $e->getMessage()]);
             }
 
             // Filter subscriptions to show only relevant ones (hide old cancelled/rejected/expired)
@@ -92,7 +104,14 @@ class SubscriptionController extends Controller
                 }
             }
 
-            return view('plans::subscriptions.index', compact('user', 'subscriptions', 'filteredSubscriptions', 'activeSubscription', 'availablePlans'));
+            return view('plans::subscriptions.index', compact(
+                'user',
+                'subscriptions',
+                'filteredSubscriptions',
+                'activeSubscription',
+                'pendingSubscription',
+                'availablePlans'
+            ));
         } catch (\Throwable $e) {
             \Log::error('Fatal error in subscriptions index', [
                 'error' => $e->getMessage(),
@@ -387,10 +406,18 @@ class SubscriptionController extends Controller
     public function adminIndex(Request $request)
     {
         $status = $request->get('status', 'all');
-        $subscriptions = $this->subscriptionService->getAllSubscriptions($status);
+
+        $filterUser = null;
+        if ($request->filled('user_id')) {
+            $filterUser = User::find((int) $request->user_id);
+            if ($filterUser && ! $this->userHasCurrentlyActiveSubscription($filterUser)) {
+                $filterUser = null;
+            }
+        }
+
+        $subscriptions = $this->subscriptionService->getAllSubscriptions($status, $filterUser?->id, 15);
         $stats = $this->subscriptionService->getSubscriptionStats();
 
-        // Get counts for filter tabs
         $counts = [
             'all' => Subscription::count(),
             'pending' => Subscription::where('status', 'pending')->count(),
@@ -398,7 +425,127 @@ class SubscriptionController extends Controller
             'expired' => Subscription::where('status', 'expired')->count(),
         ];
 
-        return view('plans::admin.subscriptions.index', compact('subscriptions', 'stats', 'counts'));
+        $subscriberLeaderboard = $this->buildSubscriberLeaderboard();
+        $rankByUserId = $subscriberLeaderboard->mapWithKeys(fn ($u, $idx) => [$u->id => $idx + 1]);
+
+        $leaderboardPerPage = 15;
+        $leaderTotal = $subscriberLeaderboard->count();
+        $lastLeaderPage = max(1, (int) ceil($leaderTotal / $leaderboardPerPage));
+        $leaderPage = min($lastLeaderPage, max(1, (int) $request->input('leaderboard_page', 1)));
+        $leaderboardPaginator = new LengthAwarePaginator(
+            $subscriberLeaderboard->forPage($leaderPage, $leaderboardPerPage)->values(),
+            $leaderTotal,
+            $leaderboardPerPage,
+            $leaderPage,
+            [
+                'path' => $request->url(),
+                'pageName' => 'leaderboard_page',
+            ]
+        );
+        $leaderboardPaginator->withQueryString();
+
+        return view('plans::admin.subscriptions.index', [
+            'subscriptions' => $subscriptions,
+            'stats' => $stats,
+            'counts' => $counts,
+            'subscriberLeaderboard' => $subscriberLeaderboard,
+            'leaderboardPaginator' => $leaderboardPaginator,
+            'rankByUserId' => $rankByUserId,
+            'topSubscriber' => $subscriberLeaderboard->first(),
+            'filterUser' => $filterUser,
+        ]);
+    }
+
+    /**
+     * Admin: subscriber (patient) overview — all subscriptions for one user.
+     */
+    public function adminSubscriberDetail(User $user)
+    {
+        if (! $user->subscriptions()->exists()) {
+            abort(404);
+        }
+
+        $leaderboard = $this->buildSubscriberLeaderboard();
+        $rankIdx = $leaderboard->search(fn ($u) => (int) $u->id === (int) $user->id);
+        $leaderboardRank = $rankIdx !== false ? $rankIdx + 1 : null;
+
+        $subscriberStats = [
+            'subscription_count' => (int) $user->subscriptions()->count(),
+            'active_count' => (int) $user->subscriptions()->where('status', 'active')->where('end_date', '>', now())->count(),
+            'pending_count' => (int) $user->subscriptions()->where('status', 'pending')->count(),
+            'expired_count' => (int) $user->subscriptions()->where('status', 'expired')->count(),
+            'lifetime_total' => (float) $user->subscriptions()->sum('total_amount'),
+            'active_revenue_total' => (float) $user->subscriptions()
+                ->where('status', 'active')
+                ->where('end_date', '>', now())
+                ->sum('total_amount'),
+            'lifetime_paid' => (float) $user->subscriptions()->sum('paid_amount'),
+        ];
+
+        $subscriptions = Subscription::query()
+            ->where('user_id', $user->id)
+            ->with(['plan', 'referrer'])
+            ->orderByDesc('created_at')
+            ->paginate(15);
+
+        $adminFilterUrl = route('admin.subscriptions', ['user_id' => $user->id, 'status' => 'all']);
+
+        return view('plans::admin.subscriptions.subscriber-detail', [
+            'user' => $user,
+            'leaderboardRank' => $leaderboardRank,
+            'subscriberStats' => $subscriberStats,
+            'subscriptions' => $subscriptions,
+            'adminFilterUrl' => $adminFilterUrl,
+        ]);
+    }
+
+    /**
+     * Leaderboard: only subscribers with at least one *currently active* plan
+     * (status active and end_date in the future). Totals and counts use active rows only.
+     */
+    protected function buildSubscriberLeaderboard(): Collection
+    {
+        return User::query()
+            ->whereHas('subscriptions', fn ($q) => $this->currentlyActiveSubscriptionScope($q))
+            ->withCount([
+                'subscriptions as total_subscription_count',
+                'subscriptions as active_subscription_count' => fn ($q) => $this->currentlyActiveSubscriptionScope($q),
+            ])
+            ->withSum(
+                [
+                    'subscriptions as active_revenue_total' => fn ($q) => $this->currentlyActiveSubscriptionScope($q),
+                ],
+                'total_amount'
+            )
+            ->get()
+            ->sort(function ($a, $b) {
+                $va = (float) ($a->active_revenue_total ?? 0);
+                $vb = (float) ($b->active_revenue_total ?? 0);
+                if ($va !== $vb) {
+                    return $vb <=> $va;
+                }
+                $ca = (int) ($a->active_subscription_count ?? 0);
+                $cb = (int) ($b->active_subscription_count ?? 0);
+                if ($ca !== $cb) {
+                    return $cb <=> $ca;
+                }
+
+                return strcasecmp((string) $a->name, (string) $b->name);
+            })
+            ->values();
+    }
+
+    /**
+     * A subscription that is active and not past end date (same idea as Subscription::isActive()).
+     */
+    protected function currentlyActiveSubscriptionScope($query): void
+    {
+        $query->where('status', 'active')->where('end_date', '>', now());
+    }
+
+    protected function userHasCurrentlyActiveSubscription(User $user): bool
+    {
+        return $user->subscriptions()->where('status', 'active')->where('end_date', '>', now())->exists();
     }
 
     /**
@@ -407,6 +554,40 @@ class SubscriptionController extends Controller
     public function adminView(Subscription $subscription)
     {
         return view('plans::admin.subscriptions.view', compact('subscription'));
+    }
+
+    /**
+     * Admin: Re-sync a demo-seeded subscription from the plan catalogue (amounts + term). Real rows are rejected.
+     */
+    public function adminReconcileDemoFromCatalogue(Subscription $subscription)
+    {
+        if (! $subscription->isDemoSeeded()) {
+            return redirect()->back()
+                ->with('error', 'Only demo-seeded subscriptions can be auto-synced from the catalogue. Edit real subscriptions manually.');
+        }
+
+        try {
+            $this->subscriptionService->reconcileSubscriptionFromPlanCatalogue($subscription, true);
+            $subscription->refresh();
+
+            if (class_exists(\App\Modules\Incentives\Services\IncentiveCalculatorService::class) && $subscription->referrer_id) {
+                try {
+                    app(\App\Modules\Incentives\Services\IncentiveCalculatorService::class)
+                        ->createOrUpdateSubscriptionSaleLedger($subscription);
+                } catch (\Throwable $e) {
+                    Log::warning('Incentive ledger update after demo reconcile failed', [
+                        'subscription_id' => $subscription->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            return redirect()->back()
+                ->with('success', 'Demo subscription synced from the plan catalogue (amounts, GST, term, end date).');
+        } catch (\Throwable $e) {
+            return redirect()->back()
+                ->with('error', $e->getMessage());
+        }
     }
 
     /**

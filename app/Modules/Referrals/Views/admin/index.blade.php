@@ -97,6 +97,38 @@
             display: inline-block;
             font-weight: bold;
         }
+        /*
+         * layout.blade.php uses `.main-content .bg-primary * { color: #fff !important }`.
+         * That beats a single class — need equal or higher specificity for the pill text.
+         */
+        .main-content .card-header.bg-primary .referrals-header-staff-count {
+            background-color: #f8f9fa !important;
+            color: #0f172a !important;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+        /* Bootstrap `code` default is low-contrast pink */
+        .referral-code-readable {
+            color: #0f172a !important;
+            background-color: #e2e8f0 !important;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .referrals-page-guide {
+            border-left: 4px solid #2563eb;
+            background: #f8fafc;
+            border-radius: 0 10px 10px 0;
+        }
+        .referrals-section-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+        .main-content .card-header.bg-secondary .referrals-log-count-pill {
+            background-color: #f8f9fa !important;
+            color: #0f172a !important;
+        }
     </style>
 @endsection
 
@@ -111,7 +143,12 @@
                         <i class="fas fa-share-alt me-2 text-primary"></i>
                         Referral Management
                     </h2>
-                    <p class="text-muted mb-0">Track and manage all referral activities</p>
+                    <p class="text-muted mb-0">
+                        Staff leaderboard (totals per person) and a full activity log (each referral event).
+                        <a href="#referrals-staff-leaderboard" class="text-decoration-none ms-1">Jump to leaderboard</a>
+                        ·
+                        <a href="#referrals-activity-log" class="text-decoration-none">Jump to log</a>
+                    </p>
                 </div>
                 <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
@@ -180,9 +217,13 @@
 
     <!-- Filter Section -->
     <div class="filter-section">
+        <p class="small text-muted mb-3 mb-md-2">
+            <i class="fas fa-info-circle me-1 text-primary"></i>
+            <strong>Filter applies to the activity log only</strong> (“All Referrals” below). The staff leaderboard above always lists everyone with referrals.
+        </p>
         <form method="GET" action="{{ route('admin.referrals.index') }}" class="row g-3">
             <div class="col-md-6">
-                <label class="form-label fw-bold">Filter by Staff Member</label>
+                <label class="form-label fw-bold mb-1">Show referrals for</label>
                 <select name="staff_id" class="form-select" onchange="this.form.submit()">
                     <option value="">All Staff Members</option>
                     @foreach($staffWithReferrals as $staff)
@@ -202,19 +243,47 @@
         </form>
     </div>
 
+    <div class="referrals-page-guide px-3 py-3 mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-6">
+                <div class="referrals-section-label mb-1">Summary view</div>
+                <div class="fw-semibold text-dark">
+                    <i class="fas fa-trophy text-warning me-1"></i> Staff leaderboard
+                </div>
+                <p class="small text-muted mb-0">One row per staff member — completed / pending counts and <strong>total</strong> incentive earned.</p>
+            </div>
+            <div class="col-md-6">
+                <div class="referrals-section-label mb-1">Detail view</div>
+                <div class="fw-semibold text-dark">
+                    <i class="fas fa-stream text-secondary me-1"></i> Referral activity log
+                </div>
+                <p class="small text-muted mb-0">One row per <strong>referral event</strong> — who referred whom, code, status, amount, and date.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Staff Performance Cards -->
-    <div class="row mb-4">
+    <div class="row mb-4" id="referrals-staff-leaderboard">
         <div class="col-12">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-line me-2"></i>
-                        Staff Referral Performance
-                    </h5>
-                    <span class="badge bg-light text-primary">{{ $staffWithReferrals->count() }} Staff Members</span>
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <div class="referrals-section-label text-white-50 mb-1">Summary · per staff member</div>
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Staff Referral Performance
+                        </h5>
+                        <small class="text-white-50">Ranked by total incentive (highest first), then completed referrals</small>
+                    </div>
+                    <span class="badge rounded-pill fw-bold px-3 py-2 fs-6 shadow-sm referrals-header-staff-count">
+                        {{ $staffWithReferrals->count() }} staff members
+                    </span>
                 </div>
                 <div class="card-body">
                     @if($staffWithReferrals->count() > 0)
+                        <p class="text-muted small mb-2">
+                            Showing {{ $staffPerformancePaginator->firstItem() }}–{{ $staffPerformancePaginator->lastItem() }} of {{ $staffPerformancePaginator->total() }}
+                        </p>
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
                                 <thead class="table-light">
@@ -230,15 +299,16 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($staffWithReferrals as $index => $staff)
-                                        <tr class="{{ $index === 0 ? 'table-warning' : '' }}">
+                                    @foreach($staffPerformancePaginator as $staff)
+                                        @php $globalRank = ($staffPerformancePaginator->firstItem() ?? 0) + $loop->index; @endphp
+                                        <tr class="{{ $globalRank === 1 ? 'table-warning' : '' }}">
                                             <td class="text-center">
-                                                @if($index === 0)
+                                                @if($globalRank === 1)
                                                     <span class="badge bg-warning text-dark" style="font-size: 1rem;">
                                                         <i class="fas fa-trophy me-1"></i>#1
                                                     </span>
                                                 @else
-                                                    <span class="badge bg-secondary">#{{ $index + 1 }}</span>
+                                                    <span class="badge bg-secondary">#{{ $globalRank }}</span>
                                                 @endif
                                             </td>
                                             <td>
@@ -259,7 +329,7 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <code class="bg-light p-2 rounded d-inline-block" style="font-size: 0.85rem;">{{ $staff->referral_code }}</code>
+                                                <code class="referral-code-readable p-2 rounded d-inline-block">{{ $staff->referral_code }}</code>
                                             </td>
                                             <td class="text-center">
                                                 <span class="badge bg-success px-3 py-2" style="font-size: 1rem;">
@@ -267,7 +337,7 @@
                                                 </span>
                                             </td>
                                             <td class="text-center">
-                                                <span class="badge bg-warning px-3 py-2" style="font-size: 1rem;">
+                                                <span class="badge bg-warning text-dark px-3 py-2" style="font-size: 1rem;">
                                                     <i class="fas fa-clock me-1"></i>{{ $staff->pending_referrals }}
                                                 </span>
                                             </td>
@@ -286,6 +356,9 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="d-flex justify-content-center mt-3">
+                            {{ $staffPerformancePaginator->onEachSide(1)->links() }}
+                        </div>
                     @else
                         <div class="text-center py-5">
                             <i class="fas fa-share-alt fa-3x text-muted mb-3"></i>
@@ -298,17 +371,26 @@
     </div>
 
     <!-- All Referrals Table -->
-    <div class="row">
+    <div class="row" id="referrals-activity-log">
         <div class="col-12">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list me-2"></i>
-                        All Referrals
-                        @if($selectedStaff)
-                            <small class="ms-2">- {{ $selectedStaff->name }}</small>
-                        @endif
-                    </h5>
+                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <div class="referrals-section-label text-white-50 mb-1">Detail · each referral</div>
+                        <h5 class="mb-0">
+                            <i class="fas fa-list-ul me-2"></i>
+                            All Referrals
+                            @if($selectedStaff)
+                                <span class="fw-normal fs-6 ms-1">— {{ $selectedStaff->name }}</span>
+                            @endif
+                        </h5>
+                        <small class="text-white-50">Chronological log; use the filter above to narrow by referrer</small>
+                    </div>
+                    @if($allReferrals->total() > 0)
+                        <span class="badge rounded-pill fw-bold px-3 py-2 fs-6 shadow-sm referrals-log-count-pill">
+                            {{ $allReferrals->total() }} {{ $allReferrals->total() === 1 ? 'record' : 'records' }}
+                        </span>
+                    @endif
                 </div>
                 <div class="card-body">
                     @if($allReferrals->count() > 0)
@@ -360,7 +442,7 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <code class="bg-light p-2 rounded d-inline-block" style="font-size: 0.85rem;">{{ $referral->referral_code }}</code>
+                                                <code class="referral-code-readable p-2 rounded d-inline-block">{{ $referral->referral_code }}</code>
                                             </td>
                                             <td class="text-center">
                                                 @if($referral->status === 'completed')
@@ -368,7 +450,7 @@
                                                         <i class="fas fa-check-circle me-1"></i>Completed
                                                     </span>
                                                 @elseif($referral->status === 'pending')
-                                                    <span class="badge bg-warning px-3 py-2">
+                                                    <span class="badge bg-warning text-dark px-3 py-2">
                                                         <i class="fas fa-clock me-1"></i>Pending
                                                     </span>
                                                 @else
@@ -380,11 +462,6 @@
                                             <td class="text-center">
                                                 <span class="fw-bold text-primary" style="font-size: 1.1rem;">
                                                     <i class="fas fa-rupee-sign me-1"></i>₹{{ number_format($referral->reward_amount ?? 0, 2) }}
-                                                </span>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="fw-bold text-success" style="font-size: 1.1rem;">
-                                                    <i class="fas fa-rupee-sign me-1"></i>{{ number_format($referral->reward_amount, 2) }}
                                                 </span>
                                             </td>
                                             <td class="text-center">

@@ -206,6 +206,7 @@ class IncentiveNetworkDemoSeeder extends Seeder
     {
         $calculator = app(IncentiveCalculatorService::class);
         $frequencies = ['monthly', 'half_yearly', 'annually', 'full_payment'];
+        $paymentOptions = is_array($plan->payment_options) ? $plan->payment_options : [];
         $patientIdx = 0;
 
         foreach ($staffMembers as $sIdx => $staff) {
@@ -214,10 +215,20 @@ class IncentiveNetworkDemoSeeder extends Seeder
                 $patientIdx++;
 
                 $frequency = $frequencies[($sIdx + $k) % count($frequencies)];
-                $baseAmount = 3000 + (($sIdx + $k) % 8) * 1000;
+                $opt = $paymentOptions[$frequency] ?? [];
+                $baseAmount = (float) ($opt['price'] ?? $plan->monthly_price ?? 999.00);
+                $payableYears = (int) ($opt['payable_years'] ?? 0);
+                $careBenefitsYears = (int) ($opt['care_benefits_years'] ?? 0);
+                $totalYears = $payableYears + $careBenefitsYears;
                 $gstRate = 18.00;
                 $gstAmount = round(($baseAmount * $gstRate) / 100, 2);
-                $totalAmount = $baseAmount + $gstAmount;
+                $totalAmount = round($baseAmount + $gstAmount, 2);
+                $startDate = Carbon::today()->subDays(($k % 10) + 1);
+                if ($totalYears <= 0) {
+                    $endDate = (clone $startDate)->addMonth();
+                } else {
+                    $endDate = (clone $startDate)->addYears($totalYears);
+                }
 
                 $subscription = Subscription::query()->updateOrCreate(
                     ['notes' => "DEMO_NETWORK_SUB_{$staff->id}_{$k}"],
@@ -227,10 +238,10 @@ class IncentiveNetworkDemoSeeder extends Seeder
                         'referrer_id' => $staff->id,
                         'payment_frequency' => $frequency,
                         'status' => 'active',
-                        'start_date' => Carbon::today()->subDays(($k % 10) + 1),
-                        'end_date' => Carbon::today()->addYears(1),
-                        'care_benefits_years' => 0,
-                        'payable_years' => 1,
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                        'care_benefits_years' => $careBenefitsYears,
+                        'payable_years' => $payableYears,
                         'base_amount' => $baseAmount,
                         'gst_amount' => $gstAmount,
                         'gst_rate' => $gstRate,

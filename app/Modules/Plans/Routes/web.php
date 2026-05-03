@@ -73,6 +73,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/subscriptions/{subscription}/reject', [SubscriptionController::class, 'reject'])->name('subscriptions.reject');
         Route::post('/subscriptions/{subscription}/verify-payment', [SubscriptionController::class, 'verifyPayment'])->name('subscriptions.verify-payment');
         Route::post('/subscriptions/{subscription}/reject-payment', [SubscriptionController::class, 'rejectPayment'])->name('subscriptions.reject-payment');
+        Route::post('/subscriptions/{subscription}/reconcile-demo-catalogue', [SubscriptionController::class, 'adminReconcileDemoFromCatalogue'])->name('subscriptions.reconcile-demo-catalogue');
 
         // Plan payment records (avoid collision with Staff Payments module routes)
         Route::get('/plan-payments', [PaymentController::class, 'adminIndex'])->name('plan-payments');

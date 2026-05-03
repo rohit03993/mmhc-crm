@@ -21,4 +21,5 @@ Route::middleware(['web', 'auth', 'role:admin'])
     ->name('admin.rewards.')
     ->group(function () {
         Route::get('/', [RewardController::class, 'adminIndex'])->name('index');
+        Route::get('/staff/{staff}', [RewardController::class, 'adminStaffDetail'])->name('staff');
     });

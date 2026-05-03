@@ -156,6 +156,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Patient reward submissions (caregiver/nurse patient-detail entries).
+     */
+    public function caregiverRewards()
+    {
+        return $this->hasMany(\App\Modules\Rewards\Models\CaregiverReward::class, 'user_id');
+    }
+
+    /**
      * Get referrals made by this user (as referrer)
      */
     public function referrals()

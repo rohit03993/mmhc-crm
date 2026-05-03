@@ -18,27 +18,63 @@
         <p class="text-muted">Manage your healthcare subscription plans</p>
     </div>
 
-    <!-- Active Subscription Banner -->
     @if($activeSubscription)
     <div class="alert alert-success mb-4">
-        <div class="d-flex align-items-center">
-            <i class="fas fa-check-circle fa-2x me-3"></i>
+        <div class="d-flex align-items-start">
+            <i class="fas fa-check-circle fa-2x me-3 mt-1"></i>
             <div class="flex-grow-1">
-                <h6 class="mb-1">Active Subscription</h6>
-                <p class="mb-0">
-                    <strong>{{ $activeSubscription->plan?->name ?? 'Unknown Plan' }}</strong> - 
-                    Expires on {{ $activeSubscription->end_date->format('M d, Y') }}
-                    ({{ $activeSubscription->days_remaining }} days remaining)
+                <h6 class="mb-1">Active subscription</h6>
+                <p class="mb-1">
+                    <strong>{{ $activeSubscription->plan?->name ?? 'Your plan' }}</strong>
+                    — valid through <strong>{{ $activeSubscription->end_date->format('M d, Y') }}</strong>.
                 </p>
-                <small class="text-muted">
-                    All services are FREE while your subscription is active!
+                <small class="text-muted d-block">
+                    All listed care and services under this plan are available while your subscription stays active.
                 </small>
             </div>
         </div>
     </div>
-    
-    <!-- Upgrade/Downgrade Section -->
-    @if(isset($availablePlans) && $availablePlans->count() > 0)
+    @endif
+
+    @if($pendingSubscription)
+    <div class="alert alert-warning mb-4">
+        <div class="d-flex align-items-start">
+            <i class="fas fa-clock fa-2x me-3 mt-1"></i>
+            <div class="flex-grow-1">
+                <h6 class="mb-1">Pending subscription</h6>
+                <p class="mb-1">
+                    <strong>{{ $pendingSubscription->plan?->name ?? 'Your plan' }}</strong>
+                    @if($pendingSubscription->end_date)
+                        — if approved, coverage runs through <strong>{{ $pendingSubscription->end_date->format('M d, Y') }}</strong>.
+                    @else
+                        — awaiting payment or approval before it becomes active.
+                    @endif
+                </p>
+                <p class="mb-1 small">
+                    Payment: <strong class="text-{{ $pendingSubscription->payment_status === 'paid' ? 'success' : 'dark' }}">{{ ucfirst(str_replace('_', ' ', $pendingSubscription->payment_status ?? 'pending')) }}</strong>
+                    @if($pendingSubscription->payment_status !== 'paid')
+                        — complete payment or verification steps to activate this plan.
+                    @endif
+                </p>
+                <a href="{{ route('subscriptions.show', $pendingSubscription->id) }}" class="alert-link small">View subscription details</a>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @if(!$activeSubscription && !$pendingSubscription)
+    <div class="alert alert-info mb-4">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle me-2"></i>
+            <div>
+                <strong>No active subscription</strong> —
+                <a href="{{ route('plans.index') }}" class="alert-link">Browse plans</a> to subscribe.
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @if($activeSubscription && isset($availablePlans) && $availablePlans->count() > 0)
     <div class="upgrade-section mb-4">
         <div class="card border-primary">
             <div class="card-header bg-primary text-white">
@@ -53,43 +89,75 @@
                 <div class="row g-3">
                     @foreach($availablePlans as $plan)
                         @if(!$activeSubscription || !$activeSubscription->plan || $activeSubscription->plan->id != $plan->id)
-                        <div class="col-12 col-md-6 col-lg-4">
-                            <div class="plan-card-upgrade h-100">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="col-12 col-md-6 col-lg-4 d-flex">
+                            <div class="plan-card-upgrade w-100 d-flex flex-column h-100">
+                                <div class="d-flex justify-content-between align-items-start mb-2 flex-shrink-0">
                                     <h6 class="mb-0">{{ $plan->name }}</h6>
                                     @if($plan->is_popular)
                                     <span class="badge bg-warning text-dark">Popular</span>
                                     @endif
                                 </div>
                                 @if($plan->monthly_price)
-                                <p class="text-muted small mb-2">
+                                <p class="text-muted small mb-2 flex-shrink-0">
                                     Starting from ₹{{ number_format($plan->monthly_price, 0) }}/month
                                 </p>
                                 @endif
-                                <a href="{{ route('plans.show', $plan->id) }}?upgrade=1&current_subscription={{ $activeSubscription ? $activeSubscription->id : '' }}" 
-                                   class="btn btn-sm btn-outline-primary w-100">
-                                    @php
-                                        $isDowngrade = $activeSubscription && $activeSubscription->plan && ($activeSubscription->plan->price ?? 0) > ($plan->price ?? 0);
-                                    @endphp
-                                    <i class="fas fa-arrow-{{ $isDowngrade ? 'down' : 'up' }} me-1"></i>
-                                    {{ $isDowngrade ? 'Downgrade' : 'Upgrade' }} to {{ $plan->name }}
-                                </a>
+                                <div class="plan-upgrade-body flex-grow-1">
+                                    <div class="row g-2 g-md-0">
+                                        <div class="col-12 col-md-6 plan-upgrade-col-benefits">
+                                            @if($plan->description)
+                                            <p class="small text-muted mb-2 mb-md-3">{{ $plan->description }}</p>
+                                            @endif
+                                            @if(is_array($plan->features) && count($plan->features))
+                                            <p class="small fw-semibold text-secondary mb-1">
+                                                <i class="fas fa-stethoscope me-1 text-primary"></i>What you get
+                                            </p>
+                                            <ul class="plan-upgrade-feature-list small mb-0">
+                                                @foreach($plan->features as $feature)
+                                                <li>{{ is_string($feature) ? $feature : ($feature['label'] ?? $feature['name'] ?? json_encode($feature)) }}</li>
+                                                @endforeach
+                                            </ul>
+                                            @endif
+                                        </div>
+                                        <div class="col-12 col-md-6 plan-upgrade-col-payment">
+                                            @if(isset($plan->payment_options) && is_array($plan->payment_options) && count($plan->payment_options))
+                                            <p class="small fw-semibold text-secondary mb-2">
+                                                <i class="fas fa-wallet me-1 text-primary"></i>Payment options
+                                            </p>
+                                            <div class="plan-upgrade-payment-list">
+                                                @foreach($plan->payment_options as $frequency => $option)
+                                                <div class="plan-upgrade-payment-row">
+                                                    <div class="plan-upgrade-payment-label">
+                                                        <strong>{{ $option['label'] ?? ucfirst(str_replace('_', ' ', (string) $frequency)) }}</strong>
+                                                        @if(! empty($option['description']))
+                                                        <small class="d-block text-muted">{{ $option['description'] }}</small>
+                                                        @endif
+                                                    </div>
+                                                    <div class="plan-upgrade-payment-amount">
+                                                        ₹{{ number_format((float) ($option['price'] ?? 0), 0) }}
+                                                    </div>
+                                                </div>
+                                                @endforeach
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-auto pt-2 border-top flex-shrink-0">
+                                    <a href="{{ route('plans.show', $plan->id) }}?upgrade=1&current_subscription={{ $activeSubscription ? $activeSubscription->id : '' }}" 
+                                       class="btn btn-sm btn-outline-primary w-100">
+                                        @php
+                                            $isDowngrade = $activeSubscription && $activeSubscription->plan && ($activeSubscription->plan->price ?? 0) > ($plan->price ?? 0);
+                                        @endphp
+                                        <i class="fas fa-arrow-{{ $isDowngrade ? 'down' : 'up' }} me-1"></i>
+                                        {{ $isDowngrade ? 'Downgrade' : 'Upgrade' }} to {{ $plan->name }}
+                                    </a>
+                                </div>
                             </div>
                         </div>
                         @endif
                     @endforeach
                 </div>
-            </div>
-        </div>
-    </div>
-    @endif
-    @else
-    <div class="alert alert-info mb-4">
-        <div class="d-flex align-items-center">
-            <i class="fas fa-info-circle me-2"></i>
-            <div>
-                <strong>No Active Subscription</strong> - 
-                <a href="{{ route('plans.index') }}" class="alert-link">Subscribe to a plan</a> to get FREE services!
             </div>
         </div>
     </div>
@@ -113,7 +181,7 @@
                             </p>
                             @endif
                         </div>
-                        <span class="subscription-badge badge-{{ $subscription->status_color }}">
+                        <span class="subscription-badge badge bg-{{ $subscription->status_color }}">
                             {{ $subscription->status_display }}
                         </span>
                     </div>
@@ -149,16 +217,28 @@
                         </div>
                     </div>
 
-                    @if($subscription->payable_years > 0 || $subscription->care_benefits_years > 0)
-                    <div class="subscription-benefits mt-3">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-gift text-primary me-2"></i>
-                            <small class="text-muted">
-                                <strong>{{ $subscription->payable_years }} years payable</strong> + 
-                                <strong>{{ $subscription->care_benefits_years }} years extra</strong> = 
-                                <strong class="text-primary">{{ $subscription->payable_years + $subscription->care_benefits_years }} years total care</strong>
-                            </small>
-                        </div>
+                    @php
+                        $displayFeatures = $subscription->planFeaturesForDisplay();
+                    @endphp
+                    <div class="mt-3 pt-3 border-top">
+                        @include('plans::subscriptions.partials.enrolled-package-summary', ['subscription' => $subscription, 'variant' => 'patient'])
+                    </div>
+
+                    @if($subscription->plan && ($subscription->plan->description || count($displayFeatures)))
+                    <div class="subscription-care-facilities mt-3 pt-3 border-top">
+                        <h6 class="mb-2">
+                            <i class="fas fa-stethoscope me-2 text-primary"></i>Care &amp; facilities included with this plan
+                        </h6>
+                        @if($subscription->plan->description)
+                        <p class="small text-muted mb-2 mb-md-3">{{ $subscription->plan->description }}</p>
+                        @endif
+                        @if(count($displayFeatures))
+                        <ul class="subscription-feature-list small mb-0">
+                            @foreach($displayFeatures as $feature)
+                            <li>{{ $feature }}</li>
+                            @endforeach
+                        </ul>
+                        @endif
                     </div>
                     @endif
 
@@ -296,6 +376,32 @@
     font-weight: 600;
 }
 
+.subscription-enrolled-package {
+    background: #f0f7ff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    border: 1px solid #cfe2ff;
+}
+
+.subscription-care-facilities {
+    background: #f8f9fc;
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+
+.subscription-feature-list {
+    padding-left: 1.15rem;
+    margin-bottom: 0;
+}
+
+.subscription-feature-list li {
+    margin-bottom: 0.35rem;
+}
+
+.subscription-feature-list li:last-child {
+    margin-bottom: 0;
+}
+
 .subscription-info-item {
     text-align: center;
 }
@@ -353,6 +459,81 @@
     border-radius: 12px;
     padding: 16px;
     transition: all 0.3s ease;
+}
+
+.plan-upgrade-body {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 4px;
+}
+
+@media (min-width: 768px) {
+    .plan-upgrade-col-payment {
+        border-left: 1px solid #e9ecef;
+        padding-left: 14px !important;
+    }
+
+    .plan-upgrade-col-benefits {
+        padding-right: 14px !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .plan-upgrade-col-payment {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #e9ecef;
+    }
+}
+
+.plan-upgrade-feature-list {
+    padding-left: 1.1rem;
+    margin-bottom: 0;
+}
+
+.plan-upgrade-feature-list li {
+    margin-bottom: 0.3rem;
+}
+
+.plan-upgrade-feature-list li:last-child {
+    margin-bottom: 0;
+}
+
+.plan-upgrade-payment-list {
+    padding-top: 2px;
+}
+
+.plan-upgrade-payment-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f3f5;
+    font-size: 0.8125rem;
+}
+
+.plan-upgrade-payment-row:last-child {
+    border-bottom: none;
+    padding-bottom: 2px;
+}
+
+.plan-upgrade-payment-label {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.plan-upgrade-payment-label strong {
+    font-size: 0.8125rem;
+}
+
+.plan-upgrade-payment-amount {
+    flex: 0 0 auto;
+    font-weight: 700;
+    color: #495057;
+    white-space: nowrap;
 }
 
 .plan-card-upgrade:hover {

@@ -49,6 +49,18 @@ class IncentiveDemoFlowSeeder extends Seeder
             $serviceType
         );
 
+        $planOptions = $plan->payment_options ?? [];
+        $halfYearly = is_array($planOptions) ? ($planOptions['half_yearly'] ?? null) : null;
+        $baseAmount = (float) ($halfYearly['price'] ?? 5994.00);
+        $payableYears = (int) ($halfYearly['payable_years'] ?? 7);
+        $careYears = (int) ($halfYearly['care_benefits_years'] ?? 3);
+        $totalYears = $payableYears + $careYears;
+        $gstRate = 18.00;
+        $gstAmount = round(($baseAmount * $gstRate) / 100, 2);
+        $totalAmount = round($baseAmount + $gstAmount, 2);
+        $startDate = Carbon::today()->subDay();
+        $endDate = (clone $startDate)->addYears($totalYears);
+
         $subscription = Subscription::query()->updateOrCreate(
             ['notes' => 'INCENTIVE_DEMO_SUBSCRIPTION_ACTIVE'],
             [
@@ -57,15 +69,15 @@ class IncentiveDemoFlowSeeder extends Seeder
                 'referrer_id' => $nurse->id,
                 'payment_frequency' => 'half_yearly',
                 'status' => 'active',
-                'start_date' => Carbon::today()->subDay(),
-                'end_date' => Carbon::today()->addYears(1),
-                'care_benefits_years' => 0,
-                'payable_years' => 1,
-                'base_amount' => 10000,
-                'gst_amount' => 1800,
-                'gst_rate' => 18,
-                'total_amount' => 11800,
-                'paid_amount' => 11800,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'care_benefits_years' => $careYears,
+                'payable_years' => $payableYears,
+                'base_amount' => $baseAmount,
+                'gst_amount' => $gstAmount,
+                'gst_rate' => $gstRate,
+                'total_amount' => $totalAmount,
+                'paid_amount' => $totalAmount,
                 'payment_status' => 'paid',
                 'payment_verified_by' => $admin->id,
                 'payment_verified_at' => Carbon::now()->subHours(2),

@@ -22,7 +22,7 @@
                         <p class="subscription-members text-muted mb-2">
                             <i class="fas fa-users me-1"></i> {{ $subscription->plan?->members_included ?? '—' }}
                         </p>
-                        <span class="subscription-badge badge-{{ $subscription->status_color }}">
+                        <span class="subscription-badge badge bg-{{ $subscription->status_color }}">
                             {{ $subscription->status_display }}
                         </span>
                     </div>
@@ -63,19 +63,31 @@
                             </div>
                         </div>
 
-                        @if($subscription->payable_years > 0 || $subscription->care_benefits_years > 0)
-                        <div class="benefits-info mt-3">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-gift text-primary me-2"></i>
-                                <small class="text-muted">
-                                    <strong>{{ $subscription->payable_years }} years payable</strong> + 
-                                    <strong>{{ $subscription->care_benefits_years }} years extra</strong> = 
-                                    <strong class="text-primary">{{ $subscription->payable_years + $subscription->care_benefits_years }} years total care</strong>
-                                </small>
-                            </div>
+                        @php
+                            $displayFeatures = $subscription->planFeaturesForDisplay();
+                        @endphp
+                        <div class="mt-3">
+                            @include('plans::subscriptions.partials.enrolled-package-summary', ['subscription' => $subscription, 'variant' => 'patient'])
+                        </div>
+
+                        @if($subscription->plan && ($subscription->plan->description || count($displayFeatures)))
+                        <div class="care-facilities-callout mt-3">
+                            <h6 class="mb-2">
+                                <i class="fas fa-stethoscope text-primary me-2"></i>Care &amp; facilities included with this plan
+                            </h6>
+                            @if($subscription->plan->description)
+                            <p class="small text-muted mb-2">{{ $subscription->plan->description }}</p>
+                            @endif
+                            @if(count($displayFeatures))
+                            <ul class="small mb-0 ps-3">
+                                @foreach($displayFeatures as $feature)
+                                <li>{{ $feature }}</li>
+                                @endforeach
+                            </ul>
+                            @endif
                         </div>
                         @endif
-                        
+
                         @if($subscription->referrer)
                         <div class="referrer-info mt-3">
                             <div class="alert alert-info mb-0">
@@ -280,6 +292,12 @@
     border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
+}
+
+.care-facilities-callout {
+    background: #f8f9fc;
+    border-radius: 12px;
+    padding: 14px 16px;
 }
 
 .detail-section {

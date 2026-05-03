@@ -83,6 +83,69 @@ class SubscriptionService
     }
 
     /**
+     * Recompute base, GST, total, care years, and end date from the plan catalogue for this subscription's payment_frequency.
+     * Does not change plan_id, payment_frequency, status, or notes.
+     *
+     * @param  bool  $syncPaidAmount  When true, sets paid_amount to the new total (typical for demo repair).
+     */
+    public function reconcileSubscriptionFromPlanCatalogue(Subscription $subscription, bool $syncPaidAmount = true): Subscription
+    {
+        $plan = $subscription->plan;
+        if (! $plan) {
+            throw new \InvalidArgumentException('Subscription has no linked plan.');
+        }
+
+        $paymentOptions = $plan->payment_options ?? [];
+        if (! is_array($paymentOptions)) {
+            throw new \InvalidArgumentException('Plan has no payment options.');
+        }
+
+        $frequency = $subscription->payment_frequency;
+        $selectedOption = $paymentOptions[$frequency] ?? null;
+        if (! $selectedOption) {
+            throw new \InvalidArgumentException("No payment option «{$frequency}» on this plan.");
+        }
+
+        $payableYears = (int) round((float) ($selectedOption['payable_years'] ?? 0));
+        $careBenefitsYears = (int) round((float) ($selectedOption['care_benefits_years'] ?? 0));
+        $totalYears = $payableYears + $careBenefitsYears;
+
+        $baseAmount = (float) ($selectedOption['price'] ?? $plan->monthly_price ?? $plan->price ?? 0);
+        $gstRate = (float) config('subscription.gst_rate', 18.00);
+        $gstAmount = round(($baseAmount * $gstRate) / 100, 2);
+        $totalAmount = round($baseAmount + $gstAmount, 2);
+
+        $startDate = $subscription->start_date ?? now();
+        if (! $startDate instanceof \Carbon\CarbonInterface) {
+            $startDate = \Carbon\Carbon::parse($startDate);
+        }
+
+        if ($totalYears <= 0) {
+            $endDate = $startDate->copy()->addMonth();
+        } else {
+            $endDate = $startDate->copy()->addYears($totalYears);
+        }
+
+        $updates = [
+            'payable_years' => $payableYears,
+            'care_benefits_years' => $careBenefitsYears,
+            'base_amount' => $baseAmount,
+            'gst_amount' => $gstAmount,
+            'gst_rate' => $gstRate,
+            'total_amount' => $totalAmount,
+            'end_date' => $endDate,
+        ];
+
+        if ($syncPaidAmount) {
+            $updates['paid_amount'] = $totalAmount;
+        }
+
+        $subscription->update($updates);
+
+        return $subscription->fresh();
+    }
+
+    /**
      * Approve a subscription
      */
     public function approveSubscription(Subscription $subscription, User $approvedBy): Subscription
@@ -241,9 +304,13 @@ class SubscriptionService
     /**
      * Get all subscriptions for admin
      */
-    public function getAllSubscriptions(string $status = 'all')
+    public function getAllSubscriptions(string $status = 'all', ?int $filterUserId = null, int $perPage = 15)
     {
         $query = Subscription::with(['user', 'plan', 'approvedBy', 'paymentVerifiedBy']);
+
+        if ($filterUserId) {
+            $query->where('user_id', $filterUserId);
+        }
 
         if ($status !== 'all') {
             if ($status === 'pending') {
@@ -263,7 +330,7 @@ class SubscriptionService
             }
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate(10);
+        return $query->orderBy('created_at', 'desc')->paginate($perPage)->withQueryString();
     }
 
     /**

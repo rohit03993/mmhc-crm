@@ -163,11 +163,13 @@ Route::middleware(['auth'])->group(function () {
     // Admin subscription management
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/subscriptions', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'adminIndex'])->name('subscriptions');
+        Route::get('/subscriptions/subscriber/{user}', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'adminSubscriberDetail'])->name('subscriptions.subscriber');
         Route::get('/subscriptions/{subscription}', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'adminView'])->name('subscriptions.view');
         Route::post('/subscriptions/{subscription}/approve', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'approve'])->name('subscriptions.approve');
         Route::post('/subscriptions/{subscription}/reject', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'reject'])->name('subscriptions.reject');
         Route::post('/subscriptions/{subscription}/verify-payment', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'verifyPayment'])->name('subscriptions.verify-payment');
         Route::post('/subscriptions/{subscription}/reject-payment', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'rejectPayment'])->name('subscriptions.reject-payment');
+        Route::post('/subscriptions/{subscription}/reconcile-demo-catalogue', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'adminReconcileDemoFromCatalogue'])->name('subscriptions.reconcile-demo-catalogue');
     });
 
     // Admin Routes for Profile Management

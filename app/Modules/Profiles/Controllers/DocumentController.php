@@ -118,7 +118,7 @@ class DocumentController extends Controller
         
         $document = $this->documentService->uploadDocument($user, $request->file('document_file'), $documentData);
 
-        return redirect()->route('documents.index')
+        return redirect()->back()
             ->with('success', 'Document uploaded successfully!');
     }
 
