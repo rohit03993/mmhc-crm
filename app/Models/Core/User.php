@@ -124,11 +124,31 @@ class User extends Authenticatable
     }
 
     /**
+     * Roles that use the /academics module (keep in sync with middleware & admin filters).
+     *
+     * @return list<string>
+     */
+    public static function academicRoleSlugs(): array
+    {
+        return ['super_admin', 'institution_admin', 'faculty', 'student'];
+    }
+
+    /**
+     * Roles never removed by admin "delete all non-admin" bulk action (CRM + academic platform admins).
+     *
+     * @return list<string>
+     */
+    public static function protectedFromBulkUserDeletionRoleSlugs(): array
+    {
+        return ['admin', 'super_admin'];
+    }
+
+    /**
      * Check if user has an academic module role (redirect to /academics after login).
      */
     public function hasAcademicRole(): bool
     {
-        return in_array($this->role, ['super_admin', 'institution_admin', 'faculty', 'student']);
+        return in_array($this->role, self::academicRoleSlugs(), true);
     }
 
     /**

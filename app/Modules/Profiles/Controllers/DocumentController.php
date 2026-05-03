@@ -3,10 +3,12 @@
 namespace App\Modules\Profiles\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Core\User;
 use App\Modules\Profiles\Models\Document;
 use App\Modules\Profiles\Services\DocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -28,7 +30,7 @@ class DocumentController extends Controller
             $user = Auth::user();
             $documents = $this->documentService->getUserDocuments($user);
             $allowedDocumentTypes = $this->getAllowedDocumentTypes($user);
-            
+
             // Get category counts for staff (nurses/caregivers)
             $categoryCounts = [];
             if ($user->isStaff()) {
@@ -40,7 +42,7 @@ class DocumentController extends Controller
                     'insurance' => $allDocuments->where('document_type', 'insurance')->count(),
                 ];
             }
-            
+
             return view('profiles::documents.index', compact('user', 'documents', 'allowedDocumentTypes', 'categoryCounts'));
         } catch (\Exception $e) {
             // Fallback if document service fails
@@ -48,7 +50,7 @@ class DocumentController extends Controller
             $documents = collect(); // Empty collection
             $allowedDocumentTypes = $this->getAllowedDocumentTypes($user);
             $categoryCounts = [];
-            
+
             return view('profiles::documents.index', compact('user', 'documents', 'allowedDocumentTypes', 'categoryCounts'));
         }
     }
@@ -101,9 +103,9 @@ class DocumentController extends Controller
     {
         $user = Auth::user();
         $allowedTypes = array_keys($this->getAllowedDocumentTypes($user));
-        
+
         $validator = Validator::make($request->all(), [
-            'document_type' => ['required', 'in:' . implode(',', $allowedTypes)],
+            'document_type' => ['required', 'in:'.implode(',', $allowedTypes)],
             'document_name' => 'required|string|max:255',
             'document_file' => 'required|file|mimes:pdf,jpeg,jpg,png,doc,docx|max:10240', // 10MB max
         ]);
@@ -115,7 +117,7 @@ class DocumentController extends Controller
         }
 
         $documentData = $request->only(['document_type', 'document_name']);
-        
+
         $document = $this->documentService->uploadDocument($user, $request->file('document_file'), $documentData);
 
         return redirect()->back()
@@ -128,7 +130,8 @@ class DocumentController extends Controller
     public function delete(Document $document)
     {
         // Check if user owns this document
-        if ($document->user_id !== Auth::id() && !Auth::user()->isAdmin()) {
+        if ((int) $document->user_id !== (int) Auth::id()
+            && ! in_array(Auth::user()->role, ['admin', 'super_admin'], true)) {
             abort(403, 'Unauthorized access to document');
         }
 
@@ -144,30 +147,27 @@ class DocumentController extends Controller
     public function view($id)
     {
         $document = Document::findOrFail($id);
-        
-        // Check if user owns this document or is admin
-        if ($document->user_id !== Auth::id() && !Auth::user()->isAdmin()) {
-            abort(403, 'Unauthorized access to document');
-        }
+
+        $this->assertCanViewOrDownloadDocument($document);
 
         // Check if file exists in storage
-        if (!Storage::disk('public')->exists($document->file_path)) {
+        if (! Storage::disk('public')->exists($document->file_path)) {
             abort(404, 'Document file not found');
         }
 
         $filePath = Storage::disk('public')->path($document->file_path);
         $mimeType = $document->mime_type ?? Storage::disk('public')->mimeType($document->file_path);
-        
+
         // Check if file can be viewed in browser (PDF, images)
         $viewableTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-        
+
         if (in_array($mimeType, $viewableTypes)) {
             return response()->file($filePath, [
                 'Content-Type' => $mimeType,
-                'Content-Disposition' => 'inline; filename="' . $document->original_name . '"',
+                'Content-Disposition' => 'inline; filename="'.$document->original_name.'"',
             ]);
         }
-        
+
         // For non-viewable files, redirect to download
         return redirect()->route('documents.download', $document->id);
     }
@@ -178,19 +178,64 @@ class DocumentController extends Controller
     public function download($id)
     {
         $document = Document::findOrFail($id);
-        
-        // Check if user owns this document or is admin
-        if ($document->user_id !== Auth::id() && !Auth::user()->isAdmin()) {
-            abort(403, 'Unauthorized access to document');
-        }
+
+        $this->assertCanViewOrDownloadDocument($document);
 
         // Check if file exists in storage
-        if (!Storage::disk('public')->exists($document->file_path)) {
+        if (! Storage::disk('public')->exists($document->file_path)) {
             abort(404, 'Document file not found');
         }
 
         $filePath = Storage::disk('public')->path($document->file_path);
-        
+
         return response()->download($filePath, $document->original_name);
+    }
+
+    /**
+     * Owner, CRM admins, or academic staff who may view this student's full report may open files.
+     */
+    protected function assertCanViewOrDownloadDocument(Document $document): void
+    {
+        $auth = Auth::user();
+        if ((int) $document->user_id === (int) $auth->id) {
+            return;
+        }
+        if (in_array($auth->role, ['admin', 'super_admin'], true)) {
+            return;
+        }
+
+        $owner = User::find($document->user_id);
+        if (! $owner || $owner->role !== 'student') {
+            abort(403, 'Unauthorized access to document');
+        }
+
+        if ($auth->role === 'institution_admin' && $auth->academic_institution_id) {
+            $allowed = DB::table('academic_batch_users')
+                ->join('academic_batches', 'academic_batches.id', '=', 'academic_batch_users.batch_id')
+                ->where('academic_batch_users.user_id', $owner->id)
+                ->where('academic_batch_users.type', 'student')
+                ->where('academic_batches.institution_id', $auth->academic_institution_id)
+                ->exists();
+            if ($allowed) {
+                return;
+            }
+        }
+
+        if ($auth->role === 'faculty') {
+            $facultyBatchIds = DB::table('academic_batch_users')
+                ->where('user_id', $auth->id)
+                ->where('type', 'faculty')
+                ->pluck('batch_id');
+            $allowed = DB::table('academic_batch_users')
+                ->where('user_id', $owner->id)
+                ->where('type', 'student')
+                ->whereIn('batch_id', $facultyBatchIds)
+                ->exists();
+            if ($allowed) {
+                return;
+            }
+        }
+
+        abort(403, 'Unauthorized access to document');
     }
 }

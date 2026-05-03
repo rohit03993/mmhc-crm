@@ -3,6 +3,12 @@
 @section('title', $user->name.' — Profile')
 @section('page-title', $user->name)
 
+@section('head')
+    @isset($studentAcademic)
+        @include('academics::reports.partials.student-report-styles')
+    @endisset
+@endsection
+
 @section('content')
 @php
     $roleBadge = match ($user->role) {
@@ -58,14 +64,59 @@
                 @endif
             </div>
 
+            @if($user->hasAcademicRole())
+                <div class="apv-card mt-4 text-start">
+                    <h2 class="apv-card__title"><i class="fas fa-graduation-cap me-2 text-primary"></i>Academics</h2>
+                    @if($user->role === 'student')
+                        <p class="small text-muted mb-3">Documents, attendance, assignments, and SPI are on <strong>this page</strong> below. Use the button for a dedicated full-width report.</p>
+                        <a href="{{ route('academics.reports.student', $user) }}" class="btn btn-outline-primary btn-sm w-100 rounded-pill">
+                            <i class="fas fa-external-link-alt me-1"></i>Open academics report page
+                        </a>
+                    @else
+                        <p class="small text-muted mb-3">Use the button below for <strong>college-specific</strong> data.</p>
+                    @endif
+                    @if($user->role !== 'student')
+                        <a href="{{ route('academics.people.show', $user) }}" class="btn btn-primary btn-sm w-100 rounded-pill">
+                            <i class="fas fa-chalkboard-teacher me-1"></i>Academic overview
+                        </a>
+                        <p class="small text-muted mt-2 mb-0">Batches, subjects taught, college context.</p>
+                    @endif
+                    @if($user->academic_institution_id)
+                        <a href="{{ route('academics.institutions.show', $user->academic_institution_id) }}" class="btn btn-outline-primary btn-sm w-100 rounded-pill mt-2">
+                            <i class="fas fa-university me-1"></i>College overview
+                        </a>
+                    @endif
+                    @isset($academicAdminSummary)
+                        <div class="mt-3 pt-3 border-top small">
+                            <p class="fw-semibold mb-2 text-dark">College data (from academics seed)</p>
+                            <ul class="list-unstyled mb-2 text-muted">
+                                <li class="mb-1"><span class="text-dark fw-medium">Batches:</span> {{ $academicAdminSummary['batches']->isEmpty() ? '—' : $academicAdminSummary['batches']->pluck('name')->join(', ') }}</li>
+                                <li class="mb-1"><span class="text-dark fw-medium">Subjects:</span>
+                                    @if($academicAdminSummary['subjects']->isEmpty())
+                                        —
+                                    @else
+                                        {{ $academicAdminSummary['subjects']->map(fn ($s) => $s->name.' ('.($s->batch->name ?? '—').')')->join('; ') }}
+                                    @endif
+                                </li>
+                                <li class="mb-1"><span class="text-dark fw-medium">Assignments (topics in scope):</span> {{ $academicAdminSummary['assignments_count'] }}</li>
+                                <li class="mb-0"><span class="text-dark fw-medium">Quizzes / exams (matched scope):</span> {{ $academicAdminSummary['exams_count'] }}</li>
+                            </ul>
+                            <a href="{{ route('academics.exams.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill w-100 mb-1">Quizzes &amp; exams (admin)</a>
+                            <p class="text-muted mb-0" style="font-size: 0.75rem;">Full batch &amp; subject lists: use <strong>Academic overview</strong> above.</p>
+                        </div>
+                    @endisset
+                </div>
+            @endif
+
             @if($user->isStaff() && $profileStats['staff'])
                 @php $s = $profileStats['staff']; @endphp
                 <div class="apv-card mt-4">
                     <h2 class="apv-card__title"><i class="fas fa-chart-pie me-2 text-success"></i>Quick stats</h2>
+                    <p class="small text-muted mb-2">Healthcare CRM (nurse / caregiver field work) — not college coursework.</p>
                     <div class="row g-2">
                         <div class="col-6">
                             <div class="apv-stat">
-                                <span class="apv-stat__label">Assignments</span>
+                                <span class="apv-stat__label">Service requests</span>
                                 <span class="apv-stat__val">{{ $s['services_total'] }}</span>
                             </div>
                         </div>
@@ -216,6 +267,13 @@
                 </div>
             </div>
 
+            @isset($studentAcademic)
+                <div class="mb-4">
+                    <h2 class="h6 text-uppercase text-muted fw-semibold mb-3" style="letter-spacing: .06em;">Student record</h2>
+                    @include('academics::reports.partials.student-report-body', $studentAcademic)
+                </div>
+            @endisset
+
             @if($profile)
                 @if($user->role === 'caregiver' || ($profile->bio))
                 <div class="apv-card mb-4">
@@ -257,12 +315,13 @@
                 </div>
             @endif
 
+            @if($user->role !== 'student' && $profileDocumentsPaginator)
             <div class="apv-card mb-4">
                 <h2 class="apv-card__title d-flex align-items-center justify-content-between flex-wrap gap-2">
                     <span><i class="fas fa-folder-open me-2 text-warning"></i>Documents</span>
-                    <span class="badge bg-light text-dark border rounded-pill">{{ $profileDocuments->count() }}</span>
+                    <span class="badge bg-light text-dark border rounded-pill">{{ $profileDocumentsPaginator->total() }}</span>
                 </h2>
-                @if($profileDocuments->isNotEmpty())
+                @if($profileDocumentsPaginator->total() > 0)
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0 apv-table">
                             <thead class="table-light">
@@ -274,7 +333,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($profileDocuments as $document)
+                                @foreach($profileDocumentsPaginator as $document)
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
@@ -294,8 +353,9 @@
                                                 {{ $document->status_display }}
                                             </span>
                                         </td>
-                                        <td class="text-end">
-                                            <a href="{{ route('documents.download', $document) }}" class="btn btn-sm btn-outline-primary rounded-pill">
+                                        <td class="text-end text-nowrap">
+                                            <a href="{{ route('documents.view', $document->id) }}" class="btn btn-sm btn-outline-secondary rounded-pill me-1" target="_blank" rel="noopener">View</a>
+                                            <a href="{{ route('documents.download', $document->id) }}" class="btn btn-sm btn-outline-primary rounded-pill">
                                                 <i class="fas fa-download"></i>
                                             </a>
                                         </td>
@@ -304,6 +364,9 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="px-1">
+                        {{ $profileDocumentsPaginator->links('pagination.modern') }}
+                    </div>
                 @else
                     <div class="text-center text-muted py-5">
                         <i class="fas fa-file-alt fa-2x mb-3 opacity-50"></i>
@@ -311,6 +374,7 @@
                     </div>
                 @endif
             </div>
+            @endif
 
             @if($incentiveDetailsData)
                 <div class="apv-card mb-4 apv-card--incentive apv-incentive-wrap">

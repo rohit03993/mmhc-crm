@@ -6,7 +6,7 @@
 @section('content')
 <div class="container-fluid py-3 py-md-4 no-print">
     @php
-        $query = request()->only(['type', 'institution_id', 'batch_id', 'subject_id']);
+        $query = request()->only(['type', 'institution_id', 'batch_id', 'subject_id', 'teaching_method_key', 'assignment_type', 'assessment_type_key', 'summative_only']);
         $downloadUrl = route('academics.reports.download', $query);
     @endphp
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap gap-2 mb-4">
@@ -24,6 +24,10 @@
     <form method="GET" action="{{ route('academics.reports.show') }}" class="card shadow-sm mb-3">
         <div class="card-body">
             <input type="hidden" name="type" value="student_submission">
+            <input type="hidden" name="teaching_method_key" value="{{ request('teaching_method_key') }}">
+            <input type="hidden" name="assignment_type" value="{{ request('assignment_type') }}">
+            <input type="hidden" name="assessment_type_key" value="{{ request('assessment_type_key') }}">
+            <input type="hidden" name="summative_only" value="{{ request()->boolean('summative_only') ? '1' : '0' }}">
             <div class="row g-2 align-items-end">
                 <div class="col-12 col-md-3">
                     <label for="report_institution_id" class="form-label small mb-0">College</label>

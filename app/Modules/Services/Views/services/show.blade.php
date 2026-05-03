@@ -25,7 +25,7 @@
 @section('content')
 <div class="sr-detail">
     {{-- Mobile top bar --}}
-    <div class="sr-detail__mobile-bar d-md-none">
+    <div class="sr-detail__mobile-bar mmhc-inverse-surface d-md-none">
         <a href="{{ $backUrl }}" class="sr-detail__icon-btn" aria-label="Back">
             <i class="fas fa-arrow-left"></i>
         </a>

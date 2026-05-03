@@ -3,17 +3,24 @@
 namespace App\Modules\Academics\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Academics\Models\AcademicExam;
 use App\Modules\Academics\Models\Assignment;
 use App\Modules\Academics\Models\Subject;
 use App\Modules\Academics\Models\Topic;
+use App\Modules\Academics\Support\AcademicsTaxonomy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class AssignmentController extends Controller
 {
     protected function scopeSubjects()
     {
         $user = auth()->user();
+        if (in_array($user->role, ['super_admin', 'admin'], true)) {
+            return Subject::with('batch.institution')->active();
+        }
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             return Subject::with('batch.institution')->active()
                 ->whereHas('batch', fn ($q) => $q->where('institution_id', $user->academic_institution_id));
@@ -48,6 +55,76 @@ class AssignmentController extends Controller
         }
     }
 
+    /** @return list<array{label: string, points: float}> */
+    protected function parseChecklistItemsFromRaw(?string $raw): array
+    {
+        if ($raw === null || trim($raw) === '') {
+            return [];
+        }
+        $lines = preg_split('/\r\n|\r|\n/', $raw);
+        $out = [];
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            $points = 1.0;
+            $label = $line;
+            if (preg_match('/^(.+?)\s*\|\s*([\d.]+)\s*$/u', $line, $m)) {
+                $label = trim($m[1]);
+                $points = (float) $m[2];
+            }
+            if ($label !== '') {
+                $out[] = ['label' => $label, 'points' => max(0.0, $points)];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function validatedAssignmentPayload(Request $request): array
+    {
+        $allowedAsm = array_keys(AcademicsTaxonomy::assessmentTypes());
+        $allowedTypes = array_keys(AcademicsTaxonomy::assignmentTypes());
+        $validated = $request->validate([
+            'topic_id' => 'required|exists:academic_topics,id',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'due_date' => 'nullable|date',
+            'attachments.*' => 'nullable|file|max:10240',
+            'assignment_type' => ['required', Rule::in($allowedTypes)],
+            'assessment_type_keys' => ['nullable', 'array'],
+            'assessment_type_keys.*' => ['string', Rule::in($allowedAsm)],
+            'checklist_items_raw' => ['nullable', 'string', 'max:20000'],
+        ]);
+        $validated['assessment_type_keys'] = AcademicsTaxonomy::filterKeys($request->input('assessment_type_keys', []), $allowedAsm);
+        $validated['description'] = $validated['description'] ?? null;
+        $validated['due_date'] = $validated['due_date'] ?? null;
+        $validated['is_formative'] = $request->boolean('is_formative');
+        $validated['is_summative'] = $request->boolean('is_summative');
+        $validated['eval_includes_mcq'] = $request->boolean('eval_includes_mcq');
+        $validated['eval_includes_practical'] = $request->boolean('eval_includes_practical');
+        $validated['eval_includes_viva'] = $request->boolean('eval_includes_viva');
+        $validated['eval_includes_checklist'] = $request->boolean('eval_includes_checklist');
+
+        $checklistParsed = $this->parseChecklistItemsFromRaw($request->input('checklist_items_raw'));
+        if ($validated['assignment_type'] === Assignment::TYPE_CHECKLIST && $checklistParsed === []) {
+            throw ValidationException::withMessages([
+                'checklist_items_raw' => 'Add at least one checklist line for checklist assignments.',
+            ]);
+        }
+        if (in_array($validated['assignment_type'], [Assignment::TYPE_CHECKLIST, Assignment::TYPE_MIXED], true)) {
+            $validated['checklist_items'] = $checklistParsed;
+        } else {
+            $validated['checklist_items'] = [];
+        }
+
+        return $validated;
+    }
+
     public function index(Request $request)
     {
         $topicId = $request->get('topic_id');
@@ -70,20 +147,9 @@ class AssignmentController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'topic_id' => 'required|exists:academic_topics,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'due_date' => 'nullable|date',
-            'attachments.*' => 'nullable|file|max:10240', // 10MB
-        ]);
+        $validated = $this->validatedAssignmentPayload($request);
         $this->authorizeTopic((int) $validated['topic_id']);
-        $assignment = Assignment::create([
-            'topic_id' => $validated['topic_id'],
-            'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
-            'due_date' => $validated['due_date'] ?? null,
-        ]);
+        $assignment = Assignment::create($validated);
         $this->storeAttachments($assignment, $request->file('attachments'));
 
         return redirect()->route('academics.assignments.index')->with('success', 'Assignment created successfully.');
@@ -93,8 +159,9 @@ class AssignmentController extends Controller
     {
         $this->authorizeTopic($assignment->topic_id);
         $assignment->load('topic.subject.batch.institution');
+        $linkedExams = AcademicExam::where('assignment_id', $assignment->id)->orderByDesc('id')->get();
 
-        return view('academics::assignments.show', compact('assignment'));
+        return view('academics::assignments.show', compact('assignment', 'linkedExams'));
     }
 
     public function edit(Assignment $assignment)
@@ -109,20 +176,9 @@ class AssignmentController extends Controller
     public function update(Request $request, Assignment $assignment)
     {
         $this->authorizeTopic($assignment->topic_id);
-        $validated = $request->validate([
-            'topic_id' => 'required|exists:academic_topics,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'due_date' => 'nullable|date',
-            'attachments.*' => 'nullable|file|max:10240',
-        ]);
+        $validated = $this->validatedAssignmentPayload($request);
         $this->authorizeTopic((int) $validated['topic_id']);
-        $assignment->update([
-            'topic_id' => $validated['topic_id'],
-            'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
-            'due_date' => $validated['due_date'] ?? null,
-        ]);
+        $assignment->update($validated);
         $this->storeAttachments($assignment, $request->file('attachments'));
 
         return redirect()->route('academics.assignments.index')->with('success', 'Assignment updated successfully.');

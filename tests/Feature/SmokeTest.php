@@ -2,15 +2,14 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use Tests\TestCase;
 
 /**
- * Smoke tests for key guest-facing routes (no DB required).
- * Run with: php artisan test tests/Feature/SmokeTest.php
- *
- * Tests that hit the DB (e.g. login POST) are skipped with default config
- * because PHPUnit uses SQLite in-memory and no migrations run. See docs/TESTING.md.
+ * Smoke tests for key guest-facing routes.
+ * Guest pages may resolve site branding via DB; SQLite PDO must be enabled for these to run.
  */
+#[RequiresPhpExtension('pdo_sqlite')]
 class SmokeTest extends TestCase
 {
     public function test_login_page_returns_ok(): void

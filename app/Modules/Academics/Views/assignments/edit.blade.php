@@ -31,6 +31,8 @@
                         <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="3">{{ old('description', $assignment->description) }}</textarea>
                         @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+                    @include('academics::partials.assignment-taxonomy-fields', ['assignment' => $assignment])
+                    @include('academics::partials.assignment-checklist-fields', ['assignment' => $assignment])
                     <div class="col-md-6">
                         <label for="due_date" class="form-label">Due date</label>
                         <input type="date" class="form-control @error('due_date') is-invalid @enderror" id="due_date" name="due_date" value="{{ old('due_date', $assignment->due_date?->format('Y-m-d')) }}">

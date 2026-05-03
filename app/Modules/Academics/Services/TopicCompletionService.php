@@ -2,18 +2,19 @@
 
 namespace App\Modules\Academics\Services;
 
+use App\Modules\Academics\Models\AcademicExamAttempt;
 use App\Modules\Academics\Models\Assignment;
 
 class TopicCompletionService
 {
     /**
-     * After a submission is saved: if submission % >= threshold, mark the assignment's topic as completed.
+     * After a submission is saved or a linked quiz is submitted: if completion % >= threshold, mark the topic completed.
      */
     public static function checkAndCompleteTopic(Assignment $assignment): void
     {
-        $assignment->load('topic');
+        $assignment->load(['topic', 'exams']);
         $topic = $assignment->topic;
-        if (!$topic) {
+        if (! $topic) {
             return;
         }
 
@@ -23,7 +24,26 @@ class TopicCompletionService
             return;
         }
 
-        $submittedCount = $assignment->submissions()->count();
+        if ($assignment->assignment_type === Assignment::TYPE_QUIZ && $assignment->exams->isNotEmpty()) {
+            $examIds = $assignment->exams->pluck('id');
+            $submittedCount = 0;
+            foreach ($eligibleIds as $uid) {
+                if ($assignment->submissions()->where('user_id', $uid)->exists()) {
+                    $submittedCount++;
+
+                    continue;
+                }
+                if (AcademicExamAttempt::whereIn('exam_id', $examIds)
+                    ->where('user_id', $uid)
+                    ->where('status', AcademicExamAttempt::STATUS_SUBMITTED)
+                    ->exists()) {
+                    $submittedCount++;
+                }
+            }
+        } else {
+            $submittedCount = $assignment->submissions()->count();
+        }
+
         $percentage = (int) round(($submittedCount / $eligibleCount) * 100);
         $threshold = (int) config('academics.completion_threshold', 70);
 

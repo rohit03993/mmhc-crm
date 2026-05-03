@@ -61,7 +61,7 @@ class DashboardRedirectTest extends TestCase
         $this->assertSame(route('community.index'), $response->getTargetUrl());
     }
 
-    public function test_academic_user_is_redirected_to_community(): void
+    public function test_academic_user_is_redirected_to_academics_dashboard(): void
     {
         $user = new User([
             'name' => 'Faculty User',
@@ -74,6 +74,6 @@ class DashboardRedirectTest extends TestCase
         $response = $controller->index();
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
-        $this->assertSame(route('community.index'), $response->getTargetUrl());
+        $this->assertSame(route('academics.dashboard'), $response->getTargetUrl());
     }
 }

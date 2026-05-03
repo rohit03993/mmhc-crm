@@ -5,6 +5,11 @@
 
 @section('content')
 <div class="container-fluid py-3">
+    <div class="mb-3">
+        <a href="{{ route('academics.topics.resources.index', $topic) }}" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-film me-1"></i>Procedure &amp; video library
+        </a>
+    </div>
     <div class="card">
         <div class="card-body">
             <div class="mb-3">
@@ -36,6 +41,7 @@
                         <input type="number" class="form-control @error('sort_order') is-invalid @enderror" id="sort_order" name="sort_order" value="{{ old('sort_order', $topic->sort_order) }}" min="0">
                         @error('sort_order')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+                    @include('academics::partials.teaching-methods-fields', ['topic' => $topic])
                 </div>
                 <div class="mt-4">
                     <button type="submit" class="btn btn-primary">Update Topic</button>

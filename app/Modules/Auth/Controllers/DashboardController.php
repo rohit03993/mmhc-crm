@@ -18,7 +18,12 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        // Unified landing: all authenticated users open Community first.
+        $user = Auth::user();
+
+        if ($user && $user->hasAcademicRole()) {
+            return redirect()->route('academics.dashboard');
+        }
+
         return redirect()->route('community.index');
     }
 

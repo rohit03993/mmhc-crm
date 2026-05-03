@@ -4,6 +4,9 @@
 @section('page-title', 'Assignments')
 
 @section('content')
+@php
+    use App\Modules\Academics\Support\AcademicsTaxonomy;
+@endphp
 <div class="container-fluid py-3">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
         <h2 class="h5 mb-0">Assignments</h2>
@@ -45,6 +48,7 @@
                                         <span class="badge bg-danger ms-1">Overdue</span>
                                     @endif
                                 </td>
+                                <td><span class="badge bg-light text-dark border">{{ AcademicsTaxonomy::assignmentTypeLabel($a->assignment_type) }}</span></td>
                                 <td>{{ $a->topic->name ?? '—' }} <small class="text-muted">({{ $a->topic->subject->name ?? '' }})</small></td>
                                 <td>{{ $a->due_date ? $a->due_date->format('M d, Y') : '—' }}</td>
                                 <td>{{ count($a->attachments ?? []) }}</td>

@@ -1,0 +1,11 @@
+# PHP CLI with SQLite PDO for `php artisan test` (no need to enable pdo_sqlite on host Windows PHP).
+# Build: docker build -f Dockerfile.testing -t mmhc-crm-tests .
+# Run (use scripts/run-tests-docker.ps1 so DB_* matches phpunit — mounted .env is often mysql).
+FROM php:8.3-cli-bookworm
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libsqlite3-dev \
+    && docker-php-ext-install -j"$(nproc)" pdo_sqlite \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /var/www/html

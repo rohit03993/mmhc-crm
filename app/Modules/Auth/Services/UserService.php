@@ -3,7 +3,6 @@
 namespace App\Modules\Auth\Services;
 
 use App\Models\Core\User;
-use Illuminate\Support\Str;
 
 class UserService
 {
@@ -19,12 +18,16 @@ class UserService
      */
     public function generateUniqueId(string $role): string
     {
-        $prefix = match($role) {
+        $prefix = match ($role) {
             'nurse' => 'N-UID',
             'caregiver' => 'C-UID',
             'patient' => 'P-UID',
             'admin' => 'M-UID',
-            default => 'U-UID'
+            'super_admin' => 'ACAD-SA',
+            'institution_admin' => 'ACAD-IA',
+            'faculty' => 'ACAD-F',
+            'student' => 'ACAD-ST',
+            default => 'U-UID',
         };
 
         $startNumber = in_array($role, ['patient', 'nurse', 'caregiver'], true)
@@ -33,16 +36,16 @@ class UserService
 
         // Get the highest existing number for this role (numeric part after prefix-)
         $maxId = User::where('role', $role)
-                    ->where('unique_id', 'like', $prefix . '-%')
-                    ->selectRaw('CAST(SUBSTRING(unique_id, ' . (strlen($prefix) + 2) . ') AS UNSIGNED) as id_num')
-                    ->orderBy('id_num', 'desc')
-                    ->first();
+            ->where('unique_id', 'like', $prefix.'-%')
+            ->selectRaw('CAST(SUBSTRING(unique_id, '.(strlen($prefix) + 2).') AS UNSIGNED) as id_num')
+            ->orderBy('id_num', 'desc')
+            ->first();
 
         $nextNumber = $maxId ? max($maxId->id_num + 1, $startNumber) : $startNumber;
 
         // Ensure uniqueness by checking if the ID already exists
         do {
-            $uniqueId = $prefix . '-' . str_pad((string) $nextNumber, 6, '0', STR_PAD_LEFT);
+            $uniqueId = $prefix.'-'.str_pad((string) $nextNumber, 6, '0', STR_PAD_LEFT);
             $exists = User::where('unique_id', $uniqueId)->exists();
             if ($exists) {
                 $nextNumber++;
@@ -58,7 +61,7 @@ class UserService
     public function createUser(array $userData): User
     {
         $userData['unique_id'] = $this->generateUniqueId($userData['role']);
-        
+
         return User::create($userData);
     }
 
@@ -107,9 +110,9 @@ class UserService
 
         return $users->where(function ($q) use ($query) {
             $q->where('name', 'like', "%{$query}%")
-              ->orWhere('email', 'like', "%{$query}%")
-              ->orWhere('unique_id', 'like', "%{$query}%")
-              ->orWhere('phone', 'like', "%{$query}%");
+                ->orWhere('email', 'like', "%{$query}%")
+                ->orWhere('unique_id', 'like', "%{$query}%")
+                ->orWhere('phone', 'like', "%{$query}%");
         })->active()->get();
     }
 
@@ -131,20 +134,19 @@ class UserService
 
     /**
      * Delete all users except admins
-     * 
+     *
      * @return int Number of users deleted
      */
     public function deleteAllNonAdminUsers(): int
     {
-        return User::where('role', '!=', 'admin')->delete();
+        return User::whereNotIn('role', User::protectedFromBulkUserDeletionRoleSlugs())->delete();
     }
 
     /**
      * Normalize Indian phone number
      * Accepts 10-digit number and adds +91 prefix
      * Also handles numbers that already have +91 or 91 prefix
-     * 
-     * @param string $phone
+     *
      * @return string Normalized phone number in format +91XXXXXXXXXX
      */
     public function normalizePhone(string $phone): string
@@ -153,45 +155,46 @@ class UserService
         if (strpos($phone, '+91') === 0 && strlen($phone) === 13) {
             return $phone;
         }
-        
+
         // Remove all non-digit characters
         $digits = preg_replace('/\D/', '', $phone);
-        
+
         // If it starts with 91 and has 12 digits, remove the 91 prefix
         if (strlen($digits) === 12 && substr($digits, 0, 2) === '91') {
             $digits = substr($digits, 2);
         }
-        
+
         // If it's 10 digits, add +91 prefix
         if (strlen($digits) === 10) {
-            return '+91' . $digits;
+            return '+91'.$digits;
         }
-        
+
         // If somehow we have invalid length, try to extract last 10 digits
         if (strlen($digits) > 10) {
             $digits = substr($digits, -10);
-            return '+91' . $digits;
+
+            return '+91'.$digits;
         }
-        
+
         // Return with +91 prefix (will handle edge cases)
-        return '+91' . $digits;
+        return '+91'.$digits;
     }
 
     /**
      * Extract 10-digit phone number from normalized format
-     * 
-     * @param string $phone Normalized phone (e.g., +91XXXXXXXXXX)
+     *
+     * @param  string  $phone  Normalized phone (e.g., +91XXXXXXXXXX)
      * @return string 10-digit phone number
      */
     public function extractPhoneDigits(string $phone): string
     {
         $digits = preg_replace('/\D/', '', $phone);
-        
+
         // Remove 91 prefix if present
         if (strlen($digits) === 12 && substr($digits, 0, 2) === '91') {
             return substr($digits, 2);
         }
-        
+
         // Return last 10 digits
         return substr($digits, -10);
     }

@@ -144,9 +144,6 @@
                     <a href="{{ route('auth.login') }}" class="px-5 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition">
                         Login
                     </a>
-                    <a href="{{ route('auth.academics-login') }}" class="px-5 py-2 text-gray-700 border border-gray-400 rounded-lg hover:bg-gray-50 transition" title="College admin, faculty & students">
-                        Academics
-                    </a>
                     <a href="{{ route('auth.register') }}" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-green-500 text-white rounded-lg hover:shadow-lg transition">
                         Register
                     </a>
@@ -168,7 +165,6 @@
                 <a href="#contact" class="block text-gray-700 hover:text-blue-600 font-medium">Contact</a>
                 <hr class="my-3">
                 <a href="{{ route('auth.login') }}" class="block w-full text-center px-5 py-2 text-blue-600 border border-blue-600 rounded-lg">Login</a>
-                <a href="{{ route('auth.academics-login') }}" class="block w-full text-center px-5 py-2 text-gray-700 border border-gray-400 rounded-lg">Academics</a>
                 <a href="{{ route('auth.register') }}" class="block w-full text-center px-5 py-2 bg-gradient-to-r from-blue-600 to-green-500 text-white rounded-lg">Register</a>
             </div>
         </div>

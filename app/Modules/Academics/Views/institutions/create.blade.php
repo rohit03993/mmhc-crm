@@ -16,8 +16,9 @@
                         @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">
-                        <label for="code" class="form-label">Code</label>
-                        <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code" value="{{ old('code') }}" placeholder="e.g. MMHC-01">
+                        <label for="code" class="form-label">Short code (institute ID)</label>
+                        <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code" value="{{ old('code') }}" placeholder="e.g. MMCN-BPL" maxlength="50">
+                        <div class="form-text">Unique label shown in lists and exports; not the same as the numeric database ID.</div>
                         @error('code')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">

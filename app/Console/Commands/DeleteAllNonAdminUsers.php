@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Core\User;
 use App\Modules\Auth\Services\UserService;
+use Illuminate\Console\Command;
 
 class DeleteAllNonAdminUsers extends Command
 {
@@ -20,47 +20,44 @@ class DeleteAllNonAdminUsers extends Command
      *
      * @var string
      */
-    protected $description = 'Delete all users except admins';
+    protected $description = 'Delete all users except CRM admins and academic super admins';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $userService = new UserService();
-        
-        // Count users to be deleted
-        $nonAdminCount = User::where('role', '!=', 'admin')->count();
-        $adminCount = User::where('role', 'admin')->count();
-        
+        $userService = new UserService;
+
+        $protected = User::protectedFromBulkUserDeletionRoleSlugs();
+        $nonAdminCount = User::whereNotIn('role', $protected)->count();
+        $protectedCount = User::whereIn('role', $protected)->count();
+
         if ($nonAdminCount === 0) {
-            $this->info('No non-admin users found. Nothing to delete.');
+            $this->info('No deletable users found. CRM admins and academic super admins are always protected.');
+
             return 0;
         }
-        
-        // Show summary
-        $this->warn('⚠️  WARNING: This will delete ALL non-admin users!');
+
+        $this->warn('⚠️  WARNING: This deletes all users except CRM admin + academic super_admin!');
         $this->line('');
         $this->info("Users to be deleted: {$nonAdminCount}");
-        $this->info("Admin users (protected): {$adminCount}");
+        $this->info("Protected accounts: {$protectedCount}");
         $this->line('');
-        
-        // Get confirmation unless --force flag is used
-        if (!$this->option('force')) {
-            if (!$this->confirm('Are you sure you want to delete all non-admin users?', false)) {
+
+        if (! $this->option('force')) {
+            if (! $this->confirm('Are you sure you want to proceed?', false)) {
                 $this->info('Operation cancelled.');
+
                 return 0;
             }
         }
-        
-        // Delete users
-        $this->info('Deleting non-admin users...');
+
+        $this->info('Deleting…');
         $deleted = $userService->deleteAllNonAdminUsers();
-        
-        $this->info("✅ Successfully deleted {$deleted} non-admin user(s).");
-        $this->info("Admin users remain intact: {$adminCount}");
-        
+
+        $this->info("✅ Deleted {$deleted} user(s). Protected accounts unchanged: {$protectedCount}");
+
         return 0;
     }
 }
-

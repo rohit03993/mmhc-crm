@@ -38,13 +38,23 @@
                                         @if($sub->isLate())
                                             <span class="badge bg-warning text-dark">Late</span>
                                         @endif
+                                        @if($sub->checklist_points_possible !== null && (float) $sub->checklist_points_possible > 0)
+                                            <span class="badge bg-light text-dark border ms-1">Checklist {{ $sub->checklist_points_earned }}/{{ $sub->checklist_points_possible }}</span>
+                                        @endif
                                     @else
                                         <span class="badge bg-secondary">Pending</span>
                                     @endif
                                 </td>
                                 <td class="text-end">
+                                    @foreach($a->exams as $lex)
+                                        @if($examAccess->canTake(auth()->user(), $lex))
+                                            <a href="{{ route('academics.exams.show', $lex) }}" class="btn btn-sm btn-outline-success mb-1">Quiz</a>
+                                        @endif
+                                    @endforeach
                                     @if($sub)
-                                        <a href="{{ route('academics.submissions.download', $sub) }}" class="btn btn-sm btn-outline-secondary">Download mine</a>
+                                        @if($sub->file_path)
+                                            <a href="{{ route('academics.submissions.download', $sub) }}" class="btn btn-sm btn-outline-secondary">Download mine</a>
+                                        @endif
                                         <a href="{{ route('academics.submit.form', $a) }}" class="btn btn-sm btn-outline-primary">Re-submit</a>
                                     @else
                                         <a href="{{ route('academics.submit.form', $a) }}" class="btn btn-sm btn-primary">Submit</a>

@@ -4,6 +4,9 @@
 @section('page-title', 'Topics')
 
 @section('content')
+@php
+    use App\Modules\Academics\Support\AcademicsTaxonomy;
+@endphp
 <div class="container-fluid py-3">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
         <h2 class="h5 mb-0">Topics</h2>
@@ -42,6 +45,7 @@
                                 <td>{{ $topic->sort_order }}</td>
                                 <td>{{ $topic->name }}</td>
                                 <td>{{ $topic->subject->name ?? '—' }} <small class="text-muted">({{ $topic->subject->batch->name ?? '' }})</small></td>
+                                <td class="small text-muted">{{ Str::limit(AcademicsTaxonomy::teachingMethodLabels($topic->teaching_method_keys), 48) }}</td>
                                 <td>
                                     @if($topic->is_completed)
                                         <span class="badge bg-success">Completed</span>

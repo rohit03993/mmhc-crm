@@ -3,6 +3,7 @@
 namespace App\Modules\Academics\Services;
 
 use App\Models\Core\User;
+use App\Modules\Academics\Models\AcademicExamAttempt;
 use App\Modules\Academics\Models\Assignment;
 use App\Modules\Academics\Models\Institution;
 use App\Modules\Academics\Models\Submission;
@@ -22,16 +23,31 @@ class AcademicScoreService
         if ($user->role !== 'student') {
             return 0;
         }
-        $eligibleAssignmentIds = Assignment::whereHas('topic.subject.batch.students', fn ($q) => $q->where('users.id', $user->id))
-            ->pluck('id')
-            ->toArray();
-        if (empty($eligibleAssignmentIds)) {
+        $assignments = Assignment::with('exams')
+            ->whereHas('topic.subject.batch.students', fn ($q) => $q->where('users.id', $user->id))
+            ->get();
+        if ($assignments->isEmpty()) {
             return 0;
         }
-        $submittedCount = Submission::where('user_id', $user->id)
-            ->whereIn('assignment_id', $eligibleAssignmentIds)
-            ->count();
-        return (int) round(($submittedCount / count($eligibleAssignmentIds)) * 100);
+        $met = 0;
+        foreach ($assignments as $a) {
+            if (Submission::where('user_id', $user->id)->where('assignment_id', $a->id)->exists()) {
+                $met++;
+
+                continue;
+            }
+            if ($a->assignment_type === Assignment::TYPE_QUIZ && $a->exams->isNotEmpty()) {
+                $eids = $a->exams->pluck('id');
+                if (AcademicExamAttempt::whereIn('exam_id', $eids)
+                    ->where('user_id', $user->id)
+                    ->where('status', AcademicExamAttempt::STATUS_SUBMITTED)
+                    ->exists()) {
+                    $met++;
+                }
+            }
+        }
+
+        return (int) round(($met / $assignments->count()) * 100);
     }
 
     /**
@@ -49,6 +65,7 @@ class AcademicScoreService
             return 0;
         }
         $completed = (clone $topicQuery)->where('is_completed', true)->count();
+
         return (int) round(($completed / $total) * 100);
     }
 
@@ -64,6 +81,7 @@ class AcademicScoreService
             return 0;
         }
         $completed = (clone $topicQuery)->where('is_completed', true)->count();
+
         return (int) round(($completed / $total) * 100);
     }
 }

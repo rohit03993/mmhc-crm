@@ -4,6 +4,8 @@ namespace App\Modules\Auth\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
+use App\Modules\Academics\Models\Batch;
+use App\Modules\Academics\Models\Institution;
 use App\Modules\Auth\Services\UserService;
 use App\Modules\Auth\Services\WhatsAppOtpService;
 use App\Modules\Referrals\Services\ReferralService;
@@ -12,8 +14,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
@@ -31,7 +35,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Show login form (main: patients & caregivers).
+     * Show unified login (split layout; same credentials for all roles).
      */
     public function showLogin()
     {
@@ -39,23 +43,21 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
 
-        return view('auth::login', ['academicsLogin' => false]);
+        $achievementMedia = \App\Models\AchievementMedia::ordered()->get();
+
+        return view('auth::login', compact('achievementMedia'));
     }
 
     /**
-     * Show academics portal login (college admin, faculty, students).
-     * Same form; post-login redirect is already role-based to /academics.
+     * Legacy URL: send everyone to the single login page.
      */
     public function showAcademicsLogin()
     {
         if (Auth::check()) {
-            // Use unified role-based post-login router.
             return redirect()->route('dashboard');
         }
 
-        $achievementMedia = \App\Models\AchievementMedia::ordered()->get();
-
-        return view('auth::login', ['academicsLogin' => true, 'achievementMedia' => $achievementMedia]);
+        return redirect()->route('auth.login', [], 302);
     }
 
     /**
@@ -79,7 +81,7 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->remember)) {
             $request->session()->regenerate();
 
-            return redirect()->intended(route('dashboard'));
+            return redirect()->intended($this->defaultPostLoginUrl());
         }
 
         return redirect()->back()
@@ -197,7 +199,21 @@ class AuthController extends Controller
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard'));
+        return redirect()->intended($this->defaultPostLoginUrl());
+    }
+
+    /**
+     * Default destination after email or phone login when no intended URL is stored.
+     */
+    protected function defaultPostLoginUrl(): string
+    {
+        $user = Auth::user();
+
+        if ($user && $user->hasAcademicRole()) {
+            return route('academics.dashboard');
+        }
+
+        return route('dashboard');
     }
 
     /**
@@ -444,14 +460,32 @@ class AuthController extends Controller
     public function manageUsers(Request $request)
     {
         $searchQuery = trim((string) $request->input('q', ''));
+        $segment = (string) $request->query('segment', 'all');
+        if (! in_array($segment, ['all', 'academics', 'healthcare'], true)) {
+            $segment = 'all';
+        }
 
         $users = User::query()
+            ->when($segment === 'academics', fn ($q) => $q->whereIn('role', User::academicRoleSlugs())->with([
+                'academicInstitution:id,name,code',
+                'academicBatches:id,name,institution_id',
+            ]))
+            ->when($segment === 'healthcare', fn ($q) => $q->whereNotIn('role', User::academicRoleSlugs()))
             ->when($searchQuery !== '', fn ($query) => $this->applyAdminUserSearch($query, $searchQuery))
+            ->when($segment === 'academics', fn ($q) => $q->orderByRaw("CASE role WHEN 'super_admin' THEN 0 WHEN 'institution_admin' THEN 1 WHEN 'faculty' THEN 2 WHEN 'student' THEN 3 ELSE 4 END"))
             ->orderBy('name')
             ->paginate(10)
             ->withQueryString();
 
-        return view('auth::admin.users', compact('users', 'searchQuery'));
+        $institutions = Schema::hasTable('academic_institutions')
+            ? Institution::query()->orderBy('name')->get(['id', 'name', 'code'])
+            : collect();
+
+        $batches = Schema::hasTable('academic_batches')
+            ? Batch::query()->orderBy('institution_id')->orderBy('name')->get(['id', 'institution_id', 'name', 'academic_year'])
+            : collect();
+
+        return view('auth::admin.users', compact('users', 'searchQuery', 'segment', 'institutions', 'batches'));
     }
 
     /**
@@ -506,8 +540,16 @@ class AuthController extends Controller
             ],
             'pincode' => 'required|string|regex:/^[1-9][0-9]{5}$/',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:admin,nurse,caregiver,patient',
+            'role' => 'required|in:admin,nurse,caregiver,patient,super_admin,institution_admin,faculty,student',
+            'academic_institution_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('academic_institutions', 'id'),
+                Rule::requiredIf(fn () => in_array((string) $request->input('role'), ['institution_admin', 'faculty', 'student'], true)),
+            ],
             'address' => 'nullable|string|max:500',
+            'academic_batch_ids' => ['nullable', 'array'],
+            'academic_batch_ids.*' => ['integer', Rule::exists('academic_batches', 'id')],
         ], [
             'email.unique' => 'This email address is already registered.',
             'phone.regex' => 'Phone number must be exactly 10 digits.',
@@ -515,9 +557,13 @@ class AuthController extends Controller
             'pincode.regex' => 'Pincode must be a valid 6-digit Indian pincode.',
         ]);
 
+        $validator->after(function (\Illuminate\Validation\Validator $v) use ($request) {
+            $this->assertAcademicBatchesBelongToInstitution($v, $request);
+        });
+
         if ($validator->fails()) {
             return redirect()->back()
-                ->withErrors($validator)
+                ->withErrors($validator, 'createUser')
                 ->withInput();
         }
 
@@ -556,9 +602,20 @@ class AuthController extends Controller
             $userData['location'] = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
         }
 
+        $role = (string) $request->input('role');
+        if (in_array($role, ['institution_admin', 'faculty', 'student'], true)) {
+            $userData['academic_institution_id'] = (int) $request->input('academic_institution_id');
+        } else {
+            $userData['academic_institution_id'] = null;
+        }
+
         $user = $this->userService->createUser($userData);
 
-        return redirect()->route('admin.users')
+        $this->syncUserAcademicBatches($user, $role, $userData['academic_institution_id'] ?? null, $request);
+
+        $listQuery = in_array($user->role, User::academicRoleSlugs(), true) ? ['segment' => 'academics'] : [];
+
+        return redirect()->route('admin.users', $listQuery)
             ->with('success', "User '{$user->name}' created successfully with ID: {$user->unique_id}");
     }
 
@@ -572,6 +629,8 @@ class AuthController extends Controller
 
         // Get decrypted password using accessor (admin only)
         $decryptedPassword = $user->decrypted_password;
+
+        $user->loadMissing('academicBatches:id,name,institution_id');
 
         return response()->json([
             'success' => true,
@@ -589,6 +648,8 @@ class AuthController extends Controller
                 'created_at' => $user->created_at->format('M d, Y'),
                 'plain_password' => $decryptedPassword, // Use decrypted password accessor
                 'reward_points' => $user->reward_points ?? 0,
+                'academic_institution_id' => $user->academic_institution_id,
+                'academic_batch_ids' => $user->academicBatches->pluck('id')->values()->all(),
             ],
         ]);
     }
@@ -604,6 +665,8 @@ class AuthController extends Controller
         // Get decrypted password using accessor (admin only)
         $decryptedPassword = $user->decrypted_password;
 
+        $user->loadMissing('academicBatches:id,name,institution_id');
+
         return response()->json([
             'success' => true,
             'user' => [
@@ -618,6 +681,8 @@ class AuthController extends Controller
                 'date_of_birth' => $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : null,
                 'is_active' => $user->is_active,
                 'plain_password' => $decryptedPassword, // Use decrypted password accessor
+                'academic_institution_id' => $user->academic_institution_id,
+                'academic_batch_ids' => $user->academicBatches->pluck('id')->values()->all(),
             ],
         ]);
     }
@@ -646,10 +711,18 @@ class AuthController extends Controller
                 },
             ],
             'pincode' => 'required|string|regex:/^[1-9][0-9]{5}$/',
-            'role' => 'required|in:admin,nurse,caregiver,patient',
+            'role' => 'required|in:admin,nurse,caregiver,patient,super_admin,institution_admin,faculty,student',
+            'academic_institution_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('academic_institutions', 'id'),
+                Rule::requiredIf(fn () => in_array((string) $request->input('role'), ['institution_admin', 'faculty', 'student'], true)),
+            ],
             'address' => 'nullable|string|max:500',
             'date_of_birth' => 'nullable|date',
             'password' => 'nullable|string|min:6|confirmed',
+            'academic_batch_ids' => ['nullable', 'array'],
+            'academic_batch_ids.*' => ['integer', Rule::exists('academic_batches', 'id')],
         ], [
             'email.unique' => 'This email address is already registered.',
             'phone.regex' => 'Phone number must be exactly 10 digits.',
@@ -657,9 +730,13 @@ class AuthController extends Controller
             'pincode.regex' => 'Pincode must be a valid 6-digit Indian pincode.',
         ]);
 
+        $validator->after(function (\Illuminate\Validation\Validator $v) use ($request) {
+            $this->assertAcademicBatchesBelongToInstitution($v, $request);
+        });
+
         if ($validator->fails()) {
             return redirect()->back()
-                ->withErrors($validator)
+                ->withErrors($validator, 'updateUser')
                 ->withInput();
         }
 
@@ -667,6 +744,13 @@ class AuthController extends Controller
 
         // Normalize and store phone number
         $updateData['phone'] = $normalizedPhone;
+
+        $newRole = (string) $request->input('role');
+        if (in_array($newRole, ['institution_admin', 'faculty', 'student'], true)) {
+            $updateData['academic_institution_id'] = (int) $request->input('academic_institution_id');
+        } else {
+            $updateData['academic_institution_id'] = null;
+        }
 
         // Handle is_active field
         if ($request->has('is_active')) {
@@ -707,8 +791,73 @@ class AuthController extends Controller
 
         $user->update($updateData);
 
-        return redirect()->route('admin.users')
+        $user->refresh();
+        $this->syncUserAcademicBatches(
+            $user,
+            (string) $user->role,
+            $user->academic_institution_id ? (int) $user->academic_institution_id : null,
+            $request
+        );
+
+        $listQuery = in_array($user->role, User::academicRoleSlugs(), true) ? ['segment' => 'academics'] : [];
+
+        return redirect()->route('admin.users', $listQuery)
             ->with('success', "User '{$user->name}' updated successfully!");
+    }
+
+    /**
+     * Ensure selected batches belong to the submitted institution (faculty / student only).
+     */
+    private function assertAcademicBatchesBelongToInstitution(\Illuminate\Validation\Validator $validator, Request $request): void
+    {
+        if (! Schema::hasTable('academic_batches')) {
+            return;
+        }
+        $role = (string) $request->input('role');
+        $instId = (int) $request->input('academic_institution_id');
+        if (! in_array($role, ['faculty', 'student'], true) || $instId < 1) {
+            return;
+        }
+        $ids = array_values(array_filter(array_map('intval', (array) $request->input('academic_batch_ids', []))));
+        if ($ids === []) {
+            return;
+        }
+        $invalid = Batch::query()->whereIn('id', $ids)->where('institution_id', '!=', $instId)->exists();
+        if ($invalid) {
+            $validator->errors()->add('academic_batch_ids', 'Each selected batch must belong to the chosen institution.');
+        }
+    }
+
+    /**
+     * Attach faculty/students to batches (pivot type matches role). Clears when role/institution not applicable.
+     */
+    private function syncUserAcademicBatches(User $user, string $role, ?int $institutionId, Request $request): void
+    {
+        if (! Schema::hasTable('academic_batch_users')) {
+            return;
+        }
+        $institutionId = $institutionId ?: null;
+        if (! in_array($role, ['faculty', 'student'], true) || ! $institutionId) {
+            $user->academicBatches()->detach();
+
+            return;
+        }
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array) $request->input('academic_batch_ids', [])))));
+        if ($ids === []) {
+            $user->academicBatches()->detach();
+
+            return;
+        }
+        $validIds = Batch::query()
+            ->where('institution_id', $institutionId)
+            ->whereIn('id', $ids)
+            ->pluck('id');
+        $pivotType = $role === 'faculty' ? 'faculty' : 'student';
+        $sync = [];
+        foreach ($validIds as $bid) {
+            $sync[$bid] = ['type' => $pivotType];
+        }
+        $user->academicBatches()->sync($sync);
     }
 
     /**
@@ -751,17 +900,18 @@ class AuthController extends Controller
      */
     public function deleteAllNonAdminUsers()
     {
-        $nonAdminCount = User::where('role', '!=', 'admin')->count();
-        $adminCount = User::where('role', 'admin')->count();
+        $protected = User::protectedFromBulkUserDeletionRoleSlugs();
+        $nonAdminCount = User::whereNotIn('role', $protected)->count();
+        $protectedCount = User::whereIn('role', $protected)->count();
 
         if ($nonAdminCount === 0) {
             return redirect()->route('admin.users')
-                ->with('error', 'No non-admin users found to delete.');
+                ->with('error', 'No deletable users found (CRM and academic platform admins stay protected).');
         }
 
         $deleted = $this->userService->deleteAllNonAdminUsers();
 
         return redirect()->route('admin.users')
-            ->with('success', "Successfully deleted {$deleted} non-admin user(s). {$adminCount} admin user(s) remain protected.");
+            ->with('success', "Deleted {$deleted} user(s). {$protectedCount} protected account(s) remain (admin + academic super admin).");
     }
 }

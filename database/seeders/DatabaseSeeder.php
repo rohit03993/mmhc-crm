@@ -30,6 +30,9 @@ class DatabaseSeeder extends Seeder
         // Academics demo users/data (institution admin, faculty, students)
         $this->call(AcademicDemoSeeder::class);
 
+        // Large multi-college academics (~15 colleges, 10 faculty & 30 students each): run when needed — can take ~1 min.
+        // $this->call(AcademicBulkDemoSeeder::class);
+
         $this->call(IncentiveRuleSetSeeder::class);
         $this->call(IncentiveNetworkDemoSeeder::class);
         $this->call(PaymentGatewayDemoSeeder::class);

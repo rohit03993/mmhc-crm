@@ -397,6 +397,32 @@
                                 <i class="fas fa-chevron-right"></i>
                             </div>
                         </a>
+
+                        <a href="{{ route('academics.institutions.index') }}" class="quick-action-btn">
+                            <div class="quick-action-icon" style="background: linear-gradient(135deg, #1e3a5f 0%, #0ea5e9 100%);">
+                                <i class="fas fa-university"></i>
+                            </div>
+                            <div class="quick-action-content">
+                                <div class="quick-action-title">Institutes &amp; codes</div>
+                                <div class="quick-action-desc">Colleges, database IDs, short codes</div>
+                            </div>
+                            <div class="quick-action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </a>
+
+                        <a href="{{ route('admin.users', ['segment' => 'academics']) }}" class="quick-action-btn">
+                            <div class="quick-action-icon bg-primary">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <div class="quick-action-content">
+                                <div class="quick-action-title">Academic users</div>
+                                <div class="quick-action-desc">Filter user list by college roles</div>
+                            </div>
+                            <div class="quick-action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </a>
                         
                         <a href="{{ route('admin.referrals.index') }}" class="quick-action-btn">
                             <div class="quick-action-icon bg-info">

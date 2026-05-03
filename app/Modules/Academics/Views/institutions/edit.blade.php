@@ -10,6 +10,7 @@
             <form action="{{ route('academics.institutions.update', $institution) }}" method="POST">
                 @csrf
                 @method('PUT')
+                <p class="text-muted small mb-3">Database ID: <span class="badge bg-light text-dark border font-monospace">{{ $institution->id }}</span> — use this value when linking users to an institution in User Management.</p>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
@@ -17,8 +18,9 @@
                         @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">
-                        <label for="code" class="form-label">Code</label>
-                        <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code" value="{{ old('code', $institution->code) }}">
+                        <label for="code" class="form-label">Short code (institute ID)</label>
+                        <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code" value="{{ old('code', $institution->code) }}" maxlength="50">
+                        <div class="form-text">Unique short label (e.g. MMCN-BPL), separate from the numeric database ID above.</div>
                         @error('code')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">

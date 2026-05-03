@@ -2,8 +2,8 @@
 
 namespace App\Modules\Academics\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Core\User;
+use Illuminate\Database\Eloquent\Model;
 
 class Submission extends Model
 {
@@ -16,10 +16,16 @@ class Submission extends Model
         'original_name',
         'submitted_at',
         'notes',
+        'checklist_answers',
+        'checklist_points_earned',
+        'checklist_points_possible',
     ];
 
     protected $casts = [
         'submitted_at' => 'datetime',
+        'checklist_answers' => 'array',
+        'checklist_points_earned' => 'decimal:2',
+        'checklist_points_possible' => 'decimal:2',
     ];
 
     public function assignment()
@@ -35,6 +41,7 @@ class Submission extends Model
     public function isLate(): bool
     {
         $due = $this->assignment->due_date ?? null;
+
         return $due && $this->submitted_at->isAfter($due->endOfDay());
     }
 }

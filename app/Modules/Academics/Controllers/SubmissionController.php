@@ -5,6 +5,8 @@ namespace App\Modules\Academics\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Academics\Models\Assignment;
 use App\Modules\Academics\Models\Submission;
+use App\Modules\Academics\Services\ChecklistScoreService;
+use App\Modules\Academics\Services\ExamAccessService;
 use App\Modules\Academics\Services\TopicCompletionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -16,65 +18,100 @@ class SubmissionController extends Controller
     {
         $userId = auth()->id();
 
-        return Assignment::with(['topic.subject.batch', 'submissions' => fn ($q) => $q->where('user_id', $userId)])
+        return Assignment::with([
+            'topic.subject.batch',
+            'submissions' => fn ($q) => $q->where('user_id', $userId),
+            'exams' => fn ($q) => $q->orderByDesc('id'),
+        ])
             ->whereHas('topic.subject.batch.students', fn ($q) => $q->where('users.id', $userId));
     }
 
-    public function index()
+    public function index(ExamAccessService $examAccess)
     {
         $assignments = $this->myAssignmentsQuery()
             ->orderBy('due_date')
             ->orderBy('title')
             ->paginate(10);
 
-        return view('academics::submissions.my-assignments', compact('assignments'));
+        return view('academics::submissions.my-assignments', compact('assignments', 'examAccess'));
     }
 
-    public function create(Assignment $assignment)
+    public function create(Assignment $assignment, ExamAccessService $examAccess)
     {
         $eligibleIds = $assignment->eligibleStudentIds();
         if (! in_array(auth()->id(), $eligibleIds)) {
             abort(403, 'You are not eligible to submit this assignment.');
         }
-        $assignment->load('topic.subject.batch');
-        $existing = Submission::where('assignment_id', $assignment->id)->where('user_id', auth()->id())->first();
-
-        return view('academics::submissions.submit', compact('assignment', 'existing'));
-    }
-
-    public function store(Request $request, Assignment $assignment)
-    {
-        $eligibleIds = $assignment->eligibleStudentIds();
-        if (! in_array(auth()->id(), $eligibleIds)) {
-            abort(403, 'You are not eligible to submit this assignment.');
-        }
-        $request->validate([
-            'file' => 'required|file|max:10240', // 10MB
-            'notes' => 'nullable|string|max:1000',
+        $assignment->load([
+            'topic.subject.batch',
+            'topic.resources',
+            'exams' => fn ($q) => $q->orderByDesc('id'),
         ]);
-        $file = $request->file('file');
-        $dir = 'academic/submissions/'.$assignment->id;
-        $path = $file->storeAs($dir, auth()->id().'_'.time().'_'.$file->getClientOriginalName(), 'public');
         $existing = Submission::where('assignment_id', $assignment->id)->where('user_id', auth()->id())->first();
-        if ($existing) {
-            if ($existing->file_path && Storage::disk('public')->exists($existing->file_path)) {
+
+        return view('academics::submissions.submit', compact('assignment', 'existing', 'examAccess'));
+    }
+
+    public function store(Request $request, Assignment $assignment, ChecklistScoreService $checklistScore)
+    {
+        $eligibleIds = $assignment->eligibleStudentIds();
+        if (! in_array(auth()->id(), $eligibleIds)) {
+            abort(403, 'You are not eligible to submit this assignment.');
+        }
+        $needsChecklist = $assignment->studentMustCompleteChecklist();
+        $fileRules = $assignment->assignment_type === Assignment::TYPE_FILE_UPLOAD
+            ? ['required', 'file', 'max:10240']
+            : ['nullable', 'file', 'max:10240'];
+        $rules = [
+            'file' => $fileRules,
+            'notes' => 'nullable|string|max:1000',
+        ];
+        if ($needsChecklist) {
+            $rules['checklist'] = ['nullable', 'array'];
+        }
+        $request->validate($rules);
+        $file = $request->file('file');
+        $existing = Submission::where('assignment_id', $assignment->id)->where('user_id', auth()->id())->first();
+        $dir = 'academic/submissions/'.$assignment->id;
+        $path = $existing?->file_path;
+        $originalName = $existing?->original_name;
+        if ($file && $file->isValid()) {
+            if ($existing && $existing->file_path && Storage::disk('public')->exists($existing->file_path)) {
                 Storage::disk('public')->delete($existing->file_path);
             }
-            $existing->update([
-                'file_path' => $path,
-                'original_name' => $file->getClientOriginalName(),
-                'submitted_at' => now(),
-                'notes' => $request->input('notes'),
-            ]);
+            $path = $file->storeAs($dir, auth()->id().'_'.time().'_'.$file->getClientOriginalName(), 'public');
+            $originalName = $file->getClientOriginalName();
+        }
+        if ($assignment->assignment_type === Assignment::TYPE_FILE_UPLOAD && ! $path) {
+            return redirect()->back()->withInput()->withErrors(['file' => 'A file is required for this assignment type.']);
+        }
+        $checklistAnswers = null;
+        $earned = null;
+        $possible = null;
+        if ($needsChecklist) {
+            $scored = $checklistScore->score($assignment, $request->input('checklist', []));
+            $checklistAnswers = $scored['normalized_answers'];
+            $earned = $scored['earned'];
+            $possible = $scored['possible'];
+        }
+        $payload = [
+            'file_path' => $path,
+            'original_name' => $originalName,
+            'submitted_at' => now(),
+            'notes' => $request->input('notes'),
+        ];
+        if ($needsChecklist) {
+            $payload['checklist_answers'] = $checklistAnswers;
+            $payload['checklist_points_earned'] = $earned;
+            $payload['checklist_points_possible'] = $possible;
+        }
+        if ($existing) {
+            $existing->update($payload);
         } else {
-            Submission::create([
+            Submission::create(array_merge($payload, [
                 'assignment_id' => $assignment->id,
                 'user_id' => auth()->id(),
-                'file_path' => $path,
-                'original_name' => $file->getClientOriginalName(),
-                'submitted_at' => now(),
-                'notes' => $request->input('notes'),
-            ]);
+            ]));
         }
         TopicCompletionService::checkAndCompleteTopic($assignment->fresh());
 
@@ -84,17 +121,17 @@ class SubmissionController extends Controller
     public function download(Submission $submission)
     {
         $user = auth()->user();
-        if ($user->id === $submission->user_id || in_array($user->role, ['super_admin', 'institution_admin', 'faculty'])) {
-            if ($submission->assignment && in_array($user->role, ['super_admin', 'institution_admin', 'faculty'])) {
-                // Admin/faculty: ensure they can see this assignment
+        if ($user->id === $submission->user_id || in_array($user->role, ['super_admin', 'admin', 'institution_admin', 'faculty'])) {
+            if ($submission->assignment && in_array($user->role, ['super_admin', 'admin', 'institution_admin', 'faculty'])) {
+                // Platform / college roles: same visibility as assignment management
             } elseif ($user->id !== $submission->user_id) {
                 $this->authorizeFacultyOrAdminForAssignment($submission->assignment_id);
             }
         } else {
             abort(403);
         }
-        if (! Storage::disk('public')->exists($submission->file_path)) {
-            abort(404);
+        if (! $submission->file_path || ! Storage::disk('public')->exists($submission->file_path)) {
+            abort(404, 'No file on this submission (notes-only or quiz completion).');
         }
 
         return response()->download(
@@ -119,7 +156,7 @@ class SubmissionController extends Controller
     {
         $assignment = Assignment::with('topic.subject')->findOrFail($assignmentId);
         $user = auth()->user();
-        if ($user->role === 'super_admin') {
+        if (in_array($user->role, ['super_admin', 'admin'], true)) {
             return;
         }
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {

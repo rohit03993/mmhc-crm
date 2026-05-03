@@ -36,7 +36,9 @@
                         <tbody>
                             @foreach($faculty as $f)
                             <tr>
-                                <td>{{ $f->name }}</td>
+                                <td>
+                                    <a href="{{ route('academics.people.show', $f) }}" class="fw-medium text-dark text-decoration-none">{{ $f->name }}</a>
+                                </td>
                                 <td>{{ $f->email }}</td>
                                 <td><code>{{ $f->unique_id ?? '—' }}</code></td>
                                 <td>{{ $f->phone ?? '—' }}</td>

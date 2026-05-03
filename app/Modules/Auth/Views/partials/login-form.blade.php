@@ -1,4 +1,4 @@
-{{-- Shared login form (email + phone OTP tabs). Used by both main and academics login. --}}
+{{-- Shared login form (email + phone OTP tabs). --}}
 @if($errors->any())
     <div class="alert-modern">
         <ul>

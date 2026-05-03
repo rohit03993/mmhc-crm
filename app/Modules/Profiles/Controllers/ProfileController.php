@@ -4,6 +4,11 @@ namespace App\Modules\Profiles\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
+use App\Modules\Academics\Models\AcademicExam;
+use App\Modules\Academics\Models\Assignment;
+use App\Modules\Academics\Models\Batch;
+use App\Modules\Academics\Models\Subject;
+use App\Modules\Academics\Services\StudentAcademicReportDataService;
 use App\Modules\Incentives\Models\IncentiveLedger;
 use App\Modules\Payments\Models\StaffPayment;
 use App\Modules\Payments\Services\StaffPayoutService;
@@ -15,6 +20,7 @@ use App\Modules\Services\Models\ServiceRequest;
 use App\Modules\Services\Services\StaffIncentiveDetailsDataService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -434,7 +440,7 @@ class ProfileController extends Controller
     /**
      * Admin: View specific user profile
      */
-    public function adminView(User $user)
+    public function adminView(Request $request, User $user)
     {
         try {
             $profile = $this->profileService->getProfile($user);
@@ -453,8 +459,21 @@ class ProfileController extends Controller
 
         // Note: User has both a `documents` JSON column (cast) and a `documents()` relation — property access
         // resolves to the column. Use an explicit query for uploaded Document models.
-        $profileDocuments = $user->documents()->orderByDesc('created_at')->get();
+        $studentAcademic = null;
+        if ($user->role === 'student') {
+            $studentAcademic = app(StudentAcademicReportDataService::class)->build($request, $user);
+        }
+
+        $profileDocumentsPaginator = null;
+        if ($user->role !== 'student') {
+            $profileDocumentsPaginator = $user->documents()
+                ->orderByDesc('created_at')
+                ->paginate(8, ['*'], 'prof_doc_page')
+                ->withQueryString();
+        }
+
         $profileStats = $this->buildAdminProfileStats($user);
+        $academicAdminSummary = $this->buildAcademicAdminSummary($user);
 
         $incentiveDetailsData = $user->isStaff()
             ? app(StaffIncentiveDetailsDataService::class)->buildForStaff($user)
@@ -476,7 +495,9 @@ class ProfileController extends Controller
             'user',
             'profile',
             'profileStats',
-            'profileDocuments',
+            'academicAdminSummary',
+            'studentAcademic',
+            'profileDocumentsPaginator',
             'incentiveDetailsData',
             'staffPaymentPending',
             'staffPaymentHistory'
@@ -488,6 +509,72 @@ class ProfileController extends Controller
      *
      * @return array{staff: ?array<string, mixed>, patient: ?array<string, mixed>}
      */
+    /**
+     * Inline academics snapshot for admin CRM profile (faculty / institution admin).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function buildAcademicAdminSummary(User $user): ?array
+    {
+        if (! $user->hasAcademicRole() || $user->role === 'student') {
+            return null;
+        }
+
+        if ($user->role === 'institution_admin' && $user->academic_institution_id) {
+            $instId = (int) $user->academic_institution_id;
+            $batches = Batch::where('institution_id', $instId)->orderBy('name')->get();
+            $subjects = Subject::query()
+                ->whereHas('batch', fn ($q) => $q->where('institution_id', $instId))
+                ->with('batch')
+                ->orderBy('name')
+                ->limit(50)
+                ->get();
+
+            return [
+                'batches' => $batches,
+                'subjects' => $subjects,
+                'assignments_count' => Assignment::whereHas('topic.subject.batch', fn ($q) => $q->where('institution_id', $instId))->count(),
+                'exams_count' => AcademicExam::where('institution_id', $instId)->count(),
+            ];
+        }
+
+        if ($user->role === 'faculty') {
+            $batches = $user->academicBatches()->with('institution')->orderBy('name')->get();
+            $subjectIds = DB::table('academic_subject_faculty')->where('user_id', $user->id)->pluck('subject_id');
+            $subjects = Subject::query()
+                ->whereIn('id', $subjectIds)
+                ->with('batch.institution')
+                ->orderBy('name')
+                ->get();
+            $assignmentsCount = 0;
+            $examsCount = 0;
+            if ($subjects->isNotEmpty() && $user->academic_institution_id) {
+                $sid = $subjects->pluck('id');
+                $batchIds = $subjects->pluck('batch_id')->unique()->filter()->values()->all();
+                $assignmentsCount = Assignment::whereHas('topic', fn ($q) => $q->whereIn('subject_id', $sid))->count();
+                $examsCount = AcademicExam::query()
+                    ->where('institution_id', $user->academic_institution_id)
+                    ->where(function ($q) use ($sid, $user, $batchIds) {
+                        $q->whereIn('subject_id', $sid)
+                            ->orWhere('created_by', $user->id);
+                        if ($batchIds !== []) {
+                            $q->orWhereIn('batch_id', $batchIds);
+                        }
+                    })
+                    ->count();
+            }
+
+            return [
+                'batches' => $batches,
+                'subjects' => $subjects,
+                'assignments_count' => $assignmentsCount,
+                'exams_count' => $examsCount,
+            ];
+        }
+
+        return null;
+    }
+
     private function buildAdminProfileStats(User $user): array
     {
         $out = ['staff' => null, 'patient' => null];

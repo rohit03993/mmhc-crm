@@ -5,7 +5,9 @@ namespace App\Modules\Academics\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Academics\Models\Subject;
 use App\Modules\Academics\Models\Topic;
+use App\Modules\Academics\Support\AcademicsTaxonomy;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class TopicController extends Controller
 {
@@ -13,6 +15,9 @@ class TopicController extends Controller
     protected function scopeSubjects()
     {
         $user = auth()->user();
+        if (in_array($user->role, ['super_admin', 'admin'], true)) {
+            return Subject::with('batch.institution')->active();
+        }
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             return Subject::with('batch.institution')->active()
                 ->whereHas('batch', fn ($q) => $q->where('institution_id', $user->academic_institution_id));
@@ -55,13 +60,17 @@ class TopicController extends Controller
 
     public function store(Request $request)
     {
+        $allowedTm = array_keys(AcademicsTaxonomy::teachingMethods());
         $validated = $request->validate([
             'subject_id' => 'required|exists:academic_subjects,id',
             'name' => 'required|string|max:255',
             'sort_order' => 'nullable|integer|min:0',
+            'teaching_method_keys' => ['nullable', 'array'],
+            'teaching_method_keys.*' => ['string', Rule::in($allowedTm)],
         ]);
         $this->authorizeSubject($validated['subject_id']);
         $validated['sort_order'] = (int) ($validated['sort_order'] ?? 0);
+        $validated['teaching_method_keys'] = AcademicsTaxonomy::filterKeys($validated['teaching_method_keys'] ?? [], $allowedTm);
         Topic::create($validated);
 
         return redirect()->route('academics.topics.index')->with('success', 'Topic created successfully.');
@@ -79,13 +88,17 @@ class TopicController extends Controller
     public function update(Request $request, Topic $topic)
     {
         $this->authorizeSubject($topic->subject_id);
+        $allowedTm = array_keys(AcademicsTaxonomy::teachingMethods());
         $validated = $request->validate([
             'subject_id' => 'required|exists:academic_subjects,id',
             'name' => 'required|string|max:255',
             'sort_order' => 'nullable|integer|min:0',
+            'teaching_method_keys' => ['nullable', 'array'],
+            'teaching_method_keys.*' => ['string', Rule::in($allowedTm)],
         ]);
         $this->authorizeSubject($validated['subject_id']);
         $validated['sort_order'] = (int) ($validated['sort_order'] ?? 0);
+        $validated['teaching_method_keys'] = AcademicsTaxonomy::filterKeys($validated['teaching_method_keys'] ?? [], $allowedTm);
         $topic->update($validated);
 
         return redirect()->route('academics.topics.index')->with('success', 'Topic updated successfully.');

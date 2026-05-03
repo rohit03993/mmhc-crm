@@ -3,8 +3,14 @@
 namespace App\Modules\Academics\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Core\User;
+use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Institution;
+use App\Modules\Academics\Services\AcademicScoreService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class InstitutionController extends Controller
 {
@@ -13,6 +19,82 @@ class InstitutionController extends Controller
         $institutions = Institution::orderBy('name')->paginate(10);
 
         return view('academics::institutions.index', compact('institutions'));
+    }
+
+    /**
+     * Read-only overview: batches, counts, links to reports and people.
+     */
+    public function show(Institution $institution): View
+    {
+        $user = auth()->user();
+        if (in_array($user->role, ['super_admin', 'admin'], true)) {
+            // full access
+        } elseif ($user->role === 'institution_admin' && (int) $user->academic_institution_id === (int) $institution->id) {
+            // own college
+        } elseif ($user->role === 'faculty' && (int) $user->academic_institution_id === (int) $institution->id) {
+            // teaching staff
+        } else {
+            abort(403, 'You cannot view this institution.');
+        }
+
+        $pivot = 'academic_batch_users';
+        $batchTable = 'academic_batches';
+
+        $allBatches = Batch::query()
+            ->where('institution_id', $institution->id)
+            ->orderBy('name')
+            ->get();
+        foreach ($allBatches as $batch) {
+            $batch->setAttribute('students_count', (int) DB::table($pivot)
+                ->where('batch_id', $batch->id)
+                ->where('type', 'student')
+                ->count());
+            $batch->setAttribute('faculty_count', (int) DB::table($pivot)
+                ->where('batch_id', $batch->id)
+                ->where('type', 'faculty')
+                ->count());
+        }
+
+        $batchPage = max(1, (int) request()->get('batch_page', 1));
+        $perBatchPage = 10;
+        $batchesPaginator = new LengthAwarePaginator(
+            $allBatches->forPage($batchPage, $perBatchPage)->values()->all(),
+            $allBatches->count(),
+            $perBatchPage,
+            $batchPage,
+            ['path' => request()->url(), 'pageName' => 'batch_page']
+        );
+        $batchesPaginator->withQueryString();
+
+        $studentCount = (int) DB::table($pivot)
+            ->join($batchTable, "{$batchTable}.id", '=', "{$pivot}.batch_id")
+            ->where("{$batchTable}.institution_id", $institution->id)
+            ->where("{$pivot}.type", 'student')
+            ->selectRaw('COUNT(DISTINCT '.$pivot.'.user_id) as c')
+            ->value('c');
+
+        $facultyCount = User::query()
+            ->where('role', 'faculty')
+            ->where('academic_institution_id', $institution->id)
+            ->count();
+
+        $icr = AcademicScoreService::getIcr($institution);
+
+        $peoplePaginator = User::query()
+            ->where('academic_institution_id', $institution->id)
+            ->whereIn('role', ['student', 'faculty'])
+            ->orderByDesc('id')
+            ->paginate(12, ['id', 'name', 'email', 'role', 'unique_id'], 'people_page')
+            ->withQueryString();
+
+        return view('academics::institutions.show', compact(
+            'institution',
+            'studentCount',
+            'facultyCount',
+            'icr',
+            'batchesPaginator',
+            'peoplePaginator',
+        ));
     }
 
     public function create()

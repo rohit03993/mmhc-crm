@@ -1,5 +1,10 @@
-<nav class="navbar navbar-expand-lg navbar-light top-navbar d-none d-md-flex">
+<nav class="navbar navbar-expand-lg navbar-light top-navbar">
     <div class="container-fluid">
+        @auth
+            <button class="btn btn-link text-dark d-md-none me-1 px-2 py-0 border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mmhcAppSidebar" aria-controls="mmhcAppSidebar" aria-label="Open sidebar menu">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+        @endauth
         <a class="navbar-brand" href="{{ route('dashboard') }}">
             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--nav">
             <span class="visually-hidden">{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}</span>
@@ -28,6 +33,12 @@
                     @endif
                     
                     @if(auth()->user()->isAdmin())
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('academics.*') ? 'active' : '' }}" href="{{ route('academics.dashboard') }}">
+                                <i class="fas fa-graduation-cap me-1"></i>
+                                Academics
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('admin.users') }}">
                                 <i class="fas fa-users me-1"></i>
@@ -117,12 +128,6 @@
                         <a class="nav-link" href="{{ route('auth.login') }}">
                             <i class="fas fa-sign-in-alt me-1"></i>
                             Login
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('auth.academics-login') }}" title="College admin, faculty & students">
-                            <i class="fas fa-graduation-cap me-1"></i>
-                            Academics
                         </a>
                     </li>
                     <li class="nav-item">

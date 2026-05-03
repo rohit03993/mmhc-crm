@@ -30,6 +30,7 @@
                         <input type="number" class="form-control @error('sort_order') is-invalid @enderror" id="sort_order" name="sort_order" value="{{ old('sort_order', 0) }}" min="0">
                         @error('sort_order')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+                    @include('academics::partials.teaching-methods-fields', ['topic' => null])
                 </div>
                 <div class="mt-4">
                     <button type="submit" class="btn btn-primary">Create Topic</button>

@@ -5,9 +5,12 @@
 
 @section('content')
 <div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-        <h2 class="h5 mb-0">Institutions</h2>
-        <a href="{{ route('academics.institutions.create') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Add Institution</a>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h2 class="h5 mb-1">Institutions</h2>
+            <p class="text-muted small mb-0">Each row is a college. <strong>ID</strong> is the database key (for linking users). <strong>Code</strong> is your short institute identifier (e.g. MMCN-BPL).</p>
+        </div>
+        <a href="{{ route('academics.institutions.create') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Add institution</a>
     </div>
 
     <div class="card">
@@ -19,6 +22,7 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
+                                <th class="text-nowrap">ID</th>
                                 <th>Name</th>
                                 <th>Code</th>
                                 <th>Contact</th>
@@ -29,7 +33,10 @@
                         <tbody>
                             @foreach($institutions as $institution)
                             <tr>
-                                <td>{{ $institution->name }}</td>
+                                <td><span class="badge bg-light text-dark border font-monospace">{{ $institution->id }}</span></td>
+                                <td>
+                                    <a href="{{ route('academics.institutions.show', $institution) }}" class="fw-medium text-dark text-decoration-none">{{ $institution->name }}</a>
+                                </td>
                                 <td><code>{{ $institution->code ?? '—' }}</code></td>
                                 <td>{{ $institution->email ?? $institution->phone ?? '—' }}</td>
                                 <td>

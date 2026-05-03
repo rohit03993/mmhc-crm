@@ -1,94 +1,9 @@
 @extends('auth::layout')
 
-@section('title', ($academicsLogin ?? false) ? 'Academics login - MMHC CRM' : 'Login - MMHC CRM')
+@section('title', 'Sign in - MMHC CRM')
 
 @section('head')
 <style>
-    .auth-page-wrapper {
-        min-height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
-        background-size: 400% 400%;
-        animation: gradientShift 15s ease infinite;
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem 1rem;
-    }
-
-    @keyframes gradientShift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
-    .auth-page-wrapper::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
-        opacity: 0.3;
-    }
-
-    .login-card {
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(20px);
-        border-radius: 24px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        position: relative;
-        z-index: 1;
-        max-width: 440px;
-        width: 100%;
-        animation: slideUp 0.5s ease-out;
-    }
-
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .login-card-header {
-        text-align: center;
-        padding: 2.5rem 2rem 1.5rem;
-    }
-
-    .login-card-header .brand-logo {
-        max-width: 180px;
-        height: auto;
-        margin: 0 auto 1.5rem auto;
-        display: block;
-        filter: drop-shadow(0 4px 12px rgba(102, 126, 234, 0.2));
-    }
-
-    .login-card-header h2 {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 0.5rem;
-        letter-spacing: -0.5px;
-    }
-
-    .login-card-header p {
-        color: #64748b;
-        font-size: 0.95rem;
-        margin: 0;
-    }
-
-    .login-card-body {
-        padding: 0 2rem 2.5rem;
-    }
-
     .form-floating-modern {
         position: relative;
         margin-bottom: 1.5rem;
@@ -326,21 +241,7 @@
         text-decoration: underline;
     }
 
-    @media (max-width: 576px) {
-        .login-card-header {
-            padding: 2rem 1.5rem 1rem;
-        }
-
-        .login-card-body {
-            padding: 0 1.5rem 2rem;
-        }
-
-        .login-card-header h2 {
-            font-size: 1.5rem;
-        }
-    }
-
-    /* Academics portal: no page scroll, fit viewport, image on left */
+    /* Split login: no page scroll, fit viewport, gallery on left */
     body:has(.academics-login-wrapper),
     html:has(.academics-login-wrapper) {
         overflow: hidden !important;
@@ -568,16 +469,6 @@
         font-size: 0.875rem;
         margin-bottom: 0.35rem;
     }
-    .academics-main-login {
-        font-size: 0.85rem;
-        margin-bottom: 1rem;
-    }
-    .academics-main-login a {
-        color: #0ea5e9;
-        text-decoration: none;
-        font-weight: 500;
-    }
-    .academics-main-login a:hover { text-decoration: underline; }
     .academics-form-wrap .login-tabs .nav-link.active {
         background: #0ea5e9;
         color: #fff;
@@ -656,8 +547,7 @@
 @endsection
 
 @section('content')
-@if(!empty($academicsLogin))
-{{-- Academics portal: Sharda-style two-column layout (presentation only; same form/functionality) --}}
+{{-- Unified sign-in: achievements / brand left, form right --}}
 <div class="academics-login-wrapper">
     <div class="academics-login-left">
         <div class="academics-login-left-inner">
@@ -687,17 +577,17 @@
             <div class="academics-login-left-img-wrap">
                 <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="academics-login-left-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                 <div class="academics-login-left-img-placeholder" style="display:none;" aria-hidden="true">
-                    <span class="academics-placeholder-icon"><i class="fas fa-graduation-cap"></i></span>
-                    <span class="academics-placeholder-text">Academic Portal</span>
+                    <span class="academics-placeholder-icon"><i class="fas fa-heartbeat"></i></span>
+                    <span class="academics-placeholder-text">MeD Miracle Health Care</span>
                 </div>
             </div>
             <div class="academics-hero-block">
                 <h3 class="academics-hero-title">MeD Miracle Health Care</h3>
-                <p class="academics-hero-sub">Academic Portal</p>
-                <p class="academics-hero-desc">For college administrators, faculty &amp; students. Sign in to access your dashboard, assignments and reports.</p>
+                <p class="academics-hero-sub">Care, community &amp; learning</p>
+                <p class="academics-hero-desc">One secure sign-in for patients, caregivers, staff, and academic roles. Your dashboard opens based on your account type.</p>
             </div>
             <div class="academics-badges">
-                <span class="academics-badge">Academic Portal</span>
+                <span class="academics-badge">Trusted care</span>
             </div>
             @endif
         </div>
@@ -705,35 +595,19 @@
     <div class="academics-login-right">
         <div class="academics-login-right-inner">
             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="academics-logo">
-            <h1 class="academics-portal-title">Academics portal</h1>
-            <p class="academics-portal-desc">Sign in for college admin, faculty &amp; students. Same secure login system, role-based dashboard redirect.</p>
-            <p class="academics-main-login">Patients or caregivers? <a href="{{ route('auth.login') }}">Use main login</a>.</p>
+            <h1 class="academics-portal-title">Sign in</h1>
+            <p class="academics-portal-desc">Use your email and password, or sign in with WhatsApp OTP on your registered mobile number.</p>
             <div class="academics-form-wrap">
                 @include('auth::partials.login-form')
             </div>
             <footer class="academics-login-footer">
-                <span>©{{ date('Y') }}, MeD Miracle Academic Portal</span>
-                <a href="{{ url('/') }}">{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}</a>
+                <span>©{{ date('Y') }}, {{ $siteCompanyName ?? 'MeD Miracle Health Care' }}</span>
+                <a href="{{ url('/') }}">Home</a>
                 <p class="academics-powered">Powered by <strong>MeD Miracle</strong></p>
             </footer>
         </div>
     </div>
 </div>
-@else
-<div class="auth-page-wrapper">
-    <div class="login-card">
-        <div class="login-card-header">
-            <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MED Miracle Health Care' }}" class="brand-logo">
-            <h2>Welcome Back</h2>
-            <p>Sign in to your account to continue.</p>
-            <p class="small text-muted mt-2 mb-0">College admin, faculty or students? <a href="{{ route('auth.academics-login') }}">Academics portal view</a> (same account login).</p>
-        </div>
-        <div class="login-card-body">
-            @include('auth::partials.login-form')
-        </div>
-    </div>
-</div>
-@endif
 
 <script>
 (function() {

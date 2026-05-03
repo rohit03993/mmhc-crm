@@ -2,8 +2,8 @@
 
 namespace App\Modules\Academics\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class Topic extends Model
 {
@@ -14,10 +14,12 @@ class Topic extends Model
         'name',
         'sort_order',
         'is_completed',
+        'teaching_method_keys',
     ];
 
     protected $casts = [
         'is_completed' => 'boolean',
+        'teaching_method_keys' => 'array',
     ];
 
     public function subject()
@@ -28,6 +30,11 @@ class Topic extends Model
     public function assignments()
     {
         return $this->hasMany(Assignment::class, 'topic_id');
+    }
+
+    public function resources()
+    {
+        return $this->hasMany(TopicResource::class, 'topic_id')->orderBy('sort_order');
     }
 
     public function scopeCompleted(Builder $query): Builder

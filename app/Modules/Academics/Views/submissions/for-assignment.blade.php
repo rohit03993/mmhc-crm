@@ -37,6 +37,7 @@
                             <th>Email</th>
                             <th>Status</th>
                             <th>Submitted at</th>
+                            <th>Checklist score</th>
                             <th class="text-end">Action</th>
                         </tr>
                     </thead>
@@ -59,9 +60,21 @@
                                 @endif
                             </td>
                             <td>{{ $sub ? $sub->submitted_at->format('M d, Y H:i') : '—' }}</td>
+                            <td class="small">
+                                @if($sub && $sub->checklist_points_possible !== null && (float) $sub->checklist_points_possible > 0)
+                                    {{ $sub->checklist_points_earned }} / {{ $sub->checklist_points_possible }}
+                                    <span class="text-muted">({{ round((float) $sub->checklist_points_earned / (float) $sub->checklist_points_possible * 100) }}%)</span>
+                                @elseif($assignment->studentMustCompleteChecklist())
+                                    —
+                                @else
+                                    <span class="text-muted">n/a</span>
+                                @endif
+                            </td>
                             <td class="text-end">
-                                @if($sub)
+                                @if($sub && $sub->file_path)
                                     <a href="{{ route('academics.submissions.download', $sub) }}" class="btn btn-sm btn-outline-primary">Download</a>
+                                @elseif($sub)
+                                    <span class="small text-muted">No file</span>
                                 @else
                                     —
                                 @endif

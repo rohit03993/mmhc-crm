@@ -4,15 +4,15 @@ namespace App\Modules\Academics\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
+use App\Modules\Academics\Models\AcademicExamAttempt;
 use App\Modules\Academics\Models\Assignment;
-use App\Modules\Academics\Models\Attendance;
 use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Institution;
 use App\Modules\Academics\Models\Subject;
 use App\Modules\Academics\Models\Submission;
 use App\Modules\Academics\Models\Topic;
-use App\Modules\Academics\Services\AcademicScoreService;
-use Carbon\Carbon;
+use App\Modules\Academics\Services\StudentAcademicReportDataService;
+use App\Modules\Academics\Support\AcademicsTaxonomy;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -53,105 +53,10 @@ class ReportController extends Controller
             }
         }
 
-        $period = $request->get('period', 'this_month');
-        if (! in_array($period, ['this_month', 'last_month', 'all'], true)) {
-            $period = 'this_month';
-        }
-        $dateRange = $this->attendanceDateRange($period);
-        $start = Carbon::parse($dateRange['start']);
-        $end = Carbon::parse($dateRange['end']);
-        $totalDays = $start->diffInDays($end) + 1;
-
-        $attendanceQuery = Attendance::where('user_id', $user->id)->with('batch')->orderByDesc('date');
-        $attendanceQuery->whereBetween('date', [$dateRange['start'], $dateRange['end']]);
-        $attendanceRows = $attendanceQuery->get();
-
-        // One status per day: present if any record present; else leave if any leave; else absent (incl. no record)
-        $byDay = $attendanceRows->groupBy(fn ($r) => $r->date->format('Y-m-d'));
-        $presentDays = 0;
-        $leaveDays = 0;
-        for ($i = 0; $i <= $start->diffInDays($end); $i++) {
-            $day = $start->copy()->addDays($i)->format('Y-m-d');
-            $records = $byDay->get($day, collect());
-            if ($records->contains('status', Attendance::STATUS_PRESENT)) {
-                $presentDays++;
-            } elseif ($records->contains('status', Attendance::STATUS_LEAVE)) {
-                $leaveDays++;
-            }
-        }
-        $absentDays = $totalDays - $presentDays - $leaveDays;
-
-        $attendanceStats = [
-            'total' => $totalDays,
-            'present' => $presentDays,
-            'absent' => $absentDays,
-            'leave' => $leaveDays,
-        ];
-        $attendanceStats['percentage'] = $totalDays > 0
-            ? (int) round(($presentDays / $totalDays) * 100)
-            : 0;
-
-        $batches = $user->academicBatches()->with('institution')->get();
-        $institution = $batches->first()?->institution;
-        $eligibleAssignments = Assignment::whereHas('topic.subject.batch.students', fn ($q) => $q->where('users.id', $user->id))
-            ->with(['topic.subject.batch'])
-            ->orderBy('due_date')
-            ->get();
-        $submissionsByAssignment = Submission::where('user_id', $user->id)
-            ->whereIn('assignment_id', $eligibleAssignments->pluck('id'))
-            ->get()
-            ->keyBy('assignment_id');
-        $spi = AcademicScoreService::getSpi($user);
-
-        $periodLabel = $dateRange['label'];
-
-        return view('academics::reports.student', [
-            'student' => $user,
-            'institution' => $institution,
-            'batches' => $batches,
-            'attendanceStats' => $attendanceStats,
-            'attendanceRows' => $attendanceRows,
-            'eligibleAssignments' => $eligibleAssignments,
-            'submissionsByAssignment' => $submissionsByAssignment,
-            'spi' => $spi,
-            'currentPeriod' => $period,
-            'periodLabel' => $periodLabel,
-        ]);
-    }
-
-    /**
-     * Date range for daily attendance. Always returns start/end/label.
-     * this_month = 1st to today; last_month = full month; all = 12 months to today.
-     *
-     * @return array{start: string, end: string, label: string}
-     */
-    protected function attendanceDateRange(string $period): array
-    {
-        $now = now();
-        if ($period === 'this_month') {
-            return [
-                'start' => $now->copy()->startOfMonth()->format('Y-m-d'),
-                'end' => $now->copy()->format('Y-m-d'),
-                'label' => $now->format('F Y').' (this month)',
-            ];
-        }
-        if ($period === 'last_month') {
-            $last = $now->copy()->subMonth();
-
-            return [
-                'start' => $last->startOfMonth()->format('Y-m-d'),
-                'end' => $last->endOfMonth()->format('Y-m-d'),
-                'label' => $last->format('F Y').' (last month)',
-            ];
-        }
-        $end = $now->format('Y-m-d');
-        $start = $now->copy()->subYear()->startOfMonth()->format('Y-m-d');
-
-        return [
-            'start' => $start,
-            'end' => $end,
-            'label' => 'Last 12 months',
-        ];
+        return view(
+            'academics::reports.student',
+            app(StudentAcademicReportDataService::class)->build($request, $user)
+        );
     }
 
     public function index(Request $request)
@@ -160,7 +65,7 @@ class ReportController extends Controller
         $institutions = collect();
         $batches = collect();
         $subjects = collect();
-        if ($user->role === 'super_admin') {
+        if (in_array($user->role, ['super_admin', 'admin'], true)) {
             $institutions = Institution::orderBy('name')->get();
             $batches = Batch::with('institution')->orderBy('name')->get();
             $subjects = Subject::with('batch.institution')->orderBy('name')->get();
@@ -178,7 +83,13 @@ class ReportController extends Controller
             $subjects = Subject::with('batch.institution')->whereIn('batch_id', $batchIds)->orderBy('name')->get();
         }
 
-        return view('academics::reports.index', compact('institutions', 'batches', 'subjects'));
+        $taxonomyFilters = [
+            'teaching_methods' => AcademicsTaxonomy::teachingMethods(),
+            'assessment_types' => AcademicsTaxonomy::assessmentTypes(),
+            'assignment_types' => AcademicsTaxonomy::assignmentTypes(),
+        ];
+
+        return view('academics::reports.index', compact('institutions', 'batches', 'subjects', 'taxonomyFilters'));
     }
 
     public function show(Request $request)
@@ -213,7 +124,7 @@ class ReportController extends Controller
         $this->applySubjectScope($user, $subjectId);
         $this->ensureSubjectBelongsToBatch($batchId, $subjectId);
 
-        $data = $this->buildReportData($type, $institutionId, $batchId, $subjectId, null, $user);
+        $data = $this->buildReportData($type, $institutionId, $batchId, $subjectId, $request, $user);
         $filename = 'academics_'.$type.'_'.date('Y-m-d').'.csv';
 
         return response()->streamDownload(function () use ($data, $type) {
@@ -272,7 +183,7 @@ class ReportController extends Controller
     /** Institutions to show in Student Submission report filter (scoped by role). */
     protected function reportFilterInstitutions($user): \Illuminate\Support\Collection
     {
-        if ($user->role === 'super_admin') {
+        if (in_array($user->role, ['super_admin', 'admin'], true)) {
             return Institution::orderBy('name')->get();
         }
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
@@ -293,7 +204,7 @@ class ReportController extends Controller
     /** Batches to show in Student Submission report filter (scoped by role). */
     protected function reportFilterBatches($user): \Illuminate\Support\Collection
     {
-        if ($user->role === 'super_admin') {
+        if (in_array($user->role, ['super_admin', 'admin'], true)) {
             return Batch::with('institution')->orderBy('name')->get();
         }
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
@@ -323,6 +234,32 @@ class ReportController extends Controller
         }
     }
 
+    /**
+     * @return array{teaching_method_key: ?string, assignment_type: ?string, assessment_type_key: ?string, summative_only: bool}
+     */
+    protected function normalizeReportTaxonomyRequest(?Request $request): array
+    {
+        $tm = $request?->get('teaching_method_key');
+        if ($tm !== null && $tm !== '' && ! array_key_exists($tm, AcademicsTaxonomy::teachingMethods())) {
+            $tm = null;
+        }
+        $at = $request?->get('assignment_type');
+        if ($at !== null && $at !== '' && ! array_key_exists($at, AcademicsTaxonomy::assignmentTypes())) {
+            $at = null;
+        }
+        $ask = $request?->get('assessment_type_key');
+        if ($ask !== null && $ask !== '' && ! array_key_exists($ask, AcademicsTaxonomy::assessmentTypes())) {
+            $ask = null;
+        }
+
+        return [
+            'teaching_method_key' => $tm !== null && $tm !== '' ? $tm : null,
+            'assignment_type' => $at !== null && $at !== '' ? $at : null,
+            'assessment_type_key' => $ask !== null && $ask !== '' ? $ask : null,
+            'summative_only' => (bool) $request?->boolean('summative_only'),
+        ];
+    }
+
     protected function buildReportData(string $type, $institutionId, $batchId, $subjectId = null, ?Request $request = null, $user = null): array
     {
         $user = $user ?? auth()->user();
@@ -350,6 +287,8 @@ class ReportController extends Controller
         }
         $batches = $baseBatchQuery->orderBy('name')->get();
 
+        $tax = $this->normalizeReportTaxonomyRequest($request);
+
         switch ($type) {
             case 'faculty_performance':
                 $facultyIdsQuery = \DB::table('academic_subject_faculty')->distinct()->select('user_id');
@@ -359,7 +298,7 @@ class ReportController extends Controller
                 }
                 $facultyIds = $facultyIdsQuery->pluck('user_id');
                 $faculty = User::whereIn('id', $facultyIds)->where('role', 'faculty')->orderBy('name')->get();
-                $rows = $faculty->map(function ($f) use ($institutionId, $batchId, $facultyBatchIds) {
+                $rows = $faculty->map(function ($f) use ($institutionId, $batchId, $facultyBatchIds, $tax) {
                     $topicQuery = Topic::whereHas('subject.faculty', fn ($q) => $q->where('user_id', $f->id));
                     if ($facultyBatchIds !== null) {
                         $topicQuery->whereHas('subject', fn ($q) => $q->whereIn('batch_id', $facultyBatchIds));
@@ -369,6 +308,9 @@ class ReportController extends Controller
                     }
                     if ($batchId) {
                         $topicQuery->whereHas('subject', fn ($q) => $q->where('batch_id', $batchId));
+                    }
+                    if ($tax['teaching_method_key']) {
+                        $topicQuery->whereJsonContains('teaching_method_keys', $tax['teaching_method_key']);
                     }
                     $total = $topicQuery->count();
                     $completed = (clone $topicQuery)->where('is_completed', true)->count();
@@ -390,16 +332,20 @@ class ReportController extends Controller
                 if ($batchId) {
                     $topicQuery->whereHas('subject', fn ($q) => $q->where('batch_id', $batchId));
                 }
+                if ($tax['teaching_method_key']) {
+                    $topicQuery->whereJsonContains('teaching_method_keys', $tax['teaching_method_key']);
+                }
                 $topics = $topicQuery->orderBy('subject_id')->orderBy('sort_order')->get();
                 $rows = $topics->map(fn ($t) => [
                     $t->subject->batch->institution->name ?? '—',
                     $t->subject->batch->name ?? '—',
                     $t->subject->name ?? '—',
                     $t->name,
+                    AcademicsTaxonomy::teachingMethodLabels($t->teaching_method_keys),
                     $t->is_completed ? 'Completed' : 'Pending',
                 ]);
 
-                return ['title' => 'Topic Completion Report', 'rows' => $rows, 'headers' => ['Institution', 'Batch', 'Subject', 'Topic', 'Status']];
+                return ['title' => 'Topic Completion Report', 'rows' => $rows, 'headers' => ['Institution', 'Batch', 'Subject', 'Topic', 'Teaching methods', 'Status']];
 
             case 'student_submission':
                 $studentIdsQuery = \DB::table('academic_batch_users')
@@ -447,8 +393,36 @@ class ReportController extends Controller
                     if ($batchId) {
                         $eligibleIds = Assignment::whereIn('id', $eligibleIds)->whereHas('topic.subject', fn ($q) => $q->where('batch_id', $batchId))->pluck('id')->toArray();
                     }
-                    $submitted = empty($eligibleIds) ? 0 : Submission::where('user_id', $s->id)->whereIn('assignment_id', $eligibleIds)->count();
-                    $total = count($eligibleIds);
+                    $assignFilter = Assignment::query()->whereIn('id', $eligibleIds);
+                    if ($tax['assignment_type']) {
+                        $assignFilter->where('assignment_type', $tax['assignment_type']);
+                    }
+                    if ($tax['assessment_type_key']) {
+                        $assignFilter->whereJsonContains('assessment_type_keys', $tax['assessment_type_key']);
+                    }
+                    if ($tax['summative_only']) {
+                        $assignFilter->where('is_summative', true);
+                    }
+                    $eligibleIds = $assignFilter->pluck('id')->toArray();
+                    $assignmentsForStudent = Assignment::with('exams')->whereIn('id', $eligibleIds)->get();
+                    $total = $assignmentsForStudent->count();
+                    $submitted = 0;
+                    foreach ($assignmentsForStudent as $a) {
+                        if (Submission::where('user_id', $s->id)->where('assignment_id', $a->id)->exists()) {
+                            $submitted++;
+
+                            continue;
+                        }
+                        if ($a->assignment_type === Assignment::TYPE_QUIZ && $a->exams->isNotEmpty()) {
+                            $eids = $a->exams->pluck('id');
+                            if (AcademicExamAttempt::whereIn('exam_id', $eids)
+                                ->where('user_id', $s->id)
+                                ->where('status', AcademicExamAttempt::STATUS_SUBMITTED)
+                                ->exists()) {
+                                $submitted++;
+                            }
+                        }
+                    }
                     $spi = $total > 0 ? (int) round(($submitted / $total) * 100) : 0;
                     $rows[] = [$s->name, $s->email, $institutionNames, $batchNames, $total, $submitted, $spi, $s->id];
                 }
