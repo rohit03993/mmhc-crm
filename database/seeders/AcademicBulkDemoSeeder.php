@@ -14,8 +14,6 @@ use App\Modules\Academics\Models\Topic;
 use App\Modules\Profiles\Models\Document;
 use App\Modules\Profiles\Models\Profile;
 use Carbon\Carbon;
-use Faker\Factory as FakerFactory;
-use Faker\Generator as FakerGenerator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -83,14 +81,83 @@ class AcademicBulkDemoSeeder extends Seeder
 
     private int $demoMobileSeq = 6200013000;
 
-    private ?FakerGenerator $inFaker = null;
+    /** @var list<string> */
+    private const DEMO_FIRST_NAMES = [
+        'Priya', 'Ananya', 'Rohan', 'Kavya', 'Arjun', 'Meera', 'Vikram', 'Divya', 'Suresh', 'Lakshmi',
+        'Nikhil', 'Sneha', 'Rahul', 'Isha', 'Karan', 'Aditi', 'Manoj', 'Pooja', 'Sanjay', 'Deepa',
+    ];
+
+    /** @var list<string> */
+    private const DEMO_LAST_NAMES = [
+        'Sharma', 'Iyer', 'Nair', 'Reddy', 'Patel', 'Singh', 'Khan', 'Das', 'Menon', 'Joshi',
+        'Verma', 'Rao', 'Mehta', 'Pillai', 'Ghosh', 'Choudhury', 'Kulkarni', 'Banerjee', 'Malhotra', 'Kapoor',
+    ];
+
+    /** @var list<string> */
+    private const BIO_WORDS = [
+        'Clinical', 'nursing', 'student', 'community', 'care', 'evidence', 'based', 'practice',
+        'patient', 'safety', 'simulation', 'lab', 'skills', 'mentoring', 'teaching', 'learning',
+    ];
+
+    private int $demoNameSeq = 0;
 
     /**
-     * Indian-locale Faker for realistic demo names and addresses.
+     * @template T of mixed
+     * @param  array<int, T>  $items
+     * @return T
      */
-    private function indianFaker(): FakerGenerator
+    private function pickRandom(array $items): mixed
     {
-        return $this->inFaker ??= FakerFactory::create('en_IN');
+        return $items[array_rand($items)];
+    }
+
+    /**
+     * @template T of mixed
+     * @param  array<int, T>  $items
+     * @return array<int, T>
+     */
+    private function pickNRandom(array $items, int $n): array
+    {
+        $copy = $items;
+        shuffle($copy);
+
+        return array_slice($copy, 0, min($n, count($copy)));
+    }
+
+    private function demoFirstName(): string
+    {
+        return self::DEMO_FIRST_NAMES[$this->demoNameSeq++ % count(self::DEMO_FIRST_NAMES)];
+    }
+
+    private function demoLastName(): string
+    {
+        return self::DEMO_LAST_NAMES[$this->demoNameSeq++ % count(self::DEMO_LAST_NAMES)];
+    }
+
+    private function demoFullName(): string
+    {
+        return $this->demoFirstName().' '.$this->demoLastName();
+    }
+
+    private function demoSentence(int $wordCount): string
+    {
+        $words = self::BIO_WORDS;
+        shuffle($words);
+        $n = max(3, min($wordCount, count($words)));
+
+        return ucfirst(implode(' ', array_slice($words, 0, $n))).'.';
+    }
+
+    private function seederRandomFloat(int $decimals, float $min, float $max): float
+    {
+        $mul = 10 ** $decimals;
+        $lo = (int) round($min * $mul);
+        $hi = (int) round($max * $mul);
+        if ($lo > $hi) {
+            [$lo, $hi] = [$hi, $lo];
+        }
+
+        return round(random_int($lo, $hi) / $mul, $decimals);
     }
 
     /** Next unique 10-digit Indian mobile number (starts with 6–9). */
@@ -131,25 +198,27 @@ class AcademicBulkDemoSeeder extends Seeder
 
             $admin = $this->makeUser([
                 'email' => strtolower($code).'-admin@academic-bulk.demo',
-                'name' => $this->indianFaker()->name(),
+                'name' => $this->demoFullName(),
                 'role' => 'institution_admin',
                 'unique_id' => 'B-'.$bp['code_suffix'].'-IA',
                 'academic_institution_id' => $institution->id,
                 'password' => $password,
                 'location' => $defaultLocation,
+                'demo_city' => $bp['city'],
             ]);
 
             $facultyIds = [];
             for ($f = 1; $f <= self::FACULTY_PER_COLLEGE; $f++) {
                 $facultyIds[] = $this->makeUser([
                     'email' => strtolower($code).'-f'.str_pad((string) $f, 2, '0', STR_PAD_LEFT).'@academic-bulk.demo',
-                    'name' => 'Dr. '.$this->indianFaker()->firstName().' '.$this->indianFaker()->lastName(),
+                    'name' => 'Dr. '.$this->demoFirstName().' '.$this->demoLastName(),
                     'role' => 'faculty',
                     'unique_id' => 'B-'.$bp['code_suffix'].'-F'.str_pad((string) $f, 2, '0', STR_PAD_LEFT),
                     'academic_institution_id' => $institution->id,
-                    'qualification' => fake()->randomElement(['M.Sc Nursing', 'B.Sc Nursing', 'Ph.D Nursing', 'M.Sc Anatomy']),
+                    'qualification' => $this->pickRandom(['M.Sc Nursing', 'B.Sc Nursing', 'Ph.D Nursing', 'M.Sc Anatomy']),
                     'password' => $password,
                     'location' => $defaultLocation,
+                    'demo_city' => $bp['city'],
                 ])->id;
             }
 
@@ -157,18 +226,19 @@ class AcademicBulkDemoSeeder extends Seeder
             for ($s = 1; $s <= self::STUDENTS_PER_COLLEGE; $s++) {
                 $studentIds[] = $this->makeUser([
                     'email' => strtolower($code).'-s'.str_pad((string) $s, 3, '0', STR_PAD_LEFT).'@academic-bulk.demo',
-                    'name' => $this->indianFaker()->name(),
+                    'name' => $this->demoFullName(),
                     'role' => 'student',
                     'unique_id' => 'B-'.$bp['code_suffix'].'-S'.str_pad((string) $s, 3, '0', STR_PAD_LEFT),
                     'academic_institution_id' => $institution->id,
                     'password' => $password,
                     'location' => $defaultLocation,
+                    'demo_city' => $bp['city'],
                 ])->id;
             }
 
             $batchNames = [
-                'B.Sc Nursing – Year '.fake()->numberBetween(1, 4),
-                fake()->randomElement(['GNM – Year 1', 'PB B.Sc Nursing – Year 1', 'M.Sc Nursing – Year 1', 'Diploma in Nursing – Year 2']),
+                'B.Sc Nursing – Year '.random_int(1, 4),
+                $this->pickRandom(['GNM – Year 1', 'PB B.Sc Nursing – Year 1', 'M.Sc Nursing – Year 1', 'Diploma in Nursing – Year 2']),
             ];
             $batches = [];
             foreach ($batchNames as $bn) {
@@ -221,7 +291,7 @@ class AcademicBulkDemoSeeder extends Seeder
                         [
                             'sort_order' => $ti,
                             'is_completed' => false,
-                            'teaching_method_keys' => fake()->randomElements([
+                            'teaching_method_keys' => $this->pickNRandom([
                                 'demonstration', 'presentation', 'seminar', 'lab_demo', 'skill_simulation',
                             ], 3),
                         ]
@@ -407,7 +477,7 @@ class AcademicBulkDemoSeeder extends Seeder
                                 'status' => AcademicExamAttempt::STATUS_SUBMITTED,
                                 'started_at' => now()->subDays(2),
                                 'submitted_at' => now()->subDay(),
-                                'score' => fake()->randomFloat(2, 1, 2),
+                                'score' => $this->seederRandomFloat(2, 1, 2),
                             ]
                         );
                     }
@@ -422,7 +492,7 @@ class AcademicBulkDemoSeeder extends Seeder
                                 'status' => AcademicExamAttempt::STATUS_SUBMITTED,
                                 'started_at' => now()->subDays(3),
                                 'submitted_at' => now()->subDays(2),
-                                'score' => fake()->randomFloat(2, 0.5, 1),
+                                'score' => $this->seederRandomFloat(2, 0.5, 1),
                             ]
                         );
                     }
@@ -599,13 +669,20 @@ class AcademicBulkDemoSeeder extends Seeder
      */
     private function makeUser(array $attrs): User
     {
+        $demoCity = $attrs['demo_city'] ?? 'India';
+        unset($attrs['demo_city']);
+
         $attrs['phone'] = $attrs['phone'] ?? $this->nextIndianMobile();
         $attrs['is_active'] = true;
         $attrs['email_verified_at'] = now();
-        $f = $this->indianFaker();
-        $attrs['address'] = $attrs['address'] ?? $f->streetAddress().', '.$f->city().', '.$f->state();
-        $attrs['pincode'] = $attrs['pincode'] ?? (string) $f->numberBetween(110001, 829999);
-        $attrs['date_of_birth'] = $attrs['date_of_birth'] ?? $f->dateTimeBetween('-28 years', '-17 years')->format('Y-m-d');
+        $role = $attrs['role'] ?? 'student';
+        $attrs['address'] = $attrs['address'] ?? ('Ward '.random_int(1, 48).', Demo Colony, '.$demoCity);
+        $attrs['pincode'] = $attrs['pincode'] ?? (string) random_int(110001, 829999);
+        $attrs['date_of_birth'] = $attrs['date_of_birth'] ?? match ($role) {
+            'student' => Carbon::now()->subYears(random_int(18, 24))->format('Y-m-d'),
+            'faculty' => Carbon::now()->subYears(random_int(28, 55))->format('Y-m-d'),
+            default => Carbon::now()->subYears(random_int(35, 58))->format('Y-m-d'),
+        };
 
         $email = $attrs['email'];
         unset($attrs['email']);
@@ -628,11 +705,11 @@ class AcademicBulkDemoSeeder extends Seeder
         Profile::updateOrCreate(
             ['user_id' => $user->id],
             [
-                'bio' => $full ? $this->indianFaker()->sentence(12) : $this->indianFaker()->sentence(6),
-                'experience_years' => $user->role === 'student' ? $this->indianFaker()->numberBetween(0, 2) : $this->indianFaker()->numberBetween(5, 22),
+                'bio' => $full ? $this->demoSentence(12) : $this->demoSentence(6),
+                'experience_years' => $user->role === 'student' ? random_int(0, 2) : random_int(5, 22),
                 'specialization' => $user->role === 'student'
                     ? 'B.Sc Nursing (student)'
-                    : fake()->randomElement(['Medical-Surgical', 'Community Health', 'Anatomy', 'Pediatrics', 'Mental Health']),
+                    : $this->pickRandom(['Medical-Surgical', 'Community Health', 'Anatomy', 'Pediatrics', 'Mental Health']),
                 'availability_status' => 'available',
                 'avatar_path' => $avatarPath,
                 'is_profile_complete' => $full,
@@ -654,7 +731,7 @@ class AcademicBulkDemoSeeder extends Seeder
                 'file_path' => $idPath,
                 'file_size' => strlen($png),
                 'mime_type' => 'image/png',
-                'status' => fake()->randomElement(['uploaded', 'verified']),
+                'status' => $this->pickRandom(['uploaded', 'verified']),
             ]);
         }
 
@@ -669,7 +746,7 @@ class AcademicBulkDemoSeeder extends Seeder
                 'file_path' => $certPath,
                 'file_size' => strlen($pdf),
                 'mime_type' => 'application/pdf',
-                'status' => fake()->randomElement(['uploaded', 'verified']),
+                'status' => $this->pickRandom(['uploaded', 'verified']),
             ]);
         }
     }
