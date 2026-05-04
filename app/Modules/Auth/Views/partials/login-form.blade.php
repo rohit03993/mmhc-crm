@@ -12,7 +12,7 @@
     <div class="alert alert-success py-2 small">{{ session('success_otp') }}</div>
 @endif
 
-<ul class="nav nav-pills nav-fill mb-3 login-tabs" id="loginTab" role="tablist">
+<ul class="nav nav-pills nav-fill mb-2 login-tabs" id="loginTab" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link {{ (session('login_tab') !== 'phone') ? 'active' : '' }}" id="tab-email" data-bs-toggle="pill" data-bs-target="#pane-email" type="button" role="tab">Email</button>
     </li>
@@ -75,6 +75,47 @@
                 Sign In
             </button>
         </form>
+
+        <div class="login-signup-section" aria-labelledby="login-signup-heading-email">
+            <div class="login-signup-divider" role="presentation"></div>
+            <div class="login-signup-head">
+                <span class="login-signup-kicker">New to MMHC?</span>
+                <h2 id="login-signup-heading-email" class="login-signup-title">Create your account</h2>
+                <p class="login-signup-lead">Same sign-in later—your dashboard matches the path you pick.</p>
+            </div>
+            <div class="login-signup-grid">
+                <a href="{{ route('auth.register') }}" class="login-signup-card login-signup-card--healthcare">
+                    <span class="login-signup-card-glow" aria-hidden="true"></span>
+                    <span class="login-signup-card-icon"><i class="fas fa-heart-pulse" aria-hidden="true"></i></span>
+                    <span class="login-signup-card-eyebrow">Healthcare &amp; home care</span>
+                    <span class="login-signup-card-name">Medical team &amp; patients</span>
+                    <p class="login-signup-card-desc">Patients, nurses &amp; caregivers—home care &amp; community on MMHC.</p>
+                    <ul class="login-signup-card-list">
+                        <li>Patient, nurse, or caregiver</li>
+                        <li>Visits, care tasks &amp; care plans</li>
+                    </ul>
+                    <span class="login-signup-card-cta">
+                        <span>Sign up for healthcare</span>
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    </span>
+                </a>
+                <a href="{{ route('auth.register', ['academics' => 1]) }}" class="login-signup-card login-signup-card--academics">
+                    <span class="login-signup-card-glow" aria-hidden="true"></span>
+                    <span class="login-signup-card-icon"><i class="fas fa-graduation-cap" aria-hidden="true"></i></span>
+                    <span class="login-signup-card-eyebrow">Colleges &amp; programmes</span>
+                    <span class="login-signup-card-name">Academics</span>
+                    <p class="login-signup-card-desc">Students &amp; faculty—join your college’s batches &amp; coursework.</p>
+                    <ul class="login-signup-card-list">
+                        <li>Institute + batch on MMHC</li>
+                        <li>Assignments, quizzes &amp; reports</li>
+                    </ul>
+                    <span class="login-signup-card-cta">
+                        <span>Sign up for academics</span>
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    </span>
+                </a>
+            </div>
+        </div>
     </div>
 
     <div class="tab-pane fade {{ (session('login_tab') === 'phone') ? 'show active' : '' }}" id="pane-phone" role="tabpanel">
@@ -135,12 +176,10 @@
                 </button>
             </form>
         @endif
+        @unless(session('otp_sent'))
+        <p class="login-phone-signup-hint small text-muted mt-3 mb-0">
+            Need a new account? Switch to the <strong>Email</strong> tab—choose <strong>Healthcare</strong> or <strong>Academics</strong> registration below the sign-in form.
+        </p>
+        @endunless
     </div>
-</div>
-
-<div class="signup-link">
-    <p>
-        Don't have an account?
-        <a href="{{ route('auth.register') }}">Sign up here</a>
-    </p>
 </div>

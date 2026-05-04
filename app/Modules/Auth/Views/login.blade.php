@@ -241,11 +241,430 @@
         text-decoration: underline;
     }
 
+    /* Email tab: dual signup paths (healthcare vs academics) */
+    .login-signup-section {
+        margin-top: 1.75rem;
+        padding-top: 0.25rem;
+    }
+    .login-signup-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #e2e8f0 15%, #e2e8f0 85%, transparent);
+        margin-bottom: 1.5rem;
+    }
+    .login-signup-head {
+        text-align: left;
+        margin-bottom: 1.25rem;
+    }
+    .login-signup-kicker {
+        display: inline-block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 0.35rem;
+    }
+    .login-signup-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.03em;
+        margin: 0 0 0.35rem;
+        line-height: 1.25;
+    }
+    .login-signup-lead {
+        font-size: 0.85rem;
+        color: #64748b;
+        line-height: 1.5;
+        margin: 0;
+        max-width: 36rem;
+    }
+    .login-signup-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    @media (min-width: 520px) {
+        .login-signup-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 0.875rem;
+        }
+    }
+    .login-signup-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        text-decoration: none;
+        color: inherit;
+        padding: 1.15rem 1.1rem 1.05rem;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        background: linear-gradient(165deg, #ffffff 0%, #f8fafc 100%);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        overflow: hidden;
+        transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+        outline: none;
+    }
+    .login-signup-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+        border-color: #cbd5e1;
+    }
+    .login-signup-card:focus-visible {
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.35), 0 12px 28px rgba(15, 23, 42, 0.08);
+    }
+    .login-signup-card-glow {
+        position: absolute;
+        top: -40%;
+        right: -30%;
+        width: 70%;
+        height: 80%;
+        border-radius: 50%;
+        opacity: 0.12;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+    .login-signup-card:hover .login-signup-card-glow {
+        opacity: 0.2;
+    }
+    .login-signup-card--healthcare .login-signup-card-glow {
+        background: radial-gradient(circle, #667eea 0%, #764ba2 60%, transparent 70%);
+    }
+    .login-signup-card--academics .login-signup-card-glow {
+        background: radial-gradient(circle, #0ea5e9 0%, #6366f1 55%, transparent 70%);
+    }
+    .login-signup-card--healthcare {
+        border-color: rgba(102, 126, 234, 0.22);
+    }
+    .login-signup-card--healthcare:hover {
+        border-color: rgba(102, 126, 234, 0.45);
+    }
+    .login-signup-card--academics {
+        border-color: rgba(14, 165, 233, 0.25);
+    }
+    .login-signup-card--academics:hover {
+        border-color: rgba(14, 165, 233, 0.5);
+    }
+    .login-signup-card-icon {
+        position: relative;
+        z-index: 1;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        margin-bottom: 0.65rem;
+    }
+    .login-signup-card--healthcare .login-signup-card-icon {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.12) 100%);
+        color: #5b21b6;
+    }
+    .login-signup-card--academics .login-signup-card-icon {
+        background: linear-gradient(135deg, rgba(14, 165, 233, 0.18) 0%, rgba(99, 102, 241, 0.12) 100%);
+        color: #0369a1;
+    }
+    .login-signup-card-eyebrow {
+        position: relative;
+        z-index: 1;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 0.15rem;
+    }
+    .login-signup-card-name {
+        position: relative;
+        z-index: 1;
+        font-size: 1.05rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #0f172a;
+        margin-bottom: 0.35rem;
+        line-height: 1.2;
+    }
+    .login-signup-card-desc {
+        position: relative;
+        z-index: 1;
+        font-size: 0.78rem;
+        color: #64748b;
+        line-height: 1.45;
+        margin: 0 0 0.5rem;
+    }
+    .login-signup-card-list {
+        position: relative;
+        z-index: 1;
+        margin: 0 0 0.75rem;
+        padding-left: 1rem;
+        font-size: 0.72rem;
+        color: #475569;
+        line-height: 1.45;
+    }
+    .login-signup-card-list li {
+        margin-bottom: 0.2rem;
+    }
+    .login-signup-card-list li::marker {
+        color: #94a3b8;
+    }
+    .login-signup-card--healthcare .login-signup-card-list li::marker {
+        color: #a78bfa;
+    }
+    .login-signup-card--academics .login-signup-card-list li::marker {
+        color: #38bdf8;
+    }
+    .login-signup-card-cta {
+        position: relative;
+        z-index: 1;
+        margin-top: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+    .login-signup-card--healthcare .login-signup-card-cta {
+        color: #5b21b6;
+    }
+    .login-signup-card--academics .login-signup-card-cta {
+        color: #0369a1;
+    }
+    .login-signup-card-cta i {
+        font-size: 0.72rem;
+        transition: transform 0.2s ease;
+    }
+    .login-signup-card:hover .login-signup-card-cta i {
+        transform: translateX(4px);
+    }
+
+    /* Desktop split: dense layout so email tab + signup fits without scroll */
+    @media (min-width: 992px) {
+        .academics-form-wrap {
+            flex: 1 1 auto;
+            min-height: 0;
+            max-height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .academics-form-wrap .login-tabs {
+            margin-bottom: 0.45rem !important;
+        }
+        .academics-form-wrap .login-tabs .nav-link {
+            padding: 0.4rem 0.55rem;
+            font-size: 0.8rem;
+            border-radius: 10px;
+        }
+        .academics-form-wrap #loginTabContent {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .academics-form-wrap #loginTabContent > .tab-pane.fade.show {
+            display: flex !important;
+            flex-direction: column;
+            flex: 1 1 auto;
+            min-height: 0;
+            max-height: 100%;
+            overflow: hidden;
+        }
+        .academics-login-right .form-floating-modern {
+            margin-bottom: 0.5rem;
+        }
+        .academics-login-right .form-floating-modern label {
+            font-size: 0.78rem;
+            margin-bottom: 0.2rem;
+        }
+        .academics-login-right .form-floating-modern input {
+            height: 44px;
+            padding: 0.45rem 0.55rem 0.45rem 2.25rem;
+            font-size: 0.9rem;
+            border-radius: 11px;
+            border-width: 1px;
+        }
+        .academics-login-right .form-floating-modern .input-icon {
+            left: 12px;
+            font-size: 0.85rem;
+        }
+        .academics-login-right .password-toggle {
+            right: 8px;
+            padding: 0.3rem;
+        }
+        .academics-login-right .remember-me-container {
+            margin-bottom: 0.45rem;
+        }
+        .academics-login-right .form-check-modern label {
+            font-size: 0.8rem;
+        }
+        .academics-login-right .form-check-modern input[type="checkbox"] {
+            width: 17px;
+            height: 17px;
+        }
+        .academics-login-right .forgot-password-link {
+            font-size: 0.8rem;
+        }
+        .academics-login-right .btn-login {
+            height: 46px;
+            font-size: 0.95rem;
+            border-radius: 11px;
+            letter-spacing: 0.02em;
+        }
+        .academics-login-right .btn-login:hover {
+            transform: translateY(-1px);
+        }
+        .academics-login-right .alert-modern {
+            padding: 0.5rem 0.65rem;
+            margin-bottom: 0.45rem;
+            font-size: 0.8rem;
+        }
+        .academics-login-right .login-signup-section {
+            margin-top: 0.45rem;
+            padding-top: 0;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .academics-login-right .login-signup-divider {
+            margin-bottom: 0.45rem;
+        }
+        .academics-login-right .login-signup-head {
+            margin-bottom: 0.45rem;
+        }
+        .academics-login-right .login-signup-kicker {
+            font-size: 0.65rem;
+            margin-bottom: 0.1rem;
+        }
+        .academics-login-right .login-signup-title {
+            font-size: 0.98rem;
+            margin-bottom: 0.1rem;
+        }
+        .academics-login-right .login-signup-lead {
+            font-size: 0.72rem;
+            line-height: 1.35;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .academics-login-right .login-signup-grid {
+            gap: 0.65rem;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+        .academics-login-right .login-signup-card {
+            padding: 0.65rem 0.65rem 0.55rem;
+            border-radius: 12px;
+        }
+        .academics-login-right .login-signup-card-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            font-size: 0.9rem;
+            margin-bottom: 0.35rem;
+        }
+        .academics-login-right .login-signup-card-eyebrow {
+            font-size: 0.6rem;
+            letter-spacing: 0.07em;
+        }
+        .academics-login-right .login-signup-card-name {
+            font-size: 0.88rem;
+            margin-bottom: 0.2rem;
+        }
+        .academics-login-right .login-signup-card-desc {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-size: 0.72rem;
+            line-height: 1.35;
+            margin: 0 0 0.35rem;
+            color: #64748b;
+        }
+        .academics-login-right .login-signup-card-list {
+            font-size: 0.68rem;
+            margin: 0 0 0.3rem;
+            padding-left: 0.9rem;
+            line-height: 1.35;
+        }
+        .academics-login-right .login-signup-card-list li {
+            margin-bottom: 0.08rem;
+        }
+        .academics-login-right .login-signup-card-cta {
+            font-size: 0.74rem;
+            margin-top: 0.15rem;
+        }
+        .academics-login-brand-stack {
+            gap: 0.45rem;
+        }
+        .academics-login-left-img-wrap {
+            padding: 0.55rem 0.75rem;
+            min-height: 0;
+            margin-bottom: 0;
+            border-radius: 14px;
+        }
+        .academics-login-left-img {
+            max-height: min(12vh, 100px);
+        }
+        .academics-hero-block {
+            margin-bottom: 0;
+        }
+        .academics-hero-kicker {
+            margin-bottom: 0.25rem;
+        }
+        .academics-hero-title {
+            font-size: clamp(1rem, 2.2vh, 1.35rem);
+            margin-bottom: 0.2rem;
+        }
+        .academics-hero-sub {
+            font-size: 0.78rem;
+            margin-bottom: 0.3rem;
+        }
+        .academics-hero-desc {
+            font-size: 0.68rem;
+            line-height: 1.4;
+        }
+        .academics-badges {
+            margin-top: 0.15rem;
+            gap: 0.35rem;
+        }
+        .academics-badge {
+            font-size: 0.65rem;
+            padding: 0.25rem 0.55rem;
+        }
+        .academics-login-footer {
+            flex-shrink: 0;
+        }
+    }
+
+    @media (min-width: 992px) and (max-height: 720px) {
+        .academics-login-wrapper {
+            font-size: 97%;
+        }
+        .academics-login-right .login-signup-lead {
+            -webkit-line-clamp: 1;
+        }
+        .academics-login-right .login-signup-card-list {
+            display: none;
+        }
+        .academics-login-right .login-signup-card-cta {
+            margin-top: 0.2rem;
+        }
+    }
+
     /* Split login: no page scroll, fit viewport, gallery on left */
     body:has(.academics-login-wrapper),
     html:has(.academics-login-wrapper) {
         overflow: hidden !important;
-        height: 100% !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
     }
     .academics-login-wrapper {
         position: fixed;
@@ -253,8 +672,8 @@
         left: 0;
         right: 0;
         bottom: 0;
-        height: 100vh;
-        max-height: 100vh;
+        height: 100dvh;
+        max-height: 100dvh;
         display: flex;
         background: #f8fafc;
         z-index: 10;
@@ -262,36 +681,100 @@
     }
     .academics-login-left {
         flex: 0 0 50%;
-        background: linear-gradient(165deg, #1e3a5f 0%, #2d4a6f 50%, #1e3a5f 100%);
+        position: relative;
+        isolation: isolate;
+        background: linear-gradient(152deg, #0c1222 0%, #142947 38%, #0a2744 72%, #051525 100%);
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 1.5rem 2rem;
+        padding: clamp(1.5rem, 4vw, 2.75rem);
         min-height: 0;
         overflow-y: auto;
         overflow-x: hidden;
     }
+    @media (min-width: 992px) {
+        .academics-login-left {
+            overflow-y: hidden;
+            padding: clamp(0.6rem, 1.8vh, 1.25rem) 1rem;
+        }
+    }
+    .academics-login-left::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(ellipse 90% 60% at 15% 25%, rgba(14, 165, 233, 0.28), transparent 55%),
+            radial-gradient(ellipse 70% 50% at 88% 75%, rgba(99, 102, 241, 0.22), transparent 50%),
+            radial-gradient(ellipse 50% 40% at 50% 100%, rgba(6, 182, 212, 0.12), transparent 45%);
+        pointer-events: none;
+        z-index: 0;
+    }
+    .academics-login-left::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+        background-size: 56px 56px;
+        mask-image: linear-gradient(165deg, black 0%, black 45%, transparent 92%);
+        opacity: 0.65;
+        pointer-events: none;
+        z-index: 0;
+    }
     .academics-login-left-inner {
+        position: relative;
+        z-index: 1;
         width: 100%;
-        max-width: 100%;
         min-height: min-content;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        gap: 1rem;
+        gap: 1.25rem;
+    }
+    .academics-login-brand-stack {
+        width: 100%;
+        max-width: min(520px, 100%);
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
     }
     .academics-left-featured {
-        background: rgba(255,255,255,0.08);
-        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 20px;
         overflow: hidden;
         margin-bottom: 0;
-        border: 1px solid rgba(255,255,255,0.2);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow:
+            0 24px 48px rgba(0, 0, 0, 0.35),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
         flex: 0 0 auto;
         min-height: 52vh;
         display: flex;
         flex-direction: column;
         position: relative;
+    }
+    @media (min-width: 992px) {
+        .academics-left-featured {
+            min-height: 0;
+            max-height: min(34vh, 300px);
+            flex: 0 1 auto;
+        }
+        .academics-left-featured-img {
+            min-height: 0;
+            max-height: min(28vh, 260px);
+        }
+        .academics-login-left-inner {
+            gap: 0.4rem;
+            max-height: 100%;
+            overflow: hidden;
+        }
+        .academics-left-thumb-card img {
+            max-height: 48px;
+        }
     }
     .academics-left-featured .academics-left-slides {
         border-radius: 12px;
@@ -326,12 +809,14 @@
         background: rgba(0,0,0,0.15);
     }
     .academics-left-featured-caption {
-        padding: 0.75rem 1rem;
+        padding: 0.85rem 1.1rem;
         color: #fff;
         text-align: center;
         flex-shrink: 0;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.35) 100%);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .academics-left-featured-caption .name { font-size: 1rem; font-weight: 700; display: block; }
+    .academics-left-featured-caption .name { font-size: 0.95rem; font-weight: 600; display: block; letter-spacing: -0.01em; }
     .academics-left-featured-caption .sub { font-size: 0.8rem; opacity: 0.9; }
     .academics-left-thumbs {
         display: flex;
@@ -343,11 +828,12 @@
     .academics-left-thumb-card {
         flex: 0 0 calc(25% - 0.5rem);
         max-width: calc(25% - 0.5rem);
-        background: rgba(255,255,255,0.08);
-        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
         overflow: hidden;
-        border: 1px solid rgba(255,255,255,0.2);
-        box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .academics-thumb-btn {
         cursor: pointer;
@@ -356,8 +842,14 @@
         text-align: left;
         transition: transform 0.2s, box-shadow 0.2s;
     }
-    .academics-thumb-btn:hover { transform: scale(1.03); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
-    .academics-thumb-btn.active { border-color: rgba(255,255,255,0.8); box-shadow: 0 0 0 2px rgba(255,255,255,0.4); }
+    .academics-thumb-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    }
+    .academics-thumb-btn.active {
+        border-color: rgba(14, 165, 233, 0.65);
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.35);
+    }
     .academics-left-thumb-card img {
         width: 100%;
         aspect-ratio: 1;
@@ -385,69 +877,139 @@
         .academics-left-thumb-card { flex: 0 0 calc(50% - 0.25rem); max-width: calc(50% - 0.25rem); }
     }
     .academics-login-left-img-wrap {
-        background: rgba(255,255,255,0.95);
-        border-radius: 12px;
-        padding: 1.25rem;
-        margin-bottom: 1.25rem;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-radius: 20px;
+        padding: 1.5rem 1.75rem;
+        margin-bottom: 0.5rem;
         display: flex;
         align-items: center;
         justify-content: center;
         min-height: 120px;
-        border: 2px solid rgba(255,255,255,0.3);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        box-shadow:
+            0 12px 40px rgba(0, 0, 0, 0.28),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
-    .academics-login-left-img { max-width: 100%; max-height: 22vh; width: auto; height: auto; object-fit: contain; display: block; }
-    .academics-login-left-img-placeholder { text-align: center; color: #1e3a5f; padding: 1rem; }
-    .academics-placeholder-icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; opacity: 0.9; }
-    .academics-placeholder-text { font-size: 1rem; font-weight: 600; }
+    .academics-login-left-img {
+        max-width: 100%;
+        max-height: 22vh;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        display: block;
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
+    }
+    .academics-login-left-img-placeholder { text-align: center; color: #e2e8f0; padding: 1rem; }
+    .academics-placeholder-icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; color: #7dd3fc; opacity: 0.95; }
+    .academics-placeholder-text { font-size: 1rem; font-weight: 600; color: #f1f5f9; }
     .academics-hero-block {
         color: #fff;
-        margin-bottom: 1.25rem;
+        margin-bottom: 0.25rem;
+    }
+    .academics-hero-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(224, 242, 254, 0.85);
+        margin-bottom: 0.75rem;
+    }
+    .academics-hero-kicker::before {
+        content: '';
+        width: 28px;
+        height: 2px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, #38bdf8, transparent);
     }
     .academics-hero-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin-bottom: 0.35rem;
-        letter-spacing: -0.02em;
+        font-size: clamp(1.55rem, 2.8vw, 2.15rem);
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.035em;
+        line-height: 1.15;
+        background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 55%, #bae6fd 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
     .academics-hero-sub {
-        font-size: 1.1rem;
-        opacity: 0.9;
-        margin-bottom: 1.25rem;
+        font-size: clamp(1rem, 1.6vw, 1.15rem);
+        font-weight: 500;
+        color: rgba(226, 232, 240, 0.95);
+        margin-bottom: 1rem;
+        letter-spacing: -0.01em;
     }
     .academics-hero-desc {
-        font-size: 0.95rem;
-        line-height: 1.6;
-        opacity: 0.85;
+        font-size: 0.925rem;
+        line-height: 1.65;
+        color: rgba(203, 213, 225, 0.92);
+        margin-bottom: 0;
     }
     .academics-badges {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
+        margin-top: 0.25rem;
     }
     .academics-badge {
-        background: rgba(255,255,255,0.15);
-        color: #fff;
-        padding: 0.4rem 0.9rem;
-        border-radius: 6px;
-        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(255, 255, 255, 0.09);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        color: #f1f5f9;
+        padding: 0.45rem 0.95rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
         font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+    .academics-badge i {
+        font-size: 0.75rem;
+        opacity: 0.9;
+        color: #7dd3fc;
     }
     .academics-login-right {
         flex: 0 0 50%;
         background: #fff;
         display: flex;
-        align-items: center;
+        align-items: stretch;
         justify-content: center;
         padding: 1.25rem 2rem;
         min-height: 0;
         overflow-y: auto;
         overflow-x: hidden;
     }
+    @media (min-width: 992px) {
+        .academics-login-right {
+            overflow-y: hidden;
+            overflow-x: hidden;
+            padding: 0.55rem 1.25rem 0.45rem;
+            align-items: center;
+        }
+    }
     .academics-login-right-inner {
         width: 100%;
-        max-width: 400px;
+        max-width: 520px;
         flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        max-height: 100%;
+    }
+    @media (min-width: 992px) {
+        .academics-login-right-inner {
+            flex: 1 1 auto;
+            max-height: 100dvh;
+            justify-content: center;
+        }
     }
     .academics-logo {
         max-width: 140px;
@@ -455,37 +1017,44 @@
         margin-bottom: 0.5rem;
         display: block;
     }
+    @media (min-width: 992px) {
+        .academics-logo {
+            max-width: 132px;
+            max-height: 44px;
+            width: auto;
+            object-fit: contain;
+            margin-bottom: 0.3rem;
+        }
+    }
     .academics-portal-title {
         font-size: 1.5rem;
         font-weight: 700;
         color: #1e293b;
         margin-bottom: 0.35rem;
         padding-bottom: 0.35rem;
-        border-bottom: 3px solid #0ea5e9;
+        border-bottom: 3px solid #667eea;
         display: inline-block;
+    }
+    @media (min-width: 992px) {
+        .academics-portal-title {
+            font-size: 1.35rem;
+            padding-bottom: 0.2rem;
+            border-bottom-width: 2px;
+            margin-bottom: 0.2rem;
+        }
     }
     .academics-portal-desc {
         color: #64748b;
         font-size: 0.875rem;
         margin-bottom: 0.35rem;
     }
-    .academics-form-wrap .login-tabs .nav-link.active {
-        background: #0ea5e9;
-        color: #fff;
+    @media (min-width: 992px) {
+        .academics-portal-desc {
+            font-size: 0.82rem;
+            line-height: 1.4;
+            margin-bottom: 0.35rem;
+        }
     }
-    .academics-form-wrap .btn-login {
-        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.35);
-    }
-    .academics-form-wrap .btn-login:hover {
-        box-shadow: 0 6px 20px rgba(14, 165, 233, 0.45);
-    }
-    .academics-form-wrap .form-floating-modern input:focus {
-        border-color: #0ea5e9;
-        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
-    }
-    .academics-form-wrap .forgot-password-link { color: #0ea5e9; }
-    .academics-form-wrap .signup-link a { color: #0ea5e9; }
     .academics-login-footer {
         margin-top: 1.25rem;
         padding-top: 0.75rem;
@@ -493,8 +1062,20 @@
         font-size: 0.75rem;
         color: #64748b;
     }
+    @media (min-width: 992px) {
+        .academics-login-footer {
+            margin-top: 0.45rem;
+            padding-top: 0.4rem;
+            font-size: 0.72rem;
+            line-height: 1.4;
+        }
+        .academics-powered {
+            margin-top: 0.15rem;
+            display: inline;
+        }
+    }
     .academics-login-footer a {
-        color: #0ea5e9;
+        color: #667eea;
         text-decoration: none;
         margin-left: 0.5rem;
     }
@@ -574,20 +1155,24 @@
                 @endforeach
             </div>
             @else
-            <div class="academics-login-left-img-wrap">
-                <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="academics-login-left-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                <div class="academics-login-left-img-placeholder" style="display:none;" aria-hidden="true">
-                    <span class="academics-placeholder-icon"><i class="fas fa-heartbeat"></i></span>
-                    <span class="academics-placeholder-text">MeD Miracle Health Care</span>
+            <div class="academics-login-brand-stack">
+                <div class="academics-login-left-img-wrap">
+                    <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="academics-login-left-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="academics-login-left-img-placeholder" style="display:none;" aria-hidden="true">
+                        <span class="academics-placeholder-icon"><i class="fas fa-heartbeat"></i></span>
+                        <span class="academics-placeholder-text">MeD Miracle Health Care</span>
+                    </div>
                 </div>
-            </div>
-            <div class="academics-hero-block">
-                <h3 class="academics-hero-title">MeD Miracle Health Care</h3>
-                <p class="academics-hero-sub">Care, community &amp; learning</p>
-                <p class="academics-hero-desc">One secure sign-in for patients, caregivers, staff, and academic roles. Your dashboard opens based on your account type.</p>
-            </div>
-            <div class="academics-badges">
-                <span class="academics-badge">Trusted care</span>
+                <div class="academics-hero-block">
+                    <p class="academics-hero-kicker">MMHC portal</p>
+                    <h3 class="academics-hero-title">MeD Miracle Health Care</h3>
+                    <p class="academics-hero-sub">Care, community &amp; learning</p>
+                    <p class="academics-hero-desc">One secure sign-in for patients, caregivers, staff, and academic roles. Your dashboard opens based on your account type.</p>
+                </div>
+                <div class="academics-badges">
+                    <span class="academics-badge"><i class="fas fa-shield-heart" aria-hidden="true"></i> Trusted care</span>
+                    <span class="academics-badge"><i class="fas fa-fingerprint" aria-hidden="true"></i> One secure sign-in</span>
+                </div>
             </div>
             @endif
         </div>

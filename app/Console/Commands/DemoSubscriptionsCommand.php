@@ -8,9 +8,8 @@ use App\Modules\Plans\Models\Payment;
 use App\Modules\Plans\Models\Subscription;
 use App\Modules\Plans\Support\DemoSubscriptionNotes;
 use App\Modules\Plans\Services\SubscriptionService;
+use Database\Seeders\HealthcareCrmDemoSeeder;
 use Database\Seeders\IncentiveDemoFlowSeeder;
-use Database\Seeders\IncentiveNetworkDemoSeeder;
-use Database\Seeders\PaymentGatewayDemoSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -113,7 +112,7 @@ class DemoSubscriptionsCommand extends Command
     private function runRefresh(SubscriptionService $subscriptionService, bool $dry): int
     {
         if ($dry) {
-            $this->warn('[dry-run] Would delete demo subscriptions, then run PaymentGatewayDemoSeeder, IncentiveDemoFlowSeeder, IncentiveNetworkDemoSeeder.');
+            $this->warn('[dry-run] Would delete demo subscriptions, then run HealthcareCrmDemoSeeder and IncentiveDemoFlowSeeder.');
 
             return 0;
         }
@@ -124,9 +123,8 @@ class DemoSubscriptionsCommand extends Command
         // Must use db:seed so SeedCommand sets $command on the seeder tree ($this->call(SomeSeeder::class) is for Artisan commands only).
         $seedOpts = ['--force' => true];
         foreach ([
-            PaymentGatewayDemoSeeder::class,
+            HealthcareCrmDemoSeeder::class,
             IncentiveDemoFlowSeeder::class,
-            IncentiveNetworkDemoSeeder::class,
         ] as $seederClass) {
             $code = $this->call('db:seed', array_merge($seedOpts, ['--class' => $seederClass]));
             if ($code !== 0) {

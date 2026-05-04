@@ -73,16 +73,40 @@ class InstitutionController extends Controller
             ->selectRaw('COUNT(DISTINCT '.$pivot.'.user_id) as c')
             ->value('c');
 
-        $facultyCount = User::query()
-            ->where('role', 'faculty')
-            ->where('academic_institution_id', $institution->id)
-            ->count();
+        // Faculty linked via batch pivot (same source as batch table rows); do not rely on users.academic_institution_id alone.
+        $facultyCount = (int) DB::table($pivot)
+            ->join($batchTable, "{$batchTable}.id", '=', "{$pivot}.batch_id")
+            ->where("{$batchTable}.institution_id", $institution->id)
+            ->where("{$pivot}.type", 'faculty')
+            ->selectRaw('COUNT(DISTINCT '.$pivot.'.user_id) as c')
+            ->value('c');
 
         $icr = AcademicScoreService::getIcr($institution);
 
-        $peoplePaginator = User::query()
+        // People must match batch membership: pivot is the source of truth for who teaches/studies here.
+        $peopleUserIds = DB::table($pivot)
+            ->join($batchTable, "{$batchTable}.id", '=', "{$pivot}.batch_id")
+            ->where("{$batchTable}.institution_id", $institution->id)
+            ->whereIn("{$pivot}.type", ['student', 'faculty'])
+            ->distinct()
+            ->pluck("{$pivot}.user_id");
+
+        $adminIds = User::query()
             ->where('academic_institution_id', $institution->id)
-            ->whereIn('role', ['student', 'faculty'])
+            ->where('role', 'institution_admin')
+            ->pluck('id');
+
+        $peopleIds = $peopleUserIds->merge($adminIds)->unique()->values();
+
+        $peopleQuery = User::query()
+            ->whereIn('role', ['student', 'faculty', 'institution_admin']);
+        if ($peopleIds->isEmpty()) {
+            $peopleQuery->whereRaw('0 = 1');
+        } else {
+            $peopleQuery->whereIn('id', $peopleIds);
+        }
+
+        $peoplePaginator = $peopleQuery
             ->orderByDesc('id')
             ->paginate(12, ['id', 'name', 'email', 'role', 'unique_id'], 'people_page')
             ->withQueryString();

@@ -10,11 +10,20 @@ use App\Modules\Rewards\Models\CaregiverReward;
 use App\Modules\Services\Models\ServiceRequest;
 use App\Modules\Services\Models\ServiceType;
 use Carbon\Carbon;
+use Faker\Factory as FakerFactory;
+use Faker\Generator as FakerGenerator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class IncentiveNetworkDemoSeeder extends Seeder
 {
+    private ?FakerGenerator $inFaker = null;
+
+    private function indianFaker(): FakerGenerator
+    {
+        return $this->inFaker ??= FakerFactory::create('en_IN');
+    }
+
     private const TOTAL_NURSES = 30;
 
     private const TOTAL_CAREGIVERS = 25;
@@ -27,15 +36,12 @@ class IncentiveNetworkDemoSeeder extends Seeder
 
     private const REWARDS_PER_STAFF = 2;
 
+    /**
+     * Expects {@see ServiceTypesSeeder}, {@see SubscriptionPlansSeeder}, {@see DemoDataSeeder},
+     * and {@see IncentiveRuleSetSeeder} to have run (e.g. via {@see HealthcareCrmDemoSeeder}).
+     */
     public function run(): void
     {
-        $this->call([
-            ServiceTypesSeeder::class,
-            SubscriptionPlansSeeder::class,
-            DemoDataSeeder::class,
-            IncentiveRuleSetSeeder::class,
-        ]);
-
         $admin = User::query()->where('role', 'admin')->orderBy('id')->first();
         $plan = Plan::query()->orderBy('id')->first();
         $serviceTypes = ServiceType::query()->orderBy('id')->get();
@@ -74,15 +80,14 @@ class IncentiveNetworkDemoSeeder extends Seeder
                 : "{$role}.demo{$i}@mmhc.local";
             $uniqueId = ($role === 'nurse' ? 'N' : 'C').'-UID-'.str_pad((string) $i, 6, '0', STR_PAD_LEFT);
             $phone = (string) (9000000000 + ($role === 'nurse' ? 0 : 500) + $i);
-            $namePrefix = $role === 'nurse' ? 'Nurse' : 'Caregiver';
             $qualification = $role === 'nurse' ? 'B.Sc Nursing' : 'General Care';
 
             $staff = User::query()->updateOrCreate(
                 ['email' => $email],
                 [
                     'name' => $isFirstDemo
-                        ? ($role === 'nurse' ? 'Dr. Priya Sharma' : 'Ram Prasad Yadav')
-                        : "{$namePrefix} Demo {$i}",
+                        ? ($role === 'nurse' ? 'Priya Sharma' : 'Ram Prasad Yadav')
+                        : $this->indianFaker()->name(),
                     'phone' => $phone,
                     'password' => 'password123',
                     'plain_password' => 'password123',
@@ -91,7 +96,7 @@ class IncentiveNetworkDemoSeeder extends Seeder
                     'qualification' => $qualification,
                     'experience' => $this->experienceBandForIndex($i),
                     'experience_tier' => $this->experienceTierForIndex($i),
-                    'address' => "Demo {$namePrefix} Address {$i}",
+                    'address' => $this->indianFaker()->streetAddress().', '.$this->indianFaker()->city().', '.$this->indianFaker()->state(),
                     'location' => $defaultPoint,
                     'is_active' => true,
                     'email_verified_at' => now(),
@@ -118,13 +123,13 @@ class IncentiveNetworkDemoSeeder extends Seeder
             $patient = User::query()->updateOrCreate(
                 ['email' => $email],
                 [
-                    'name' => $isFirstDemo ? 'Shri Ram Kumar Singh' : "Patient Demo {$i}",
+                    'name' => $isFirstDemo ? 'Ram Kumar Singh' : $this->indianFaker()->name(),
                     'phone' => $phone,
                     'password' => 'password123',
                     'plain_password' => 'password123',
                     'role' => 'patient',
                     'unique_id' => $uniqueId,
-                    'address' => "Demo Patient Address {$i}",
+                    'address' => $this->indianFaker()->streetAddress().', '.$this->indianFaker()->city().', '.$this->indianFaker()->state(),
                     'location' => $defaultPoint,
                     'is_active' => true,
                     'email_verified_at' => now(),
@@ -181,12 +186,12 @@ class IncentiveNetworkDemoSeeder extends Seeder
                         'patient_phone' => (string) (9600000000 + ($staff->id % 1000) * 10 + $j),
                     ],
                     [
-                        'patient_name' => "Reward Patient {$staff->id}-{$j}",
+                        'patient_name' => $this->indianFaker()->name(),
                         'patient_age' => 45 + ($j % 20),
-                        'patient_address' => "Reward Patient Address {$staff->id}-{$j}",
-                        'patient_pincode' => '4620'.str_pad((string) (($staff->id + $j) % 99), 2, '0', STR_PAD_LEFT),
-                        'hospital_name' => "Demo Hospital {$j}",
-                        'treatment_details' => 'Demo reward submission',
+                        'patient_address' => $this->indianFaker()->streetAddress().', '.$this->indianFaker()->city(),
+                        'patient_pincode' => (string) $this->indianFaker()->numberBetween(110001, 829999),
+                        'hospital_name' => $this->indianFaker()->city().' District Hospital',
+                        'treatment_details' => 'OPD follow-up; demo referral reward',
                         'reward_points' => 1,
                         'reward_amount' => 10.00,
                         'payment_processed' => false,

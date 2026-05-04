@@ -30,11 +30,12 @@ class DemoDataSeeder extends Seeder
             $admin = User::create([
                 'name' => 'Mantu Kumar',
                 'email' => 'mantu@themmhc.com',
-                'phone' => '9113311256',
+                'phone' => '9826012345',
                 'password' => 'password123',
                 'role' => 'admin',
                 'unique_id' => 'M-UID-000001',
-                'address' => 'Udgam Incubation Centre, Rohit Nagar, Phase 1, Bhopal 462023',
+                'address' => 'Udgam Incubation Centre, Rohit Nagar, Phase 1, Bhopal, Madhya Pradesh',
+                'pincode' => '462023',
                 'location' => $defaultPoint,
                 'is_active' => true,
                 'email_verified_at' => now(),
@@ -51,7 +52,7 @@ class DemoDataSeeder extends Seeder
             
         if (!$nurse) {
             $nurse = User::create([
-                'name' => 'Dr. Priya Sharma',
+                'name' => 'Priya Sharma',
                 'email' => 'nurse@demo.com',
                 'phone' => '9876543210',
                 'password' => 'password123', // Laravel's 'hashed' cast will automatically hash this
@@ -59,7 +60,8 @@ class DemoDataSeeder extends Seeder
                 'unique_id' => $nurseUniqueId,
                 'qualification' => 'B.Sc Nursing',
                 'experience' => '5-10',
-                'address' => 'Sector 15, Noida, Uttar Pradesh 201301',
+                'address' => 'H.No. 42, Sector 15, Noida, Gautam Buddha Nagar, Uttar Pradesh',
+                'pincode' => '201301',
                 'location' => $defaultPoint,
                 'date_of_birth' => '1985-03-15',
                 'is_active' => true,
@@ -81,13 +83,14 @@ class DemoDataSeeder extends Seeder
             $caregiver = User::create([
                 'name' => 'Ram Prasad Yadav',
                 'email' => 'caregiver@demo.com',
-                'phone' => '9876543211',
+                'phone' => '8765432109',
                 'password' => 'password123', // Laravel's 'hashed' cast will automatically hash this
                 'role' => 'caregiver',
                 'unique_id' => $caregiverUniqueId,
                 'qualification' => 'General Care',
                 'experience' => '3-5',
-                'address' => 'Village: Dumra, District: Patna, Bihar 801101',
+                'address' => 'Village Dumra, Bakhtiarpur, District Patna, Bihar',
+                'pincode' => '801103',
                 'location' => $defaultPoint,
                 'date_of_birth' => '1985-12-03',
                 'is_active' => true,
@@ -107,13 +110,14 @@ class DemoDataSeeder extends Seeder
             
         if (!$patient) {
             $patient = User::create([
-                'name' => 'Shri Ram Kumar Singh',
+                'name' => 'Ram Kumar Singh',
                 'email' => 'patient@demo.com',
-                'phone' => '9876543220',
+                'phone' => '9123456780',
                 'password' => 'password123', // Laravel's 'hashed' cast will automatically hash this
                 'role' => 'patient',
                 'unique_id' => $patientUniqueId,
-                'address' => 'House No. 45, Gandhi Nagar, Patna, Bihar 800001',
+                'address' => 'House No. 45, Gandhi Nagar, Kankarbagh, Patna, Bihar',
+                'pincode' => '800020',
                 'location' => $defaultPoint,
                 'date_of_birth' => '1965-03-10',
                 'is_active' => true,

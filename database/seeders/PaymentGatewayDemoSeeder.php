@@ -12,14 +12,12 @@ use Illuminate\Database\Seeder;
 
 class PaymentGatewayDemoSeeder extends Seeder
 {
+    /**
+     * Expects subscription plans, demo users, and incentive rules to exist
+     * (run {@see HealthcareCrmDemoSeeder} or seed prerequisites first).
+     */
     public function run(): void
     {
-        $this->call([
-            SubscriptionPlansSeeder::class,
-            DemoDataSeeder::class,
-            IncentiveRuleSetSeeder::class,
-        ]);
-
         $admin = User::query()->where('role', 'admin')->orderBy('id')->first();
         $patient = User::query()->where('role', 'patient')->orderBy('id')->first();
         $staff = User::query()->whereIn('role', ['nurse', 'caregiver'])->orderBy('id')->first();

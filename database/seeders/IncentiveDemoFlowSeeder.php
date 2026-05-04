@@ -15,16 +15,11 @@ class IncentiveDemoFlowSeeder extends Seeder
 {
     private const NURSE_VISITS_FOR_SLAB_DEMO = 55;
 
+    /**
+     * Nurse visit slab demo. Run after {@see HealthcareCrmDemoSeeder} (or equivalent prerequisites).
+     */
     public function run(): void
     {
-        // Ensure baseline demo users/service types/plans/rule set exist.
-        $this->call([
-            ServiceTypesSeeder::class,
-            SubscriptionPlansSeeder::class,
-            DemoDataSeeder::class,
-            IncentiveRuleSetSeeder::class,
-        ]);
-
         $admin = User::query()->where('role', 'admin')->orderBy('id')->first();
         $nurse = User::query()->where('role', 'nurse')->orderBy('id')->first();
         $patient = User::query()->where('role', 'patient')->orderBy('id')->first();

@@ -225,6 +225,23 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
 
+        if ($request->boolean('academics')) {
+            if (! Schema::hasTable('academic_institutions')) {
+                return redirect()->route('auth.register')
+                    ->with('error', 'Academics registration is not available on this installation.');
+            }
+
+            $institutions = Institution::query()->active()->orderBy('name')->get(['id', 'name', 'code']);
+            $batches = Schema::hasTable('academic_batches')
+                ? Batch::query()->where('is_active', true)
+                    ->orderBy('institution_id')
+                    ->orderBy('name')
+                    ->get(['id', 'institution_id', 'name', 'academic_year'])
+                : collect();
+
+            return view('auth::register-academics', compact('institutions', 'batches'));
+        }
+
         // Check if referral code is present
         $referralCode = $request->get('ref');
         $referral = null;
@@ -250,6 +267,10 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
+        if ($request->input('registration_portal') === 'academics') {
+            return $this->registerAcademicUser($request);
+        }
+
         // Normalize phone number for validation
         $phoneDigits = preg_replace('/\D/', '', $request->input('phone', ''));
         $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
@@ -413,6 +434,115 @@ class AuthController extends Controller
             // Patient: go to dashboard with success message
             return redirect()->route('dashboard')
                 ->with('success', $roleMessage);
+        });
+    }
+
+    /**
+     * Public self-registration for student / faculty at an existing institution.
+     */
+    private function registerAcademicUser(Request $request)
+    {
+        if (! Schema::hasTable('academic_institutions') || ! Schema::hasTable('academic_batches')) {
+            return redirect()->route('auth.register')
+                ->with('error', 'Academics registration is not available.');
+        }
+
+        $phoneDigits = preg_replace('/\D/', '', $request->input('phone', ''));
+        $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'phone' => [
+                'required',
+                'string',
+                'regex:/^[0-9]{10}$/',
+                function ($attribute, $value, $fail) use ($normalizedPhone) {
+                    if (User::where('phone', $normalizedPhone)->exists()) {
+                        $fail('This phone number is already registered.');
+                    }
+                },
+            ],
+            'pincode' => 'required|string|regex:/^[1-9][0-9]{5}$/',
+            'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|in:student,faculty',
+            'academic_institution_id' => [
+                'required',
+                'integer',
+                Rule::exists('academic_institutions', 'id'),
+            ],
+            'academic_batch_ids' => ['required', 'array', 'min:1'],
+            'academic_batch_ids.*' => ['integer', Rule::exists('academic_batches', 'id')],
+            'qualification' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:500',
+            'date_of_birth' => 'nullable|date',
+        ], [
+            'email.unique' => 'This email address is already registered.',
+            'phone.regex' => 'Phone number must be exactly 10 digits.',
+            'pincode.required' => 'Pincode is required.',
+            'pincode.regex' => 'Pincode must be a valid 6-digit Indian pincode.',
+        ]);
+
+        $validator->after(function (\Illuminate\Validation\Validator $v) use ($request) {
+            $id = (int) $request->input('academic_institution_id');
+            if ($id > 0 && ! Institution::query()->where('id', $id)->where('is_active', true)->exists()) {
+                $v->errors()->add('academic_institution_id', 'This institute is not active or could not be found.');
+            }
+            $this->assertAcademicBatchesBelongToInstitution($v, $request);
+            if ((string) $request->input('role') === 'faculty' && empty(trim((string) $request->input('qualification', '')))) {
+                $v->errors()->add('qualification', 'Qualification is required for faculty registration.');
+            }
+        });
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        return DB::transaction(function () use ($request, $normalizedPhone) {
+            $role = (string) $request->input('role');
+            $userData = $request->only(['name', 'email', 'password', 'role', 'date_of_birth', 'address', 'pincode']);
+            $userData['phone'] = $normalizedPhone;
+            $userData['plain_password'] = $userData['password'];
+            $userData['password'] = Hash::make($userData['password']);
+            $userData['unique_id'] = $this->userService->generateUniqueId($role);
+            $userData['academic_institution_id'] = (int) $request->input('academic_institution_id');
+            $userData['email_verified_at'] = now();
+            $userData['is_active'] = true;
+
+            $pincode = $request->input('pincode');
+            $pincodeData = \App\Models\Pincode::findByPincode($pincode);
+            if ($pincodeData) {
+                $userData['pincode'] = $pincode;
+                $latitude = $pincodeData->latitude ? (float) $pincodeData->latitude : null;
+                $longitude = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
+                $userData['latitude'] = $latitude;
+                $userData['longitude'] = $longitude;
+                if ($latitude && $longitude) {
+                    $userData['location'] = \App\Modules\Auth\Services\LocationService::createSpatialPoint($latitude, $longitude);
+                } else {
+                    $userData['location'] = DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
+                }
+            } else {
+                $userData['pincode'] = $pincode;
+                $userData['latitude'] = null;
+                $userData['longitude'] = null;
+                $userData['location'] = DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
+            }
+
+            $user = User::create($userData);
+
+            if ($role === 'faculty' && $request->filled('qualification')) {
+                $user->update(['qualification' => $request->input('qualification')]);
+            }
+
+            $this->syncUserAcademicBatches($user, $role, $userData['academic_institution_id'], $request);
+
+            Auth::login($user);
+
+            return redirect()->route('academics.dashboard')
+                ->with('success', 'Welcome! You are enrolled under your selected batch(es).');
         });
     }
 

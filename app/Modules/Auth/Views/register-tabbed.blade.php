@@ -7,6 +7,23 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
+    <style>
+        .register-portal-academics {
+            border-color: rgba(14, 165, 233, 0.45) !important;
+            background: linear-gradient(165deg, rgba(14, 165, 233, 0.1) 0%, #ffffff 55%);
+            color: inherit;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+        .register-portal-academics:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(14, 165, 233, 0.25);
+            border-color: rgba(14, 165, 233, 0.75) !important;
+        }
+        .register-portal-academics:focus-visible {
+            outline: 3px solid rgba(14, 165, 233, 0.45);
+            outline-offset: 2px;
+        }
+    </style>
 @endsection
 
 @section('content')
@@ -20,7 +37,25 @@
                             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--auth" style="max-height: 50px; display: block;">
                         </div>
                         <h2 class="mt-2 mb-1" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; font-size: 1.5rem;">{{ isset($warrior) && $warrior ? 'Join as Nursing Warrior' : 'Create your account' }}</h2>
-                        <p class="text-muted mb-0" style="font-size: 0.9rem;">{{ isset($warrior) && $warrior ? 'Register as Nurse Warrior or Caregiver Warrior' : 'Join MMHC and get started with healthcare services' }}</p>
+                        <p class="text-muted mb-3" style="font-size: 0.9rem;">{{ isset($warrior) && $warrior ? 'Register as Nurse Warrior or Caregiver Warrior' : 'Join MMHC for home care & community services (patient, nurse, caregiver)' }}</p>
+                        @if(empty($warrior) && empty($patientOnly))
+                        <div class="register-portal-switch row g-2 g-md-3 mb-0 justify-content-center">
+                            <div class="col-12 col-md-5 col-lg-5">
+                                <div class="h-100 rounded-3 px-3 py-3 border text-center text-md-start" style="background: linear-gradient(165deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.06) 100%); border-color: rgba(102, 126, 234, 0.35) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);">
+                                    <span class="badge rounded-pill mb-2" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">You are here</span>
+                                    <div class="fw-bold text-dark mb-1"><i class="fas fa-heart-pulse me-1 text-primary"></i>Healthcare registration</div>
+                                    <p class="small text-muted mb-0">Use the <strong>Patient</strong>, <strong>Nurse</strong>, or <strong>Caregiver</strong> tabs below for home care &amp; community.</p>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-5 col-lg-5">
+                                <a href="{{ route('auth.register', ['academics' => 1]) }}" class="register-portal-academics d-flex flex-column h-100 rounded-3 px-3 py-3 border border-2 text-center text-md-start text-decoration-none">
+                                    <span class="badge bg-info text-dark mb-2 align-self-center align-self-md-start rounded-pill"><i class="fas fa-graduation-cap me-1"></i>Academics</span>
+                                    <div class="fw-bold mb-1" style="color: #0369a1;">Sign up as student or faculty <i class="fas fa-arrow-right ms-1 small opacity-75"></i></div>
+                                    <p class="small text-muted mb-0 flex-grow-1">Opens the <strong>Academics</strong> form: pick your college, batch, and role.</p>
+                                </a>
+                            </div>
+                        </div>
+                        @endif
                     </div>
 
                     @if(isset($warrior) && $warrior)
@@ -88,6 +123,13 @@
                         @if(empty($warrior))
                         <!-- Patient Registration Form (not rendered in warrior flow) -->
                         <div class="tab-pane fade {{ (!isset($referralCode) || !$referralCode) || !empty($patientOnly) ? 'show active' : '' }}" id="patient-form" role="tabpanel">
+                            <div class="rounded-3 p-3 mb-3 border" style="background: rgba(102, 126, 234, 0.06); border-color: rgba(102, 126, 234, 0.22) !important;">
+                                <p class="small fw-semibold mb-2 text-secondary text-uppercase" style="letter-spacing: 0.03em;">What you’re signing up for</p>
+                                <ul class="small text-muted mb-0 ps-3">
+                                    <li><strong>Patient:</strong> Receive home care and community support, book visits, and follow your care plan with your medical team on MMHC.</li>
+                                    <li>Use this tab if you are receiving care—not if you are college staff; for students or faculty, use <a href="{{ route('auth.register', ['academics' => 1]) }}" class="fw-semibold">Academics registration</a>.</li>
+                                </ul>
+                            </div>
                             <!-- Registration Form -->
                             <div class="form-panel">
                                 <form method="POST" action="{{ route('auth.register.post') }}" id="patientForm">
@@ -256,6 +298,13 @@
                         @if(empty($patientOnly))
                         <!-- Nurse Registration Form -->
                         <div class="tab-pane fade {{ (isset($referralCode) && $referralCode) || !empty($warrior) ? 'show active' : '' }}" id="nurse-form" role="tabpanel">
+                            <div class="rounded-3 p-3 mb-3 border" style="background: rgba(16, 185, 129, 0.07); border-color: rgba(16, 185, 129, 0.28) !important;">
+                                <p class="small fw-semibold mb-2 text-secondary text-uppercase" style="letter-spacing: 0.03em;">What you’re signing up for</p>
+                                <ul class="small text-muted mb-0 ps-3">
+                                    <li><strong>{{ !empty($warrior) ? 'Nurse Warrior' : 'Nurse' }}:</strong> Join the MMHC field team to manage visits, documentation, and patient care workflows in the healthcare CRM.</li>
+                                    <li>Complete your professional details and any uploads required for onboarding and verification.</li>
+                                </ul>
+                            </div>
                             <!-- Registration Form -->
                             <div class="form-panel">
                                 <form method="POST" action="{{ route('auth.register.post') }}{{ isset($referralCode) && $referralCode ? '?ref=' . $referralCode : '' }}" id="nurseForm" enctype="multipart/form-data">
@@ -462,6 +511,13 @@
 
                         <!-- Caregiver Registration Form -->
                         <div class="tab-pane fade" id="caregiver-form" role="tabpanel">
+                            <div class="rounded-3 p-3 mb-3 border" style="background: rgba(59, 130, 246, 0.07); border-color: rgba(59, 130, 246, 0.28) !important;">
+                                <p class="small fw-semibold mb-2 text-secondary text-uppercase" style="letter-spacing: 0.03em;">What you’re signing up for</p>
+                                <ul class="small text-muted mb-0 ps-3">
+                                    <li><strong>{{ !empty($warrior) ? 'Caregiver Warrior' : 'Caregiver' }}:</strong> Support patients alongside nursing, coordinate daily care tasks, and use MMHC tools assigned to your role.</li>
+                                    <li>Fill in your profile and any required documents so your team can verify and assign you to cases.</li>
+                                </ul>
+                            </div>
                             <!-- Registration Form -->
                             <div class="form-panel">
                                 <form method="POST" action="{{ route('auth.register.post') }}{{ isset($referralCode) && $referralCode ? '?ref=' . $referralCode : '' }}" id="caregiverForm" enctype="multipart/form-data">

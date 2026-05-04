@@ -50,20 +50,24 @@ class ResetDemoUsers extends Command
         $this->info('Creating simplified demo users...');
         
         $password = 'password123';
+        // users.location is NOT NULL (spatial); align with DemoDataSeeder
+        $defaultLocation = DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
         
         // Create Nurse
         $nurse = User::firstOrCreate(
             ['email' => 'nurse@demo.com'],
             [
-                'name' => 'Dr. Priya Sharma',
+                'name' => 'Priya Sharma',
                 'phone' => '9876543210',
                 'password' => $password,
                 'role' => 'nurse',
                 'unique_id' => 'N-UID-000001',
                 'qualification' => 'B.Sc Nursing',
                 'experience' => '5-10',
-                'address' => 'Sector 15, Noida, Uttar Pradesh 201301',
+                'address' => 'H.No. 42, Sector 15, Noida, Gautam Buddha Nagar, Uttar Pradesh',
+                'pincode' => '201301',
                 'date_of_birth' => '1985-03-15',
+                'location' => $defaultLocation,
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]
@@ -79,14 +83,16 @@ class ResetDemoUsers extends Command
             ['email' => 'caregiver@demo.com'],
             [
                 'name' => 'Ram Prasad Yadav',
-                'phone' => '9876543211',
+                'phone' => '8765432109',
                 'password' => $password,
                 'role' => 'caregiver',
                 'unique_id' => 'C-UID-000001',
                 'qualification' => 'General Care',
                 'experience' => '3-5',
-                'address' => 'Village: Dumra, District: Patna, Bihar 801101',
+                'address' => 'Village Dumra, Bakhtiarpur, District Patna, Bihar',
+                'pincode' => '801103',
                 'date_of_birth' => '1985-12-03',
+                'location' => $defaultLocation,
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]
@@ -105,13 +111,15 @@ class ResetDemoUsers extends Command
         if ($patient) {
             // Update existing patient
             $patient->update([
-                'name' => 'Shri Ram Kumar Singh',
+                'name' => 'Ram Kumar Singh',
                 'email' => 'patient@demo.com',
-                'phone' => '9876543220',
+                'phone' => '9123456780',
                 'role' => 'patient',
                 'unique_id' => 'P-UID-000001',
-                'address' => 'House No. 45, Gandhi Nagar, Patna, Bihar 800001',
+                'address' => 'House No. 45, Gandhi Nagar, Kankarbagh, Patna, Bihar',
+                'pincode' => '800020',
                 'date_of_birth' => '1965-03-10',
+                'location' => $defaultLocation,
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]);
@@ -119,14 +127,16 @@ class ResetDemoUsers extends Command
         } else {
             // Create new patient
             $patient = User::create([
-                'name' => 'Shri Ram Kumar Singh',
+                'name' => 'Ram Kumar Singh',
                 'email' => 'patient@demo.com',
-                'phone' => '9876543220',
+                'phone' => '9123456780',
                 'password' => $password,
                 'role' => 'patient',
                 'unique_id' => 'P-UID-000001',
-                'address' => 'House No. 45, Gandhi Nagar, Patna, Bihar 800001',
+                'address' => 'House No. 45, Gandhi Nagar, Kankarbagh, Patna, Bihar',
+                'pincode' => '800020',
                 'date_of_birth' => '1965-03-10',
+                'location' => $defaultLocation,
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]);

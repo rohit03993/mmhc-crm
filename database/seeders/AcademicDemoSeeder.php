@@ -35,8 +35,8 @@ class AcademicDemoSeeder extends Seeder
             [
                 'name' => 'MeD Miracle College of Nursing',
                 'email' => 'academics@medmiracle.com',
-                'phone' => '0755-1234567',
-                'address' => 'Bhopal, Madhya Pradesh, India',
+                'phone' => '0755-2745123',
+                'address' => 'NH-12, Hoshangabad Road, Bhopal, Madhya Pradesh 462026, India',
                 'is_active' => true,
             ]
         );
@@ -47,8 +47,8 @@ class AcademicDemoSeeder extends Seeder
         $superAdmin = User::firstOrCreate(
             ['email' => 'academic.super@themmhc.com'],
             [
-                'name' => 'Academic Super Admin',
-                'phone' => '9111111001',
+                'name' => 'Vikram Joshi',
+                'phone' => '9825511001',
                 'password' => Hash::make($password),
                 'role' => 'super_admin',
                 'unique_id' => 'ACAD-SA-001',
@@ -64,7 +64,7 @@ class AcademicDemoSeeder extends Seeder
             ['email' => 'college.admin@medmiracle.com'],
             [
                 'name' => 'Dr. Sunita Verma',
-                'phone' => '9111111002',
+                'phone' => '9825511002',
                 'password' => Hash::make($password),
                 'role' => 'institution_admin',
                 'unique_id' => 'ACAD-IA-001',
@@ -82,7 +82,7 @@ class AcademicDemoSeeder extends Seeder
             ['email' => 'faculty.nursing@medmiracle.com'],
             [
                 'name' => 'Prof. Rajesh Kumar',
-                'phone' => '9111111003',
+                'phone' => '9825511003',
                 'password' => Hash::make($password),
                 'role' => 'faculty',
                 'unique_id' => 'ACAD-F-001',
@@ -100,7 +100,7 @@ class AcademicDemoSeeder extends Seeder
             ['email' => 'faculty.anatomy@medmiracle.com'],
             [
                 'name' => 'Dr. Anjali Singh',
-                'phone' => '9111111004',
+                'phone' => '9825511004',
                 'password' => Hash::make($password),
                 'role' => 'faculty',
                 'unique_id' => 'ACAD-F-002',
@@ -117,11 +117,11 @@ class AcademicDemoSeeder extends Seeder
         // 5. Students (B.Sc Nursing – India style names)
         $students = [];
         $studentData = [
-            ['email' => 'student1@medmiracle.com', 'name' => 'Kavita Sharma',     'phone' => '9111112001', 'uid' => 'ACAD-ST-001'],
-            ['email' => 'student2@medmiracle.com', 'name' => 'Priyanka Patel',    'phone' => '9111112002', 'uid' => 'ACAD-ST-002'],
-            ['email' => 'student3@medmiracle.com', 'name' => 'Anjali Yadav',      'phone' => '9111112003', 'uid' => 'ACAD-ST-003'],
-            ['email' => 'student4@medmiracle.com', 'name' => 'Neha Gupta',       'phone' => '9111112004', 'uid' => 'ACAD-ST-004'],
-            ['email' => 'student5@medmiracle.com', 'name' => 'Sneha Reddy',       'phone' => '9111112005', 'uid' => 'ACAD-ST-005'],
+            ['email' => 'student1@medmiracle.com', 'name' => 'Kavita Sharma',     'phone' => '6200012001', 'uid' => 'ACAD-ST-001'],
+            ['email' => 'student2@medmiracle.com', 'name' => 'Priyanka Patel',    'phone' => '6200012002', 'uid' => 'ACAD-ST-002'],
+            ['email' => 'student3@medmiracle.com', 'name' => 'Anjali Yadav',      'phone' => '6200012003', 'uid' => 'ACAD-ST-003'],
+            ['email' => 'student4@medmiracle.com', 'name' => 'Neha Gupta',       'phone' => '6200012004', 'uid' => 'ACAD-ST-004'],
+            ['email' => 'student5@medmiracle.com', 'name' => 'Sneha Reddy',       'phone' => '6200012005', 'uid' => 'ACAD-ST-005'],
         ];
         foreach ($studentData as $s) {
             $user = User::firstOrCreate(
@@ -412,7 +412,7 @@ class AcademicDemoSeeder extends Seeder
      */
     protected function seedDemoProfileFieldsForAcademicUsers(Institution $institution): void
     {
-        $demoAddress = $institution->address ?: 'Bhopal, Madhya Pradesh, India';
+        $demoAddress = $institution->address ?: 'NH-12, Hoshangabad Road, Bhopal, Madhya Pradesh 462026, India';
 
         $facultySeeds = [
             'faculty.nursing@medmiracle.com' => ['dob' => '1984-08-20', 'bio' => 'Demo faculty (Fundamentals of Nursing & community health).'],

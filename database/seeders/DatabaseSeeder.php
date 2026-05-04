@@ -18,23 +18,17 @@ class DatabaseSeeder extends Seeder
         // Demo images for Achievements & Media carousel (landing page)
         $this->call(AchievementMediaSeeder::class);
 
-        // Seed Subscription Plans (for patient subscriptions)
-        $this->call(SubscriptionPlansSeeder::class);
-
-        // Seed Service Types (required for service requests)
-        $this->call(ServiceTypesSeeder::class);
-
-        // Then seed demo data (nurses, caregivers, patients, service requests)
-        $this->call(DemoDataSeeder::class);
+        // Healthcare / CRM demo: single orchestrated seeder (service types, plans, users, services, incentives, payments)
+        $this->call(HealthcareCrmDemoSeeder::class);
 
         // Academics demo users/data (institution admin, faculty, students)
         $this->call(AcademicDemoSeeder::class);
 
-        // Large multi-college academics (~15 colleges, 10 faculty & 30 students each): run when needed — can take ~1 min.
+        // Large multi-college academics (~15 colleges). Optional — can take ~1–3 minutes:
+        // php artisan db:seed --class=AcademicBulkDemoSeeder
         // $this->call(AcademicBulkDemoSeeder::class);
 
-        $this->call(IncentiveRuleSetSeeder::class);
-        $this->call(IncentiveNetworkDemoSeeder::class);
-        $this->call(PaymentGatewayDemoSeeder::class);
+        // Align users.academic_institution_id with batch membership (fixes empty “People” on institution pages)
+        $this->call(SyncAcademicUsersInstitutionFromBatchesSeeder::class);
     }
 }

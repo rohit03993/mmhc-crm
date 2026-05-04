@@ -14,15 +14,16 @@ use App\Modules\Academics\Models\Topic;
 use App\Modules\Profiles\Models\Document;
 use App\Modules\Profiles\Models\Profile;
 use Carbon\Carbon;
+use Faker\Factory as FakerFactory;
+use Faker\Generator as FakerGenerator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
  * Large academics demo: 15 nursing/paramedical-style colleges, each with
- * 1 institution admin, 10 faculty, 30 students (2 batches × 15), subjects,
+ * 1 institution admin, 6 faculty, 18 students (2 batches × 9), subjects,
  * topics, homework (assignments), published quizzes, partial submissions, and
  * rich student/faculty profiles (avatar + documents).
  *
@@ -35,9 +36,9 @@ class AcademicBulkDemoSeeder extends Seeder
 
     private const INSTITUTION_COUNT = 15;
 
-    private const FACULTY_PER_COLLEGE = 10;
+    private const FACULTY_PER_COLLEGE = 6;
 
-    private const STUDENTS_PER_COLLEGE = 30;
+    private const STUDENTS_PER_COLLEGE = 18;
 
     /** 1×1 transparent PNG */
     private const PNG_BYTES = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
@@ -56,7 +57,7 @@ class AcademicBulkDemoSeeder extends Seeder
         ['name' => 'Manipal College of Nursing', 'city' => 'Manipal, Karnataka', 'code_suffix' => 'MNP'],
         ['name' => 'Apollo College of Nursing', 'city' => 'Chennai, Tamil Nadu', 'code_suffix' => 'APL'],
         ['name' => 'Bharati Vidyapeeth Nursing College', 'city' => 'Pune, Maharashtra', 'code_suffix' => 'BVP'],
-        ['name' => 'RAK College of Nursing', 'city' => 'Ras Al Khaimah, UAE', 'code_suffix' => 'RAK'],
+        ['name' => 'Government College of Nursing', 'city' => 'Thiruvananthapuram, Kerala', 'code_suffix' => 'GCN'],
         ['name' => 'Nightingale School of Nursing', 'city' => 'Kolkata, West Bengal', 'code_suffix' => 'NGT'],
         ['name' => 'Ramaiah Institute of Nursing', 'city' => 'Bengaluru, Karnataka', 'code_suffix' => 'RMS'],
         ['name' => 'KLE Academy of Nursing', 'city' => 'Belagavi, Karnataka', 'code_suffix' => 'KLE'],
@@ -80,9 +81,33 @@ class AcademicBulkDemoSeeder extends Seeder
 
     private int $globalUidSeq = 700000;
 
+    private int $demoMobileSeq = 6200013000;
+
+    private ?FakerGenerator $inFaker = null;
+
+    /**
+     * Indian-locale Faker for realistic demo names and addresses.
+     */
+    private function indianFaker(): FakerGenerator
+    {
+        return $this->inFaker ??= FakerFactory::create('en_IN');
+    }
+
+    /** Next unique 10-digit Indian mobile number (starts with 6–9). */
+    private function nextIndianMobile(): string
+    {
+        $n = $this->demoMobileSeq++;
+        if ($this->demoMobileSeq > 9999999999) {
+            $this->demoMobileSeq = 6200013000;
+        }
+
+        return (string) $n;
+    }
+
     public function run(): void
     {
-        $password = Hash::make(self::DEMO_PASSWORD);
+        // Let User "password" hashed cast hash once (avoid double-hash from pre-hashed values)
+        $password = self::DEMO_PASSWORD;
         $defaultLocation = DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
         $png = base64_decode(self::PNG_BYTES, true) ?: '';
         $pdf = base64_decode(self::PDF_BYTES_BASE64, true) ?: '';
@@ -106,7 +131,7 @@ class AcademicBulkDemoSeeder extends Seeder
 
             $admin = $this->makeUser([
                 'email' => strtolower($code).'-admin@academic-bulk.demo',
-                'name' => fake()->name(),
+                'name' => $this->indianFaker()->name(),
                 'role' => 'institution_admin',
                 'unique_id' => 'B-'.$bp['code_suffix'].'-IA',
                 'academic_institution_id' => $institution->id,
@@ -118,7 +143,7 @@ class AcademicBulkDemoSeeder extends Seeder
             for ($f = 1; $f <= self::FACULTY_PER_COLLEGE; $f++) {
                 $facultyIds[] = $this->makeUser([
                     'email' => strtolower($code).'-f'.str_pad((string) $f, 2, '0', STR_PAD_LEFT).'@academic-bulk.demo',
-                    'name' => 'Dr. '.fake()->lastName().' '.fake()->firstName(),
+                    'name' => 'Dr. '.$this->indianFaker()->firstName().' '.$this->indianFaker()->lastName(),
                     'role' => 'faculty',
                     'unique_id' => 'B-'.$bp['code_suffix'].'-F'.str_pad((string) $f, 2, '0', STR_PAD_LEFT),
                     'academic_institution_id' => $institution->id,
@@ -132,7 +157,7 @@ class AcademicBulkDemoSeeder extends Seeder
             for ($s = 1; $s <= self::STUDENTS_PER_COLLEGE; $s++) {
                 $studentIds[] = $this->makeUser([
                     'email' => strtolower($code).'-s'.str_pad((string) $s, 3, '0', STR_PAD_LEFT).'@academic-bulk.demo',
-                    'name' => fake()->name(),
+                    'name' => $this->indianFaker()->name(),
                     'role' => 'student',
                     'unique_id' => 'B-'.$bp['code_suffix'].'-S'.str_pad((string) $s, 3, '0', STR_PAD_LEFT),
                     'academic_institution_id' => $institution->id,
@@ -158,8 +183,8 @@ class AcademicBulkDemoSeeder extends Seeder
                 );
             }
 
-            $batch1Students = array_slice($studentIds, 0, 15);
-            $batch2Students = array_slice($studentIds, 15, 15);
+            $batch1Students = array_slice($studentIds, 0, 9);
+            $batch2Students = array_slice($studentIds, 9, 9);
             $batches[0]->students()->sync(array_fill_keys($batch1Students, ['type' => 'student']));
             $batches[1]->students()->sync(array_fill_keys($batch2Students, ['type' => 'student']));
             $facultyPivot = array_fill_keys($facultyIds, ['type' => 'faculty']);
@@ -410,8 +435,8 @@ class AcademicBulkDemoSeeder extends Seeder
             }
 
             foreach ($assignmentsForSubmissions as $asg) {
-                foreach ($batch1Students as $sid) {
-                    if ($sid % 4 === 0) {
+                foreach ($batch1Students as $idx => $sid) {
+                    if ($idx % 4 === 0) {
                         continue;
                     }
                     if ($asg->assignment_type === Assignment::TYPE_FILE_UPLOAD) {
@@ -448,6 +473,84 @@ class AcademicBulkDemoSeeder extends Seeder
                 }
             }
 
+            foreach ($assignmentsForSubmissions as $asg) {
+                foreach ($batch2Students as $idx => $sid) {
+                    if ($idx % 5 === 0) {
+                        continue;
+                    }
+                    if ($asg->assignment_type === Assignment::TYPE_FILE_UPLOAD) {
+                        Submission::firstOrCreate(
+                            ['assignment_id' => $asg->id, 'user_id' => $sid],
+                            [
+                                'file_path' => $demoFileRel,
+                                'original_name' => 'homework-'.$asg->id.'-'.$sid.'.pdf',
+                                'submitted_at' => now()->subHours(rand(1, 120)),
+                                'notes' => 'Seeded submission for load testing.',
+                            ]
+                        );
+                    } elseif ($asg->studentMustCompleteChecklist()) {
+                        $items = $asg->normalizedChecklistItems();
+                        $possible = array_sum(array_column($items, 'points'));
+                        $earned = max(0, $possible - 1);
+                        $answers = [];
+                        foreach (array_keys($items) as $i) {
+                            $answers[(string) $i] = true;
+                        }
+                        Submission::firstOrCreate(
+                            ['assignment_id' => $asg->id, 'user_id' => $sid],
+                            [
+                                'file_path' => null,
+                                'original_name' => null,
+                                'submitted_at' => now()->subHours(rand(1, 96)),
+                                'notes' => null,
+                                'checklist_answers' => $answers,
+                                'checklist_points_earned' => $earned,
+                                'checklist_points_possible' => $possible,
+                            ]
+                        );
+                    }
+                }
+            }
+
+            if (! empty($assignmentsForSubmissions)) {
+                $primary = $assignmentsForSubmissions[0];
+                foreach (array_merge($batch1Students, $batch2Students) as $sid) {
+                    if ($primary->assignment_type === Assignment::TYPE_FILE_UPLOAD) {
+                        Submission::firstOrCreate(
+                            ['assignment_id' => $primary->id, 'user_id' => $sid],
+                            [
+                                'file_path' => $demoFileRel,
+                                'original_name' => 'homework-'.$primary->id.'-'.$sid.'-all.pdf',
+                                'submitted_at' => now()->subHours(rand(1, 96)),
+                                'notes' => 'Seeded submission for load testing.',
+                            ]
+                        );
+                    } elseif ($primary->studentMustCompleteChecklist()) {
+                        $items = $primary->normalizedChecklistItems();
+                        $possible = array_sum(array_column($items, 'points'));
+                        $earned = max(0, $possible - 1);
+                        $answers = [];
+                        foreach (array_keys($items) as $i) {
+                            $answers[(string) $i] = true;
+                        }
+                        Submission::firstOrCreate(
+                            ['assignment_id' => $primary->id, 'user_id' => $sid],
+                            [
+                                'file_path' => null,
+                                'original_name' => null,
+                                'submitted_at' => now()->subHours(rand(1, 72)),
+                                'notes' => null,
+                                'checklist_answers' => $answers,
+                                'checklist_points_earned' => $earned,
+                                'checklist_points_possible' => $possible,
+                            ]
+                        );
+                    }
+                }
+            }
+
+            $this->syncAcademicInstitutionFromBatches((int) $institution->id);
+
             $this->enrichProfile($admin, $png, $pdf, full: true);
             foreach ($facultyIds as $fid) {
                 $this->enrichProfile(User::find($fid), $png, $pdf, full: true);
@@ -463,9 +566,32 @@ class AcademicBulkDemoSeeder extends Seeder
         $this->command?->info('');
         $this->command?->info('Bulk academics seeded. Login pattern (password: '.self::DEMO_PASSWORD.'):');
         $this->command?->info('  Admin:   {CODE}-admin@academic-bulk.demo   e.g. bulk-agn-01-admin@…');
-        $this->command?->info('  Faculty: {CODE}-f01@academic-bulk.demo … f10');
-        $this->command?->info('  Student: {CODE}-s001@academic-bulk.demo … s030');
+        $this->command?->info('  Faculty: {CODE}-f01@academic-bulk.demo … f06');
+        $this->command?->info('  Student: {CODE}-s001@academic-bulk.demo … s018');
         $this->command?->info('CODE is lowercase institution code (see institutions.code BULK-*).');
+    }
+
+    /** Sync users.academic_institution_id from batch membership for this college. */
+    private function syncAcademicInstitutionFromBatches(int $institutionId): void
+    {
+        $batchIds = Batch::query()->where('institution_id', $institutionId)->pluck('id');
+        if ($batchIds->isEmpty()) {
+            return;
+        }
+
+        $userIds = DB::table('academic_batch_users')
+            ->whereIn('batch_id', $batchIds)
+            ->whereIn('type', ['student', 'faculty'])
+            ->pluck('user_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($userIds !== []) {
+            User::query()->whereIn('id', $userIds)->update([
+                'academic_institution_id' => $institutionId,
+            ]);
+        }
     }
 
     /**
@@ -473,12 +599,13 @@ class AcademicBulkDemoSeeder extends Seeder
      */
     private function makeUser(array $attrs): User
     {
-        $attrs['phone'] = $attrs['phone'] ?? '91'.str_pad((string) (++$this->globalUidSeq), 10, '0', STR_PAD_LEFT);
+        $attrs['phone'] = $attrs['phone'] ?? $this->nextIndianMobile();
         $attrs['is_active'] = true;
         $attrs['email_verified_at'] = now();
-        $attrs['address'] = $attrs['address'] ?? fake()->streetAddress().', '.fake()->city();
-        $attrs['pincode'] = $attrs['pincode'] ?? (string) fake()->numberBetween(110001, 999999);
-        $attrs['date_of_birth'] = $attrs['date_of_birth'] ?? fake()->dateTimeBetween('-28 years', '-17 years')->format('Y-m-d');
+        $f = $this->indianFaker();
+        $attrs['address'] = $attrs['address'] ?? $f->streetAddress().', '.$f->city().', '.$f->state();
+        $attrs['pincode'] = $attrs['pincode'] ?? (string) $f->numberBetween(110001, 829999);
+        $attrs['date_of_birth'] = $attrs['date_of_birth'] ?? $f->dateTimeBetween('-28 years', '-17 years')->format('Y-m-d');
 
         $email = $attrs['email'];
         unset($attrs['email']);
@@ -501,8 +628,8 @@ class AcademicBulkDemoSeeder extends Seeder
         Profile::updateOrCreate(
             ['user_id' => $user->id],
             [
-                'bio' => $full ? fake()->sentence(12) : fake()->sentence(6),
-                'experience_years' => $user->role === 'student' ? fake()->numberBetween(0, 2) : fake()->numberBetween(5, 22),
+                'bio' => $full ? $this->indianFaker()->sentence(12) : $this->indianFaker()->sentence(6),
+                'experience_years' => $user->role === 'student' ? $this->indianFaker()->numberBetween(0, 2) : $this->indianFaker()->numberBetween(5, 22),
                 'specialization' => $user->role === 'student'
                     ? 'B.Sc Nursing (student)'
                     : fake()->randomElement(['Medical-Surgical', 'Community Health', 'Anatomy', 'Pediatrics', 'Mental Health']),
