@@ -24,6 +24,9 @@ class DatabaseSeeder extends Seeder
         // Academics demo users/data (institution admin, faculty, students)
         $this->call(AcademicDemoSeeder::class);
 
+        // Replace all academics data with 15 demo colleges (5 faculty & 5 students each) + platform super:
+        // php artisan db:seed --class=FreshAcademicDemoSeeder
+
         // Large multi-college academics (~15 colleges). Optional — can take ~1–3 minutes:
         // php artisan db:seed --class=AcademicBulkDemoSeeder
         // $this->call(AcademicBulkDemoSeeder::class);

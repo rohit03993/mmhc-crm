@@ -33,9 +33,9 @@
                     @foreach($attempts as $att)
                         <tr>
                             <td class="ps-3">
-                                <a href="{{ route('academics.exams.result', [$exam, $att]) }}" class="fw-medium text-decoration-none">{{ $att->user->name }}</a>
+                                <a href="{{ route('academics.exams.result', [$exam, $att]) }}" class="fw-medium text-decoration-none">{{ $att->studentLabel() }}</a>
                             </td>
-                            <td class="small text-muted">{{ $att->user->email }}</td>
+                            <td class="small text-muted">{{ $att->user?->email ?? '—' }}</td>
                             <td>
                                 <strong>{{ number_format((float) $att->score, 2) }}</strong>
                                 <span class="text-muted small">/ {{ number_format($maxPoints, 2) }}</span>

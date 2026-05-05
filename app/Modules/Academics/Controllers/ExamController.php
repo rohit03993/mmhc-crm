@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -29,20 +30,32 @@ class ExamController extends Controller
     public function index(Request $request, ExamAccessService $examAccess): View
     {
         $user = Auth::user();
-        $query = AcademicExam::query()->with(['subject.batch.institution', 'batch.institution', 'institution']);
+        $query = AcademicExam::query()->with(['subject.batch.institution', 'batch.institution', 'institution', 'creator']);
 
         if (in_array($user->role, ['super_admin', 'admin'], true)) {
             // all institutions
         } elseif ($user->role === 'institution_admin' && $user->academic_institution_id) {
             $query->where('institution_id', $user->academic_institution_id);
-        } elseif (in_array($user->role, ['faculty', 'student'], true) && $user->academic_institution_id) {
-            $query->where(function ($q) use ($user) {
-                $q->where('institution_id', $user->academic_institution_id)
-                    ->orWhere(function ($q2) {
-                        $q2->where('audience_type', AcademicExam::AUDIENCE_COMMUNITY)
-                            ->where('allows_cross_institution', true);
-                    });
-            });
+        } elseif ($user->role === 'faculty') {
+            $instIds = $this->institutionIdsForAcademicUser($user);
+            if ($instIds === []) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $this->applyFacultyManageableExamIndexScope($query, $user, $instIds);
+            }
+        } elseif ($user->role === 'student') {
+            $instIds = $this->institutionIdsForAcademicUser($user);
+            if ($instIds === []) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->where(function ($q) use ($instIds) {
+                    $q->whereIn('institution_id', $instIds)
+                        ->orWhere(function ($q2) {
+                            $q2->where('audience_type', AcademicExam::AUDIENCE_COMMUNITY)
+                                ->where('allows_cross_institution', true);
+                        });
+                });
+            }
         } else {
             $query->whereRaw('1 = 0');
         }
@@ -51,21 +64,47 @@ class ExamController extends Controller
             $query->where('is_published', true);
         }
 
-        $exams = $query->orderByDesc('id')->limit(200)->get();
+        $this->applyExamIndexFilters($request, $query, $user);
 
-        if ($user->role === 'student') {
-            $exams = $exams->filter(fn (AcademicExam $exam) => $examAccess->canTake($user, $exam))->values();
-        } elseif (in_array($user->role, ['faculty', 'institution_admin'], true)) {
-            $exams = $exams->filter(fn (AcademicExam $exam) => $examAccess->canManage($user, $exam))->values();
+        $perPage = min(100, max(5, (int) $request->get('per_page', 20)));
+        $useDbPagination = in_array($user->role, ['super_admin', 'admin', 'institution_admin', 'faculty'], true);
+
+        if ($useDbPagination) {
+            $exams = $query->orderByDesc('id')->paginate($perPage)->withQueryString();
+        } else {
+            $all = $query->orderByDesc('id')->limit(1000)->get();
+            if ($user->role === 'student') {
+                $filtered = $all->filter(fn (AcademicExam $exam) => $examAccess->studentCanViewPublishedExam($user, $exam))->values();
+            } else {
+                $filtered = $all->filter(fn (AcademicExam $exam) => $examAccess->canManage($user, $exam))->values();
+            }
+            $page = max(1, (int) $request->get('page', 1));
+            $total = $filtered->count();
+            $slice = $filtered->slice(($page - 1) * $perPage, $perPage)->values();
+            $exams = new LengthAwarePaginator($slice, $total, $perPage, $page, [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]);
         }
-        // super_admin, admin: show all (no filter)
 
         $viewerCanCreate = in_array($user->role, ['super_admin', 'admin', 'institution_admin', 'faculty'], true);
+
+        $filterInstitutions = in_array($user->role, ['super_admin', 'admin'], true)
+            ? Institution::query()->orderBy('name')->get(['id', 'name'])
+            : collect();
 
         return view('academics::exams.index', [
             'exams' => $exams,
             'viewerRole' => $user->role,
             'viewerCanCreate' => $viewerCanCreate,
+            'filterInstitutions' => $filterInstitutions,
+            'filters' => [
+                'q' => $request->get('q', ''),
+                'institution_id' => $request->get('institution_id', ''),
+                'publish' => $request->get('publish', 'all'),
+                'window' => $request->get('window', 'all'),
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
@@ -111,6 +150,10 @@ class ExamController extends Controller
         $exam->load(['subject', 'batch', 'institution', 'assignment.topic', 'questions.options', 'creator']);
 
         $canManage = $examAccess->canManage($user, $exam);
+        $canViewAsStudent = $user->role === 'student' && $examAccess->studentCanViewPublishedExam($user, $exam);
+        if ($user->role === 'student' && ! $canViewAsStudent) {
+            abort(403, 'This exam is not available for your account.');
+        }
         $canTake = $user->role === 'student' && $examAccess->canTake($user, $exam);
 
         $attemptCount = 0;
@@ -131,6 +174,30 @@ class ExamController extends Controller
 
         $maxPoints = $scoring->maxPointsForExam($exam);
 
+        $manageAttempts = null;
+        if ($canManage) {
+            $manageAttempts = [
+                'submitted_count' => AcademicExamAttempt::query()
+                    ->where('exam_id', $exam->id)
+                    ->where('status', AcademicExamAttempt::STATUS_SUBMITTED)
+                    ->count(),
+                'in_progress_count' => AcademicExamAttempt::query()
+                    ->where('exam_id', $exam->id)
+                    ->where('status', AcademicExamAttempt::STATUS_IN_PROGRESS)
+                    ->count(),
+                'recent' => AcademicExamAttempt::query()
+                    ->where('exam_id', $exam->id)
+                    ->whereIn('status', [
+                        AcademicExamAttempt::STATUS_SUBMITTED,
+                        AcademicExamAttempt::STATUS_IN_PROGRESS,
+                    ])
+                    ->with('user')
+                    ->orderByDesc('id')
+                    ->limit(75)
+                    ->get(),
+            ];
+        }
+
         return view('academics::exams.show', compact(
             'exam',
             'canManage',
@@ -138,7 +205,8 @@ class ExamController extends Controller
             'attemptCount',
             'inProgress',
             'lastSubmitted',
-            'maxPoints'
+            'maxPoints',
+            'manageAttempts'
         ));
     }
 
@@ -354,8 +422,8 @@ class ExamController extends Controller
                         $pct = $maxPoints > 0 ? round(((float) $a->score / $maxPoints) * 100, 2) : '';
                         fputcsv($out, [
                             $a->id,
-                            $a->user->name ?? '',
-                            $a->user->email ?? '',
+                            $a->studentLabel(),
+                            $a->user?->email ?? '',
                             $a->user_id,
                             $a->score,
                             $maxPoints,
@@ -727,5 +795,153 @@ class ExamController extends Controller
         }
 
         return $questions;
+    }
+
+    /**
+     * SQL equivalent of {@see ExamAccessService::canManage()} for faculty (index listing + DB pagination).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<AcademicExam>  $query
+     * @param  list<int>  $instIds
+     */
+    protected function applyFacultyManageableExamIndexScope($query, User $user, array $instIds): void
+    {
+        $uid = (int) $user->id;
+        $t = (new AcademicExam)->getTable();
+
+        $query->where(function ($outer) use ($uid, $instIds, $t) {
+            $outer->where(function ($a) use ($uid, $instIds, $t) {
+                $a->whereIn("{$t}.institution_id", $instIds)
+                    ->where(function ($inner) use ($uid, $t) {
+                        $inner->where(function ($sc) use ($uid, $t) {
+                            $sc->where("{$t}.audience_type", AcademicExam::AUDIENCE_SUBJECT_COHORT)
+                                ->whereNotNull("{$t}.subject_id")
+                                ->whereExists(function ($sub) use ($uid, $t) {
+                                    $sub->selectRaw('1')
+                                        ->from('academic_subject_faculty')
+                                        ->whereColumn('academic_subject_faculty.subject_id', "{$t}.subject_id")
+                                        ->where('academic_subject_faculty.user_id', $uid);
+                                });
+                        })
+                            ->orWhere(function ($bt) use ($uid, $t) {
+                                $bt->where("{$t}.audience_type", AcademicExam::AUDIENCE_BATCH)
+                                    ->whereNotNull("{$t}.batch_id")
+                                    ->whereExists(function ($sub) use ($uid, $t) {
+                                        $sub->selectRaw('1')
+                                            ->from('academic_batch_users')
+                                            ->whereColumn('academic_batch_users.batch_id', "{$t}.batch_id")
+                                            ->where('academic_batch_users.user_id', $uid)
+                                            ->where('academic_batch_users.type', 'faculty');
+                                    });
+                            })
+                            ->orWhereIn("{$t}.audience_type", [
+                                AcademicExam::AUDIENCE_INSTITUTION_OPEN,
+                                AcademicExam::AUDIENCE_COMMUNITY,
+                            ]);
+                    });
+            })
+                ->orWhere(function ($b) use ($uid, $t) {
+                    $b->where("{$t}.audience_type", AcademicExam::AUDIENCE_COMMUNITY)
+                        ->where("{$t}.allows_cross_institution", true)
+                        ->whereExists(function ($sub) use ($uid, $t) {
+                            $sub->selectRaw('1')
+                                ->from('academic_batches')
+                                ->join('academic_batch_users', 'academic_batch_users.batch_id', '=', 'academic_batches.id')
+                                ->whereColumn('academic_batches.institution_id', "{$t}.institution_id")
+                                ->where('academic_batch_users.user_id', $uid)
+                                ->where('academic_batch_users.type', 'faculty');
+                        });
+                });
+        });
+    }
+
+    protected function applyExamIndexFilters(Request $request, $query, User $user): void
+    {
+        $search = trim((string) $request->get('q', ''));
+        if ($search !== '') {
+            $like = '%'.addcslashes($search, '%_\\').'%';
+            $query->where('title', 'like', $like);
+        }
+
+        if (in_array($user->role, ['super_admin', 'admin'], true)) {
+            $rawInst = $request->get('institution_id');
+            if ($rawInst !== null && $rawInst !== '') {
+                $id = (int) $rawInst;
+                if ($id > 0 && Institution::query()->whereKey($id)->exists()) {
+                    $query->where('institution_id', $id);
+                }
+            }
+        }
+
+        $publish = $user->role === 'student'
+            ? 'published'
+            : $request->get('publish', 'all');
+        if (! in_array($publish, ['all', 'published', 'draft'], true)) {
+            $publish = 'all';
+        }
+
+        $window = $request->get('window', 'all');
+        if (! in_array($window, ['all', 'upcoming', 'open', 'ended'], true)) {
+            $window = 'all';
+        }
+
+        if ($publish === 'draft') {
+            $window = 'all';
+        }
+
+        if ($publish === 'published') {
+            $query->where('is_published', true);
+            if ($window !== 'all') {
+                $this->applyScheduleWindowToBuilder($query, $window);
+            }
+        } elseif ($publish === 'draft') {
+            $query->where('is_published', false);
+        } elseif ($window !== 'all') {
+            $query->where(function ($outer) use ($window) {
+                $outer->where('is_published', false)
+                    ->orWhere(function ($inner) use ($window) {
+                        $inner->where('is_published', true);
+                        $this->applyScheduleWindowToBuilder($inner, $window);
+                    });
+            });
+        }
+    }
+
+    protected function applyScheduleWindowToBuilder($query, string $window): void
+    {
+        if ($window === 'upcoming') {
+            $query->whereNotNull('opens_at')->where('opens_at', '>', now());
+        } elseif ($window === 'open') {
+            $query->where(function ($w) {
+                $w->whereNull('opens_at')->orWhere('opens_at', '<=', now());
+            })->where(function ($w) {
+                $w->whereNull('closes_at')->orWhere('closes_at', '>=', now());
+            });
+        } elseif ($window === 'ended') {
+            $query->whereNotNull('closes_at')->where('closes_at', '<', now());
+        }
+    }
+
+    /**
+     * For students/faculty: use academic_institution_id when set, else derive from batch membership.
+     *
+     * @return list<int>
+     */
+    protected function institutionIdsForAcademicUser(User $user): array
+    {
+        if ((int) ($user->academic_institution_id ?? 0) > 0) {
+            return [(int) $user->academic_institution_id];
+        }
+
+        $ids = DB::table('academic_batch_users')
+            ->join('academic_batches', 'academic_batches.id', '=', 'academic_batch_users.batch_id')
+            ->where('academic_batch_users.user_id', $user->id)
+            ->whereIn('academic_batch_users.type', ['student', 'faculty'])
+            ->pluck('academic_batches.institution_id')
+            ->unique()
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+
+        return array_values(array_filter($ids, fn (int $id) => $id > 0));
     }
 }

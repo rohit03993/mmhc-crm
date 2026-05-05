@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Core\User;
 use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Subject;
+use App\Modules\Academics\Services\AcademicMembershipSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -14,8 +15,15 @@ class SubjectController extends Controller
     protected function scopeBatches()
     {
         $user = auth()->user();
+        $q = Batch::with('institution')->active()->orderBy('name');
+        if (in_array($user->role, ['super_admin', 'admin'], true)) {
+            return $q;
+        }
+        if ($user->role === 'institution_admin' && $user->academic_institution_id) {
+            return $q->forInstitution((int) $user->academic_institution_id);
+        }
 
-        return Batch::with('institution')->forInstitution((int) $user->academic_institution_id);
+        return Batch::with('institution')->whereRaw('1 = 0');
     }
 
     public function index(Request $request)
@@ -26,6 +34,7 @@ class SubjectController extends Controller
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             $query->whereHas('batch', fn ($q) => $q->where('institution_id', $user->academic_institution_id));
         }
+        // super_admin / admin: no institution filter — full catalogue
         if ($batchId) {
             $query->where('batch_id', $batchId);
         }
@@ -95,7 +104,7 @@ class SubjectController extends Controller
         return redirect()->route('academics.subjects.index')->with('success', 'Subject deleted successfully.');
     }
 
-    public function updateFaculty(Request $request, Subject $subject)
+    public function updateFaculty(Request $request, Subject $subject, AcademicMembershipSyncService $membershipSync)
     {
         $this->authorizeBatch($subject->batch_id);
         $institutionId = (int) $subject->batch->institution_id;
@@ -116,6 +125,10 @@ class SubjectController extends Controller
             $batch->users()->syncWithoutDetaching([$userId => ['type' => 'faculty']]);
         }
 
+        $membershipSync->syncFacultyInstitutionFromSubject($institutionId, $facultyIds);
+        $batch->refresh();
+        $membershipSync->syncInstitutionForBatchMembers($batch);
+
         return redirect()->route('academics.subjects.edit', $subject)->with('success', 'Faculty assignment updated.');
     }
 
@@ -123,8 +136,14 @@ class SubjectController extends Controller
     {
         $batch = Batch::findOrFail($batchId);
         $user = auth()->user();
+        if (in_array($user->role, ['super_admin', 'admin'], true)) {
+            return;
+        }
         if ($user->role === 'institution_admin' && (int) $user->academic_institution_id !== (int) $batch->institution_id) {
             abort(403, 'You can only manage subjects of your institution.');
+        }
+        if ($user->role !== 'institution_admin') {
+            abort(403, 'You cannot manage subjects.');
         }
     }
 }

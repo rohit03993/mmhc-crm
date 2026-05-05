@@ -10,6 +10,18 @@
             <form action="{{ route('academics.faculty.store') }}" method="POST">
                 @csrf
                 <div class="row g-3">
+                    @if(isset($institutions) && $institutions->isNotEmpty())
+                    <div class="col-12">
+                        <label for="institution_id" class="form-label">Institution <span class="text-danger">*</span></label>
+                        <select name="institution_id" id="institution_id" class="form-select @error('institution_id') is-invalid @enderror" required>
+                            <option value="">— Select college —</option>
+                            @foreach($institutions as $inst)
+                                <option value="{{ $inst->id }}" @selected(old('institution_id') == $inst->id)>{{ $inst->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('institution_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    @endif
                     <div class="col-md-6">
                         <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required>

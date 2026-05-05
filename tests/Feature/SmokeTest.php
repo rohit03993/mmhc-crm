@@ -2,14 +2,12 @@
 
 namespace Tests\Feature;
 
-use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use Tests\TestCase;
 
 /**
  * Smoke tests for key guest-facing routes.
- * Guest pages may resolve site branding via DB; SQLite PDO must be enabled for these to run.
+ * Guest pages may touch the database (e.g. settings); MySQL is used (see phpunit.xml).
  */
-#[RequiresPhpExtension('pdo_sqlite')]
 class SmokeTest extends TestCase
 {
     public function test_login_page_returns_ok(): void

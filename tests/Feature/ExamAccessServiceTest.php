@@ -8,17 +8,12 @@ use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Institution;
 use App\Modules\Academics\Models\Subject;
 use App\Modules\Academics\Services\ExamAccessService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use Tests\TestCase;
 
-#[RequiresPhpExtension('pdo_sqlite')]
 class ExamAccessServiceTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_subject_cohort_student_in_batch_can_take_when_faculty_published(): void
     {
         $service = new ExamAccessService;
@@ -82,6 +77,29 @@ class ExamAccessServiceTest extends TestCase
         ]);
 
         $this->assertFalse($service->canTake($ctx['student'], $exam));
+        $this->assertFalse($service->studentCanViewPublishedExam($ctx['student'], $exam));
+    }
+
+    public function test_student_can_browse_upcoming_published_exam_but_not_take_until_open(): void
+    {
+        $service = new ExamAccessService;
+        $ctx = $this->makeInstitutionWithSubjectAndUsers();
+
+        $exam = AcademicExam::create([
+            'institution_id' => $ctx['institution']->id,
+            'created_by' => $ctx['faculty']->id,
+            'audience_type' => AcademicExam::AUDIENCE_SUBJECT_COHORT,
+            'subject_id' => $ctx['subject']->id,
+            'batch_id' => null,
+            'title' => 'Future quiz',
+            'is_published' => true,
+            'published_at' => now(),
+            'opens_at' => now()->addDay(),
+            'closes_at' => now()->addWeek(),
+        ]);
+
+        $this->assertTrue($service->studentCanViewPublishedExam($ctx['student'], $exam));
+        $this->assertFalse($service->canTake($ctx['student'], $exam));
     }
 
     /**
@@ -120,9 +138,13 @@ class ExamAccessServiceTest extends TestCase
             'is_active' => true,
         ]);
 
+        $defaultLocation = DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
+
         $faculty = User::create([
             'name' => 'Faculty One',
             'email' => 'f1@exam-access.test',
+            'phone' => '9810000001',
+            'location' => $defaultLocation,
             'password' => Hash::make('password'),
             'role' => 'faculty',
             'unique_id' => 'F1-EX',
@@ -133,6 +155,8 @@ class ExamAccessServiceTest extends TestCase
         $other_faculty = User::create([
             'name' => 'Faculty Two',
             'email' => 'f2@exam-access.test',
+            'phone' => '9810000002',
+            'location' => $defaultLocation,
             'password' => Hash::make('password'),
             'role' => 'faculty',
             'unique_id' => 'F2-EX',
@@ -143,6 +167,8 @@ class ExamAccessServiceTest extends TestCase
         $student = User::create([
             'name' => 'Student In',
             'email' => 's1@exam-access.test',
+            'phone' => '9810000003',
+            'location' => $defaultLocation,
             'password' => Hash::make('password'),
             'role' => 'student',
             'unique_id' => 'S1-EX',
@@ -153,6 +179,8 @@ class ExamAccessServiceTest extends TestCase
         $other_student = User::create([
             'name' => 'Student Other',
             'email' => 's2@exam-access.test',
+            'phone' => '9810000004',
+            'location' => $defaultLocation,
             'password' => Hash::make('password'),
             'role' => 'student',
             'unique_id' => 'S2-EX',
@@ -163,6 +191,8 @@ class ExamAccessServiceTest extends TestCase
         $institution_admin = User::create([
             'name' => 'Admin',
             'email' => 'ia@exam-access.test',
+            'phone' => '9810000005',
+            'location' => $defaultLocation,
             'password' => Hash::make('password'),
             'role' => 'institution_admin',
             'unique_id' => 'IA-EX',

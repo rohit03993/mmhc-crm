@@ -20,6 +20,7 @@
                                 <th>Topic · Subject</th>
                                 <th>Due date</th>
                                 <th>Status</th>
+                                <th>Resources</th>
                                 <th class="text-end">Action</th>
                             </tr>
                         </thead>
@@ -32,6 +33,9 @@
                                 <td>{{ $a->title }}</td>
                                 <td>{{ $a->topic->name ?? '—' }} · {{ $a->topic->subject->name ?? '—' }}</td>
                                 <td>{{ $a->due_date ? $a->due_date->format('M d, Y') : '—' }}</td>
+                                <td>
+                                    <a href="{{ route('academics.topics.student-library', $a->topic_id) }}" class="btn btn-sm btn-outline-secondary">Topic library</a>
+                                </td>
                                 <td>
                                     @if($sub)
                                         <span class="badge bg-success">Submitted</span>

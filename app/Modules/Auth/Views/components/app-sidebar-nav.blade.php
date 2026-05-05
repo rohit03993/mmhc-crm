@@ -18,6 +18,30 @@
         </a>
     </li>
     <li class="nav-item">
+        <a class="nav-link text-white {{ request()->routeIs('academics.batches.*') ? 'active' : '' }}" href="{{ route('academics.batches.index') }}">
+            <i class="fas fa-layer-group me-2"></i>
+            Batches
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-white {{ request()->routeIs('academics.subjects.*') ? 'active' : '' }}" href="{{ route('academics.subjects.index') }}">
+            <i class="fas fa-book me-2"></i>
+            Subjects
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-white {{ request()->routeIs('academics.faculty.*') ? 'active' : '' }}" href="{{ route('academics.faculty.index') }}">
+            <i class="fas fa-chalkboard-teacher me-2"></i>
+            Faculty
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-white {{ request()->routeIs('academics.assignments.*') ? 'active' : '' }}" href="{{ route('academics.assignments.index') }}">
+            <i class="fas fa-tasks me-2"></i>
+            Assignments
+        </a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link text-white {{ request()->routeIs('academics.reports.*') ? 'active' : '' }}" href="{{ route('academics.reports.index') }}">
             <i class="fas fa-chart-bar me-2"></i>
             Reports
@@ -33,12 +57,6 @@
         <a class="nav-link text-white {{ request()->routeIs('academics.topics.*') ? 'active' : '' }}" href="{{ route('academics.topics.index') }}">
             <i class="fas fa-list-ul me-2"></i>
             Topics
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-white {{ request()->routeIs('academics.osce.*') && !request()->routeIs('academics.osce.my*') ? 'active' : '' }}" href="{{ route('academics.osce.index') }}">
-            <i class="fas fa-stethoscope me-2"></i>
-            OSCE sessions
         </a>
     </li>
     @endif
@@ -86,12 +104,6 @@
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link text-white {{ request()->routeIs('academics.osce.*') && !request()->routeIs('academics.osce.my*') ? 'active' : '' }}" href="{{ route('academics.osce.index') }}">
-            <i class="fas fa-stethoscope me-2"></i>
-            OSCE sessions
-        </a>
-    </li>
-    <li class="nav-item">
         <a class="nav-link text-white {{ request()->routeIs('academics.attendance.index') || request()->routeIs('academics.attendance.mark') ? 'active' : '' }}" href="{{ route('academics.attendance.index') }}">
             <i class="fas fa-calendar-check me-2"></i>
             Mark attendance
@@ -124,12 +136,6 @@
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link text-white {{ request()->routeIs('academics.osce.*') && !request()->routeIs('academics.osce.my*') ? 'active' : '' }}" href="{{ route('academics.osce.index') }}">
-            <i class="fas fa-stethoscope me-2"></i>
-            OSCE sessions
-        </a>
-    </li>
-    <li class="nav-item">
         <a class="nav-link text-white {{ request()->routeIs('academics.attendance.index') || request()->routeIs('academics.attendance.mark') ? 'active' : '' }}" href="{{ route('academics.attendance.index') }}">
             <i class="fas fa-calendar-check me-2"></i>
             Mark attendance
@@ -144,6 +150,12 @@
         </a>
     </li>
     <li class="nav-item">
+        <a class="nav-link text-white {{ request()->routeIs('academics.learning-resources') || request()->routeIs('academics.topics.student-library') ? 'active' : '' }}" href="{{ route('academics.learning-resources') }}">
+            <i class="fas fa-photo-video me-2"></i>
+            Learning resources
+        </a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link text-white {{ request()->routeIs('academics.attendance.my') ? 'active' : '' }}" href="{{ route('academics.attendance.my') }}">
             <i class="fas fa-calendar-check me-2"></i>
             My attendance
@@ -153,12 +165,6 @@
         <a class="nav-link text-white {{ request()->routeIs('academics.exams.*') ? 'active' : '' }}" href="{{ route('academics.exams.index') }}">
             <i class="fas fa-question-circle me-2"></i>
             Quizzes &amp; exams
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-white {{ request()->routeIs('academics.osce.my*') ? 'active' : '' }}" href="{{ route('academics.osce.my') }}">
-            <i class="fas fa-stethoscope me-2"></i>
-            Clinical skills (OSCE)
         </a>
     </li>
     @endif
@@ -314,6 +320,30 @@
             </a>
         </li>
         <li class="nav-item">
+            <a class="nav-link text-white {{ request()->routeIs('academics.batches.*') ? 'active' : '' }}" href="{{ route('academics.batches.index') }}">
+                <i class="fas fa-layer-group me-2"></i>
+                Batches
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white {{ request()->routeIs('academics.subjects.*') ? 'active' : '' }}" href="{{ route('academics.subjects.index') }}">
+                <i class="fas fa-book me-2"></i>
+                Subjects
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white {{ request()->routeIs('academics.faculty.*') ? 'active' : '' }}" href="{{ route('academics.faculty.index') }}">
+                <i class="fas fa-chalkboard-teacher me-2"></i>
+                Faculty
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white {{ request()->routeIs('academics.assignments.*') ? 'active' : '' }}" href="{{ route('academics.assignments.index') }}">
+                <i class="fas fa-tasks me-2"></i>
+                Assignments
+            </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link text-white {{ request()->routeIs('academics.reports.*') ? 'active' : '' }}" href="{{ route('academics.reports.index') }}">
                 <i class="fas fa-chart-bar me-2"></i>
                 Academic reports
@@ -331,13 +361,6 @@
                 Topics
             </a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link text-white {{ request()->routeIs('academics.osce.*') && !request()->routeIs('academics.osce.my*') ? 'active' : '' }}" href="{{ route('academics.osce.index') }}">
-                <i class="fas fa-stethoscope me-2"></i>
-                OSCE sessions
-            </a>
-        </li>
-
         <li class="nav-item mt-2">
             <span class="nav-link text-white-50 text-uppercase small px-3 py-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Healthcare &amp; CRM</span>
         </li>

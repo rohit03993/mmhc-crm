@@ -29,6 +29,7 @@
             @endif
         </div>
     </div>
-    <a href="{{ route('academics.my-assignments') }}" class="btn btn-outline-secondary btn-sm mt-3">Back to assignments</a>
+    <a href="{{ route('academics.learning-resources') }}" class="btn btn-outline-secondary btn-sm mt-3">All topics</a>
+    <a href="{{ route('academics.my-assignments') }}" class="btn btn-outline-secondary btn-sm mt-3">My assignments</a>
 </div>
 @endsection

@@ -12,7 +12,9 @@ use App\Modules\Academics\Models\Submission;
 use App\Modules\Academics\Services\AcademicScoreService;
 use App\Modules\Profiles\Models\Document;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class AcademicsDashboardController extends Controller
@@ -75,14 +77,7 @@ class AcademicsDashboardController extends Controller
             }
         } elseif (in_array($user->role, ['super_admin', 'admin'], true)) {
             $totalStudentsCount = $this->totalStudentsCount();
-            $institutionRows = Institution::orderBy('name')->get()->map(function ($inst) {
-                return [
-                    'id' => $inst->id,
-                    'name' => $inst->name,
-                    'icr' => AcademicScoreService::getIcr($inst),
-                    'students' => $this->institutionStudentsCount($inst->id),
-                ];
-            });
+            $institutionRows = $this->institutionRowsWithStatsForDashboard();
             $instPage = max(1, (int) request()->get('inst_page', 1));
             $perInstPage = 8;
             $institutionsWithIcrPaginator = new LengthAwarePaginator(
@@ -249,9 +244,55 @@ class AcademicsDashboardController extends Controller
         ];
     }
 
+    /**
+     * Super/admin institution table: one grouped query for ICR + students (avoids N+1 per college).
+     *
+     * @return Collection<int, array{id: int, name: string, icr: int, students: int}>
+     */
+    protected function institutionRowsWithStatsForDashboard(): Collection
+    {
+        if (! Schema::hasTable('academic_topics')) {
+            return Institution::query()->orderBy('name')->get()->map(fn ($inst) => [
+                'id' => $inst->id,
+                'name' => $inst->name,
+                'icr' => 0,
+                'students' => $this->institutionStudentsCount($inst->id),
+            ]);
+        }
+
+        $icrStats = DB::table('academic_topics as t')
+            ->join('academic_subjects as s', 's.id', '=', 't.subject_id')
+            ->join('academic_batches as b', 'b.id', '=', 's.batch_id')
+            ->selectRaw('b.institution_id, COUNT(t.id) as topic_total, SUM(CASE WHEN t.is_completed THEN 1 ELSE 0 END) as topic_done')
+            ->groupBy('b.institution_id')
+            ->get()
+            ->keyBy('institution_id');
+
+        $studentsByInst = DB::table('academic_batch_users as bu')
+            ->join('academic_batches as b', 'b.id', '=', 'bu.batch_id')
+            ->where('bu.type', 'student')
+            ->selectRaw('b.institution_id, COUNT(DISTINCT bu.user_id) as c')
+            ->groupBy('b.institution_id')
+            ->pluck('c', 'institution_id');
+
+        return Institution::query()->orderBy('name')->get()->map(function ($inst) use ($icrStats, $studentsByInst) {
+            $row = $icrStats->get($inst->id);
+            $total = $row ? (int) $row->topic_total : 0;
+            $done = $row ? (int) $row->topic_done : 0;
+            $icr = $total > 0 ? (int) round(($done / $total) * 100) : 0;
+
+            return [
+                'id' => $inst->id,
+                'name' => $inst->name,
+                'icr' => $icr,
+                'students' => (int) ($studentsByInst[$inst->id] ?? 0),
+            ];
+        });
+    }
+
     protected function totalStudentsCount(): int
     {
-        return (int) \DB::table('academic_batch_users')
+        return (int) DB::table('academic_batch_users')
             ->where('type', 'student')
             ->selectRaw('COUNT(DISTINCT user_id) as c')
             ->value('c');
@@ -264,7 +305,7 @@ class AcademicsDashboardController extends Controller
             return 0;
         }
 
-        return (int) \DB::table('academic_batch_users')
+        return (int) DB::table('academic_batch_users')
             ->where('type', 'student')
             ->whereIn('batch_id', $batchIds)
             ->selectRaw('COUNT(DISTINCT user_id) as c')
@@ -273,7 +314,7 @@ class AcademicsDashboardController extends Controller
 
     protected function facultyStudentsCount(int $facultyUserId): int
     {
-        $batchIds = \DB::table('academic_batch_users')
+        $batchIds = DB::table('academic_batch_users')
             ->where('user_id', $facultyUserId)
             ->where('type', 'faculty')
             ->pluck('batch_id');
@@ -281,7 +322,7 @@ class AcademicsDashboardController extends Controller
             return 0;
         }
 
-        return (int) \DB::table('academic_batch_users')
+        return (int) DB::table('academic_batch_users')
             ->where('type', 'student')
             ->whereIn('batch_id', $batchIds)
             ->selectRaw('COUNT(DISTINCT user_id) as c')

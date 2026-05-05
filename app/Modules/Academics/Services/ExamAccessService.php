@@ -14,11 +14,24 @@ class ExamAccessService
 {
     public function canTake(User $user, AcademicExam $exam): bool
     {
+        if (! $this->studentCanViewPublishedExam($user, $exam)) {
+            return false;
+        }
+
+        return $exam->isWithinSchedule();
+    }
+
+    /**
+     * Whether a student may see this published exam on the index / detail (cohort rules only).
+     * Window timing is enforced separately via {@see self::canTake()} for starting an attempt.
+     */
+    public function studentCanViewPublishedExam(User $user, AcademicExam $exam): bool
+    {
         if (! $user->is_active || $user->role !== 'student') {
             return false;
         }
 
-        if (! $exam->is_published || ! $exam->isWithinSchedule()) {
+        if (! $exam->is_published) {
             return false;
         }
 
@@ -49,7 +62,7 @@ class ExamAccessService
             return false;
         }
 
-        if ((int) $user->academic_institution_id !== (int) $exam->institution_id) {
+        if (! $this->facultyBelongsToExamInstitution($user, (int) $exam->institution_id)) {
             return false;
         }
 
@@ -99,7 +112,16 @@ class ExamAccessService
 
     protected function studentInInstitution(User $user, int $institutionId): bool
     {
-        return (int) ($user->academic_institution_id ?? 0) === $institutionId;
+        if ((int) ($user->academic_institution_id ?? 0) === $institutionId) {
+            return true;
+        }
+
+        return DB::table('academic_batch_users')
+            ->join('academic_batches', 'academic_batches.id', '=', 'academic_batch_users.batch_id')
+            ->where('academic_batch_users.user_id', $user->id)
+            ->where('academic_batch_users.type', 'student')
+            ->where('academic_batches.institution_id', $institutionId)
+            ->exists();
     }
 
     protected function facultyOnSubject(User $user, int $subjectId): bool
@@ -116,6 +138,20 @@ class ExamAccessService
             ->where('batch_id', $batchId)
             ->where('user_id', $user->id)
             ->where('type', 'faculty')
+            ->exists();
+    }
+
+    protected function facultyBelongsToExamInstitution(User $user, int $institutionId): bool
+    {
+        if ((int) ($user->academic_institution_id ?? 0) === $institutionId) {
+            return true;
+        }
+
+        return DB::table('academic_batch_users')
+            ->join('academic_batches', 'academic_batches.id', '=', 'academic_batch_users.batch_id')
+            ->where('academic_batch_users.user_id', $user->id)
+            ->where('academic_batch_users.type', 'faculty')
+            ->where('academic_batches.institution_id', $institutionId)
             ->exists();
     }
 }

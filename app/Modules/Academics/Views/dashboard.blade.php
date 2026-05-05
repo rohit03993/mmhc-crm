@@ -121,18 +121,28 @@
             <p class="academics-dash-hero__kicker mb-0">Academic workspace</p>
             <h1 class="academics-dash-hero__title">Dashboard</h1>
         @if(auth()->user()->role === 'super_admin')
-            <p class="academics-dash-hero__lede">Manage institutions and monitor every college’s progress, students, and readiness (ICR).</p>
+            <p class="academics-dash-hero__lede">Create colleges, set up batches and curriculum, and monitor progress (ICR) across institutions.</p>
             <div class="academics-quick-links">
-                <a href="{{ route('academics.exams.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-question-circle me-1"></i>Exams (all)</a>
                 <a href="{{ route('academics.institutions.index') }}" class="btn btn-primary btn-sm"><i class="fas fa-university me-1"></i>Institutions</a>
+                <a href="{{ route('academics.batches.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-layer-group me-1"></i>Batches</a>
+                <a href="{{ route('academics.subjects.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-book me-1"></i>Subjects</a>
+                <a href="{{ route('academics.faculty.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-chalkboard-teacher me-1"></i>Faculty</a>
+                <a href="{{ route('academics.topics.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-list-ul me-1"></i>Topics</a>
+                <a href="{{ route('academics.assignments.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-tasks me-1"></i>Assignments</a>
+                <a href="{{ route('academics.exams.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-question-circle me-1"></i>Quizzes &amp; exams</a>
                 <a href="{{ route('academics.reports.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-alt me-1"></i>All reports</a>
                 <a href="{{ route('academics.reports.show', ['type' => 'student_submission']) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-graduate me-1"></i>Student report</a>
                 <a href="{{ route('community.index') }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-comments me-1"></i>Community</a>
             </div>
         @elseif(auth()->user()->role === 'admin')
-            <p class="academics-dash-hero__lede">Create colleges, set their short codes (IDs), and manage academic accounts from User Management.</p>
+            <p class="academics-dash-hero__lede">Create colleges, set their short codes (IDs), run batches and curriculum, and manage academic accounts.</p>
             <div class="academics-quick-links">
                 <a href="{{ route('academics.institutions.index') }}" class="btn btn-primary btn-sm"><i class="fas fa-university me-1"></i>Institutes &amp; codes</a>
+                <a href="{{ route('academics.batches.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-layer-group me-1"></i>Batches</a>
+                <a href="{{ route('academics.subjects.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-book me-1"></i>Subjects</a>
+                <a href="{{ route('academics.faculty.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-chalkboard-teacher me-1"></i>Faculty</a>
+                <a href="{{ route('academics.assignments.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-tasks me-1"></i>Assignments</a>
+                <a href="{{ route('academics.exams.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-question-circle me-1"></i>Exams</a>
                 <a href="{{ route('admin.users', ['segment' => 'academics']) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-users me-1"></i>Academic users</a>
                 <a href="{{ route('academics.reports.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-alt me-1"></i>Reports</a>
                 <a href="{{ route('community.index') }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-comments me-1"></i>Community</a>
@@ -163,9 +173,10 @@
                 <a href="{{ route('academics.reports.show', ['type' => 'student_submission']) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-graduate me-1"></i>Student report</a>
             </div>
         @elseif(auth()->user()->role === 'student')
-            <p class="academics-dash-hero__lede">Submit assignments, check attendance, and follow your progress (SPI).</p>
+            <p class="academics-dash-hero__lede">Submit assignments, take quizzes, open learning resources, and track attendance (SPI).</p>
             <div class="academics-quick-links">
                 <a href="{{ route('academics.my-assignments') }}" class="btn btn-primary btn-sm"><i class="fas fa-tasks me-1"></i>My assignments</a>
+                <a href="{{ route('academics.learning-resources') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-photo-video me-1"></i>Learning resources</a>
                 <a href="{{ route('academics.exams.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-question-circle me-1"></i>Exams</a>
                 <a href="{{ route('academics.attendance.my') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-calendar me-1"></i>My attendance</a>
             </div>
@@ -351,7 +362,7 @@
                         <tr>
                             <th class="ps-3 ps-md-4">Institution</th>
                             <th class="text-end">Students</th>
-                            <th class="text-end pe-3 pe-md-4">ICR %</th>
+                            <th class="text-end pe-3 pe-md-4" title="Institution Clinical Readiness: share of topics marked complete for this college.">ICR %</th>
                         </tr>
                     </thead>
                     <tbody>

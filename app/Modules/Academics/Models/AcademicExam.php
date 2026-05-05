@@ -109,4 +109,21 @@ class AcademicExam extends Model
 
         return true;
     }
+
+    /** List badge: draft | upcoming | open | ended (for published exams). */
+    public function scheduleListState(): string
+    {
+        if (! $this->is_published) {
+            return 'draft';
+        }
+        $now = now();
+        if ($this->opens_at && $now->lt($this->opens_at)) {
+            return 'upcoming';
+        }
+        if ($this->closes_at && $now->gt($this->closes_at)) {
+            return 'ended';
+        }
+
+        return 'open';
+    }
 }

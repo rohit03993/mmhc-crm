@@ -7,10 +7,8 @@ use App\Modules\Auth\Controllers\DashboardController;
 use App\Modules\Payments\Services\StaffPayoutService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use Tests\TestCase;
 
-#[RequiresPhpExtension('pdo_sqlite')]
 class DashboardRedirectTest extends TestCase
 {
     public function test_admin_user_is_redirected_to_community(): void

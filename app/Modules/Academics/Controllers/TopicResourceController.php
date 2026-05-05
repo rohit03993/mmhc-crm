@@ -53,6 +53,35 @@ class TopicResourceController extends Controller
         }
     }
 
+    /** Topics for the student’s batches — entry point to per-topic resource libraries (Phase B). */
+    public function studentTopicsIndex()
+    {
+        $user = auth()->user();
+        if ($user->role !== 'student') {
+            abort(403);
+        }
+        $batchIds = DB::table('academic_batch_users')
+            ->where('user_id', $user->id)
+            ->where('type', 'student')
+            ->pluck('batch_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+        if ($batchIds === []) {
+            return view('academics::topic-resources.student-topics-index', ['topics' => collect()]);
+        }
+        $topics = Topic::query()
+            ->whereHas('subject', fn ($q) => $q->whereIn('batch_id', $batchIds))
+            ->with(['subject.batch.institution'])
+            ->orderBy('subject_id')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        return view('academics::topic-resources.student-topics-index', compact('topics'));
+    }
+
     public function index(Topic $topic)
     {
         $this->authorizeTopic($topic);

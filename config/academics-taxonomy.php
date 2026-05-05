@@ -32,7 +32,6 @@ return [
     'assessment_types' => [
         'rating' => 'Rating',
         'mcq_test_presentation' => 'MCQ / test on presentation',
-        'osce' => 'OSCE',
         'practical' => 'Practical',
         'formative' => 'Formative',
         'quiz' => 'Quiz',

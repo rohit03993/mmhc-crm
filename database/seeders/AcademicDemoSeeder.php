@@ -8,8 +8,6 @@ use App\Modules\Academics\Models\AcademicExamQuestion;
 use App\Modules\Academics\Models\Assignment;
 use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Institution;
-use App\Modules\Academics\Models\OsceSession;
-use App\Modules\Academics\Models\OsceStation;
 use App\Modules\Academics\Models\Subject;
 use App\Modules\Academics\Models\Topic;
 use App\Modules\Academics\Models\TopicResource;
@@ -22,6 +20,8 @@ use Illuminate\Support\Facades\Hash;
 /**
  * Seeds demo data for Academics module (nursing college – India).
  * Run: php artisan db:seed --class=AcademicDemoSeeder
+ *
+ * Full reset + this seed: php artisan db:seed --class=FreshAcademicDemoSeeder
  */
 class AcademicDemoSeeder extends Seeder
 {
@@ -256,6 +256,14 @@ class AcademicDemoSeeder extends Seeder
             [
                 'description' => 'Submit your practical write-up with observations.',
                 'due_date' => Carbon::now()->addDays(7),
+                'assignment_type' => Assignment::TYPE_FILE_UPLOAD,
+                'assessment_type_keys' => ['practical', 'formative'],
+                'is_formative' => true,
+                'is_summative' => false,
+                'eval_includes_mcq' => false,
+                'eval_includes_practical' => true,
+                'eval_includes_viva' => false,
+                'eval_includes_checklist' => false,
             ]
         );
 
@@ -333,46 +341,6 @@ class AcademicDemoSeeder extends Seeder
                 'resource_type' => TopicResource::TYPE_VIDEO_LINK,
                 'video_url' => 'https://www.youtube.com/watch?v=WcHkD6MYVYw',
                 'sort_order' => 0,
-            ]);
-        }
-
-        $demoOsce = OsceSession::firstOrCreate(
-            [
-                'institution_id' => $institution->id,
-                'title' => 'Demo: Year-1 nursing OSCE (sample)',
-            ],
-            [
-                'batch_id' => $batch->id,
-                'description' => "Practice layout — hand hygiene, vitals, communication.\nStudents: use station checklists during drills.",
-                'starts_at' => Carbon::now()->addWeeks(2),
-                'duration_minutes' => 90,
-                'created_by' => $instAdmin->id,
-            ]
-        );
-        if ($demoOsce->stations()->count() === 0) {
-            OsceStation::create([
-                'osce_session_id' => $demoOsce->id,
-                'sort_order' => 0,
-                'name' => 'Hand hygiene & PPE',
-                'instructions' => 'Complete within time limit. Evaluator uses the checklist below.',
-                'time_limit_seconds' => 300,
-                'checklist_items' => [
-                    ['label' => 'Hand wash / rub per protocol', 'points' => 1],
-                    ['label' => 'Don PPE in correct order', 'points' => 2],
-                    ['label' => 'Verbalize infection-control rationale', 'points' => 1],
-                ],
-            ]);
-            OsceStation::create([
-                'osce_session_id' => $demoOsce->id,
-                'sort_order' => 1,
-                'name' => 'Vital signs (demo station)',
-                'instructions' => 'State normal ranges; demonstrate technique on manikin if available.',
-                'time_limit_seconds' => 420,
-                'checklist_items' => [
-                    ['label' => 'Introduce self and explain procedure', 'points' => 1],
-                    ['label' => 'Measure BP with correct cuff size', 'points' => 2],
-                    ['label' => 'Record pulse & respiratory rate', 'points' => 1],
-                ],
             ]);
         }
 

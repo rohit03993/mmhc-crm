@@ -4,6 +4,7 @@ namespace App\Modules\Academics\Models;
 
 use App\Models\Core\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -46,5 +47,22 @@ class AcademicExamAttempt extends Model
     public function answers(): HasMany
     {
         return $this->hasMany(AcademicExamAttemptAnswer::class, 'attempt_id');
+    }
+
+    /** Display label when `users.name` is empty (common for draft accounts). */
+    public function studentLabel(): string
+    {
+        $u = $this->relationLoaded('user') ? $this->user : $this->user()->first();
+        if (! $u instanceof User) {
+            return 'User #'.$this->user_id.' (missing)';
+        }
+        if (Str::of((string) ($u->name ?? ''))->trim()->isNotEmpty()) {
+            return (string) $u->name;
+        }
+        if (Str::of((string) ($u->email ?? ''))->trim()->isNotEmpty()) {
+            return (string) $u->email;
+        }
+
+        return 'Student #'.$this->user_id;
     }
 }

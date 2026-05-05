@@ -8,8 +8,6 @@ use App\Modules\Academics\Controllers\BatchController;
 use App\Modules\Academics\Controllers\ExamController;
 use App\Modules\Academics\Controllers\FacultyController;
 use App\Modules\Academics\Controllers\InstitutionController;
-use App\Modules\Academics\Controllers\OsceSessionController;
-use App\Modules\Academics\Controllers\OsceStationController;
 use App\Modules\Academics\Controllers\ReportController;
 use App\Modules\Academics\Controllers\SubjectController;
 use App\Modules\Academics\Controllers\SubmissionController;
@@ -68,8 +66,8 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::delete('/{institution}', [InstitutionController::class, 'destroy'])->name('destroy');
     });
 
-    // Batch management (Institution Admin only – Super Admin does not create batches)
-    Route::middleware(['role:institution_admin'])->prefix('batches')->name('batches.')->group(function () {
+    // Batch management (college ops + platform support)
+    Route::middleware(['role:super_admin,admin,institution_admin'])->prefix('batches')->name('batches.')->group(function () {
         Route::get('/', [BatchController::class, 'index'])->name('index');
         Route::get('/create', [BatchController::class, 'create'])->name('create');
         Route::post('/', [BatchController::class, 'store'])->name('store');
@@ -79,15 +77,15 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::delete('/{batch}', [BatchController::class, 'destroy'])->name('destroy');
     });
 
-    // Faculty management (Institution Admin only – add faculty for their institution)
-    Route::middleware(['role:institution_admin'])->prefix('faculty')->name('faculty.')->group(function () {
+    // Faculty management
+    Route::middleware(['role:super_admin,admin,institution_admin'])->prefix('faculty')->name('faculty.')->group(function () {
         Route::get('/', [FacultyController::class, 'index'])->name('index');
         Route::get('/create', [FacultyController::class, 'create'])->name('create');
         Route::post('/', [FacultyController::class, 'store'])->name('store');
     });
 
-    // Subject management (Institution Admin only)
-    Route::middleware(['role:institution_admin'])->prefix('subjects')->name('subjects.')->group(function () {
+    // Subject management
+    Route::middleware(['role:super_admin,admin,institution_admin'])->prefix('subjects')->name('subjects.')->group(function () {
         Route::get('/', [SubjectController::class, 'index'])->name('index');
         Route::get('/create', [SubjectController::class, 'create'])->name('create');
         Route::post('/', [SubjectController::class, 'store'])->name('store');
@@ -116,22 +114,6 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
     Route::get('/topics/{topic}/resources/{resource}/download', [TopicResourceController::class, 'download'])
         ->name('topics.resources.download')
         ->whereNumber(['topic', 'resource']);
-
-    // OSCE sessions & stations (structured skills assessment — Phase B)
-    Route::middleware(['role:super_admin,admin,institution_admin,faculty'])->prefix('osce')->name('osce.')->group(function () {
-        Route::get('/', [OsceSessionController::class, 'index'])->name('index');
-        Route::get('/create', [OsceSessionController::class, 'create'])->name('create');
-        Route::post('/', [OsceSessionController::class, 'store'])->name('store');
-        Route::get('/{session}', [OsceSessionController::class, 'show'])->name('show')->whereNumber('session');
-        Route::get('/{session}/edit', [OsceSessionController::class, 'edit'])->name('edit')->whereNumber('session');
-        Route::put('/{session}', [OsceSessionController::class, 'update'])->name('update')->whereNumber('session');
-        Route::delete('/{session}', [OsceSessionController::class, 'destroy'])->name('destroy')->whereNumber('session');
-        Route::get('/{session}/stations/create', [OsceStationController::class, 'create'])->name('stations.create')->whereNumber('session');
-        Route::post('/{session}/stations', [OsceStationController::class, 'store'])->name('stations.store')->whereNumber('session');
-        Route::get('/{session}/stations/{station}/edit', [OsceStationController::class, 'edit'])->name('stations.edit')->whereNumber(['session', 'station']);
-        Route::put('/{session}/stations/{station}', [OsceStationController::class, 'update'])->name('stations.update')->whereNumber(['session', 'station']);
-        Route::delete('/{session}/stations/{station}', [OsceStationController::class, 'destroy'])->name('stations.destroy')->whereNumber(['session', 'station']);
-    });
 
     // Assignment management (platform CRM admin + college roles — aligned with exams)
     Route::middleware(['role:super_admin,admin,institution_admin,faculty'])->prefix('assignments')->name('assignments.')->group(function () {
@@ -164,12 +146,11 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
 
     // Student: My Assignments & Submit
     Route::middleware(['role:student'])->group(function () {
+        Route::get('/my-learning-resources', [TopicResourceController::class, 'studentTopicsIndex'])->name('learning-resources');
         Route::get('/my-attendance', [AttendanceController::class, 'myAttendance'])->name('attendance.my');
         Route::get('/my-assignments', [SubmissionController::class, 'index'])->name('my-assignments');
         Route::get('/assignments/{assignment}/submit', [SubmissionController::class, 'create'])->name('submit.form');
         Route::post('/assignments/{assignment}/submit', [SubmissionController::class, 'store'])->name('submit.store');
-        Route::get('/my-osce', [OsceSessionController::class, 'studentIndex'])->name('osce.my');
-        Route::get('/my-osce/{session}', [OsceSessionController::class, 'studentShow'])->name('osce.my.show')->whereNumber('session');
         Route::get('/topic-library/{topic}', [TopicResourceController::class, 'studentLibrary'])->name('topics.student-library')->whereNumber('topic');
     });
 

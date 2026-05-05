@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Core\User;
 use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Institution;
+use App\Modules\Academics\Services\AcademicMembershipSyncService;
 use Illuminate\Http\Request;
 
 class BatchController extends Controller
@@ -13,8 +14,15 @@ class BatchController extends Controller
     protected function scopeBatches()
     {
         $user = auth()->user();
+        $q = Batch::with('institution')->orderBy('name');
+        if (in_array($user->role, ['super_admin', 'admin'], true)) {
+            return $q;
+        }
+        if ($user->role === 'institution_admin' && $user->academic_institution_id) {
+            return $q->forInstitution((int) $user->academic_institution_id);
+        }
 
-        return Batch::with('institution')->forInstitution((int) $user->academic_institution_id);
+        return $q->whereRaw('1 = 0');
     }
 
     public function index()
@@ -34,7 +42,7 @@ class BatchController extends Controller
         $institutions = Institution::active()->orderBy('name')->get();
         $user = auth()->user();
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
-            $institutions = $institutions->where('id', $user->academic_institution_id);
+            $institutions = $institutions->where('id', $user->academic_institution_id)->values();
         }
 
         return view('academics::batches.create', compact('institutions'));
@@ -54,6 +62,12 @@ class BatchController extends Controller
         if ($user->role === 'institution_admin') {
             $validated['institution_id'] = $user->academic_institution_id;
         }
+        if (in_array($user->role, ['super_admin', 'admin'], true)) {
+            $allowed = Institution::active()->pluck('id')->map(fn ($id) => (int) $id)->all();
+            if (! in_array((int) $validated['institution_id'], $allowed, true)) {
+                abort(403, 'Invalid institution.');
+            }
+        }
         $validated['is_active'] = $request->boolean('is_active', true);
         Batch::create($validated);
 
@@ -67,7 +81,7 @@ class BatchController extends Controller
         $institutions = Institution::active()->orderBy('name')->get();
         $user = auth()->user();
         if ($user->role === 'institution_admin') {
-            $institutions = $institutions->where('id', $user->academic_institution_id);
+            $institutions = $institutions->where('id', $user->academic_institution_id)->values();
         }
         $studentsAvailable = User::where('role', 'student')->orderBy('name')->get();
         $facultyAvailable = User::where('role', 'faculty')->orderBy('name')->get();
@@ -95,6 +109,8 @@ class BatchController extends Controller
         }
         $validated['is_active'] = $request->boolean('is_active', true);
         $batch->update($validated);
+        $batch->refresh();
+        app(AcademicMembershipSyncService::class)->syncInstitutionForBatchMembers($batch);
 
         return redirect()->route('academics.batches.index')->with('success', 'Batch updated successfully.');
     }
@@ -107,7 +123,7 @@ class BatchController extends Controller
         return redirect()->route('academics.batches.index')->with('success', 'Batch deleted successfully.');
     }
 
-    public function updateAssignments(Request $request, Batch $batch)
+    public function updateAssignments(Request $request, Batch $batch, AcademicMembershipSyncService $membershipSync)
     {
         $this->authorizeBatch($batch);
         $request->validate([
@@ -126,6 +142,8 @@ class BatchController extends Controller
             $sync[$id] = ['type' => 'faculty'];
         }
         $batch->users()->sync($sync);
+        $batch->refresh();
+        $membershipSync->syncInstitutionForBatchMembers($batch);
 
         return redirect()->route('academics.batches.edit', $batch)->with('success', 'Assignments updated.');
     }
@@ -133,8 +151,14 @@ class BatchController extends Controller
     protected function authorizeBatch(Batch $batch): void
     {
         $user = auth()->user();
+        if (in_array($user->role, ['super_admin', 'admin'], true)) {
+            return;
+        }
         if ($user->role === 'institution_admin' && (int) $user->academic_institution_id !== (int) $batch->institution_id) {
             abort(403, 'You can only manage batches of your institution.');
+        }
+        if ($user->role !== 'institution_admin') {
+            abort(403, 'You cannot manage batches.');
         }
     }
 }

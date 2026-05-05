@@ -21,9 +21,10 @@ use Illuminate\Support\Str;
 
 /**
  * Large academics demo: 15 nursing/paramedical-style colleges, each with
- * 1 institution admin, 6 faculty, 18 students (2 batches × 9), subjects,
+ * 1 institution admin, 5 faculty, 5 students, 5 subjects (mapped across faculty),
  * topics, homework (assignments), published quizzes, partial submissions, and
- * rich student/faculty profiles (avatar + documents).
+ * rich student/faculty profiles (avatar + documents). Uses one batch per college
+ * when student count is under 10; otherwise two batches split evenly.
  *
  * Run: php artisan db:seed --class=AcademicBulkDemoSeeder
  * Password for all bulk demo logins: same as {@see AcademicBulkDemoSeeder::DEMO_PASSWORD}.
@@ -34,9 +35,9 @@ class AcademicBulkDemoSeeder extends Seeder
 
     private const INSTITUTION_COUNT = 15;
 
-    private const FACULTY_PER_COLLEGE = 6;
+    private const FACULTY_PER_COLLEGE = 5;
 
-    private const STUDENTS_PER_COLLEGE = 18;
+    private const STUDENTS_PER_COLLEGE = 5;
 
     /** 1×1 transparent PNG */
     private const PNG_BYTES = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
@@ -78,8 +79,6 @@ class AcademicBulkDemoSeeder extends Seeder
     ];
 
     private int $globalUidSeq = 700000;
-
-    private int $demoMobileSeq = 6200013000;
 
     /** @var list<string> */
     private const DEMO_FIRST_NAMES = [
@@ -160,15 +159,20 @@ class AcademicBulkDemoSeeder extends Seeder
         return round(random_int($lo, $hi) / $mul, $decimals);
     }
 
-    /** Next unique 10-digit Indian mobile number (starts with 6–9). */
+    /**
+     * Next unique 10-digit demo mobile (starts with 8–9). Avoids fixed sequences that collide
+     * with other seeders or previous runs (users.phone is unique app-wide).
+     */
     private function nextIndianMobile(): string
     {
-        $n = $this->demoMobileSeq++;
-        if ($this->demoMobileSeq > 9999999999) {
-            $this->demoMobileSeq = 6200013000;
+        for ($i = 0; $i < 250; $i++) {
+            $candidate = (string) random_int(8700000000, 8999999999);
+            if (! User::query()->where('phone', $candidate)->exists()) {
+                return $candidate;
+            }
         }
 
-        return (string) $n;
+        throw new \RuntimeException('AcademicBulkDemoSeeder: could not allocate a unique demo phone after 250 attempts.');
     }
 
     public function run(): void
@@ -236,10 +240,11 @@ class AcademicBulkDemoSeeder extends Seeder
                 ])->id;
             }
 
-            $batchNames = [
-                'B.Sc Nursing – Year '.random_int(1, 4),
-                $this->pickRandom(['GNM – Year 1', 'PB B.Sc Nursing – Year 1', 'M.Sc Nursing – Year 1', 'Diploma in Nursing – Year 2']),
-            ];
+            $batchLabelPrimary = 'B.Sc Nursing – Year '.random_int(1, 4);
+            $batchNames = [$batchLabelPrimary];
+            if (self::STUDENTS_PER_COLLEGE >= 10) {
+                $batchNames[] = $this->pickRandom(['GNM – Year 1', 'PB B.Sc Nursing – Year 1', 'M.Sc Nursing – Year 1', 'Diploma in Nursing – Year 2']);
+            }
             $batches = [];
             foreach ($batchNames as $bn) {
                 $batches[] = Batch::firstOrCreate(
@@ -253,13 +258,17 @@ class AcademicBulkDemoSeeder extends Seeder
                 );
             }
 
-            $batch1Students = array_slice($studentIds, 0, 9);
-            $batch2Students = array_slice($studentIds, 9, 9);
-            $batches[0]->students()->sync(array_fill_keys($batch1Students, ['type' => 'student']));
-            $batches[1]->students()->sync(array_fill_keys($batch2Students, ['type' => 'student']));
+            $nBatches = count($batches);
+            $chunkSize = (int) max(1, ceil(count($studentIds) / $nBatches));
+            $studentChunks = array_values(array_chunk($studentIds, $chunkSize));
             $facultyPivot = array_fill_keys($facultyIds, ['type' => 'faculty']);
-            $batches[0]->faculty()->sync($facultyPivot);
-            $batches[1]->faculty()->sync($facultyPivot);
+            foreach ($batches as $bi => $batch) {
+                $slice = $studentChunks[$bi] ?? [];
+                $batch->students()->sync(array_fill_keys($slice, ['type' => 'student']));
+                $batch->faculty()->sync($facultyPivot);
+            }
+            $batch1Students = $studentChunks[0] ?? [];
+            $batch2Students = $studentChunks[1] ?? [];
 
             $allSubjects = [];
             foreach ($batches as $bi => $batch) {
@@ -286,11 +295,11 @@ class AcademicBulkDemoSeeder extends Seeder
                 $facultyId = $row['faculty_id'];
                 for ($ti = 0; $ti < 2; $ti++) {
                     $topicLabel = 'Unit '.($ti + 1).': Guided study — '.$subject->name;
-                    $topic = Topic::firstOrCreate(
+                    $topic = Topic::updateOrCreate(
                         ['subject_id' => $subject->id, 'name' => $topicLabel],
                         [
                             'sort_order' => $ti,
-                            'is_completed' => false,
+                            'is_completed' => $ti === 0,
                             'teaching_method_keys' => $this->pickNRandom([
                                 'demonstration', 'presentation', 'seminar', 'lab_demo', 'skill_simulation',
                             ], 3),
@@ -636,8 +645,9 @@ class AcademicBulkDemoSeeder extends Seeder
         $this->command?->info('');
         $this->command?->info('Bulk academics seeded. Login pattern (password: '.self::DEMO_PASSWORD.'):');
         $this->command?->info('  Admin:   {CODE}-admin@academic-bulk.demo   e.g. bulk-agn-01-admin@…');
-        $this->command?->info('  Faculty: {CODE}-f01@academic-bulk.demo … f06');
-        $this->command?->info('  Student: {CODE}-s001@academic-bulk.demo … s018');
+        $this->command?->info('  Faculty: {CODE}-f01@academic-bulk.demo … f'.str_pad((string) self::FACULTY_PER_COLLEGE, 2, '0', STR_PAD_LEFT));
+        $maxS = self::STUDENTS_PER_COLLEGE;
+        $this->command?->info('  Student: {CODE}-s001@academic-bulk.demo … s'.str_pad((string) $maxS, 3, '0', STR_PAD_LEFT));
         $this->command?->info('CODE is lowercase institution code (see institutions.code BULK-*).');
     }
 
