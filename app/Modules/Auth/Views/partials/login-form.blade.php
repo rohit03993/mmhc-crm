@@ -17,7 +17,7 @@
         <button class="nav-link {{ (session('login_tab') !== 'phone') ? 'active' : '' }}" id="tab-email" data-bs-toggle="pill" data-bs-target="#pane-email" type="button" role="tab">Email</button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link {{ (session('login_tab') === 'phone') ? 'active' : '' }}" id="tab-phone" data-bs-toggle="pill" data-bs-target="#pane-phone" type="button" role="tab">Phone (WhatsApp OTP)</button>
+        <button class="nav-link {{ (session('login_tab') === 'phone') ? 'active' : '' }}" id="tab-phone" data-bs-toggle="pill" data-bs-target="#pane-phone" type="button" role="tab">Phone (SMS OTP)</button>
     </li>
 </ul>
 
@@ -124,7 +124,7 @@
                 @csrf
                 <input type="hidden" name="phone" value="{{ old('phone', session('otp_phone')) }}">
                 <div class="form-floating-modern">
-                    <label for="otp">6-digit OTP (sent on WhatsApp)</label>
+                    <label for="otp">6-digit OTP (sent by SMS)</label>
                     <div style="position: relative;">
                         <i class="fas fa-key input-icon"></i>
                         <input type="text"
@@ -169,10 +169,10 @@
                     @error('phone')
                         <div class="invalid-feedback d-block mt-1">{{ $message }}</div>
                     @enderror
-                    <small class="text-muted">OTP will be sent to this number on WhatsApp</small>
+                    <small class="text-muted">OTP will be sent to this number by SMS</small>
                 </div>
                 <button type="submit" class="btn btn-login w-100">
-                    <i class="fab fa-whatsapp me-2"></i>Send OTP on WhatsApp
+                    <i class="fas fa-sms me-2"></i>Send OTP by SMS
                 </button>
             </form>
         @endif

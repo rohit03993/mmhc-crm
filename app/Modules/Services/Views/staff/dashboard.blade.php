@@ -198,12 +198,35 @@
                     <div class="total-earnings-text">
                         <div class="total-earnings-label">Total Overall Earnings</div>
                         <div class="total-earnings-value">₹{{ number_format($totalOverallEarnings, 2) }}</div>
-                        <div class="total-earnings-subtitle">From all income sources combined</div>
+                        <div class="total-earnings-subtitle">
+                            Payable from all sources
+                            @if(empty($staffMobileVerified) && !empty($totalOverallEarnedAmount) && (float) $totalOverallEarnedAmount > (float) $totalOverallEarnings)
+                                <span class="text-warning d-block small mt-1">₹{{ number_format((float) $totalOverallEarnedAmount - (float) $totalOverallEarnings, 2) }} earned · payout on hold</span>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    @if(empty($staffMobileVerified) && !empty($heldEarningsDueToUnverifiedMobile) && (float) ($heldEarningsDueToUnverifiedMobile['total'] ?? 0) > 0)
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-warning mb-0">
+                <strong><i class="fas fa-mobile-alt me-1"></i>₹{{ number_format((float) $heldEarningsDueToUnverifiedMobile['total'], 2) }} on hold</strong> until you verify your account mobile in Profile.
+                Patient rewards and referrals below may show earned amounts, but admin payout stays blocked until SMS OTP is complete.
+                <a href="{{ route('profile.edit') }}" class="alert-link fw-semibold ms-1">Verify mobile now</a>
+            </div>
+        </div>
+    </div>
+    @elseif(empty($staffMobileVerified))
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-warning mb-0 small">Verify your account mobile in <a href="{{ route('profile.edit') }}" class="alert-link">Profile</a> to unlock patient reward and referral payouts.</div>
+        </div>
+    </div>
+    @endif
 
     <!-- Four Earnings Sources - Card Layout -->
     <div class="row g-3 mb-4">
@@ -258,7 +281,10 @@
                 <div class="earnings-source-body">
                     <div class="earnings-source-main">
                         <div class="earnings-source-amount">₹{{ number_format($patientRewardEarnings['total_amount'], 2) }}</div>
-                        <div class="earnings-source-label">{{ number_format($patientRewardEarnings['total_points']) }} Points</div>
+                        <div class="earnings-source-label">{{ number_format($patientRewardEarnings['total_points']) }} pts · payable</div>
+                        @if(empty($staffMobileVerified) && ($patientRewardEarnings['earned_amount'] ?? 0) > 0)
+                            <div class="small text-warning">₹{{ number_format((float) $patientRewardEarnings['earned_amount'], 2) }} earned · on hold</div>
+                        @endif
                     </div>
                     <div class="earnings-source-details">
                         <div class="detail-item">
@@ -271,12 +297,18 @@
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">This Month:</span>
-                            <span class="detail-value text-success">₹{{ number_format($patientRewardEarnings['this_month'], 2) }}</span>
+                            <span class="detail-value {{ empty($staffMobileVerified) ? 'text-warning' : 'text-success' }}">₹{{ number_format($patientRewardEarnings['this_month'], 2) }}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Rate:</span>
                             <span class="detail-value">1 pt = ₹10</span>
                         </div>
+                        @if(empty($staffMobileVerified) && !empty($heldEarningsDueToUnverifiedMobile['patient_reward']['amount']))
+                        <div class="detail-item">
+                            <span class="detail-label text-warning">Held:</span>
+                            <span class="detail-value text-warning fw-semibold">₹{{ number_format((float) $heldEarningsDueToUnverifiedMobile['patient_reward']['amount'], 2) }} (verify mobile)</span>
+                        </div>
+                        @endif
                     </div>
                     <a href="{{ route('staff.rewards.index') }}" class="btn btn-sm btn-outline-warning w-100 mt-2">
                         <i class="fas fa-eye me-1"></i>View Details
@@ -297,11 +329,14 @@
                 <div class="earnings-source-body">
                     <div class="earnings-source-main">
                         <div class="earnings-source-amount">₹{{ number_format($staffReferralEarnings['total_amount'], 2) }}</div>
-                        <div class="earnings-source-label">{{ $staffReferralEarnings['total_referrals'] }} Referrals</div>
+                        <div class="earnings-source-label">{{ $staffReferralEarnings['total_referrals'] }} referral(s) · payable</div>
+                        @if(empty($staffMobileVerified) && ($staffReferralEarnings['earned_amount'] ?? 0) > 0)
+                            <div class="small text-warning">₹{{ number_format((float) $staffReferralEarnings['earned_amount'], 2) }} earned · on hold</div>
+                        @endif
                     </div>
                     <div class="earnings-source-details">
                         <div class="detail-item">
-                            <span class="detail-label">Completed:</span>
+                            <span class="detail-label">OTP verified:</span>
                             <span class="detail-value">{{ $staffReferralEarnings['total_referrals'] }}</span>
                         </div>
                         <div class="detail-item">
@@ -310,12 +345,18 @@
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">This Month:</span>
-                            <span class="detail-value text-success">₹{{ number_format($staffReferralEarnings['this_month_amount'], 2) }}</span>
+                            <span class="detail-value {{ empty($staffMobileVerified) ? 'text-warning' : 'text-success' }}">₹{{ number_format($staffReferralEarnings['this_month_amount'], 2) }}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Base:</span>
                             <span class="detail-value">₹100 / referral + slab logic</span>
                         </div>
+                        @if(empty($staffMobileVerified) && !empty($heldEarningsDueToUnverifiedMobile['staff_referral']['amount']))
+                        <div class="detail-item">
+                            <span class="detail-label text-warning">Held:</span>
+                            <span class="detail-value text-warning fw-semibold">₹{{ number_format((float) $heldEarningsDueToUnverifiedMobile['staff_referral']['amount'], 2) }} (verify mobile)</span>
+                        </div>
+                        @endif
                     </div>
                     <a href="{{ route('staff.staff-referrals.index') }}" class="btn btn-sm btn-outline-info w-100 mt-2">
                         <i class="fas fa-eye me-1"></i>View Details
@@ -337,6 +378,9 @@
                     <div class="earnings-source-main">
                         <div class="earnings-source-amount">₹{{ number_format($subscriptionReferralEarnings['total_commission'], 2) }}</div>
                         <div class="earnings-source-label">{{ $subscriptionReferralEarnings['total_referrals'] }} Subscriptions</div>
+                        @if(empty($staffMobileVerified) && ($subscriptionReferralEarnings['earned_commission'] ?? 0) > 0)
+                            <div class="small text-warning mt-1">₹{{ number_format((float) $subscriptionReferralEarnings['earned_commission'], 2) }} earned · on hold</div>
+                        @endif
                     </div>
                     <div class="earnings-source-details">
                         <div class="detail-item">

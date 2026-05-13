@@ -191,17 +191,21 @@
                                             </td>
                                             <td><small>{{ Str::limit($reward->hospital_name, 32) }}</small></td>
                                             <td class="text-center">
-                                                <span class="fw-semibold text-success">+{{ $reward->reward_points }}</span>
-                                                <div class="small text-muted">₹{{ number_format($reward->reward_amount, 2) }}</div>
+                                                @php
+                                                    $staffMobileOk = (bool) $staff->hasVerifiedPhone();
+                                                    $rewardBlockers = \App\Modules\Payments\Services\StaffEarningStatusResolver::patientRewardBlockers($reward, $staffMobileOk);
+                                                    $countsForStaff = \App\Modules\Payments\Services\StaffEarningStatusResolver::patientRewardCountsForStaff($reward, $staffMobileOk);
+                                                @endphp
+                                                @if($countsForStaff || $reward->payment_processed)
+                                                    <span class="fw-semibold text-success">+{{ $reward->reward_points }}</span>
+                                                    <div class="small text-muted">₹{{ number_format($reward->reward_amount, 2) }}</div>
+                                                @else
+                                                    <span class="fw-semibold text-muted">0</span>
+                                                    <div class="small text-muted">Not credited</div>
+                                                @endif
                                             </td>
                                             <td class="text-center">
-                                                @if(($reward->verification_status ?? 'verified') === 'verified')
-                                                    <span class="badge bg-success">Verified</span>
-                                                @elseif($reward->verification_status === 'pending')
-                                                    <span class="badge bg-warning text-dark">Pending</span>
-                                                @else
-                                                    <span class="badge bg-secondary">{{ $reward->verification_status ?? '—' }}</span>
-                                                @endif
+                                                @include('services::staff.partials.payout-status-blockers', ['blockers' => $rewardBlockers, 'compact' => true, 'align' => 'center'])
                                             </td>
                                             <td>
                                                 <div class="fw-semibold small">{{ $reward->created_at->format('M d, Y') }}</div>

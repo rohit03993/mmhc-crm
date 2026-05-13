@@ -59,13 +59,7 @@
                         </form>
                         <form method="POST" action="{{ route('staff.referrals.resend-otp') }}" class="mt-2">
                             @csrf
-                            <div class="d-flex gap-2 flex-wrap align-items-center">
-                                <select name="otp_channel" class="form-select form-select-sm" style="max-width: 180px;" required>
-                                    <option value="mobile">Resend on Mobile</option>
-                                    <option value="email">Resend on Email</option>
-                                </select>
-                                <button type="submit" class="btn btn-sm btn-outline-secondary">Resend OTP</button>
-                            </div>
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Resend SMS OTP</button>
                         </form>
                     </div>
                 @endif

@@ -22,8 +22,22 @@
         </div>
     </div>
 
+    @include('services::staff.partials.verification-steps-explainer')
+
     <!-- Stats Banner -->
     <div class="row g-3 mb-4">
+        @if(!$staffMobileVerified && (($stats['held_amount'] ?? 0) > 0 || ($stats['total_points'] ?? 0) > 0))
+        <div class="col-12">
+            <div class="alert alert-warning mb-0 py-2">
+                <i class="fas fa-mobile-alt me-1"></i>
+                @if(($stats['held_amount'] ?? 0) > 0)
+                    ₹{{ number_format((float) $stats['held_amount'], 2) }} is earned but not payable until <strong>your Profile mobile</strong> is SMS-verified (separate from patient mobile OTP on the form).
+                @else
+                    Verify your account mobile in Profile to unlock reward payouts.
+                @endif
+            </div>
+        </div>
+        @endif
         <div class="col-12 col-md-4">
             <div class="stats-card-modern bg-warning">
                 <div class="stats-icon">
@@ -36,13 +50,16 @@
             </div>
         </div>
         <div class="col-12 col-md-4">
-            <div class="stats-card-modern bg-success">
+            <div class="stats-card-modern {{ (!$staffMobileVerified && ($stats['earned_amount'] ?? 0) > 0) ? 'bg-warning' : 'bg-success' }}">
                 <div class="stats-icon">
                     <i class="fas fa-rupee-sign"></i>
                 </div>
                 <div class="stats-content">
-                    <div class="stats-value">₹{{ number_format($stats['total_amount'], 2) }}</div>
-                    <div class="stats-label">Total Earnings</div>
+                    <div class="stats-value">₹{{ number_format($stats['payable_amount'], 2) }}</div>
+                    <div class="stats-label">Payable Earnings</div>
+                    @if(!$staffMobileVerified && ($stats['earned_amount'] ?? 0) > 0)
+                        <div class="small text-warning mt-1">₹{{ number_format((float) $stats['earned_amount'], 2) }} earned · payout on hold</div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -102,11 +119,24 @@
                                     </div>
                                 </div>
                                 <div class="reward-entry-badge-modern">
-                                    <span class="badge-points">+{{ $reward->reward_points }} pts</span>
-                                    <span class="badge-amount">₹{{ number_format($reward->reward_amount, 2) }}</span>
-                                    <span class="badge bg-{{ ($reward->verification_status ?? 'verified') === 'verified' ? 'success' : 'warning text-dark' }}">
-                                        {{ ucfirst($reward->verification_status ?? 'verified') }}
-                                    </span>
+                                    @php
+                                        $rewardBlockers = \App\Modules\Payments\Services\StaffEarningStatusResolver::patientRewardBlockers($reward, $staffMobileVerified);
+                                        $payoutStatus = \App\Modules\Payments\Services\StaffEarningStatusResolver::primaryStatus($rewardBlockers);
+                                        $statusMessages = \App\Modules\Payments\Services\StaffEarningStatusResolver::detailMessagesForBlockers(
+                                            $rewardBlockers,
+                                            \App\Modules\Payments\Services\StaffEarningStatusResolver::patientRewardMaskedPhone($reward)
+                                        );
+                                        $showRewardAmount = \App\Modules\Payments\Services\StaffEarningStatusResolver::patientRewardCountsForStaff($reward, $staffMobileVerified)
+                                            || $reward->payment_processed;
+                                    @endphp
+                                    @if($showRewardAmount)
+                                        <span class="badge-points">+{{ $reward->reward_points }} pts</span>
+                                        <span class="badge-amount">₹{{ number_format($reward->reward_amount, 2) }}</span>
+                                    @else
+                                        <span class="badge-points badge-points--muted">0 pts</span>
+                                        <span class="badge-amount text-muted">Not credited yet</span>
+                                    @endif
+                                    @include('services::staff.partials.payout-status-blockers', ['blockers' => $rewardBlockers, 'compact' => true])
                                 </div>
                             </div>
                             <div class="reward-entry-details-modern">
@@ -126,12 +156,18 @@
                                     <i class="fas fa-clock me-2 text-muted"></i>
                                     <span>{{ $reward->created_at->format('M d, Y') }} • {{ $reward->created_at->diffForHumans() }}</span>
                                 </div>
-                                @if(($reward->verification_status ?? 'verified') !== 'verified')
+                                @if(in_array(\App\Modules\Payments\Services\StaffEarningStatusResolver::PENDING_PATIENT_OTP, $rewardBlockers, true))
                                 <div class="mt-2 d-flex gap-2">
-                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="sendRewardOtp({{ $reward->id }})">Send OTP</button>
-                                    <button type="button" class="btn btn-sm btn-success" onclick="verifyRewardOtp({{ $reward->id }})">Verify OTP</button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="sendRewardOtp({{ $reward->id }})">Send OTP to patient mobile</button>
+                                    <button type="button" class="btn btn-sm btn-success" onclick="verifyRewardOtp({{ $reward->id }})">Verify patient OTP</button>
                                 </div>
                                 @endif
+                                @foreach($statusMessages as $statusMessage)
+                                <div class="detail-row mt-2">
+                                    <i class="fas fa-info-circle me-2 text-warning"></i>
+                                    <span>{{ $statusMessage }}</span>
+                                </div>
+                                @endforeach
                             </div>
                         </div>
                     @endforeach
@@ -184,6 +220,7 @@
 
 .bg-warning .stats-icon { background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); }
 .bg-success .stats-icon { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
+.bg-warning .stats-icon { background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); }
 .bg-info .stats-icon { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); }
 
 .stats-content {
@@ -262,6 +299,17 @@
 
 .reward-entry-badge-modern {
     text-align: right;
+}
+
+.badge-points--muted {
+    display: block;
+    background: #e9ecef !important;
+    color: #6c757d !important;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
 }
 
 .badge-points {

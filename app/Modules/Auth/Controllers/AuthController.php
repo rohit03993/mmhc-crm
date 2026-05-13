@@ -7,7 +7,7 @@ use App\Models\Core\User;
 use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Institution;
 use App\Modules\Auth\Services\UserService;
-use App\Modules\Auth\Services\WhatsAppOtpService;
+use App\Modules\Auth\Services\SmsOtpService;
 use App\Modules\Referrals\Services\ReferralService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -25,13 +25,13 @@ class AuthController extends Controller
 
     protected $referralService;
 
-    protected $whatsAppOtpService;
+    protected $smsOtpService;
 
-    public function __construct(UserService $userService, ReferralService $referralService, WhatsAppOtpService $whatsAppOtpService)
+    public function __construct(UserService $userService, ReferralService $referralService, SmsOtpService $smsOtpService)
     {
         $this->userService = $userService;
         $this->referralService = $referralService;
-        $this->whatsAppOtpService = $whatsAppOtpService;
+        $this->smsOtpService = $smsOtpService;
     }
 
     /**
@@ -90,7 +90,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Send OTP to phone via WhatsApp (for phone login). Only for registered users.
+     * Send OTP to phone via SMS (Sent.dm) for phone login. Does not leak whether the number is registered.
      */
     public function sendLoginOtp(Request $request)
     {
@@ -121,12 +121,12 @@ class AuthController extends Controller
 
         if (! $user) {
             return redirect()->back()
-                ->withErrors(['phone' => 'No account found with this number. Please register or use email login.'])
+                ->with('success_otp', 'If an account exists for this number, you will receive an SMS with a login code shortly.')
                 ->withInput()
                 ->with('login_tab', 'phone');
         }
 
-        $result = $this->whatsAppOtpService->sendOtp($normalizedPhone);
+        $result = $this->smsOtpService->sendOtp($normalizedPhone);
 
         if (! $result['success']) {
             $message = $result['message'];
@@ -176,7 +176,7 @@ class AuthController extends Controller
 
         $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
 
-        if (! $this->whatsAppOtpService->verifyOtp($normalizedPhone, $request->input('otp'))) {
+        if (! $this->smsOtpService->verifyOtp($normalizedPhone, $request->input('otp'))) {
             return redirect()->back()
                 ->withErrors(['otp' => 'Invalid or expired OTP. Please request a new one.'])
                 ->withInput()
@@ -409,7 +409,7 @@ class AuthController extends Controller
             if ($isReferralRegistration && $referralCode) {
                 $referralProcessed = $this->referralService->processReferral($referralCode, $user);
                 if (! $referralProcessed) {
-                    $request->session()->flash('warning', 'Referral registration created, but OTP could not be sent right now. Please use Resend OTP on dashboard/welcome page.');
+                    $request->session()->flash('warning', 'Referral could not be started. The referrer may need to verify their mobile in Profile first, or OTP could not be sent to your mobile. You can retry from the dashboard when ready.');
                 } else {
                     $request->session()->flash('success', 'Referral detected. OTP sent to your mobile for referral verification.');
                 }

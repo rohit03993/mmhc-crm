@@ -72,6 +72,22 @@ class Referral extends Model
     }
 
     /**
+     * Referred staff completed SMS OTP (not legacy/demo completed rows only).
+     */
+    public function isReferralMobileOtpVerified(): bool
+    {
+        return $this->verification_status === 'verified'
+            && $this->verified_at !== null;
+    }
+
+    public function scopeReferralMobileOtpVerified($query)
+    {
+        return $query
+            ->where('verification_status', 'verified')
+            ->whereNotNull('verified_at');
+    }
+
+    /**
      * Mark referral as completed
      */
     public function markAsCompleted(): void

@@ -445,24 +445,20 @@
                                                 <code class="referral-code-readable p-2 rounded d-inline-block">{{ $referral->referral_code }}</code>
                                             </td>
                                             <td class="text-center">
-                                                @if($referral->status === 'completed')
-                                                    <span class="badge bg-success px-3 py-2">
-                                                        <i class="fas fa-check-circle me-1"></i>Completed
-                                                    </span>
-                                                @elseif($referral->status === 'pending')
-                                                    <span class="badge bg-warning text-dark px-3 py-2">
-                                                        <i class="fas fa-clock me-1"></i>Pending
-                                                    </span>
-                                                @else
-                                                    <span class="badge bg-secondary px-3 py-2">
-                                                        <i class="fas fa-times-circle me-1"></i>Cancelled
-                                                    </span>
-                                                @endif
+                                                @php
+                                                    $referrerMobileOk = (bool) optional($referral->referrer)->hasVerifiedPhone();
+                                                    $adminReferralBlockers = \App\Modules\Payments\Services\StaffEarningStatusResolver::referralBlockers($referral, $referrerMobileOk);
+                                                @endphp
+                                                @include('services::staff.partials.payout-status-blockers', ['blockers' => $adminReferralBlockers, 'compact' => true, 'align' => 'center'])
                                             </td>
                                             <td class="text-center">
-                                                <span class="fw-bold text-primary" style="font-size: 1.1rem;">
-                                                    <i class="fas fa-rupee-sign me-1"></i>₹{{ number_format($referral->reward_amount ?? 0, 2) }}
-                                                </span>
+                                                @if(\App\Modules\Payments\Services\StaffEarningStatusResolver::referralIncentiveCountsForStaff($referral, $referrerMobileOk))
+                                                    <span class="fw-bold text-primary" style="font-size: 1.1rem;">
+                                                        <i class="fas fa-rupee-sign me-1"></i>₹{{ number_format($referral->reward_amount ?? 100, 2) }}
+                                                    </span>
+                                                @else
+                                                    <span class="text-muted small">Not payable yet</span>
+                                                @endif
                                             </td>
                                             <td class="text-center">
                                                 @if($referral->completed_at)

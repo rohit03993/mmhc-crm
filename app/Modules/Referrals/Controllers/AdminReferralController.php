@@ -30,10 +30,23 @@ class AdminReferralController extends Controller
             ->withCount([
                 'referrals as total_referrals',
                 'referrals as completed_referrals' => function ($query) {
-                    $query->where('status', 'completed')->whereNotNull('referred_id');
+                    $query->referralMobileOtpVerified()
+                        ->where('status', 'completed')
+                        ->whereNotNull('referred_id');
                 },
                 'referrals as pending_referrals' => function ($query) {
-                    $query->where('status', 'pending')->whereNull('referred_id');
+                    $query->where(function ($q) {
+                        $q->where('status', 'pending')
+                            ->orWhere('verification_status', 'pending')
+                            ->orWhere(function ($legacy) {
+                                $legacy->where('status', 'completed')
+                                    ->where(function ($nullOrPending) {
+                                        $nullOrPending->whereNull('verification_status')
+                                            ->orWhere('verification_status', '!=', 'verified')
+                                            ->orWhereNull('verified_at');
+                                    });
+                            });
+                    })->whereNotNull('referred_id');
                 },
             ])
             ->get()
@@ -45,6 +58,7 @@ class AdminReferralController extends Controller
                     ->sum('final_amount');
                 if ($totalAmount <= 0) {
                     $totalAmount = (float) Referral::where('referrer_id', $staff->id)
+                        ->referralMobileOtpVerified()
                         ->where('status', 'completed')
                         ->whereNotNull('referred_id')
                         ->sum('reward_amount');
@@ -101,7 +115,8 @@ class AdminReferralController extends Controller
         $overallStats = [
             'total_staff_with_referrals' => $staffWithReferrals->count(),
             'total_referrals' => Referral::whereNotNull('referred_id')->count(),
-            'completed_referrals' => Referral::where('status', 'completed')
+            'completed_referrals' => Referral::referralMobileOtpVerified()
+                ->where('status', 'completed')
                 ->whereNotNull('referred_id')
                 ->count(),
             'pending_referrals' => Referral::where('status', 'pending')

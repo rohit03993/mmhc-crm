@@ -19,6 +19,8 @@ class User extends Authenticatable
         'email',
         'pending_email',
         'phone',
+        'phone_verified_at',
+        'phone_verified_source',
         'pending_phone',
         'contact_update_channel',
         'contact_update_otp_hash',
@@ -63,6 +65,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'phone_verified_at' => 'datetime',
         'date_of_birth' => 'datetime',
         'password' => 'hashed',
         'is_active' => 'boolean',
@@ -113,6 +116,83 @@ class User extends Authenticatable
     public function isPatient()
     {
         return $this->role === 'patient';
+    }
+
+    /**
+     * Mobile on the account was confirmed via OTP (profile contact flow).
+     */
+    public function hasVerifiedPhone(): bool
+    {
+        return $this->phone_verified_at !== null;
+    }
+
+    /**
+     * Nurses/caregivers must verify account mobile (SMS) before earning-related actions.
+     */
+    public function staffMustVerifyMobileBeforeRewards(): bool
+    {
+        return $this->isStaff() && ! $this->hasVerifiedPhone();
+    }
+
+    /**
+     * Profile edit flow: new mobile saved, awaiting SMS OTP before it becomes active.
+     */
+    public function hasPendingMobileContactVerification(): bool
+    {
+        return $this->contact_update_channel === 'mobile' && ! empty($this->pending_phone);
+    }
+
+    /**
+     * Human label for how the account mobile was OTP-verified (admin reporting).
+     */
+    public function phoneVerificationSourceLabel(): string
+    {
+        if (! $this->phone_verified_at || ! $this->phone) {
+            return '—';
+        }
+
+        return match ((string) $this->phone_verified_source) {
+            'profile' => 'Profile contact OTP',
+            'referral' => 'Staff referral OTP (mobile)',
+            'patient_reward' => 'Patient reward OTP (same mobile as account)',
+            default => 'Verified (legacy / unknown)',
+        };
+    }
+
+    public function applyPhoneVerifiedFromProfileContactOtp(): void
+    {
+        $this->forceFill([
+            'phone_verified_at' => now(),
+            'phone_verified_source' => 'profile',
+        ])->save();
+    }
+
+    /**
+     * Referred user completed referral verification via SMS OTP.
+     */
+    public function applyPhoneVerifiedFromReferralMobileOtp(): void
+    {
+        if ((string) $this->phone_verified_source === 'profile') {
+            return;
+        }
+        $this->forceFill([
+            'phone_verified_at' => now(),
+            'phone_verified_source' => 'referral',
+        ])->save();
+    }
+
+    /**
+     * Staff verified a patient reward by SMS where patient mobile matches this user's account phone.
+     */
+    public function applyPhoneVerifiedFromPatientRewardSelfMobileOtp(): void
+    {
+        if (in_array((string) $this->phone_verified_source, ['profile', 'referral'], true)) {
+            return;
+        }
+        $this->forceFill([
+            'phone_verified_at' => now(),
+            'phone_verified_source' => 'patient_reward',
+        ])->save();
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\SiteSetting;
+use App\Modules\Payments\Services\StaffPayoutService;
 use App\Modules\Referrals\Models\Referral;
 use App\Modules\Rewards\Models\CaregiverReward;
 use App\Modules\Services\Models\ServiceRequest;
@@ -48,10 +49,15 @@ class AppServiceProvider extends ServiceProvider
             $pendingRewardOtpBanner = null;
             $pendingServiceCompletionBanner = null;
             $hasPendingContactUpdate = false;
+            $heldEarningsDueToUnverifiedMobile = null;
+            $staffNeedsMobileVerification = false;
 
             if (Auth::check() && Auth::user()->isStaff()) {
                 $user = Auth::user();
-                $hasPendingContactUpdate = ! empty($user->contact_update_channel) && (! empty($user->pending_email) || ! empty($user->pending_phone));
+                $hasPendingContactUpdate = $user->hasPendingMobileContactVerification();
+                $staffNeedsMobileVerification = ! $user->hasVerifiedPhone();
+                $heldEarningsDueToUnverifiedMobile = app(StaffPayoutService::class)
+                    ->calculateHeldDueToUnverifiedMobile($user);
                 $pendingReferralOtpBanner = Referral::query()
                     ->where('referred_id', $user->id)
                     ->where('status', 'pending')
@@ -100,6 +106,8 @@ class AppServiceProvider extends ServiceProvider
             $view->with('pendingRewardOtpBanner', $pendingRewardOtpBanner);
             $view->with('pendingServiceCompletionBanner', $pendingServiceCompletionBanner);
             $view->with('hasPendingContactUpdate', $hasPendingContactUpdate);
+            $view->with('heldEarningsDueToUnverifiedMobile', $heldEarningsDueToUnverifiedMobile);
+            $view->with('staffNeedsMobileVerification', $staffNeedsMobileVerification);
         });
     }
 }

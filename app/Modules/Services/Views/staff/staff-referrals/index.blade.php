@@ -22,8 +22,22 @@
         </div>
     </div>
 
+    @include('services::staff.partials.verification-steps-explainer')
+
     <!-- Stats Banner (₹100 base per referral + incentive logic) -->
     <div class="row g-3 mb-4">
+        @if(!$staffMobileVerified && ($staffReferralHeldAmount > 0 || $staffReferralEarnedAmount > 0))
+        <div class="col-12">
+            <div class="alert alert-warning mb-0 py-2">
+                <i class="fas fa-mobile-alt me-1"></i>
+                @if($staffReferralHeldAmount > 0)
+                    ₹{{ number_format($staffReferralHeldAmount, 2) }} is earned but not payable until <strong>your Profile mobile</strong> is SMS-verified (separate from the referred person’s mobile OTP).
+                @else
+                    Verify your account mobile in Profile to unlock referral payouts.
+                @endif
+            </div>
+        </div>
+        @endif
         <div class="col-12 col-md-6">
             <div class="stats-card-modern bg-info">
                 <div class="stats-icon">
@@ -31,18 +45,24 @@
                 </div>
                 <div class="stats-content">
                     <div class="stats-value">{{ $referralStats['completed_referrals'] }}</div>
-                    <div class="stats-label">Completed Referrals</div>
+                    <div class="stats-label">Referrals (referred staff SMS OTP done)</div>
+                    @if(($referralStats['pending_referrals'] ?? 0) > 0)
+                        <div class="small text-muted mt-1">{{ $referralStats['pending_referrals'] }} waiting on referred staff mobile OTP</div>
+                    @endif
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-6">
-            <div class="stats-card-modern bg-success">
+            <div class="stats-card-modern {{ (!$staffMobileVerified && $staffReferralEarnedAmount > 0) ? 'bg-warning' : 'bg-success' }}">
                 <div class="stats-icon">
                     <i class="fas fa-rupee-sign"></i>
                 </div>
                 <div class="stats-content">
-                    <div class="stats-value">₹{{ number_format($staffReferralTotalAmount, 2) }}</div>
-                    <div class="stats-label">Total Incentive (base: ₹{{ number_format($basePerRef, 0) }} per referral)</div>
+                    <div class="stats-value">₹{{ number_format($staffReferralPayableAmount, 2) }}</div>
+                    <div class="stats-label">Payable Incentive (base: ₹{{ number_format($basePerRef, 0) }} per referral)</div>
+                    @if(!$staffMobileVerified && $staffReferralEarnedAmount > 0)
+                        <div class="small text-warning mt-1">₹{{ number_format($staffReferralEarnedAmount, 2) }} earned · payout on hold</div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -57,7 +77,7 @@
                     <h5 class="mb-0">Your Staff Referral Link</h5>
                 </div>
                 <div class="referral-link-body">
-                    <p class="mb-3">Share this link with nurses and caregivers. Referral stays <strong>pending</strong> until OTP verification by the referred staff. After verification, base <strong>₹{{ number_format($basePerRef, 0) }}</strong> and final incentive logic (growth/DtA) are unlocked.</p>
+                    <p class="mb-3">Share this link with nurses and caregivers. Referral stays <strong>pending</strong> until the referred staff completes SMS OTP. After that, base <strong>₹{{ number_format($basePerRef, 0) }}</strong> is earned — payout unlocks once <strong>your account mobile</strong> is verified in Profile.</p>
                     <div class="input-group-modern">
                         <input type="text" 
                                class="form-control form-control-lg" 
@@ -71,7 +91,7 @@
                         </button>
                     </div>
                     <small class="text-muted d-block mt-2">
-                        <i class="fas fa-info-circle me-1"></i>You can share this link multiple times. Reward is credited only after OTP verification.
+                        <i class="fas fa-info-circle me-1"></i>Referral SMS OTP must be completed by the referred staff. Your account mobile must also be verified in Profile before incentive is payable.
                     </small>
                 </div>
             </div>
@@ -90,45 +110,50 @@
             @if($referrals->count() > 0)
                 <div class="referrals-list-cards">
                     @foreach($referrals as $referral)
+                        @php
+                            $referralBlockers = \App\Modules\Payments\Services\StaffEarningStatusResolver::referralBlockers($referral, $staffMobileVerified);
+                            $statusMessages = \App\Modules\Payments\Services\StaffEarningStatusResolver::detailMessagesForBlockers($referralBlockers);
+                            $showIncentive = \App\Modules\Payments\Services\StaffEarningStatusResolver::referralIncentiveCountsForStaff($referral, $staffMobileVerified)
+                                || $referral->payment_processed;
+                        @endphp
                         <div class="referral-entry-card-modern">
                             <div class="referral-entry-header-modern">
                                 <div class="referral-entry-info">
                                     <div class="referral-entry-name">
                                         @if($referral->referred)
-                                            <i class="fas fa-user-check me-2 text-success"></i>{{ $referral->referred->name }}
+                                            <i class="fas fa-user me-2 text-primary"></i>{{ $referral->referred->name }}
                                         @else
                                             <i class="fas fa-clock me-2 text-warning"></i>Pending Registration
                                         @endif
                                     </div>
                                     <div class="referral-entry-meta">
                                         <span class="badge bg-secondary me-2">Code: {{ $referral->referral_code }}</span>
-                                        @php
-                                            $verificationStatus = $referral->verification_status ?? ($referral->status === 'completed' ? 'verified' : 'pending');
-                                        @endphp
-                                        <span class="badge bg-{{ $verificationStatus === 'verified' ? 'success' : ($verificationStatus === 'pending' ? 'warning text-dark' : 'secondary') }}">
-                                            {{ ucfirst($verificationStatus) }}
-                                        </span>
+                                        @include('services::staff.partials.payout-status-blockers', ['blockers' => $referralBlockers, 'compact' => true])
                                     </div>
                                 </div>
-                                @if($verificationStatus === 'verified')
+                                @if($showIncentive)
                                 <div class="referral-entry-badge-modern">
                                     <span class="badge-points">Base ₹{{ number_format($basePerRef, 0) }}</span>
                                 </div>
+                                @else
+                                <div class="referral-entry-badge-modern">
+                                    <span class="badge-points badge-points--held">₹0 · not credited yet</span>
+                                </div>
                                 @endif
                             </div>
-                            @if($verificationStatus !== 'verified')
+                            @foreach($statusMessages as $statusMessage)
                                 <div class="referral-entry-details-modern mb-2">
                                     <div class="detail-row">
-                                        <i class="fas fa-shield-alt me-2 text-warning"></i>
-                                        <span>OTP verification is pending on referred staff mobile. Incentive will be credited only after OTP verification.</span>
+                                        <i class="fas fa-info-circle me-2 text-warning"></i>
+                                        <span>{{ $statusMessage }}</span>
                                     </div>
                                 </div>
-                            @endif
-                            @if($referral->completed_at)
+                            @endforeach
+                            @if(\App\Modules\Payments\Services\StaffEarningStatusResolver::referralOtpVerified($referral) && ($referral->verified_at || $referral->completed_at))
                             <div class="referral-entry-details-modern">
                                 <div class="detail-row">
-                                    <i class="fas fa-calendar-check me-2 text-success"></i>
-                                    <span>Completed: {{ $referral->completed_at->format('M d, Y') }} • {{ $referral->completed_at->diffForHumans() }}</span>
+                                    <i class="fas fa-calendar-alt me-2 text-muted"></i>
+                                    <span>Referred staff SMS OTP verified: {{ ($referral->verified_at ?? $referral->completed_at)->format('M d, Y') }}</span>
                                 </div>
                             </div>
                             @endif
@@ -179,8 +204,13 @@
 }
 
 .bg-info .stats-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-.bg-success .stats-icon { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
+.badge-points--held {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%) !important;
+    color: #212529 !important;
+}
+
 .bg-warning .stats-icon { background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); }
+.bg-success .stats-icon { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
 
 .stats-content {
     flex: 1;

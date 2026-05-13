@@ -2,6 +2,7 @@
 
 namespace App\Modules\Rewards\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -43,5 +44,23 @@ class CaregiverReward extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Core\User::class);
+    }
+
+    /**
+     * Patient SMS OTP completed (not legacy/demo rows with only verification_status set).
+     */
+    public function isPatientMobileOtpVerified(): bool
+    {
+        return $this->verification_status === 'verified'
+            && $this->verified_at !== null
+            && $this->verification_otp_sent_at !== null;
+    }
+
+    public function scopeVerified(Builder $query): Builder
+    {
+        return $query
+            ->where('verification_status', 'verified')
+            ->whereNotNull('verified_at')
+            ->whereNotNull('verification_otp_sent_at');
     }
 }

@@ -5,12 +5,12 @@ namespace App\Modules\Referrals\Services;
 use App\Models\Core\User;
 use App\Modules\Incentives\Models\IncentiveLedger;
 use App\Modules\Incentives\Services\IncentiveCalculatorService;
+use App\Modules\Auth\Services\ScopedSmsOtpRedisService;
+use App\Modules\Auth\Services\SmsOtpService;
 use App\Modules\Referrals\Models\Referral;
 use App\Modules\Rewards\Services\RewardService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class ReferralService
@@ -136,6 +136,10 @@ class ReferralService
             // Get referrer
             $referrer = $existingReferral->referrer;
 
+            if (! $referrer || ! $referrer->hasVerifiedPhone()) {
+                return false;
+            }
+
             // Check if this user was already referred by this referrer
             $alreadyReferred = Referral::where('referrer_id', $referrer->id)
                 ->where('referred_id', $newUser->id)
@@ -211,49 +215,27 @@ class ReferralService
         }
     }
 
-    private function sendReferralCompletionOtp(Referral $referral, User $referredStaff, string $channel = 'mobile'): bool
+    private function sendReferralCompletionOtp(Referral $referral, User $referredStaff): bool
     {
-        $channel = strtolower($channel);
-        if (! in_array($channel, ['mobile', 'email'], true)) {
-            return false;
-        }
         if ($referral->verification_otp_sent_at && $referral->verification_otp_sent_at->gt(now()->subMinutes(15))) {
             return false;
         }
         $otp = (string) random_int(100000, 999999);
-        $maskedDestination = null;
-
-        if ($channel === 'mobile') {
-            $rawPhone = (string) ($referredStaff->pending_phone ?: $referredStaff->phone);
-            $normalizedPhone = $this->normalizeIndianPhone($rawPhone);
-            if (! $normalizedPhone) {
-                return false;
-            }
-            $send = app(\App\Modules\Auth\Services\WhatsAppOtpService::class)->sendCustomOtp($normalizedPhone, $otp);
-            if (! ($send['success'] ?? false)) {
-                return false;
-            }
-            $maskedDestination = 'Mobile: '.$this->maskPhone($normalizedPhone);
-        } else {
-            $email = trim((string) ($referredStaff->pending_email ?: $referredStaff->email ?? ''));
-            if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                return false;
-            }
-            try {
-                Mail::raw(
-                    "Your MMHC referral verification OTP is: {$otp}. It expires in 5 minutes.",
-                    function ($message) use ($email) {
-                        $message->to($email)->subject('MMHC Referral Verification OTP');
-                    }
-                );
-            } catch (\Throwable $e) {
-                return false;
-            }
-            $maskedDestination = 'Email: '.$this->maskEmail($email);
+        $rawPhone = (string) ($referredStaff->pending_phone ?: $referredStaff->phone);
+        $normalizedPhone = $this->normalizeIndianPhone($rawPhone);
+        if (! $normalizedPhone) {
+            return false;
         }
+        $send = app(SmsOtpService::class)->sendCustomOtp($normalizedPhone, $otp);
+        if (! ($send['success'] ?? false)) {
+            return false;
+        }
+        $maskedDestination = 'Mobile: '.$this->maskPhone($normalizedPhone);
+
+        app(ScopedSmsOtpRedisService::class)->store(ScopedSmsOtpRedisService::PURPOSE_REFERRAL, (int) $referral->id, $otp);
 
         $referral->update([
-            'verification_otp_hash' => Hash::make($otp),
+            'verification_otp_hash' => null,
             'verification_otp_expires_at' => now()->addMinutes(5),
             'verification_otp_attempts' => 0,
             'verification_otp_sent_at' => now(),
@@ -263,12 +245,8 @@ class ReferralService
         return true;
     }
 
-    public function resendReferralOtpForReferred(User $referredUser, string $channel = 'mobile'): array
+    public function resendReferralOtpForReferred(User $referredUser): array
     {
-        $channel = strtolower($channel);
-        if (! in_array($channel, ['mobile', 'email'], true)) {
-            return ['success' => false, 'message' => 'Invalid OTP channel selected.'];
-        }
         $referral = Referral::query()
             ->where('referred_id', $referredUser->id)
             ->where('status', 'pending')
@@ -283,14 +261,12 @@ class ReferralService
             return ['success' => false, 'message' => 'Please wait 15 minutes before resending OTP.'];
         }
 
-        $ok = $this->sendReferralCompletionOtp($referral, $referredUser, $channel);
+        $ok = $this->sendReferralCompletionOtp($referral, $referredUser);
         if (! $ok) {
-            return ['success' => false, 'message' => $channel === 'email'
-                ? 'Could not send OTP on email right now. Please check your registered email.'
-                : 'Could not send OTP on mobile right now. Please check your registered mobile number.'];
+            return ['success' => false, 'message' => 'Could not send OTP on mobile right now. Please check your registered mobile number.'];
         }
 
-        return ['success' => true, 'message' => 'Referral OTP resent successfully via '.ucfirst($channel).'.'];
+        return ['success' => true, 'message' => 'Referral OTP resent successfully via SMS.'];
     }
 
     public function verifyReferralOtpForReferred(User $referredUser, string $otp): array
@@ -305,7 +281,16 @@ class ReferralService
         if (! $referral) {
             return ['success' => false, 'message' => 'No pending referral OTP found.'];
         }
-        if (! $referral->verification_otp_hash || ! $referral->verification_otp_expires_at) {
+
+        $referrer = User::query()->find($referral->referrer_id);
+        if (! $referrer || ! $referrer->hasVerifiedPhone()) {
+            return ['success' => false, 'message' => 'This referral cannot be completed until your referrer has verified their mobile number in Profile.'];
+        }
+
+        if (! $referral->verification_otp_expires_at) {
+            return ['success' => false, 'message' => 'OTP not generated for this referral.'];
+        }
+        if (! $referral->verification_otp_sent_at) {
             return ['success' => false, 'message' => 'OTP not generated for this referral.'];
         }
         if (now()->greaterThan($referral->verification_otp_expires_at)) {
@@ -314,7 +299,14 @@ class ReferralService
         if ((int) $referral->verification_otp_attempts >= 3) {
             return ['success' => false, 'message' => 'Maximum OTP attempts reached.'];
         }
-        if (! Hash::check($otp, (string) $referral->verification_otp_hash)) {
+
+        $otpValid = app(ScopedSmsOtpRedisService::class)->verifyAndConsume(
+            ScopedSmsOtpRedisService::PURPOSE_REFERRAL,
+            (int) $referral->id,
+            $otp
+        );
+
+        if (! $otpValid) {
             $referral->increment('verification_otp_attempts');
 
             return ['success' => false, 'message' => 'Invalid OTP.'];
@@ -338,6 +330,10 @@ class ReferralService
                 if ($referrer) {
                     $this->syncReferralIncentiveLedger($referrer, $locked);
                 }
+                $referred = User::query()->find($locked->referred_id);
+                if ($referred) {
+                    $referred->applyPhoneVerifiedFromReferralMobileOtp();
+                }
             }
         });
 
@@ -353,12 +349,24 @@ class ReferralService
 
         $totalReferrals = Referral::where('referrer_id', $user->id)->count();
         $completedReferrals = Referral::where('referrer_id', $user->id)
+            ->referralMobileOtpVerified()
             ->where('status', 'completed')
             ->count();
         $pendingReferrals = Referral::where('referrer_id', $user->id)
-            ->where('status', 'pending')
+            ->where(function ($query) {
+                $query->where('status', 'pending')
+                    ->orWhere('verification_status', 'pending')
+                    ->orWhere(function ($legacy) {
+                        $legacy->where('status', 'completed')
+                            ->where(function ($nullOrPending) {
+                                $nullOrPending->whereNull('verification_status')
+                                    ->orWhere('verification_status', '!=', 'verified');
+                            });
+                    });
+            })
             ->count();
         $totalRewardPoints = Referral::where('referrer_id', $user->id)
+            ->referralMobileOtpVerified()
             ->where('status', 'completed')
             ->sum('reward_points');
         $totalRewardAmount = IncentiveLedger::query()
@@ -366,8 +374,8 @@ class ReferralService
             ->where('source_type', IncentiveLedger::SOURCE_REFERRAL)
             ->sum('final_amount');
         if ((float) $totalRewardAmount <= 0) {
-            // Backward-compatibility fallback for older records without referral ledger.
             $totalRewardAmount = Referral::where('referrer_id', $user->id)
+                ->referralMobileOtpVerified()
                 ->where('status', 'completed')
                 ->sum('reward_amount');
         }
@@ -391,6 +399,10 @@ class ReferralService
             return;
         }
 
+        if (! $referrer->hasVerifiedPhone()) {
+            return;
+        }
+
         $existingLedgerReferralIds = \App\Modules\Incentives\Models\IncentiveLedger::query()
             ->where('staff_id', $referrer->id)
             ->where('source_type', \App\Modules\Incentives\Models\IncentiveLedger::SOURCE_REFERRAL)
@@ -398,11 +410,8 @@ class ReferralService
 
         $missingCompletedReferrals = Referral::query()
             ->where('referrer_id', $referrer->id)
+            ->referralMobileOtpVerified()
             ->where('status', 'completed')
-            ->where(function ($query) {
-                $query->where('verification_status', 'verified')
-                    ->orWhereNull('verification_status');
-            })
             ->whereNotNull('referred_id')
             ->when($existingLedgerReferralIds->isNotEmpty(), function ($query) use ($existingLedgerReferralIds) {
                 $query->whereNotIn('id', $existingLedgerReferralIds);
@@ -431,11 +440,8 @@ class ReferralService
     public function getReferralHistory(User $user, int $limit = 10)
     {
         return Referral::where('referrer_id', $user->id)
+            ->referralMobileOtpVerified()
             ->where('status', 'completed')
-            ->where(function ($query) {
-                $query->where('verification_status', 'verified')
-                    ->orWhereNull('verification_status');
-            })
             ->whereNotNull('referred_id')
             ->with('referred')
             ->orderBy('completed_at', 'desc')
@@ -462,20 +468,5 @@ class ReferralService
     private function maskPhone(string $normalizedPhone): string
     {
         return str_repeat('*', max(0, strlen($normalizedPhone) - 4)).substr($normalizedPhone, -4);
-    }
-
-    private function maskEmail(string $email): string
-    {
-        $parts = explode('@', $email);
-        if (count($parts) !== 2) {
-            return $email;
-        }
-        $name = $parts[0];
-        $domain = $parts[1];
-        if (strlen($name) <= 2) {
-            return str_repeat('*', strlen($name)).'@'.$domain;
-        }
-
-        return substr($name, 0, 2).str_repeat('*', max(0, strlen($name) - 2)).'@'.$domain;
     }
 }

@@ -24,6 +24,18 @@
 
     <!-- Stats Banner -->
     <div class="row g-3 mb-4">
+        @if(!$staffMobileVerified && ($subscriptionHeldAmount > 0 || ($stats->earned_commission ?? 0) > 0))
+        <div class="col-12">
+            <div class="alert alert-warning mb-0 py-2">
+                <i class="fas fa-mobile-alt me-1"></i>
+                @if($subscriptionHeldAmount > 0)
+                    ₹{{ number_format($subscriptionHeldAmount, 2) }} in subscription commission is on hold until you verify your Profile mobile.
+                @else
+                    Verify your Profile mobile to unlock subscription referral payouts.
+                @endif
+            </div>
+        </div>
+        @endif
         <div class="col-12 col-md-4">
             <div class="stats-card-modern bg-success">
                 <div class="stats-icon">
@@ -53,7 +65,10 @@
                 </div>
                 <div class="stats-content">
                     <div class="stats-value">₹{{ number_format($stats->total_commission ?? 0, 2) }}</div>
-                    <div class="stats-label">Total Commission</div>
+                    <div class="stats-label">Payable Commission</div>
+                    @if(!$staffMobileVerified && ($stats->earned_commission ?? 0) > 0)
+                        <div class="small text-warning mt-1">₹{{ number_format((float) $stats->earned_commission, 2) }} earned · on hold</div>
+                    @endif
                 </div>
             </div>
         </div>

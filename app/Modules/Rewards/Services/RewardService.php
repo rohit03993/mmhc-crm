@@ -3,11 +3,11 @@
 namespace App\Modules\Rewards\Services;
 
 use App\Models\Core\User;
-use App\Modules\Auth\Services\WhatsAppOtpService;
+use App\Modules\Auth\Services\ScopedSmsOtpRedisService;
+use App\Modules\Auth\Services\SmsOtpService;
+use App\Modules\Incentives\Models\IncentiveRuleSet;
 use App\Modules\Rewards\Models\CaregiverReward;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 
 class RewardService
 {
@@ -39,48 +39,34 @@ class RewardService
         ]);
     }
 
-    public function sendVerificationOtp(CaregiverReward $reward, string $channel = 'mobile'): array
+    /**
+     * Send patient verification OTP by SMS only (Sent.dm).
+     */
+    public function sendVerificationOtp(CaregiverReward $reward): array
     {
         if ($reward->verification_otp_sent_at && $reward->verification_otp_sent_at->gt(now()->subMinutes(15))) {
             return ['success' => false, 'message' => 'Please wait 15 minutes before requesting OTP again.'];
         }
-        $channel = strtolower($channel);
-        if (! in_array($channel, ['mobile', 'email'], true)) {
-            return ['success' => false, 'message' => 'Invalid OTP channel.'];
-        }
 
         $otp = (string) random_int(100000, 999999);
-        $maskedDestination = null;
-        if ($channel === 'mobile') {
-            $normalizedPhone = $this->normalizeIndianPhone((string) $reward->patient_phone);
-            if (! $normalizedPhone) {
-                return ['success' => false, 'message' => 'Patient mobile number is invalid for OTP.'];
-            }
-            $send = app(WhatsAppOtpService::class)->sendCustomOtp($normalizedPhone, $otp);
-            if (! ($send['success'] ?? false)) {
-                return ['success' => false, 'message' => $send['message'] ?? 'Failed to send OTP on mobile.'];
-            }
-            $maskedDestination = $this->maskPhone($normalizedPhone);
-        } else {
-            $email = trim((string) ($reward->patient_email ?? ''));
-            if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                return ['success' => false, 'message' => 'Valid patient email is required for email OTP.'];
-            }
-            try {
-                Mail::raw(
-                    "Your MMHC patient verification OTP is: {$otp}. It expires in 5 minutes.",
-                    function ($message) use ($email) {
-                        $message->to($email)->subject('MMHC Patient Verification OTP');
-                    }
-                );
-            } catch (\Throwable $e) {
-                return ['success' => false, 'message' => 'Could not send OTP email. Please check mail settings.'];
-            }
-            $maskedDestination = $this->maskEmail($email);
+        $normalizedPhone = $this->normalizeIndianPhone((string) $reward->patient_phone);
+        if (! $normalizedPhone) {
+            return ['success' => false, 'message' => 'Patient mobile number is invalid for OTP.'];
         }
+        $send = app(SmsOtpService::class)->sendCustomOtp($normalizedPhone, $otp);
+        if (! ($send['success'] ?? false)) {
+            return ['success' => false, 'message' => $send['message'] ?? 'Failed to send OTP on mobile.'];
+        }
+        $maskedDestination = $this->maskPhone($normalizedPhone);
+
+        app(ScopedSmsOtpRedisService::class)->store(
+            ScopedSmsOtpRedisService::PURPOSE_PATIENT_REWARD,
+            (int) $reward->id,
+            $otp
+        );
 
         $reward->update([
-            'verification_otp_hash' => Hash::make($otp),
+            'verification_otp_hash' => null,
             'verification_otp_expires_at' => now()->addMinutes(5),
             'verification_otp_attempts' => 0,
             'verification_otp_sent_at' => now(),
@@ -92,10 +78,13 @@ class RewardService
 
     public function verifyRewardOtp(CaregiverReward $reward, string $otp): array
     {
-        if ($reward->verification_status === 'verified') {
+        if ($reward->isPatientMobileOtpVerified()) {
             return ['success' => true, 'message' => 'Already verified.'];
         }
-        if (! $reward->verification_otp_hash || ! $reward->verification_otp_expires_at) {
+        if (! $reward->verification_otp_expires_at) {
+            return ['success' => false, 'message' => 'OTP not generated. Send OTP first.'];
+        }
+        if (! $reward->verification_otp_sent_at) {
             return ['success' => false, 'message' => 'OTP not generated. Send OTP first.'];
         }
         if (now()->greaterThan($reward->verification_otp_expires_at)) {
@@ -104,28 +93,82 @@ class RewardService
         if ((int) $reward->verification_otp_attempts >= 3) {
             return ['success' => false, 'message' => 'Maximum attempts reached. Send OTP again.'];
         }
-        if (! Hash::check($otp, (string) $reward->verification_otp_hash)) {
+
+        $otpValid = app(ScopedSmsOtpRedisService::class)->verifyAndConsume(
+            ScopedSmsOtpRedisService::PURPOSE_PATIENT_REWARD,
+            (int) $reward->id,
+            $otp
+        );
+
+        if (! $otpValid) {
             $reward->increment('verification_otp_attempts');
             $remaining = max(0, 3 - (int) $reward->fresh()->verification_otp_attempts);
 
             return ['success' => false, 'message' => $remaining > 0 ? "Invalid OTP. {$remaining} attempts left." : 'Invalid OTP. No attempts left.'];
         }
 
-        DB::transaction(function () use ($reward) {
+        $otpSentTo = (string) $reward->verification_otp_sent_to;
+
+        DB::transaction(function () use ($reward, $otpSentTo) {
             $locked = CaregiverReward::query()->lockForUpdate()->findOrFail($reward->id);
             if ($locked->verification_status !== 'verified') {
+                $verifiedCountBefore = (int) CaregiverReward::query()
+                    ->where('user_id', $locked->user_id)
+                    ->verified()
+                    ->count();
+                $eventCount = $verifiedCountBefore + 1;
                 $locked->verification_status = 'verified';
                 $locked->verified_at = now();
+                $locked->reward_amount = $this->calculateVerifiedRewardAmount($eventCount);
                 $locked->verification_otp_hash = null;
                 $locked->verification_otp_expires_at = null;
                 $locked->verification_otp_attempts = 0;
                 $locked->save();
 
-                $locked->user()->increment('reward_points', (int) $locked->reward_points);
+                if (str_starts_with($otpSentTo, 'Mobile')) {
+                    $staff = User::query()->lockForUpdate()->find($locked->user_id);
+                    $patientDigits = $this->normalizeIndianPhone((string) $locked->patient_phone);
+                    $accountDigits = $staff ? $this->normalizeIndianPhone((string) $staff->phone) : null;
+                    if ($staff && $patientDigits && $accountDigits && $patientDigits === $accountDigits) {
+                        $staff->applyPhoneVerifiedFromPatientRewardSelfMobileOtp();
+                    }
+                }
+            }
+            $staff = User::query()->find($locked->user_id);
+            if ($staff) {
+                $this->syncStaffRewardPoints($staff);
             }
         });
 
-        return ['success' => true, 'message' => 'Reward verified and credited successfully.'];
+        $staff = $reward->fresh()->user;
+        $message = ($staff && $staff->hasVerifiedPhone())
+            ? 'Reward verified and points credited.'
+            : 'Patient mobile verified. Points credit after you verify your Profile mobile (SMS OTP).';
+
+        return ['success' => true, 'message' => $message];
+    }
+
+    /**
+     * Staff reward_points = sum of patient-SMS-verified rows only when Profile mobile is also verified.
+     */
+    public function syncStaffRewardPoints(User $staff): void
+    {
+        $staff = $staff->fresh();
+        if (! $staff) {
+            return;
+        }
+
+        $points = 0;
+        if ($staff->hasVerifiedPhone()) {
+            $points = (int) CaregiverReward::query()
+                ->where('user_id', $staff->id)
+                ->verified()
+                ->sum('reward_points');
+        }
+
+        if ((int) $staff->reward_points !== $points) {
+            $staff->forceFill(['reward_points' => $points])->save();
+        }
     }
 
     /**
@@ -134,6 +177,23 @@ class RewardService
     public function calculateRewardAmount(int $points): float
     {
         return $points * self::POINT_VALUE;
+    }
+
+    public function calculateVerifiedRewardAmount(int $verifiedCountAtEvent): float
+    {
+        $baseAmount = (float) self::POINT_VALUE;
+        $ruleSet = IncentiveRuleSet::currentActive();
+        if (! $ruleSet) {
+            return $baseAmount;
+        }
+
+        $eventCount = max(1, $verifiedCountAtEvent);
+        $pre = $baseAmount;
+        [$growth, $dta] = app(\App\Modules\Incentives\Services\IncentiveCalculatorService::class)
+            ->getGrowthDtaPercentages($ruleSet, $eventCount);
+        $pre = $pre * (1.0 + ($growth / 100.0)) * (1.0 - ($dta / 100.0));
+
+        return round($pre, (int) $ruleSet->round_decimals);
     }
 
     private function normalizeIndianPhone(string $phone): ?string

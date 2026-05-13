@@ -36,15 +36,28 @@ return [
     ],
 
     /*
-    | AiSensy / Sensy WhatsApp Business API (OTP via WhatsApp)
-    | Create an Authentication template in AiSensy, then an API Campaign using it.
-    | destination = +91 followed by 10-digit Indian number.
-    | Use SENSY_API_URL for host, or AISENSY_BASE_URL for full endpoint URL.
+    | Sent.dm — SMS OTP (template message)
+    | https://docs.sent.dm/reference/api/messages/SentDmServicesEndpointsCustomerAPIv3MessagesSendMessageV3Endpoint
+    | SENT_DM_OTP_PARAMETER_NAME must match your template placeholder (e.g. code, otp).
     */
-    'aisensy' => [
-        'api_key' => env('AISENSY_API_KEY'),
-        'campaign_name' => env('AISENSY_CAMPAIGN_NAME', ''),
-        'base_url' => env('AISENSY_BASE_URL') ?: (rtrim(env('SENSY_API_URL', 'https://backend.aisensy.com'), '/') . '/campaign/t1/api/v2'),
+    'sent_dm' => [
+        'api_key' => env('SENT_DM_API_KEY'),
+        'template_id' => env('SENT_DM_TEMPLATE_ID'),
+        'otp_parameter_name' => env('SENT_DM_OTP_PARAMETER_NAME', 'code'),
+        'base_url' => env('SENT_DM_BASE_URL', 'https://api.sent.dm/v3/messages'),
+        'sandbox' => filter_var(env('SENT_DM_SANDBOX', false), FILTER_VALIDATE_BOOLEAN),
+        // Windows cURL error 60: set SENT_DM_CA_BUNDLE to path of https://curl.se/ca/cacert.pem
+        'ca_bundle' => env('SENT_DM_CA_BUNDLE'),
+        'http_verify' => filter_var(env('SENT_DM_HTTP_VERIFY', true), FILTER_VALIDATE_BOOLEAN),
+    ],
+
+    /*
+    | Login OTP storage (HMAC in cache). Use Redis cache store in production.
+    */
+    'phone_otp' => [
+        'ttl_seconds' => (int) env('PHONE_LOGIN_OTP_TTL_SECONDS', 600),
+        'bind_ttl_seconds' => (int) env('PHONE_BIND_OTP_TTL_SECONDS', 300),
+        'pepper' => env('OTP_PEPPER', env('APP_KEY')),
     ],
 
 ];

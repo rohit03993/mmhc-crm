@@ -94,13 +94,13 @@
         <div class="col-md-4">
             <div class="rewards-admin-stat teal">
                 <div class="rv">{{ number_format($totalPoints) }}</div>
-                <div class="rl"><i class="fas fa-star me-1"></i>Reward points issued</div>
+                <div class="rl"><i class="fas fa-star me-1"></i>Points (patient SMS verified)</div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="rewards-admin-stat blue">
                 <div class="rv">₹{{ number_format($totalAmount, 2) }}</div>
-                <div class="rl"><i class="fas fa-rupee-sign me-1"></i>Reward value (₹)</div>
+                <div class="rl"><i class="fas fa-rupee-sign me-1"></i>Value (SMS-verified rows)</div>
             </div>
         </div>
     </div>

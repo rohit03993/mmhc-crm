@@ -31,7 +31,12 @@
         <div class="d-none d-md-block mb-4">
             <h2 class="mb-0">My Reward Entries</h2>
             @if(!empty($pendingVerificationCount) && $pendingVerificationCount > 0)
-                <p class="text-warning mb-0 mt-1"><i class="fas fa-exclamation-triangle me-1"></i>{{ $pendingVerificationCount }} entries are pending OTP verification and not yet credited.</p>
+                <p class="text-warning mb-0 mt-1"><i class="fas fa-exclamation-triangle me-1"></i>{{ $pendingVerificationCount }} entries are pending patient SMS OTP and not yet credited.</p>
+            @endif
+            @if(!empty($heldEarningsDueToUnverifiedMobile))
+                <p class="text-warning mb-0 mt-1"><i class="fas fa-mobile-alt me-1"></i>₹{{ number_format((float) $heldEarningsDueToUnverifiedMobile['total'], 2) }} in verified earnings is on hold until you verify your account mobile in Profile.</p>
+            @elseif(!empty($staffNeedsMobileVerification))
+                <p class="text-warning mb-0 mt-1"><i class="fas fa-mobile-alt me-1"></i>Verify your account mobile in Profile to unlock reward payouts.</p>
             @endif
         </div>
 
@@ -90,13 +95,29 @@
                                     @endif
                                 </div>
                                 <div class="reward-entry-badge">
-                                    @if(($reward->verification_status ?? 'verified') === 'verified')
-                                        <span class="badge bg-success">+1 pt</span>
+                                    @php
+                                        $staffMobileOk = empty($staffNeedsMobileVerification);
+                                        $rewardBlockers = \App\Modules\Payments\Services\StaffEarningStatusResolver::patientRewardBlockers($reward, $staffMobileOk);
+                                        $statusMessages = \App\Modules\Payments\Services\StaffEarningStatusResolver::detailMessagesForBlockers(
+                                            $rewardBlockers,
+                                            \App\Modules\Payments\Services\StaffEarningStatusResolver::patientRewardMaskedPhone($reward)
+                                        );
+                                        $showRewardAmount = \App\Modules\Payments\Services\StaffEarningStatusResolver::patientRewardCountsForStaff($reward, $staffMobileOk)
+                                            || $reward->payment_processed;
+                                    @endphp
+                                    @if($showRewardAmount)
+                                        <span class="badge bg-success">+{{ $reward->reward_points }} pt</span>
                                         <small class="d-block text-success mt-1">₹{{ number_format($reward->reward_amount, 2) }}</small>
                                     @else
-                                        <span class="badge bg-warning text-dark">Pending OTP</span>
-                                        <small class="d-block text-warning mt-1">Not credited yet</small>
+                                        <span class="badge bg-secondary">0 pts · not credited</span>
+                                        <small class="d-block text-muted mt-1">Complete patient SMS OTP + Profile mobile</small>
                                     @endif
+                                    <div class="mt-1">
+                                        @include('services::staff.partials.payout-status-blockers', ['blockers' => $rewardBlockers, 'compact' => true, 'align' => 'end'])
+                                    </div>
+                                    @foreach($statusMessages as $statusMessage)
+                                        <small class="d-block text-warning mt-1">{{ $statusMessage }}</small>
+                                    @endforeach
                                 </div>
                             </div>
 
@@ -134,10 +155,9 @@
                                     <i class="fas fa-clock me-1"></i>
                                     {{ $reward->created_at->format('d M Y, h:i A') }}
                                 </div>
-                                @if(($reward->verification_status ?? 'verified') !== 'verified')
+                                @if(in_array(\App\Modules\Payments\Services\StaffEarningStatusResolver::PENDING_PATIENT_OTP, $rewardBlockers, true))
                                 <div class="mt-2 d-flex gap-2 flex-wrap">
-                                    <button class="btn btn-sm btn-outline-primary" type="button" onclick="sendOtp({{ $reward->id }}, 'mobile')">Send Mobile OTP</button>
-                                    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="sendOtp({{ $reward->id }}, 'email')">Send Email OTP</button>
+                                    <button class="btn btn-sm btn-outline-primary" type="button" onclick="sendOtp({{ $reward->id }})">Send SMS OTP</button>
                                     <button class="btn btn-sm btn-success" type="button" onclick="verifyOtp({{ $reward->id }})">Verify OTP</button>
                                 </div>
                                 @endif
@@ -566,7 +586,7 @@
 }
 </style>
 <script>
-function sendOtp(rewardId, channel) {
+function sendOtp(rewardId) {
     fetch(`/rewards/${rewardId}/send-otp`, {
         method: 'POST',
         headers: {
@@ -574,7 +594,7 @@ function sendOtp(rewardId, channel) {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'Accept': 'application/json'
         },
-        body: JSON.stringify({ otp_channel: channel })
+        body: JSON.stringify({})
     }).then(r => r.json()).then(data => {
         alert(data.message || (data.success ? 'OTP sent.' : 'Failed to send OTP.'));
         if (data.success) location.reload();

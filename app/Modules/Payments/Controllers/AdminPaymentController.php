@@ -240,6 +240,12 @@ class AdminPaymentController extends Controller
         ]);
 
         $staff = User::findOrFail($staffId);
+        if (! $this->staffPayoutService->staffMayAccumulatePayouts($staff)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'This staff member has not verified their account mobile (SMS OTP). Payouts cannot be processed until mobile is verified in Profile.');
+        }
+
         $admin = Auth::user();
         $requestedAmount = (float) $request->amount;
         $paymentMode = $request->input('payment_mode', 'manual');
@@ -398,17 +404,8 @@ class AdminPaymentController extends Controller
                 $ledgers = $this->staffPayoutService
                     ->pendingStaffReferralQuery($staff->id)
                     ->get();
-                $ledgerReferralIds = $ledgers->pluck('source_id');
-                $legacy = Referral::query()
-                    ->where('referrer_id', $staff->id)
-                    ->where('status', 'completed')
-                    ->where(function ($query) {
-                        $query->where('payment_processed', false)
-                            ->orWhereNull('payment_processed');
-                    })
-                    ->when($ledgerReferralIds->isNotEmpty(), function ($query) use ($ledgerReferralIds) {
-                        $query->whereNotIn('id', $ledgerReferralIds);
-                    })
+                $legacy = $this->staffPayoutService
+                    ->pendingLegacyStaffReferralQuery($staff->id)
                     ->with(['referred'])
                     ->get();
 
@@ -526,20 +523,8 @@ class AdminPaymentController extends Controller
                     $remaining -= $rewardAmount;
                 }
 
-                $ledgerReferralIds = IncentiveLedger::query()
-                    ->where('staff_id', $staff->id)
-                    ->where('source_type', IncentiveLedger::SOURCE_REFERRAL)
-                    ->pluck('source_id');
-                $legacyReferrals = Referral::query()
-                    ->where('referrer_id', $staff->id)
-                    ->where('status', 'completed')
-                    ->where(function ($query) {
-                        $query->where('payment_processed', false)
-                            ->orWhereNull('payment_processed');
-                    })
-                    ->when($ledgerReferralIds->isNotEmpty(), function ($query) use ($ledgerReferralIds) {
-                        $query->whereNotIn('id', $ledgerReferralIds);
-                    })
+                $legacyReferrals = $this->staffPayoutService
+                    ->pendingLegacyStaffReferralQuery($staff->id)
                     ->lockForUpdate()
                     ->orderBy('completed_at')
                     ->orderBy('id')

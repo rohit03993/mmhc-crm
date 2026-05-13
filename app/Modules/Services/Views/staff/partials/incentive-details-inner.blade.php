@@ -2,6 +2,21 @@
     $tid = $tabIdPrefix ?? 'inv';
 @endphp
 
+@if(empty($staffMobileVerified))
+    <div class="alert alert-warning border-0 rounded-4 mb-3 py-3 px-3">
+        <div class="fw-semibold mb-1"><i class="fas fa-mobile-alt me-2"></i>Account mobile not verified</div>
+        <div class="small mb-0">
+            @if(!empty($heldEarningsDueToUnverifiedMobile) && (float) ($heldEarningsDueToUnverifiedMobile['total'] ?? 0) > 0)
+                <strong>₹{{ number_format((float) $heldEarningsDueToUnverifiedMobile['total'], 2) }}</strong> in verified earnings is on hold until this staff member completes SMS OTP on their account mobile in Profile.
+                Payable totals below show ₹0 until then; row status explains each item.
+            @else
+                Patient rewards, staff referrals, and payouts count toward payable totals only after account mobile SMS OTP is verified in Profile.
+                <strong>Patient / referred-staff mobile OTP is a separate step on the number entered on the form.</strong>
+            @endif
+        </div>
+    </div>
+@endif
+
 <div class="row g-3 mb-3 idv-kpi-row row-cols-2 row-cols-lg-5">
     <div class="col">
         <div class="card h-100 border-0 rounded-4 idv-kpi idv-kpi--visits">
@@ -26,7 +41,11 @@
             <div class="card-body py-3 px-3">
                 <div class="idv-kpi__label">Subscription</div>
                 <div class="idv-kpi__value idv-kpi__value--money">₹{{ number_format($subscriptionSummaryAmount, 2) }}</div>
-                <div class="idv-kpi__hint">{{ $subscriptionSummaryCount }} records</div>
+                <div class="idv-kpi__hint">{{ $subscriptionSummaryCount }} records
+                    @if(empty($staffMobileVerified) && (float) ($rawSubscriptionSummaryAmount ?? 0) > 0)
+                        <br><span class="text-warning fw-semibold">₹{{ number_format((float) $rawSubscriptionSummaryAmount, 2) }} held — verify Profile mobile</span>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
@@ -35,7 +54,11 @@
             <div class="card-body py-3 px-3">
                 <div class="idv-kpi__label">Staff referrals</div>
                 <div class="idv-kpi__value idv-kpi__value--money">₹{{ number_format($staffReferralTotalAmount, 2) }}</div>
-                <div class="idv-kpi__hint">{{ $staffReferralTotalCount }} × ₹{{ number_format($staffReferralBasePerReferral, 0) }} base</div>
+                <div class="idv-kpi__hint">{{ $staffReferralTotalCount }} &times; ₹{{ number_format($staffReferralBasePerReferral, 0) }} base
+                    @if(empty($staffMobileVerified) && (float) ($rawStaffReferralTotalAmount ?? 0) > 0)
+                        <br><span class="text-warning fw-semibold">₹{{ number_format((float) $rawStaffReferralTotalAmount, 2) }} held — verify mobile</span>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
@@ -44,7 +67,11 @@
             <div class="card-body py-3 px-3">
                 <div class="idv-kpi__label">Patient rewards</div>
                 <div class="idv-kpi__value idv-kpi__value--money">₹{{ number_format($patientRewardsTotalAmount ?? 0, 2) }}</div>
-                <div class="idv-kpi__hint">Unpaid ₹{{ number_format($patientRewardsPendingAmount ?? 0, 2) }}</div>
+                <div class="idv-kpi__hint">Unpaid ₹{{ number_format($patientRewardsPendingAmount ?? 0, 2) }}
+                    @if(empty($staffMobileVerified) && (float) ($rawPatientRewardsPendingAmount ?? 0) > 0)
+                        <br><span class="text-warning fw-semibold">₹{{ number_format((float) $rawPatientRewardsPendingAmount, 2) }} held — verify mobile</span>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
@@ -53,6 +80,9 @@
 <div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2 mb-4 px-1">
     <span class="small text-muted text-uppercase fw-semibold" style="letter-spacing: 0.06em;">Total</span>
     <span class="h5 mb-0 text-success fw-bold">₹{{ number_format($combinedLedgerAndPatientRewards, 2) }}</span>
+    @if(empty($staffMobileVerified) && isset($rawCombinedLedgerAndPatientRewards) && (float) $rawCombinedLedgerAndPatientRewards > (float) $combinedLedgerAndPatientRewards)
+        <span class="small text-warning">₹{{ number_format((float) $rawCombinedLedgerAndPatientRewards - (float) $combinedLedgerAndPatientRewards, 2) }} on hold (Profile mobile)</span>
+    @endif
 </div>
 @endif
 
@@ -209,22 +239,33 @@
                                 <th class="ps-3">#</th>
                                 <th>Referral ID</th>
                                 <th>Referred user</th>
-                                <th>Completed</th>
-                                <th class="pe-3">Base</th>
+                                <th>Referral OTP</th>
+                                <th>Base</th>
+                                <th class="pe-3">Payout status</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($staffReferrals as $referral)
+                                @php
+                                    $referralPaid = (bool) ($referral->payment_processed ?? false)
+                                        || (bool) ($referralLedgerSettledBySourceId[$referral->id] ?? false);
+                                    if ($referralPaid) {
+                                        $referralPayoutStatus = \App\Modules\Payments\Services\StaffEarningStatusResolver::PAID;
+                                    } else {
+                                        $referralPayoutStatus = \App\Modules\Payments\Services\StaffEarningStatusResolver::referralPayoutStatus($referral, (bool) $staffMobileVerified);
+                                    }
+                                @endphp
                                 <tr>
                                     <td class="ps-3">{{ $loop->iteration }}</td>
                                     <td>{{ $referral->id }}</td>
                                     <td>{{ optional($referral->referred)->name ?? '—' }}</td>
                                     <td>{{ optional($referral->completed_at)->format('M d, Y') ?? '—' }}</td>
-                                    <td class="pe-3">₹{{ number_format($staffReferralBasePerReferral, 0) }}</td>
+                                    <td>₹{{ number_format($staffReferralBasePerReferral, 0) }}</td>
+                                    <td class="pe-3">@include('services::staff.partials.payout-status-badge', ['status' => $referralPayoutStatus])</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">No staff referral records.</td>
+                                    <td colspan="6" class="text-center text-muted py-4">No staff referral records.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -247,21 +288,30 @@
                                 <th>Reward ID</th>
                                 <th>Patient</th>
                                 <th>Points</th>
-                                <th class="pe-3">Amount</th>
+                                <th>Amount</th>
+                                <th class="pe-3">Payout status</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($patientRewards as $reward)
+                                @php
+                                    if ($reward->payment_processed) {
+                                        $rewardPayoutStatus = \App\Modules\Payments\Services\StaffEarningStatusResolver::PAID;
+                                    } else {
+                                        $rewardPayoutStatus = \App\Modules\Payments\Services\StaffEarningStatusResolver::patientRewardPayoutStatus($reward, (bool) $staffMobileVerified);
+                                    }
+                                @endphp
                                 <tr>
                                     <td class="ps-3">{{ $loop->iteration }}</td>
                                     <td>{{ $reward->id }}</td>
                                     <td>{{ $reward->patient_name ?? '—' }}</td>
                                     <td>{{ $reward->reward_points }}</td>
-                                    <td class="pe-3">₹{{ number_format((float) $reward->reward_amount, 2) }}</td>
+                                    <td>₹{{ number_format((float) $reward->reward_amount, 2) }}</td>
+                                    <td class="pe-3">@include('services::staff.partials.payout-status-badge', ['status' => $rewardPayoutStatus])</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">No patient reward records.</td>
+                                    <td colspan="6" class="text-center text-muted py-4">No patient reward records.</td>
                                 </tr>
                             @endforelse
                         </tbody>

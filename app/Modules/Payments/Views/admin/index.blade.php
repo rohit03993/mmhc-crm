@@ -285,6 +285,9 @@
                             <span class="ms-3">
                                 <i class="fas fa-phone me-1"></i>{{ $item['staff']->phone }}
                             </span>
+                            @if(!$item['staff']->hasVerifiedPhone())
+                                <span class="badge bg-warning text-dark ms-2">Mobile not verified — payouts held</span>
+                            @endif
                         </p>
                     </div>
                     <div class="text-end">

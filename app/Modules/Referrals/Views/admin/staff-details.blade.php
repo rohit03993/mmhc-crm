@@ -189,14 +189,14 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                @if($referral->status === 'completed')
-                                                    <span class="badge bg-success">Completed</span>
-                                                @else
-                                                    <span class="badge bg-warning">Pending</span>
-                                                @endif
+                                                @php
+                                                    $referrerMobileOk = (bool) $staff->hasVerifiedPhone();
+                                                    $adminReferralBlockers = \App\Modules\Payments\Services\StaffEarningStatusResolver::referralBlockers($referral, $referrerMobileOk);
+                                                @endphp
+                                                @include('services::staff.partials.payout-status-blockers', ['blockers' => $adminReferralBlockers, 'compact' => true, 'align' => 'start'])
                                             </td>
                                             <td>
-                                                @if($referral->status === 'completed')
+                                                @if(\App\Modules\Payments\Services\StaffEarningStatusResolver::referralIncentiveCountsForStaff($referral, $referrerMobileOk))
                                                     <span class="fw-bold text-primary">₹100 base + incentive logic</span>
                                                 @else
                                                     <span class="text-muted">—</span>

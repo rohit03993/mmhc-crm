@@ -174,6 +174,11 @@
                     <div class="app-info-content">
                         <div class="app-info-label">Phone</div>
                         <div class="app-info-value app-info-value-multiline">{{ $user->phone ?? 'Not provided' }}</div>
+                        @if(! empty($user->phone) && $user->phone_verified_at && empty($user->pending_phone))
+                            <span class="profile-verify-chip" title="Mobile number confirmed with OTP on {{ $user->phone_verified_at->format('M j, Y') }}"><i class="fas fa-check-circle" aria-hidden="true"></i> Mobile verified</span>
+                        @elseif($user->isStaff() && ! $user->hasVerifiedPhone())
+                            <span class="profile-verify-chip profile-verify-chip--warn"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Mobile not verified — payouts on hold</span>
+                        @endif
                         <a href="{{ route('profile.edit') }}" class="profile-meta-edit-link">Edit in profile settings</a>
                     </div>
                 </div>
@@ -566,6 +571,28 @@
 .profile-meta-edit-link:hover {
     text-decoration: underline;
     color: #4338ca;
+}
+
+.profile-verify-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #047857;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+}
+.profile-verify-chip i {
+    font-size: 0.72rem;
+}
+.profile-verify-chip--warn {
+    color: #92400e;
+    background: #fffbeb;
+    border-color: #fcd34d;
 }
 
 .profile-flash {

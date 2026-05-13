@@ -6,6 +6,7 @@ use App\Models\Core\User;
 use App\Modules\Incentives\Services\IncentiveCalculatorService;
 use App\Modules\Plans\Models\Plan;
 use App\Modules\Plans\Models\Subscription;
+use App\Modules\Rewards\Services\RewardService;
 use App\Modules\Services\Models\ServiceRequest;
 use App\Modules\Services\Models\ServiceType;
 use Carbon\Carbon;
@@ -14,6 +15,7 @@ use Illuminate\Database\Seeder;
 class IncentiveDemoFlowSeeder extends Seeder
 {
     private const NURSE_VISITS_FOR_SLAB_DEMO = 55;
+    private const PATIENT_REWARDS_FOR_SLAB_DEMO = 55;
 
     /**
      * Nurse visit slab demo. Run after {@see HealthcareCrmDemoSeeder} (or equivalent prerequisites).
@@ -43,6 +45,7 @@ class IncentiveDemoFlowSeeder extends Seeder
             $patient,
             $serviceType
         );
+        $patientRewards = $this->seedPatientRewardsForSlabDemo($nurse);
 
         $planOptions = $plan->payment_options ?? [];
         $halfYearly = is_array($planOptions) ? ($planOptions['half_yearly'] ?? null) : null;
@@ -93,6 +96,7 @@ class IncentiveDemoFlowSeeder extends Seeder
         $this->command->info('Incentive demo flow seeded successfully.');
         $this->command->line('Nurse visit slab demo count: '.self::NURSE_VISITS_FOR_SLAB_DEMO);
         $this->command->line('Last seeded service request id: '.$serviceLedgers['last_service_id'].', ledger id: '.$serviceLedgers['last_ledger_id']);
+        $this->command->line('Pending verified patient rewards: '.$patientRewards);
         $this->command->line('Subscription id: '.$subscription->id.', ledger id: '.($subscriptionLedger?->id ?? 'null'));
     }
 
@@ -140,6 +144,7 @@ class IncentiveDemoFlowSeeder extends Seeder
                     'started_at' => (clone $startDate)->addHours(2),
                     'completed_at' => (clone $startDate)->addHours(12),
                     'admin_approved_at' => (clone $startDate)->addHours(14),
+                    'completion_verified_at' => (clone $startDate)->addHours(13),
                     'special_requirements' => 'Incentive slab demo visit #'.$i,
                 ]
             );
@@ -153,5 +158,50 @@ class IncentiveDemoFlowSeeder extends Seeder
             'last_service_id' => $lastServiceId,
             'last_ledger_id' => $lastLedgerId,
         ];
+    }
+
+    /**
+     * Create verified, unpaid patient reward rows with slab-applied amount growth.
+     */
+    private function seedPatientRewardsForSlabDemo(User $staff): int
+    {
+        $rewardService = app(RewardService::class);
+
+        for ($i = 1; $i <= self::PATIENT_REWARDS_FOR_SLAB_DEMO; $i++) {
+            $reward = \App\Modules\Rewards\Models\CaregiverReward::query()->updateOrCreate(
+                [
+                    'user_id' => $staff->id,
+                    'patient_phone' => '+91910090'.str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+                ],
+                [
+                    'patient_name' => "Incentive Reward Patient {$i}",
+                    'patient_email' => "incentive.reward{$i}@mmhc.local",
+                    'patient_age' => 45,
+                    'patient_address' => 'Demo address',
+                    'patient_pincode' => '462001',
+                    'hospital_name' => 'MMHC Demo Hospital',
+                    'treatment_details' => 'Patient reward slab demonstration',
+                    'reward_points' => 1,
+                    'reward_amount' => self::POINT_VALUE,
+                    'verification_status' => 'pending',
+                    'verified_at' => null,
+                    'payment_processed' => false,
+                    'payment_processed_at' => null,
+                    'verification_otp_hash' => null,
+                    'verification_otp_expires_at' => null,
+                    'verification_otp_attempts' => 0,
+                    'verification_otp_sent_at' => null,
+                    'verification_otp_sent_to' => null,
+                ]
+            );
+        }
+
+        return (int) \App\Modules\Rewards\Models\CaregiverReward::query()
+            ->where('user_id', $staff->id)
+            ->verified()
+            ->where(function ($q) {
+                $q->where('payment_processed', false)->orWhereNull('payment_processed');
+            })
+            ->count();
     }
 }

@@ -380,16 +380,9 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="small text-muted mb-3">Send OTP to patient and enter it to complete this service.</p>
-                <div class="mb-3">
-                    <label class="form-label">Send OTP via</label>
-                    <select id="completionOtpChannel" class="form-select">
-                        <option value="mobile">Mobile / WhatsApp</option>
-                        <option value="email">Email</option>
-                    </select>
-                </div>
+                <p class="small text-muted mb-3">We will send a 6-digit OTP to the patient by SMS. Enter it here to complete this service.</p>
                 <div class="d-flex gap-2 mb-3">
-                    <button type="button" class="btn btn-outline-primary w-100" id="sendCompletionOtpBtn" onclick="sendCompletionOtp()">Send OTP</button>
+                    <button type="button" class="btn btn-outline-primary w-100" id="sendCompletionOtpBtn" onclick="sendCompletionOtp()">Send SMS OTP</button>
                 </div>
                 <div class="mb-2">
                     <label class="form-label">Enter OTP</label>
@@ -898,7 +891,6 @@ function openCompletionOtpModal(serviceId) {
 function sendCompletionOtp() {
     if (!activeCompletionServiceId) return;
     const btn = document.getElementById('sendCompletionOtpBtn');
-    const channel = document.getElementById('completionOtpChannel').value;
     const old = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
@@ -909,13 +901,13 @@ function sendCompletionOtp() {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'Accept': 'application/json'
         },
-        body: JSON.stringify({ channel })
+        body: JSON.stringify({})
     }).then(r => r.json()).then(data => {
         if (!data.success) {
             alert(data.message || 'Failed to send OTP');
             return;
         }
-        document.getElementById('completionOtpHint').textContent = `OTP sent to ${data.sent_to || 'patient'} via ${data.channel || channel}.`;
+        document.getElementById('completionOtpHint').textContent = `OTP sent to ${data.sent_to || 'patient'} (SMS).`;
     }).catch(() => {
         alert('Failed to send OTP.');
     }).finally(() => {

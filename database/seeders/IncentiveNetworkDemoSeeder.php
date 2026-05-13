@@ -166,6 +166,8 @@ class IncentiveNetworkDemoSeeder extends Seeder
                 [
                     'referral_code' => 'DEMO-REF-'.$referrer->id,
                     'status' => 'completed',
+                    'verification_status' => 'pending',
+                    'verified_at' => null,
                     'reward_points' => 0,
                     'reward_amount' => 100.00,
                     'completed_at' => now()->subDays(($idx % 20) + 1),
@@ -202,6 +204,7 @@ class IncentiveNetworkDemoSeeder extends Seeder
 
             $points = (int) CaregiverReward::query()
                 ->where('user_id', $staff->id)
+                ->verified()
                 ->sum('reward_points');
             $staff->update(['reward_points' => $points]);
         }

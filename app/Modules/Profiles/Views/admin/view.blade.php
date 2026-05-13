@@ -152,6 +152,17 @@
                                 <div class="d-flex justify-content-between py-1"><span>Patient rewards</span><span class="text-dark fw-semibold">₹{{ number_format($s['patient_rewards_total'], 2) }}</span></div>
                             </div>
                         </div>
+                        @if(empty($s['mobile_verified']) && (float) ($s['held_earnings_total'] ?? 0) > 0)
+                        <div class="col-12">
+                            <div class="alert alert-warning py-2 px-2 mb-0 small">
+                                <strong>₹{{ number_format((float) $s['held_earnings_total'], 2) }} on hold</strong> — verified patient rewards / referrals / services waiting for account mobile SMS OTP.
+                            </div>
+                        </div>
+                        @elseif(empty($s['mobile_verified']))
+                        <div class="col-12">
+                            <div class="alert alert-warning py-2 px-2 mb-0 small">Account mobile not verified — payable patient rewards and referral totals stay at ₹0 until SMS OTP in Profile.</div>
+                        </div>
+                        @endif
                         <div class="col-12">
                             <div class="apv-stat">
                                 <span class="apv-stat__label">Unsettled (ledger)</span>
@@ -244,7 +255,13 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <span class="apv-k">Phone</span>
-                        <p class="apv-v mb-0">{{ $user->phone ?? '—' }}</p>
+                        <p class="apv-v mb-0">{{ $user->phone ?? '—' }}
+                            @if($user->hasVerifiedPhone())
+                                <span class="badge bg-success ms-1">Mobile verified</span>
+                            @else
+                                <span class="badge bg-warning text-dark ms-1">Mobile not verified</span>
+                            @endif
+                        </p>
                     </div>
                     <div class="col-md-6">
                         <span class="apv-k">Date of birth</span>

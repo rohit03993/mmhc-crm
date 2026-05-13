@@ -110,12 +110,13 @@
                             </div>
                         </div>
                         <p class="text-muted small mb-0 mt-2 um-filter-hint"><i class="fas fa-info-circle me-1 opacity-75"></i>Use the list filter with search. Phone: 10 digits or +91 — spaces ignored.</p>
+                        <p class="text-muted small mb-0 mt-1 um-filter-hint"><strong>Mobile verified</strong> means the account phone was confirmed by SMS OTP (profile contact change, staff referral onboarding, or patient reward where patient mobile matches this user&rsquo;s account mobile).</p>
                     </form>
                 </div>
             </div>
             @php
                 $showInstitutionColumn = ($segment ?? 'all') === 'academics';
-                $tableColCount = $showInstitutionColumn ? 10 : 8;
+                $tableColCount = $showInstitutionColumn ? 12 : 10;
             @endphp
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -126,6 +127,8 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Phone</th>
+                                <th class="text-nowrap">Mobile verified</th>
+                                <th class="text-nowrap">Mobile proof</th>
                                 <th>Role</th>
                                 @if($showInstitutionColumn)
                                     <th>Institution</th>
@@ -150,7 +153,17 @@
                                         </a>
                                     </td>
                                     <td class="text-muted small">{{ $user->email }}</td>
-                                    <td class="text-muted small">{{ $user->phone }}</td>
+                                    <td class="text-muted small">{{ $user->phone ?: '—' }}</td>
+                                    <td>
+                                        @if($user->phone && $user->phone_verified_at)
+                                            <span class="badge rounded-pill bg-success">Yes</span>
+                                        @elseif($user->phone)
+                                            <span class="badge rounded-pill bg-warning text-dark">No</span>
+                                        @else
+                                            <span class="text-muted small">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="small text-muted">{{ $user->phoneVerificationSourceLabel() }}</td>
                                     <td>
                                         @php
                                             $roleBadge = match ($user->role) {

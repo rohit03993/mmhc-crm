@@ -21,9 +21,7 @@ use App\Modules\Services\Services\StaffIncentiveDetailsDataService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -128,12 +126,8 @@ class ProfileController extends Controller
             $phoneForInput = strlen($phoneDigits) >= 10 ? substr($phoneDigits, -10) : $phoneDigits;
             $emailForInput = (string) ($user->pending_email ?: $user->email ?? '');
             $pendingContactTarget = null;
-            if (! empty($user->contact_update_channel)) {
-                if ($user->contact_update_channel === 'email' && ! empty($user->pending_email)) {
-                    $pendingContactTarget = 'Email: '.$this->maskEmail((string) $user->pending_email);
-                } elseif ($user->contact_update_channel === 'mobile' && ! empty($user->pending_phone)) {
-                    $pendingContactTarget = 'Mobile: '.$this->maskPhone((string) $user->pending_phone);
-                }
+            if ($user->contact_update_channel === 'mobile' && ! empty($user->pending_phone)) {
+                $pendingContactTarget = 'Mobile: '.$this->maskPhone((string) $user->pending_phone);
             }
             $latestContactOtpDestination = (string) ($user->contact_update_otp_sent_to ?? '');
 
@@ -199,7 +193,7 @@ class ProfileController extends Controller
         $phoneChanged = $effectiveCurrentPhone !== $normalizedRequestedPhone;
         if ($emailChanged && $phoneChanged) {
             return redirect()->back()
-                ->withErrors(['email' => 'Please update either email or phone at one time for OTP verification.'])
+                ->withErrors(['email' => 'Please update either email or phone at one time.'])
                 ->withInput();
         }
 
@@ -214,22 +208,36 @@ class ProfileController extends Controller
             return redirect()->back()->withErrors(['phone' => 'This phone number is already in use.'])->withInput();
         }
 
-        $channel = $emailChanged ? 'email' : 'mobile';
-        $destination = $emailChanged ? $requestedEmail : $normalizedRequestedPhone;
+        if ($emailChanged && ! $phoneChanged) {
+            $user->forceFill([
+                'email' => $requestedEmail,
+                'pending_email' => null,
+                'pending_phone' => null,
+                'contact_update_channel' => null,
+                'contact_update_otp_hash' => null,
+                'contact_update_otp_expires_at' => null,
+                'contact_update_otp_attempts' => 0,
+                'contact_update_otp_sent_to' => null,
+                'contact_update_otp_sent_at' => null,
+                'contact_update_verified_at' => null,
+            ])->save();
 
-        // Industry-style lane switch: update pending contact lane first, then send OTP.
-        // This ensures user can switch from email->mobile (or mobile->email) even when first send attempt fails.
+            return redirect()->route('profile.index')->with('success', 'Profile updated successfully.');
+        }
+
+        // Mobile-only OTP verification for phone number changes.
         $user->forceFill([
-            // Only keep one contact verification lane active at a time.
-            'pending_email' => $emailChanged ? $requestedEmail : null,
-            'pending_phone' => $phoneChanged ? $normalizedRequestedPhone : null,
-            'contact_update_channel' => $channel,
+            'pending_email' => null,
+            'pending_phone' => $normalizedRequestedPhone,
+            'contact_update_channel' => 'mobile',
             'contact_update_otp_hash' => null,
             'contact_update_otp_expires_at' => null,
             'contact_update_otp_attempts' => 0,
             'contact_update_otp_sent_to' => null,
             'contact_update_otp_sent_at' => null,
             'contact_update_verified_at' => null,
+            'phone_verified_at' => null,
+            'phone_verified_source' => null,
         ])->save();
 
         // If referral verification is pending, clear old OTP destination so user resends to updated contact.
@@ -245,14 +253,18 @@ class ProfileController extends Controller
                 'verification_otp_sent_at' => null,
             ]);
 
-        $send = $this->sendContactUpdateOtp($channel, $destination);
+        $send = $this->sendMobileContactUpdateOtp($normalizedRequestedPhone);
         if (! ($send['success'] ?? false)) {
             return redirect()->route('profile.edit')
-                ->with('error', ($send['message'] ?? 'Could not send OTP.').' Pending contact lane is updated. Please click Resend OTP.');
+                ->with('error', ($send['message'] ?? 'Could not send OTP.').' Pending mobile is saved. Please click Resend OTP.');
+        }
+
+        $otpPayload = (string) ($send['otp'] ?? '');
+        if ($otpPayload !== '') {
+            app(\App\Modules\Auth\Services\PhoneBindOtpService::class)->storeOtp((int) $user->id, $normalizedRequestedPhone, $otpPayload);
         }
 
         $user->forceFill([
-            'contact_update_otp_hash' => Hash::make((string) $send['otp']),
             'contact_update_otp_expires_at' => now()->addMinutes(5),
             'contact_update_otp_attempts' => 0,
             'contact_update_otp_sent_to' => (string) ($send['sent_to'] ?? ''),
@@ -260,7 +272,7 @@ class ProfileController extends Controller
         ])->save();
 
         return redirect()->route('profile.edit')
-            ->with('success', 'Profile details saved. OTP sent to '.($channel === 'email' ? 'new email' : 'new mobile').' for contact verification. Previous pending contact verification (if any) is replaced.');
+            ->with('success', 'Profile details saved. OTP sent to your new mobile number for verification.');
     }
 
     public function verifyContactUpdateOtp(Request $request)
@@ -270,10 +282,10 @@ class ProfileController extends Controller
             'otp_code' => ['required', 'digits:6'],
         ]);
 
-        if (! $user->contact_update_channel || (! $user->pending_email && ! $user->pending_phone)) {
-            return redirect()->back()->with('error', 'No pending contact verification found.');
+        if (! $user->contact_update_channel || $user->contact_update_channel !== 'mobile' || empty($user->pending_phone)) {
+            return redirect()->back()->with('error', 'No pending mobile verification found.');
         }
-        if (! $user->contact_update_otp_hash || ! $user->contact_update_otp_expires_at) {
+        if (! $user->contact_update_otp_sent_at || ! $user->contact_update_otp_expires_at) {
             return redirect()->back()->with('error', 'OTP is not sent yet. Please click Resend OTP.');
         }
         if (now()->greaterThan($user->contact_update_otp_expires_at)) {
@@ -282,7 +294,14 @@ class ProfileController extends Controller
         if ((int) $user->contact_update_otp_attempts >= 3) {
             return redirect()->back()->with('error', 'Maximum OTP attempts reached. Please resend OTP.');
         }
-        if (! Hash::check((string) $request->otp_code, (string) $user->contact_update_otp_hash)) {
+
+        $otpValid = app(\App\Modules\Auth\Services\PhoneBindOtpService::class)->verifyAndConsume(
+            (int) $user->id,
+            (string) $user->pending_phone,
+            (string) $request->otp_code
+        );
+
+        if (! $otpValid) {
             $user->increment('contact_update_otp_attempts');
             $remaining = max(0, 3 - (int) $user->fresh()->contact_update_otp_attempts);
 
@@ -298,15 +317,18 @@ class ProfileController extends Controller
             'contact_update_otp_sent_at' => null,
             'contact_update_channel' => null,
         ];
-        if (! empty($user->pending_email)) {
-            $updates['email'] = $user->pending_email;
-        }
         if (! empty($user->pending_phone)) {
             $updates['phone'] = $user->pending_phone;
+            $updates['phone_verified_at'] = now();
+            $updates['phone_verified_source'] = 'profile';
         }
         $updates['pending_email'] = null;
         $updates['pending_phone'] = null;
         $user->forceFill($updates)->save();
+
+        if ($user->isStaff()) {
+            app(\App\Modules\Rewards\Services\RewardService::class)->syncStaffRewardPoints($user->fresh());
+        }
 
         return redirect()->route('profile.index')->with('success', 'Contact updated and verified successfully.');
     }
@@ -314,55 +336,43 @@ class ProfileController extends Controller
     public function resendContactUpdateOtp()
     {
         $user = Auth::user();
-        if (! $user->contact_update_channel || (! $user->pending_email && ! $user->pending_phone)) {
-            return redirect()->back()->with('error', 'No pending contact update found.');
+        if ($user->contact_update_channel !== 'mobile' || empty($user->pending_phone)) {
+            return redirect()->back()->with('error', 'No pending mobile update found.');
         }
         if ($user->contact_update_otp_sent_at && $user->contact_update_otp_sent_at->gt(now()->subMinutes(15))) {
             return redirect()->back()->with('error', 'Please wait 15 minutes before resending OTP.');
         }
 
-        $channel = (string) $user->contact_update_channel;
-        $destination = $channel === 'email' ? (string) $user->pending_email : (string) $user->pending_phone;
-        $send = $this->sendContactUpdateOtp($channel, $destination);
+        $destination = (string) $user->pending_phone;
+        $send = $this->sendMobileContactUpdateOtp($destination);
         if (! ($send['success'] ?? false)) {
             return redirect()->back()->with('error', $send['message'] ?? 'Could not resend OTP.');
         }
 
+        $otpPayload = (string) ($send['otp'] ?? '');
+        if ($otpPayload !== '') {
+            app(\App\Modules\Auth\Services\PhoneBindOtpService::class)->storeOtp((int) $user->id, $destination, $otpPayload);
+        }
+
         $user->forceFill([
-            'contact_update_otp_hash' => Hash::make((string) $send['otp']),
             'contact_update_otp_expires_at' => now()->addMinutes(5),
             'contact_update_otp_attempts' => 0,
             'contact_update_otp_sent_to' => (string) ($send['sent_to'] ?? ''),
             'contact_update_otp_sent_at' => now(),
         ])->save();
 
-        return redirect()->back()->with('success', 'OTP resent to pending '.($channel === 'email' ? 'email' : 'mobile').'.');
+        return redirect()->back()->with('success', 'OTP resent to pending mobile.');
     }
 
-    private function sendContactUpdateOtp(string $channel, string $destination): array
+    private function sendMobileContactUpdateOtp(string $normalizedPhone): array
     {
         $otp = (string) random_int(100000, 999999);
-        if ($channel === 'mobile') {
-            $send = app(\App\Modules\Auth\Services\WhatsAppOtpService::class)->sendCustomOtp($destination, $otp);
-            if (! ($send['success'] ?? false)) {
-                return ['success' => false, 'message' => $send['message'] ?? 'Could not send OTP to mobile.'];
-            }
-
-            return ['success' => true, 'otp' => $otp, 'sent_to' => 'Mobile: '.$this->maskPhone($destination)];
+        $send = app(\App\Modules\Auth\Services\SmsOtpService::class)->sendCustomOtp($normalizedPhone, $otp);
+        if (! ($send['success'] ?? false)) {
+            return ['success' => false, 'message' => $send['message'] ?? 'Could not send OTP to mobile.'];
         }
 
-        try {
-            Mail::raw(
-                "Your MMHC contact update OTP is: {$otp}. It expires in 5 minutes.",
-                function ($message) use ($destination) {
-                    $message->to($destination)->subject('MMHC Contact Update OTP');
-                }
-            );
-        } catch (\Throwable $e) {
-            return ['success' => false, 'message' => 'Could not send OTP to email. Please check mail configuration.'];
-        }
-
-        return ['success' => true, 'otp' => $otp, 'sent_to' => 'Email: '.$this->maskEmail($destination)];
+        return ['success' => true, 'otp' => $otp, 'sent_to' => 'Mobile: '.$this->maskPhone($normalizedPhone)];
     }
 
     private function normalizeIndianPhone(string $phone): ?string
@@ -384,21 +394,6 @@ class ProfileController extends Controller
     private function maskPhone(string $normalizedPhone): string
     {
         return str_repeat('*', max(0, strlen($normalizedPhone) - 4)).substr($normalizedPhone, -4);
-    }
-
-    private function maskEmail(string $email): string
-    {
-        $parts = explode('@', $email);
-        if (count($parts) !== 2) {
-            return $email;
-        }
-        $name = $parts[0];
-        $domain = $parts[1];
-        if (strlen($name) <= 2) {
-            return str_repeat('*', strlen($name)).'@'.$domain;
-        }
-
-        return substr($name, 0, 2).str_repeat('*', max(0, strlen($name) - 2)).'@'.$domain;
     }
 
     /**
@@ -583,21 +578,30 @@ class ProfileController extends Controller
             $base = ServiceRequest::query()->where('assigned_staff_id', $user->id);
             $ledger = IncentiveLedger::query()->where('staff_id', $user->id);
             $ledgerTotal = (float) (clone $ledger)->sum('final_amount');
-            $patientRewardsTotal = (float) CaregiverReward::query()
-                ->where('user_id', $user->id)
-                ->sum('reward_amount');
+            $payoutService = app(StaffPayoutService::class);
+            $heldEarnings = $payoutService->calculateHeldDueToUnverifiedMobile($user);
+            $patientRewardsTotal = $user->hasVerifiedPhone()
+                ? (float) CaregiverReward::query()
+                    ->where('user_id', $user->id)
+                    ->verified()
+                    ->sum('reward_amount')
+                : 0.0;
             $out['staff'] = [
                 'services_total' => (clone $base)->count(),
                 'services_completed' => (clone $base)->where('status', 'completed')->count(),
                 'services_approved' => (clone $base)->whereNotNull('admin_approved_at')->count(),
                 'referrals_completed' => Referral::query()
                     ->where('referrer_id', $user->id)
+                    ->referralMobileOtpVerified()
                     ->where('status', 'completed')
                     ->count(),
                 // Ledger only (services + subscription sale + referral ledger rows). Patient rewards are separate rows in caregiver_rewards.
                 'incentive_total' => $ledgerTotal,
                 'patient_rewards_total' => $patientRewardsTotal,
                 'combined_earnings' => $ledgerTotal + $patientRewardsTotal,
+                'held_earnings_total' => (float) ($heldEarnings['total'] ?? 0),
+                'held_earnings' => $heldEarnings,
+                'mobile_verified' => $user->hasVerifiedPhone(),
                 'incentive_unsettled' => (float) (clone $ledger)->where('payment_settled', false)->sum('final_amount'),
                 'incentive_service' => (float) IncentiveLedger::query()
                     ->where('staff_id', $user->id)

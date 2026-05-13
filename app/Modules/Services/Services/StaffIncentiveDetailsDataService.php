@@ -4,12 +4,17 @@ namespace App\Modules\Services\Services;
 
 use App\Models\Core\User;
 use App\Modules\Incentives\Models\IncentiveLedger;
+use App\Modules\Payments\Services\StaffPayoutService;
 use App\Modules\Plans\Models\Subscription;
 use App\Modules\Referrals\Models\Referral;
 use App\Modules\Rewards\Models\CaregiverReward;
 
 class StaffIncentiveDetailsDataService
 {
+    public function __construct(
+        private StaffPayoutService $staffPayoutService
+    ) {}
+
     /**
      * Build all view data for staff incentive details (standalone page or profile embed).
      *
@@ -17,6 +22,10 @@ class StaffIncentiveDetailsDataService
      */
     public function buildForStaff(User $targetStaff): array
     {
+        $staffMobileVerified = $targetStaff->hasVerifiedPhone();
+        $heldEarningsDueToUnverifiedMobile = $this->staffPayoutService
+            ->calculateHeldDueToUnverifiedMobile($targetStaff);
+
         $serviceLedgerBaseQuery = IncentiveLedger::query()
             ->where('staff_id', $targetStaff->id)
             ->where('source_type', IncentiveLedger::SOURCE_SERVICE_REQUEST);
@@ -57,6 +66,7 @@ class StaffIncentiveDetailsDataService
 
         $staffReferralsBaseQuery = Referral::query()
             ->where('referrer_id', $targetStaff->id)
+            ->referralMobileOtpVerified()
             ->where('status', 'completed')
             ->orderByDesc('completed_at')
             ->orderByDesc('id');
@@ -69,18 +79,18 @@ class StaffIncentiveDetailsDataService
             ->withQueryString();
 
         $patientRewardBase = CaregiverReward::query()->where('user_id', $targetStaff->id);
+        $verifiedPatientRewardBase = (clone $patientRewardBase)->verified();
 
-        $patientRewardsTotalAmount = (float) (clone $patientRewardBase)->sum('reward_amount');
-        $patientRewardsPendingAmount = (float) (clone $patientRewardBase)
-            ->where(function ($query) {
-                $query->where('verification_status', 'verified')
-                    ->orWhereNull('verification_status');
-            })
+        $rawPatientRewardsTotalAmount = (float) (clone $verifiedPatientRewardBase)->sum('reward_amount');
+        $rawPatientRewardsPendingAmount = (float) (clone $verifiedPatientRewardBase)
             ->where(function ($query) {
                 $query->where('payment_processed', false)
                     ->orWhereNull('payment_processed');
             })
             ->sum('reward_amount');
+
+        $patientRewardsTotalAmount = $staffMobileVerified ? $rawPatientRewardsTotalAmount : 0.0;
+        $patientRewardsPendingAmount = $staffMobileVerified ? $rawPatientRewardsPendingAmount : 0.0;
 
         $patientRewards = (clone $patientRewardBase)
             ->orderByDesc('created_at')
@@ -127,26 +137,36 @@ class StaffIncentiveDetailsDataService
             'ledger_grand_total' => (float) ($serviceAggregate->final_total ?? 0) + $ledgerNonServiceTotal,
         ];
 
-        $subscriptionSummaryAmount = $subscriptionLedgerTotalAmount + $legacySubscriptionTotalAmount;
+        $rawSubscriptionSummaryAmount = $subscriptionLedgerTotalAmount + $legacySubscriptionTotalAmount;
+        $subscriptionSummaryAmount = $staffMobileVerified ? $rawSubscriptionSummaryAmount : 0.0;
 
         $staffReferralBasePerReferral = 100;
         $staffReferralTotalBase = $staffReferralTotalCount * $staffReferralBasePerReferral;
         $staffReferralLedgerBaseQuery = IncentiveLedger::query()
             ->where('staff_id', $targetStaff->id)
             ->where('source_type', IncentiveLedger::SOURCE_REFERRAL);
-        $staffReferralTotalAmount = (float) (clone $staffReferralLedgerBaseQuery)->sum('final_amount');
         $staffReferralLedgerSourceIds = (clone $staffReferralLedgerBaseQuery)->pluck('source_id');
-        $legacyStaffReferralAmount = (float) Referral::query()
+        $rawStaffReferralLedgerAmount = (float) (clone $staffReferralLedgerBaseQuery)->sum('final_amount');
+        $rawLegacyStaffReferralAmount = (float) Referral::query()
             ->where('referrer_id', $targetStaff->id)
+            ->referralMobileOtpVerified()
             ->where('status', 'completed')
             ->when($staffReferralLedgerSourceIds->isNotEmpty(), function ($q) use ($staffReferralLedgerSourceIds) {
                 $q->whereNotIn('id', $staffReferralLedgerSourceIds);
             })
             ->sum('reward_amount');
-        $staffReferralTotalAmount += $legacyStaffReferralAmount;
+        $rawStaffReferralTotalAmount = $rawStaffReferralLedgerAmount + $rawLegacyStaffReferralAmount;
+        $staffReferralTotalAmount = $staffMobileVerified ? $rawStaffReferralTotalAmount : 0.0;
+
+        $referralLedgerSettledBySourceId = IncentiveLedger::query()
+            ->where('staff_id', $targetStaff->id)
+            ->where('source_type', IncentiveLedger::SOURCE_REFERRAL)
+            ->pluck('payment_settled', 'source_id');
 
         return [
             'targetStaff' => $targetStaff,
+            'staffMobileVerified' => $staffMobileVerified,
+            'heldEarningsDueToUnverifiedMobile' => $heldEarningsDueToUnverifiedMobile,
             'serviceLedgers' => $serviceLedgers,
             'subscriptionLedgers' => $subscriptionLedgers,
             'legacySubscriptions' => $legacySubscriptions,
@@ -154,16 +174,24 @@ class StaffIncentiveDetailsDataService
             'patientRewards' => $patientRewards,
             'serviceSummary' => $serviceSummary,
             'subscriptionSummaryAmount' => $subscriptionSummaryAmount,
+            'rawSubscriptionSummaryAmount' => $rawSubscriptionSummaryAmount,
             'subscriptionSummaryCount' => $subscriptionLedgerTotalCount + $legacySubscriptionTotalCount,
             'staffReferralTotalCount' => $staffReferralTotalCount,
             'staffReferralBasePerReferral' => $staffReferralBasePerReferral,
             'staffReferralTotalBase' => $staffReferralTotalBase,
             'staffReferralTotalAmount' => $staffReferralTotalAmount,
+            'rawStaffReferralTotalAmount' => $rawStaffReferralTotalAmount,
             'patientRewardsTotalAmount' => $patientRewardsTotalAmount,
             'patientRewardsPendingAmount' => $patientRewardsPendingAmount,
+            'rawPatientRewardsTotalAmount' => $rawPatientRewardsTotalAmount,
+            'rawPatientRewardsPendingAmount' => $rawPatientRewardsPendingAmount,
+            'referralLedgerSettledBySourceId' => $referralLedgerSettledBySourceId,
             'combinedLedgerAndPatientRewards' => (float) ($serviceAggregate->final_total ?? 0)
-                + $ledgerNonServiceTotal
+                + ($staffMobileVerified ? $ledgerNonServiceTotal : 0.0)
                 + $patientRewardsTotalAmount,
+            'rawCombinedLedgerAndPatientRewards' => (float) ($serviceAggregate->final_total ?? 0)
+                + $ledgerNonServiceTotal
+                + ($rawPatientRewardsTotalAmount ?? 0),
         ];
     }
 }

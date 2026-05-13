@@ -4,8 +4,11 @@ namespace App\Modules\Services\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
+use App\Modules\Auth\Services\ScopedSmsOtpRedisService;
+use App\Modules\Auth\Services\SmsOtpService;
 use App\Modules\Incentives\Models\IncentiveLedger;
 use App\Modules\Incentives\Services\IncentiveCalculatorService;
+use App\Modules\Payments\Services\StaffPayoutService;
 use App\Modules\Plans\Models\Subscription;
 use App\Modules\Referrals\Services\ReferralService;
 use App\Modules\Rewards\Models\CaregiverReward;
@@ -16,9 +19,7 @@ use App\Modules\Services\Services\StaffIncentiveDetailsDataService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class StaffDashboardController extends Controller
@@ -124,18 +125,22 @@ class StaffDashboardController extends Controller
 
         // 2. PATIENT REWARD EARNINGS (from submitting patient details)
         $rewardService = app(RewardService::class);
-        $totalPoints = $user->reward_points ?? 0;
+        $payoutService = app(StaffPayoutService::class);
+        $staffMobileVerified = $user->hasVerifiedPhone();
+        $heldEarningsDueToUnverifiedMobile = $payoutService->calculateHeldDueToUnverifiedMobile($user);
+        app(RewardService::class)->syncStaffRewardPoints($user);
+
+        $verifiedRewardsBase = CaregiverReward::query()
+            ->where('user_id', $user->id)
+            ->verified();
+        $totalPoints = (int) (clone $verifiedRewardsBase)->sum('reward_points');
+        $patientRewardEarnedAmount = $rewardService->calculateRewardAmount($totalPoints);
         $patientRewardEarnings = [
             'total_points' => $totalPoints,
-            'total_amount' => $rewardService->calculateRewardAmount($totalPoints),
-            'total_submissions' => CaregiverReward::where('user_id', $user->id)
-                ->where(function ($query) {
-                    $query->where('verification_status', 'verified')->orWhereNull('verification_status');
-                })->count(),
-            'this_month' => CaregiverReward::where('user_id', $user->id)
-                ->where(function ($query) {
-                    $query->where('verification_status', 'verified')->orWhereNull('verification_status');
-                })
+            'earned_amount' => $patientRewardEarnedAmount,
+            'total_amount' => $staffMobileVerified ? $patientRewardEarnedAmount : 0.0,
+            'total_submissions' => (clone $verifiedRewardsBase)->count(),
+            'this_month' => (clone $verifiedRewardsBase)
                 ->whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)
                 ->sum('reward_amount'),
@@ -150,8 +155,10 @@ class StaffDashboardController extends Controller
         $staffReferralEarnings = [
             'total_referrals' => $staffReferralCount,
             'total_base_amount' => $staffReferralCount * $staffReferralBasePerRef,
-            'total_amount' => $staffReferralAmount,
+            'earned_amount' => $staffReferralAmount,
+            'total_amount' => $staffMobileVerified ? $staffReferralAmount : 0.0,
             'this_month_count' => \App\Modules\Referrals\Models\Referral::where('referrer_id', $user->id)
+                ->referralMobileOtpVerified()
                 ->where('status', 'completed')
                 ->whereMonth('completed_at', now()->month)
                 ->whereYear('completed_at', now()->year)
@@ -159,6 +166,7 @@ class StaffDashboardController extends Controller
             'this_month_amount' => 0, // set below
         ];
         $thisMonthReferralIds = \App\Modules\Referrals\Models\Referral::where('referrer_id', $user->id)
+            ->referralMobileOtpVerified()
             ->where('status', 'completed')
             ->whereMonth('completed_at', now()->month)
             ->whereYear('completed_at', now()->year)
@@ -171,7 +179,8 @@ class StaffDashboardController extends Controller
         if ((float) $thisMonthAmount <= 0) {
             $thisMonthAmount = $staffReferralEarnings['this_month_count'] * $staffReferralBasePerRef;
         }
-        $staffReferralEarnings['this_month_amount'] = (float) $thisMonthAmount;
+        $staffReferralEarnings['this_month_amount'] = $staffMobileVerified ? (float) $thisMonthAmount : 0.0;
+        $staffReferralEarnings['this_month_earned'] = (float) $thisMonthAmount;
 
         // 4. SUBSCRIPTION REFERRAL EARNINGS (ledger-first, legacy fallback only where ledger row is missing)
         $subscriptionReferralsBaseQuery = Subscription::query()
@@ -204,19 +213,29 @@ class StaffDashboardController extends Controller
             ->whereYear('created_at', now()->year)
             ->sum('referral_commission_amount');
 
+        $subscriptionReferralEarnedCommission = $subscriptionLedgerTotalCommission + $legacySubscriptionTotalCommission;
         $subscriptionReferralEarnings = [
             'total_referrals' => $subscriptionTotalReferrals,
             'active_referrals' => $subscriptionActiveReferrals,
-            'total_commission' => $subscriptionLedgerTotalCommission + $legacySubscriptionTotalCommission,
-            'this_month' => $subscriptionLedgerThisMonthCommission + $legacySubscriptionThisMonthCommission,
+            'earned_commission' => $subscriptionReferralEarnedCommission,
+            'total_commission' => $staffMobileVerified ? $subscriptionReferralEarnedCommission : 0.0,
+            'this_month' => $staffMobileVerified
+                ? ($subscriptionLedgerThisMonthCommission + $legacySubscriptionThisMonthCommission)
+                : 0.0,
+            'this_month_earned' => $subscriptionLedgerThisMonthCommission + $legacySubscriptionThisMonthCommission,
         ];
 
-        // TOTAL OVERALL EARNINGS (service + patient rewards + staff referrals + subscription)
+        // TOTAL OVERALL EARNINGS (payable only — held amounts excluded until mobile verified)
         $totalOverallEarnings =
             $serviceRequestEarnings['total_approved'] +
             $staffReferralEarnings['total_amount'] +
             $patientRewardEarnings['total_amount'] +
             $subscriptionReferralEarnings['total_commission'];
+        $totalOverallEarnedAmount =
+            $serviceRequestEarnings['total_approved'] +
+            ($staffReferralEarnings['earned_amount'] ?? 0) +
+            ($patientRewardEarnings['earned_amount'] ?? 0) +
+            ($subscriptionReferralEarnings['earned_commission'] ?? 0);
 
         // Legacy earnings stats (for backward compatibility)
         $earningsStats = [
@@ -234,6 +253,8 @@ class StaffDashboardController extends Controller
         $recentReferrals = $referralService->getReferralHistory($user, 5);
         $subscriptionReferralLink = route('plans.index', ['ref' => $user->id]);
 
+        $heldEarningsDueToUnverifiedMobile = $payoutService->calculateHeldDueToUnverifiedMobile($user);
+
         return view('services::staff.dashboard', compact(
             'assignedServices',
             'stats',
@@ -243,11 +264,14 @@ class StaffDashboardController extends Controller
             'staffReferralEarnings',
             'subscriptionReferralEarnings',
             'totalOverallEarnings',
+            'totalOverallEarnedAmount',
             'recentRewards',
             'referralLink',
             'referralStats',
             'recentReferrals',
-            'subscriptionReferralLink'
+            'subscriptionReferralLink',
+            'heldEarningsDueToUnverifiedMobile',
+            'staffMobileVerified'
         ));
     }
 
@@ -309,6 +333,14 @@ class StaffDashboardController extends Controller
                 'success' => false,
                 'message' => 'You are not assigned to this service.',
             ], 403);
+        }
+
+        $staff = Auth::user();
+        if ($staff && $staff->staffMustVerifyMobileBeforeRewards()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Verify your mobile number in Profile before starting services that earn payouts.',
+            ], 422);
         }
 
         // CRITICAL FIX #5: Validate status transition using state machine
@@ -375,12 +407,12 @@ class StaffDashboardController extends Controller
     }
 
     /**
-     * Send service completion OTP to patient (mobile/email).
+     * Send service completion OTP to patient (SMS only).
      */
     public function sendCompletionOtp(Request $request, ServiceRequest $serviceRequest)
     {
         $user = Auth::user();
-        if (! empty($user->contact_update_channel) && (! empty($user->pending_email) || ! empty($user->pending_phone))) {
+        if ($user->hasPendingMobileContactVerification()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please complete your pending profile contact verification first.',
@@ -392,6 +424,14 @@ class StaffDashboardController extends Controller
                 'success' => false,
                 'message' => 'You are not assigned to this service.',
             ], 403);
+        }
+
+        $staff = Auth::user();
+        if ($staff && $staff->staffMustVerifyMobileBeforeRewards()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Verify your mobile number in Profile before sending completion OTP or earning payouts.',
+            ], 422);
         }
 
         if (! $serviceRequest->canTransitionTo('completed')) {
@@ -406,14 +446,6 @@ class StaffDashboardController extends Controller
                 'success' => false,
                 'message' => 'Service cannot be completed before end date: '.$serviceRequest->end_date->format('M d, Y'),
             ], 400);
-        }
-
-        $channel = strtolower((string) $request->input('channel', 'mobile'));
-        if (! in_array($channel, ['mobile', 'email'], true)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid OTP channel selected.',
-            ], 422);
         }
 
         $serviceRequest->load('patient');
@@ -435,72 +467,37 @@ class StaffDashboardController extends Controller
         $otp = (string) random_int(100000, 999999);
         $expiresAt = now()->addMinutes(5);
 
-        if ($channel === 'mobile') {
-            $normalizedPhone = $this->normalizeIndianPhone((string) ($patient->phone ?? $serviceRequest->contact_phone));
-            if (! $normalizedPhone) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Patient mobile number is missing/invalid. Use email OTP.',
-                ], 422);
-            }
-
-            $waResult = app(\App\Modules\Auth\Services\WhatsAppOtpService::class)->sendCustomOtp($normalizedPhone, $otp);
-            if (! ($waResult['success'] ?? false)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $waResult['message'] ?? 'Could not send OTP to patient mobile.',
-                ], 422);
-            }
-
-            // Keep request-scoped OTP as source of truth for service completion verification.
-            $serviceRequest->update([
-                'completion_otp_hash' => Hash::make($otp),
-                'completion_otp_expires_at' => $expiresAt,
-                'completion_otp_attempts' => 0,
-                'completion_otp_channel' => 'mobile',
-                'completion_otp_sent_to' => $this->maskPhone($normalizedPhone),
-                'completion_otp_sent_at' => now(),
-                'completion_verified_at' => null,
-            ]);
-        } else {
-            $patientEmail = (string) ($patient->email ?? '');
-            if ($patientEmail === '') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Patient email is not available. Use mobile OTP.',
-                ], 422);
-            }
-
-            try {
-                Mail::raw(
-                    "Your MMHC service completion OTP is: {$otp}. It expires in 5 minutes.",
-                    function ($message) use ($patientEmail) {
-                        $message->to($patientEmail)->subject('MMHC Service Completion OTP');
-                    }
-                );
-            } catch (\Throwable $e) {
-                Log::warning('Service completion OTP email send failed', [
-                    'service_request_id' => $serviceRequest->id,
-                    'patient_email' => $patientEmail,
-                    'error' => $e->getMessage(),
-                ]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Could not send OTP email. Please check mail configuration.',
-                ], 422);
-            }
-
-            $serviceRequest->update([
-                'completion_otp_hash' => Hash::make($otp),
-                'completion_otp_expires_at' => $expiresAt,
-                'completion_otp_attempts' => 0,
-                'completion_otp_channel' => 'email',
-                'completion_otp_sent_to' => $this->maskEmail($patientEmail),
-                'completion_otp_sent_at' => now(),
-                'completion_verified_at' => null,
-            ]);
+        $normalizedPhone = $this->normalizeIndianPhone((string) ($patient->phone ?? $serviceRequest->contact_phone));
+        if (! $normalizedPhone) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Patient mobile number is missing or invalid. Completion OTP is sent by SMS only.',
+            ], 422);
         }
+
+        $smsResult = app(SmsOtpService::class)->sendCustomOtp($normalizedPhone, $otp);
+        if (! ($smsResult['success'] ?? false)) {
+            return response()->json([
+                'success' => false,
+                'message' => $smsResult['message'] ?? 'Could not send OTP to patient mobile.',
+            ], 422);
+        }
+
+        app(ScopedSmsOtpRedisService::class)->store(
+            ScopedSmsOtpRedisService::PURPOSE_SERVICE_COMPLETION,
+            (int) $serviceRequest->id,
+            $otp
+        );
+
+        $serviceRequest->update([
+            'completion_otp_hash' => null,
+            'completion_otp_expires_at' => $expiresAt,
+            'completion_otp_attempts' => 0,
+            'completion_otp_channel' => 'mobile',
+            'completion_otp_sent_to' => $this->maskPhone($normalizedPhone),
+            'completion_otp_sent_at' => now(),
+            'completion_verified_at' => null,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -517,7 +514,7 @@ class StaffDashboardController extends Controller
     public function completeService(Request $request, ServiceRequest $serviceRequest)
     {
         $user = Auth::user();
-        if (! empty($user->contact_update_channel) && (! empty($user->pending_email) || ! empty($user->pending_phone))) {
+        if ($user->hasPendingMobileContactVerification()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please complete your pending profile contact verification first.',
@@ -530,6 +527,14 @@ class StaffDashboardController extends Controller
                 'success' => false,
                 'message' => 'You are not assigned to this service.',
             ], 403);
+        }
+
+        $staff = Auth::user();
+        if ($staff && $staff->staffMustVerifyMobileBeforeRewards()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Verify your mobile number in Profile before completing services that earn payouts.',
+            ], 422);
         }
 
         // CRITICAL FIX #5: Validate status transition using state machine
@@ -563,7 +568,13 @@ class StaffDashboardController extends Controller
             ], 422);
         }
 
-        if (! $serviceRequest->completion_otp_hash || ! $serviceRequest->completion_otp_expires_at) {
+        if (! $serviceRequest->completion_otp_expires_at) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please request OTP first.',
+            ], 422);
+        }
+        if (! $serviceRequest->completion_otp_sent_at) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please request OTP first.',
@@ -583,7 +594,13 @@ class StaffDashboardController extends Controller
         }
 
         $otpCode = (string) $request->input('otp_code');
-        if (! Hash::check($otpCode, (string) $serviceRequest->completion_otp_hash)) {
+        $otpValid = app(ScopedSmsOtpRedisService::class)->verifyAndConsume(
+            ScopedSmsOtpRedisService::PURPOSE_SERVICE_COMPLETION,
+            (int) $serviceRequest->id,
+            $otpCode
+        );
+
+        if (! $otpValid) {
             $serviceRequest->increment('completion_otp_attempts');
             $remainingAttempts = max(0, 3 - (int) $serviceRequest->fresh()->completion_otp_attempts);
 
@@ -806,31 +823,41 @@ class StaffDashboardController extends Controller
     {
         $user = Auth::user();
         $rewardService = app(RewardService::class);
+        $rewardService->syncStaffRewardPoints($user);
+        $payoutService = app(StaffPayoutService::class);
 
         $rewards = CaregiverReward::where('user_id', $user->id)
             ->latest()
             ->paginate(10);
 
-        $verifiedRewardsQuery = CaregiverReward::where('user_id', $user->id)
-            ->where(function ($query) {
-                $query->where('verification_status', 'verified')
-                    ->orWhereNull('verification_status');
-            });
-
-        $totalPoints = $user->reward_points ?? 0;
-        $totalAmount = $rewardService->calculateRewardAmount($totalPoints);
+        $verifiedRewardsQuery = CaregiverReward::where('user_id', $user->id)->verified();
+        $verifiedPoints = (int) (clone $verifiedRewardsQuery)->sum('reward_points');
+        $earnedAmount = $rewardService->calculateRewardAmount($verifiedPoints);
+        $staffMobileVerified = $user->hasVerifiedPhone();
+        $heldEarningsDueToUnverifiedMobile = $payoutService->calculateHeldDueToUnverifiedMobile($user);
+        $heldAmount = $heldEarningsDueToUnverifiedMobile
+            ? (float) ($heldEarningsDueToUnverifiedMobile['patient_reward']['amount'] ?? 0)
+            : 0.0;
 
         $stats = [
-            'total_submissions' => (clone $verifiedRewardsQuery)->count(),
-            'total_points' => $totalPoints,
-            'total_amount' => $totalAmount,
+            'total_submissions' => CaregiverReward::where('user_id', $user->id)->count(),
+            'total_points' => $verifiedPoints,
+            'earned_amount' => $earnedAmount,
+            'payable_amount' => $staffMobileVerified ? $earnedAmount : 0.0,
+            'held_amount' => $heldAmount,
             'this_month' => (clone $verifiedRewardsQuery)
                 ->whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)
                 ->sum('reward_amount'),
         ];
 
-        return view('services::staff.rewards.index', compact('rewards', 'stats', 'user'));
+        return view('services::staff.rewards.index', compact(
+            'rewards',
+            'stats',
+            'user',
+            'staffMobileVerified',
+            'heldEarningsDueToUnverifiedMobile'
+        ));
     }
 
     /**
@@ -840,13 +867,20 @@ class StaffDashboardController extends Controller
     {
         $user = Auth::user();
         $referralService = app(ReferralService::class);
+        $payoutService = app(StaffPayoutService::class);
 
         $referralLink = $referralService->getReferralLink($user);
         $referralStats = $referralService->getReferralStats($user);
         $basePerRef = 100;
         $completedReferrals = (int) ($referralStats['completed_referrals'] ?? 0);
         $staffReferralTotalBase = $completedReferrals * $basePerRef;
-        $staffReferralTotalAmount = (float) ($referralStats['total_reward_amount'] ?? 0);
+        $staffReferralEarnedAmount = (float) ($referralStats['total_reward_amount'] ?? 0);
+        $staffMobileVerified = $user->hasVerifiedPhone();
+        $heldEarningsDueToUnverifiedMobile = $payoutService->calculateHeldDueToUnverifiedMobile($user);
+        $staffReferralHeldAmount = $heldEarningsDueToUnverifiedMobile
+            ? (float) ($heldEarningsDueToUnverifiedMobile['staff_referral']['amount'] ?? 0)
+            : 0.0;
+        $staffReferralPayableAmount = $staffMobileVerified ? $staffReferralEarnedAmount : 0.0;
 
         $referrals = \App\Modules\Referrals\Models\Referral::where('referrer_id', $user->id)
             ->with('referred')
@@ -854,8 +888,17 @@ class StaffDashboardController extends Controller
             ->paginate(10);
 
         return view('services::staff.staff-referrals.index', compact(
-            'referralLink', 'referralStats', 'referrals', 'user',
-            'staffReferralTotalBase', 'staffReferralTotalAmount', 'basePerRef'
+            'referralLink',
+            'referralStats',
+            'referrals',
+            'user',
+            'staffReferralTotalBase',
+            'staffReferralEarnedAmount',
+            'staffReferralPayableAmount',
+            'staffReferralHeldAmount',
+            'staffMobileVerified',
+            'heldEarningsDueToUnverifiedMobile',
+            'basePerRef'
         ));
     }
 
@@ -865,6 +908,9 @@ class StaffDashboardController extends Controller
     public function subscriptionReferrals()
     {
         $user = Auth::user();
+        $payoutService = app(StaffPayoutService::class);
+        $staffMobileVerified = $user->hasVerifiedPhone();
+        $heldEarningsDueToUnverifiedMobile = $payoutService->calculateHeldDueToUnverifiedMobile($user);
 
         $subscriptionReferralLink = route('plans.index', ['ref' => $user->id]);
 
@@ -900,14 +946,31 @@ class StaffDashboardController extends Controller
             ->whereYear('created_at', now()->year)
             ->sum('referral_commission_amount');
 
+        $earnedCommission = $ledgerTotalCommission + $legacyTotalCommission;
+        $subscriptionHeldAmount = $heldEarningsDueToUnverifiedMobile
+            ? (float) ($heldEarningsDueToUnverifiedMobile['subscription_referral']['amount'] ?? 0)
+            : 0.0;
+
         $stats = (object) [
             'total_referrals' => $totalReferrals,
             'active_referrals' => $activeReferrals,
-            'total_commission' => $ledgerTotalCommission + $legacyTotalCommission,
-            'this_month_commission' => $ledgerThisMonthCommission + $legacyThisMonthCommission,
+            'earned_commission' => $earnedCommission,
+            'total_commission' => $staffMobileVerified ? $earnedCommission : 0.0,
+            'this_month_commission' => $staffMobileVerified
+                ? ($ledgerThisMonthCommission + $legacyThisMonthCommission)
+                : 0.0,
+            'this_month_earned' => $ledgerThisMonthCommission + $legacyThisMonthCommission,
         ];
 
-        return view('services::staff.subscription-referrals.index', compact('subscriptionReferralLink', 'subscriptions', 'stats', 'user'));
+        return view('services::staff.subscription-referrals.index', compact(
+            'subscriptionReferralLink',
+            'subscriptions',
+            'stats',
+            'user',
+            'staffMobileVerified',
+            'heldEarningsDueToUnverifiedMobile',
+            'subscriptionHeldAmount'
+        ));
     }
 
     /**
@@ -941,7 +1004,7 @@ class StaffDashboardController extends Controller
     public function verifyReferralOtp(Request $request)
     {
         $user = Auth::user();
-        if (! empty($user->contact_update_channel) && (! empty($user->pending_email) || ! empty($user->pending_phone))) {
+        if ($user->hasPendingMobileContactVerification()) {
             return redirect()->back()
                 ->with('error', 'Please complete your pending profile contact verification first.');
         }
@@ -958,15 +1021,12 @@ class StaffDashboardController extends Controller
     public function resendReferralOtp(Request $request)
     {
         $user = Auth::user();
-        if (! empty($user->contact_update_channel) && (! empty($user->pending_email) || ! empty($user->pending_phone))) {
+        if ($user->hasPendingMobileContactVerification()) {
             return redirect()->back()
                 ->with('error', 'Please complete your pending profile contact verification first.');
         }
 
-        $request->validate([
-            'otp_channel' => ['required', 'in:mobile,email'],
-        ]);
-        $result = app(ReferralService::class)->resendReferralOtpForReferred(Auth::user(), (string) $request->otp_channel);
+        $result = app(ReferralService::class)->resendReferralOtpForReferred(Auth::user());
 
         return redirect()->back()
             ->with(($result['success'] ?? false) ? 'success' : 'error', $result['message'] ?? 'Failed to resend OTP.');
@@ -974,10 +1034,6 @@ class StaffDashboardController extends Controller
 
     public function sendCompletionOtpFromBanner(Request $request, ServiceRequest $serviceRequest)
     {
-        $request->merge([
-            'otp_channel' => (string) $request->input('otp_channel', 'mobile'),
-        ]);
-
         $response = $this->sendCompletionOtp($request, $serviceRequest);
         $payload = method_exists($response, 'getData') ? (array) $response->getData(true) : [];
         $ok = (bool) ($payload['success'] ?? false);
@@ -1015,20 +1071,5 @@ class StaffDashboardController extends Controller
     private function maskPhone(string $normalizedPhone): string
     {
         return str_repeat('*', max(0, strlen($normalizedPhone) - 4)).substr($normalizedPhone, -4);
-    }
-
-    private function maskEmail(string $email): string
-    {
-        $parts = explode('@', $email);
-        if (count($parts) !== 2) {
-            return $email;
-        }
-        $name = $parts[0];
-        $domain = $parts[1];
-        if (strlen($name) <= 2) {
-            return str_repeat('*', strlen($name)).'@'.$domain;
-        }
-
-        return substr($name, 0, 2).str_repeat('*', max(0, strlen($name) - 2)).'@'.$domain;
     }
 }

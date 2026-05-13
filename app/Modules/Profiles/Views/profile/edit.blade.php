@@ -39,11 +39,11 @@
             </div>
         @endif
 
-        @if(!empty($user->contact_update_channel))
+        @if($user->hasPendingMobileContactVerification())
             <div class="app-alert app-alert-warning">
                 <i class="fas fa-shield-alt me-2"></i>
                 <div class="w-100">
-                    <div class="fw-semibold mb-1">Contact verification pending</div>
+                    <div class="fw-semibold mb-1">Mobile verification pending</div>
                     <div class="small mb-2">
                         Latest OTP destination:
                         <strong>{{ $latestContactOtpDestination ?: ($pendingContactTarget ?: 'not sent yet') }}</strong>.
@@ -118,6 +118,11 @@
                         @error('phone')
                             <div class="app-form-error">{{ $message }}</div>
                         @enderror
+                        @if($user->phone_verified_at && empty($user->pending_phone))
+                            <div class="app-form-help" style="color: #047857;">
+                                <i class="fas fa-check-circle me-1"></i>This mobile number was confirmed with OTP.
+                            </div>
+                        @endif
                     </div>
 
                     <div class="app-form-group">
@@ -130,7 +135,7 @@
                                name="email"
                                value="{{ old('email', $emailForInput ?? $user->email) }}">
                         <div class="app-form-help">
-                            <i class="fas fa-info-circle me-1"></i>If you change email/phone, OTP will be sent instantly to the new contact for verification.
+                            <i class="fas fa-info-circle me-1"></i>Email updates save immediately. If you change your mobile number, an SMS OTP is sent to the new number before it becomes active.
                         </div>
                         @error('email')
                             <div class="app-form-error">{{ $message }}</div>
