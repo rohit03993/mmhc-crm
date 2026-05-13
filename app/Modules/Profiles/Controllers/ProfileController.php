@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
@@ -124,7 +125,9 @@ class ProfileController extends Controller
             $effectivePhone = (string) ($user->pending_phone ?: $user->phone ?? '');
             $phoneDigits = preg_replace('/\D+/', '', $effectivePhone);
             $phoneForInput = strlen($phoneDigits) >= 10 ? substr($phoneDigits, -10) : $phoneDigits;
-            $emailForInput = (string) ($user->pending_email ?: $user->email ?? '');
+            $emailForInput = $user->usesPlaceholderEmail()
+                ? (string) old('email', '')
+                : (string) ($user->pending_email ?: $user->email ?? '');
             $pendingContactTarget = null;
             if ($user->contact_update_channel === 'mobile' && ! empty($user->pending_phone)) {
                 $pendingContactTarget = 'Mobile: '.$this->maskPhone((string) $user->pending_phone);
@@ -157,7 +160,13 @@ class ProfileController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'phone' => ['required', 'regex:/^[0-9]{10}$/'],
-            'email' => 'required|email|max:255|unique:users,email,'.$user->id,
+            'email' => [
+                Rule::requiredIf(fn () => ! $user->usesPlaceholderEmail()),
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
             'address' => 'nullable|string|max:500',
             'date_of_birth' => 'nullable|date|before:today',
             'bio' => 'nullable|string|max:1000',
@@ -187,9 +196,11 @@ class ProfileController extends Controller
             return redirect()->back()->withErrors(['phone' => 'Enter a valid 10-digit Indian mobile number.'])->withInput();
         }
 
-        $effectiveCurrentEmail = (string) ($user->pending_email ?: $user->email ?? '');
+        $effectiveCurrentEmail = $user->usesPlaceholderEmail()
+            ? ''
+            : (string) ($user->pending_email ?: $user->email ?? '');
         $effectiveCurrentPhone = $this->normalizeIndianPhone((string) ($user->pending_phone ?: $user->phone ?? ''));
-        $emailChanged = strcasecmp($requestedEmail, $effectiveCurrentEmail) !== 0;
+        $emailChanged = $requestedEmail !== '' && strcasecmp($requestedEmail, $effectiveCurrentEmail) !== 0;
         $phoneChanged = $effectiveCurrentPhone !== $normalizedRequestedPhone;
         if ($emailChanged && $phoneChanged) {
             return redirect()->back()

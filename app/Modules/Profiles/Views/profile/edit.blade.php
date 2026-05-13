@@ -127,15 +127,16 @@
 
                     <div class="app-form-group">
                         <label for="email" class="app-form-label">
-                            <i class="fas fa-envelope me-2"></i>Email Address
+                            <i class="fas fa-envelope me-2"></i>Email Address @if($user->usesPlaceholderEmail())<span class="text-muted fw-normal">(optional)</span>@endif
                         </label>
                         <input type="email" 
                                class="app-form-input @error('email') app-input-error @enderror" 
                                id="email" 
                                name="email"
-                               value="{{ old('email', $emailForInput ?? $user->email) }}">
+                               value="{{ old('email', $emailForInput ?? ($user->usesPlaceholderEmail() ? '' : $user->email)) }}"
+                               @if(!$user->usesPlaceholderEmail()) required @endif>
                         <div class="app-form-help">
-                            <i class="fas fa-info-circle me-1"></i>Email updates save immediately. If you change your mobile number, an SMS OTP is sent to the new number before it becomes active.
+                            <i class="fas fa-info-circle me-1"></i>@if($user->usesPlaceholderEmail())You sign in with SMS OTP. Add an email here only if you want one on file.@else Email updates save immediately. If you change your mobile number, an SMS OTP is sent to the new number before it becomes active.@endif
                         </div>
                         @error('email')
                             <div class="app-form-error">{{ $message }}</div>

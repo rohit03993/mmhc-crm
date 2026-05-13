@@ -73,10 +73,19 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return redirect()->back()
                 ->withErrors($validator)
-                ->withInput();
+                ->withInput()
+                ->with('login_tab', 'email');
         }
 
         $credentials = $request->only('email', 'password');
+
+        $existingUser = User::where('email', $request->input('email'))->first();
+        if ($existingUser && $existingUser->requiresPhoneLogin()) {
+            return redirect()->back()
+                ->withErrors(['email' => 'This account must sign in with mobile SMS OTP. Open the Phone tab and use your registered number.'])
+                ->withInput($request->only('email'))
+                ->with('login_tab', 'phone');
+        }
 
         if (Auth::attempt($credentials, $request->remember)) {
             $request->session()->regenerate();
@@ -86,11 +95,12 @@ class AuthController extends Controller
 
         return redirect()->back()
             ->withErrors(['email' => 'Invalid credentials'])
-            ->withInput();
+            ->withInput()
+            ->with('login_tab', 'email');
     }
 
     /**
-     * Send OTP to phone via SMS (Sent.dm) for phone login. Does not leak whether the number is registered.
+     * Send OTP to phone via SMS (Sent.dm) for phone login.
      */
     public function sendLoginOtp(Request $request)
     {
@@ -112,16 +122,19 @@ class AuthController extends Controller
         }
 
         $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
-        $user = User::where(function ($query) use ($normalizedPhone, $phoneDigits) {
-            $query->where('phone', $normalizedPhone)
-                ->orWhere('phone', $phoneDigits);
-        })
-            ->where('is_active', true)
-            ->first();
+        $user = $this->userService->findActiveUserByPhone($phoneDigits);
 
         if (! $user) {
+            $inactiveMatch = $this->userService->applyMatchingPhone(User::query(), $phoneDigits)
+                ->where('is_active', false)
+                ->exists();
+
+            $message = $inactiveMatch
+                ? 'This mobile number is registered but the account is inactive. Please contact MMHC support.'
+                : 'This mobile number is not registered on MMHC. Create an account below, or use the Email tab if you have an older account.';
+
             return redirect()->back()
-                ->with('success_otp', 'If an account exists for this number, you will receive an SMS with a login code shortly.')
+                ->withErrors(['phone' => $message])
                 ->withInput()
                 ->with('login_tab', 'phone');
         }
@@ -140,10 +153,12 @@ class AuthController extends Controller
                 ->with('login_tab', 'phone');
         }
 
+        $masked = substr($phoneDigits, 0, 2).'******'.substr($phoneDigits, -2);
+
         return redirect()->back()
             ->with('otp_sent', true)
             ->with('otp_phone', $phoneDigits)
-            ->with('success_otp', $result['message'])
+            ->with('success_otp', 'Login code sent by SMS to +91 '.$masked.'. Enter the 6-digit OTP below.')
             ->with('login_tab', 'phone');
     }
 
@@ -181,18 +196,14 @@ class AuthController extends Controller
                 ->withErrors(['otp' => 'Invalid or expired OTP. Please request a new one.'])
                 ->withInput()
                 ->with('login_tab', 'phone')
+                ->with('otp_sent', true)
                 ->with('otp_phone', $phoneDigits);
         }
 
-        $user = User::where(function ($query) use ($normalizedPhone, $phoneDigits) {
-            $query->where('phone', $normalizedPhone)
-                ->orWhere('phone', $phoneDigits);
-        })
-            ->where('is_active', true)
-            ->first();
+        $user = $this->userService->findActiveUserByPhone($phoneDigits);
         if (! $user) {
             return redirect()->back()
-                ->withErrors(['otp' => 'Account not found. Please use email login or register.'])
+                ->withErrors(['phone' => 'This mobile number is not registered on MMHC.'])
                 ->with('login_tab', 'phone');
         }
 
@@ -277,14 +288,12 @@ class AuthController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
             'phone' => [
                 'required',
                 'string',
                 'regex:/^[0-9]{10}$/',
                 function ($attribute, $value, $fail) use ($normalizedPhone) {
-                    // Check uniqueness with normalized phone format
-                    if (User::where('phone', $normalizedPhone)->exists()) {
+                    if ($this->userService->phoneAlreadyRegistered($normalizedPhone)) {
                         $fail('This phone number is already registered.');
                     }
                 },
@@ -299,7 +308,6 @@ class AuthController extends Controller
             'documents' => 'nullable|array',
             'documents.*' => 'file|mimes:pdf,jpg,jpeg,png|max:2048',
         ], [
-            'email.unique' => 'This email address is already registered.',
             'phone.regex' => 'Phone number must be exactly 10 digits.',
             'pincode.required' => 'Pincode is required.',
             'pincode.regex' => 'Pincode must be a valid 6-digit Indian pincode.',
@@ -341,10 +349,8 @@ class AuthController extends Controller
         }
 
         return DB::transaction(function () use ($request, $referralCode, $isReferralRegistration, $normalizedPhone) {
-            $userData = $request->only(['name', 'email', 'password', 'role', 'date_of_birth', 'address', 'pincode']);
-
-            // Normalize and store phone number
-            $userData['phone'] = $normalizedPhone;
+            $userData = $request->only(['name', 'password', 'role', 'date_of_birth', 'address', 'pincode']);
+            $this->userService->applySelfRegistrationIdentity($userData, $normalizedPhone);
 
             // Store password (mutator will auto-encrypt plain_password)
             $userData['plain_password'] = $userData['password'];
@@ -452,13 +458,12 @@ class AuthController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
             'phone' => [
                 'required',
                 'string',
                 'regex:/^[0-9]{10}$/',
                 function ($attribute, $value, $fail) use ($normalizedPhone) {
-                    if (User::where('phone', $normalizedPhone)->exists()) {
+                    if ($this->userService->phoneAlreadyRegistered($normalizedPhone)) {
                         $fail('This phone number is already registered.');
                     }
                 },
@@ -477,7 +482,6 @@ class AuthController extends Controller
             'address' => 'nullable|string|max:500',
             'date_of_birth' => 'nullable|date',
         ], [
-            'email.unique' => 'This email address is already registered.',
             'phone.regex' => 'Phone number must be exactly 10 digits.',
             'pincode.required' => 'Pincode is required.',
             'pincode.regex' => 'Pincode must be a valid 6-digit Indian pincode.',
@@ -502,13 +506,12 @@ class AuthController extends Controller
 
         return DB::transaction(function () use ($request, $normalizedPhone) {
             $role = (string) $request->input('role');
-            $userData = $request->only(['name', 'email', 'password', 'role', 'date_of_birth', 'address', 'pincode']);
-            $userData['phone'] = $normalizedPhone;
+            $userData = $request->only(['name', 'password', 'role', 'date_of_birth', 'address', 'pincode']);
+            $this->userService->applySelfRegistrationIdentity($userData, $normalizedPhone);
             $userData['plain_password'] = $userData['password'];
             $userData['password'] = Hash::make($userData['password']);
             $userData['unique_id'] = $this->userService->generateUniqueId($role);
             $userData['academic_institution_id'] = (int) $request->input('academic_institution_id');
-            $userData['email_verified_at'] = now();
             $userData['is_active'] = true;
 
             $pincode = $request->input('pincode');
@@ -662,8 +665,7 @@ class AuthController extends Controller
                 'string',
                 'regex:/^[0-9]{10}$/',
                 function ($attribute, $value, $fail) use ($normalizedPhone) {
-                    // Check uniqueness with normalized phone format
-                    if (User::where('phone', $normalizedPhone)->exists()) {
+                    if ($this->userService->phoneAlreadyRegistered($normalizedPhone)) {
                         $fail('This phone number is already registered.');
                     }
                 },
@@ -834,8 +836,7 @@ class AuthController extends Controller
                 'string',
                 'regex:/^[0-9]{10}$/',
                 function ($attribute, $value, $fail) use ($normalizedPhone, $user) {
-                    // Check uniqueness with normalized phone format (excluding current user)
-                    if (User::where('phone', $normalizedPhone)->where('id', '!=', $user->id)->exists()) {
+                    if ($this->userService->phoneAlreadyRegistered($normalizedPhone, $user->id)) {
                         $fail('This phone number is already registered.');
                     }
                 },
@@ -854,7 +855,6 @@ class AuthController extends Controller
             'academic_batch_ids' => ['nullable', 'array'],
             'academic_batch_ids.*' => ['integer', Rule::exists('academic_batches', 'id')],
         ], [
-            'email.unique' => 'This email address is already registered.',
             'phone.regex' => 'Phone number must be exactly 10 digits.',
             'pincode.required' => 'Pincode is required.',
             'pincode.regex' => 'Pincode must be a valid 6-digit Indian pincode.',

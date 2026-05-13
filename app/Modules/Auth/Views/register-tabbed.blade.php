@@ -153,24 +153,8 @@
                                                            required>
                                                 </div>
                                             </div>
-
-                                            <div class="mb-3">
-                                                <label for="patient_email" class="form-label">Email Address</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">
-                                                        <i class="fas fa-envelope"></i>
-                                                    </span>
-                                                    <input type="email" 
-                                                           class="form-control @error('email') is-invalid @enderror" 
-                                                           id="patient_email" 
-                                                           name="email" 
-                                                           value="{{ old('email') }}" 
-                                                           required>
-                                                </div>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="patient_phone" class="form-label">Phone Number</label>
+<div class="mb-3">
+                                                <label for="patient_phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <span class="input-group-text">+91</span>
                                                     <input type="tel" 
@@ -183,7 +167,7 @@
                                                            placeholder="9876543210"
                                                            required>
                                                 </div>
-                                                <div class="form-text">Enter 10-digit Indian mobile number (e.g., 9876543210)</div>
+                                                <div class="form-text">10-digit Indian mobile — used for SMS sign-in after registration</div>
                                                 @error('phone')
                                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror
@@ -331,24 +315,8 @@
                                                            required>
                                                 </div>
                                             </div>
-
-                                            <div class="mb-3">
-                                                <label for="nurse_email" class="form-label">Email Address</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">
-                                                        <i class="fas fa-envelope"></i>
-                                                    </span>
-                                                    <input type="email" 
-                                                           class="form-control @error('email') is-invalid @enderror" 
-                                                           id="nurse_email" 
-                                                           name="email" 
-                                                           value="{{ old('email') }}" 
-                                                           required>
-                                                </div>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="nurse_phone" class="form-label">Phone Number</label>
+<div class="mb-3">
+                                                <label for="nurse_phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <span class="input-group-text">+91</span>
                                                     <input type="tel" 
@@ -361,7 +329,7 @@
                                                            placeholder="9876543210"
                                                            required>
                                                 </div>
-                                                <div class="form-text">Enter 10-digit Indian mobile number (e.g., 9876543210)</div>
+                                                <div class="form-text">10-digit Indian mobile — used for SMS sign-in after registration</div>
                                                 @error('phone')
                                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror
@@ -544,24 +512,8 @@
                                                            required>
                                                 </div>
                                             </div>
-
-                                            <div class="mb-3">
-                                                <label for="caregiver_email" class="form-label">Email Address</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">
-                                                        <i class="fas fa-envelope"></i>
-                                                    </span>
-                                                    <input type="email" 
-                                                           class="form-control @error('email') is-invalid @enderror" 
-                                                           id="caregiver_email" 
-                                                           name="email" 
-                                                           value="{{ old('email') }}" 
-                                                           required>
-                                                </div>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="caregiver_phone" class="form-label">Phone Number</label>
+<div class="mb-3">
+                                                <label for="caregiver_phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <span class="input-group-text">+91</span>
                                                     <input type="tel" 
@@ -574,7 +526,7 @@
                                                            placeholder="9876543210"
                                                            required>
                                                 </div>
-                                                <div class="form-text">Enter 10-digit Indian mobile number (e.g., 9876543210)</div>
+                                                <div class="form-text">10-digit Indian mobile — used for SMS sign-in after registration</div>
                                                 @error('phone')
                                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror

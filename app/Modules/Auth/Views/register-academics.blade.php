@@ -279,24 +279,14 @@
                                             @error('name')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label" for="ac_reg_email">Email <span class="text-danger">*</span></label>
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                                                <input type="email" id="ac_reg_email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}" required autocomplete="email">
-                                            </div>
-                                            @error('email')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
+<div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label" for="ac_reg_phone">Phone <span class="text-danger">*</span></label>
                                             <div class="input-group">
                                                 <span class="input-group-text">+91</span>
                                                 <input type="tel" id="ac_reg_phone" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone') }}" required pattern="[0-9]{10}" maxlength="10" inputmode="numeric" placeholder="9876543210" autocomplete="tel-national">
                                             </div>
-                                            <div class="form-text small">10-digit Indian mobile</div>
+                                            <div class="form-text small">10-digit Indian mobile — SMS sign-in after registration</div>
                                             @error('phone')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                         </div>
                                     </div>

@@ -21,6 +21,7 @@ class User extends Authenticatable
         'phone',
         'phone_verified_at',
         'phone_verified_source',
+        'login_via_phone_only',
         'pending_phone',
         'contact_update_channel',
         'contact_update_otp_hash',
@@ -69,6 +70,7 @@ class User extends Authenticatable
         'date_of_birth' => 'datetime',
         'password' => 'hashed',
         'is_active' => 'boolean',
+        'login_via_phone_only' => 'boolean',
         'documents' => 'array',
         'reward_points' => 'integer',
         'contact_update_otp_expires_at' => 'datetime',
@@ -124,6 +126,27 @@ class User extends Authenticatable
     public function hasVerifiedPhone(): bool
     {
         return $this->phone_verified_at !== null;
+    }
+
+    /**
+     * Self-registered accounts (after phone-login rollout) must sign in via SMS OTP, not email/password.
+     */
+    public function requiresPhoneLogin(): bool
+    {
+        return (bool) $this->login_via_phone_only;
+    }
+
+    public function usesPlaceholderEmail(): bool
+    {
+        return app(\App\Modules\Auth\Services\UserService::class)->isPlaceholderEmail($this->email);
+    }
+
+    /**
+     * Email shown in UI — hides internal phone-placeholder addresses.
+     */
+    public function displayEmail(): ?string
+    {
+        return $this->usesPlaceholderEmail() ? null : $this->email;
     }
 
     /**

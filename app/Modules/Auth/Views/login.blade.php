@@ -1189,7 +1189,7 @@
         <div class="academics-login-right-inner">
             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="academics-logo">
             <h1 class="academics-portal-title">Sign in</h1>
-            <p class="academics-portal-desc">Use your email and password, or sign in with SMS OTP on your registered mobile number.</p>
+            <p class="academics-portal-desc">Sign in with SMS OTP on your mobile (default). Existing members may use email and password on the second tab.</p>
             <div class="academics-form-wrap">
                 @include('auth::partials.login-form')
             </div>

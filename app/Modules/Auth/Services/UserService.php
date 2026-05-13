@@ -198,4 +198,81 @@ class UserService
         // Return last 10 digits
         return substr($digits, -10);
     }
+
+    /**
+     * All common DB storage shapes for the same Indian mobile (10-digit core).
+     *
+     * @return list<string>
+     */
+    public function phoneStorageVariants(string $phoneOrDigits): array
+    {
+        $ten = $this->extractPhoneDigits($phoneOrDigits);
+
+        return array_values(array_unique([
+            $ten,
+            '+91'.$ten,
+            '91'.$ten,
+        ]));
+    }
+
+    /**
+     * Restrict a users query to rows whose phone matches the given input (any legacy format).
+     */
+    public function applyMatchingPhone(\Illuminate\Database\Eloquent\Builder $query, string $phoneOrDigits): \Illuminate\Database\Eloquent\Builder
+    {
+        $variants = $this->phoneStorageVariants($phoneOrDigits);
+
+        return $query->where(function ($q) use ($variants) {
+            $q->whereIn('phone', $variants);
+        });
+    }
+
+    public function findActiveUserByPhone(string $phoneOrDigits): ?User
+    {
+        $ten = $this->extractPhoneDigits($phoneOrDigits);
+        if (! preg_match('/^[6-9][0-9]{9}$/', $ten)) {
+            return null;
+        }
+
+        return $this->applyMatchingPhone(User::query(), $phoneOrDigits)
+            ->where('is_active', true)
+            ->first();
+    }
+
+    public function phoneAlreadyRegistered(string $phoneOrDigits, ?int $exceptUserId = null): bool
+    {
+        $query = $this->applyMatchingPhone(User::query(), $phoneOrDigits);
+        if ($exceptUserId !== null) {
+            $query->where('id', '!=', $exceptUserId);
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * Internal placeholder so DB unique email constraint is satisfied without asking users.
+     */
+    public function placeholderEmailForPhone(string $phoneOrDigits): string
+    {
+        $ten = $this->extractPhoneDigits($phoneOrDigits);
+
+        return $ten.'@phone.themmhc.com';
+    }
+
+    public function isPlaceholderEmail(?string $email): bool
+    {
+        return $email !== null && str_ends_with(strtolower($email), '@phone.themmhc.com');
+    }
+
+    /**
+     * Phone-first self-registration: normalized phone, SMS login flag, synthetic email.
+     *
+     * @param  array<string, mixed>  $userData
+     */
+    public function applySelfRegistrationIdentity(array &$userData, string $normalizedPhone): void
+    {
+        $userData['phone'] = $normalizedPhone;
+        $userData['email'] = $this->placeholderEmailForPhone($normalizedPhone);
+        $userData['login_via_phone_only'] = true;
+    }
 }

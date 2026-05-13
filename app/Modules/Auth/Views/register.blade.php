@@ -69,22 +69,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="email" class="form-label">Email Address</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-envelope"></i>
-                                    </span>
-                                    <input type="email" 
-                                           class="form-control @error('email') is-invalid @enderror" 
-                                           id="email" 
-                                           name="email" 
-                                           value="{{ old('email') }}" 
-                                           required>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
+<div class="col-md-6 mb-3">
                                 <label for="phone" class="form-label">Phone Number</label>
                                 <div class="input-group">
                                     <span class="input-group-text">

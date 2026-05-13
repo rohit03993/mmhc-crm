@@ -154,6 +154,7 @@
                     </div>
                 </div>
                 
+@if($user->displayEmail())
                 <!-- Email Card -->
                 <div class="app-info-card">
                     <div class="app-info-icon email">
@@ -161,11 +162,12 @@
                     </div>
                     <div class="app-info-content">
                         <div class="app-info-label">Email</div>
-                        <div class="app-info-value app-info-value-multiline">{{ $user->email }}</div>
+                        <div class="app-info-value app-info-value-multiline">{{ $user->displayEmail() }}</div>
                         <a href="{{ route('profile.edit') }}" class="profile-meta-edit-link">Edit in profile settings</a>
                     </div>
                 </div>
                 
+                @endif
                 <!-- Phone Card -->
                 <div class="app-info-card">
                     <div class="app-info-icon phone">
