@@ -266,79 +266,237 @@
         </div>
     </section>
 
-    <!-- PLANS SECTION -->
-    <section id="plans" class="py-20 bg-gray-50">
+    <!-- ABOUT US SECTION -->
+    <section id="about" class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Section Header -->
             <div class="text-center mb-16">
                 <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                    Subscription <span class="gradient-text">Plans</span>
+                    About <span class="gradient-text">Med Miracle Health Care</span>
                 </h2>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Affordable monthly subscription plans for your family's healthcare needs. Starting at just Rs 999/month with 24x7 home nursing care.
+                    Founded by Mantu Kumar with a vision to make quality healthcare accessible and affordable. India's newest home nursing subscription service with 10,000+ successful patient outcomes.
                 </p>
             </div>
             
-            <!-- Plans Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                @forelse($healthcarePlans as $plan)
-                    <div class="bg-white {{ $plan->is_popular ? 'rounded-2xl shadow-xl border-2 border-' . $plan->color_theme . '-500' : 'rounded-2xl shadow-lg' }} hover-lift p-8 relative">
-                        
-                        @if($plan->is_popular)
-                            <!-- Popular Badge -->
-                            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                                <span class="bg-{{ $plan->color_theme ?? 'blue' }}-500 text-white px-4 py-1 rounded-full text-xs font-semibold shadow-lg">
-                                    @if($plan->popular_label)
-                                        {{ $plan->popular_label }}
-                                    @else
-                                        ⭐ Most Popular
-                                    @endif
-                                </span>
-                            </div>
-                        @endif
-                        
-                        <div class="text-center">
-                            <div class="w-16 h-16 bg-{{ $plan->color_theme ?? 'blue' }}-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <i class="fas {{ $plan->icon_class ?? 'fa-heartbeat' }} text-{{ $plan->color_theme ?? 'blue' }}-600 text-2xl"></i>
-                            </div>
-                            <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ $plan->name }}</h3>
-                            <p class="text-gray-600 mb-6">{{ $plan->description }}</p>
-                            <div class="mb-6">
-                                <span class="text-4xl font-bold text-gray-800">{{ $plan->formatted_price }}</span>
-                                <span class="text-gray-600">{{ $plan->duration_text }}</span>
-                            </div>
-                            
-                            <!-- Features -->
-                            <ul class="text-left space-y-3 mb-8">
-                                @foreach($plan->features as $feature)
-                                    <li class="flex items-center">
-                                        <i class="fas fa-check text-green-500 mr-3"></i>
-                                        <span class="text-gray-700">{{ $feature }}</span>
-                                    </li>
-                                @endforeach
-                            </ul>
-                            
-                            <a href="{{ $plan->button_link ?: route('auth.register') }}?role=patient&plan={{ strtolower(str_replace(' ', '_', $plan->name)) }}" 
-                               class="w-full bg-{{ $plan->color_theme ?? 'blue' }}-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-{{ $plan->color_theme ?? 'blue' }}-700 transition">
-                                {{ $plan->button_text ?? 'Get Started' }}
-                            </a>
-                        </div>
+            <!-- Main Content -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-20">
+                <!-- Left Side - Story -->
+                <div>
+                    <h3 class="text-3xl font-bold text-gray-800 mb-6">Our Story</h3>
+                    <div class="space-y-6 text-gray-600 leading-relaxed">
+                        <p>
+                            Meet our founder, Mantu Kumar, the visionary behind Med Miracle Health Care. With a deep commitment to holistic well-being, Mantu Kumar has built the company into a leader in personalized home healthcare.
+                        </p>
+                        <p>
+                            We at Med Miracle Healthcare are committed to making quality healthcare accessible and affordable. What sets us apart is our unique subscription model - starting at just Rs 999/month - that provides comprehensive nursing care at home, regular checkups, and body-mind relaxation sessions.
+                        </p>
+                        <p>
+                            His dedication to providing compassionate, evidence-based care has led to over 10,000 successful patient outcomes, establishing Med Miracle Health Care as a trusted name across Patna, Ranchi, Bhopal, Noida, and Gurgaon. We're proud to be India's first largest superhero nursing association.
+                        </p>
                     </div>
-                @empty
-                    <div class="col-span-4 text-center py-12">
-                        <i class="fas fa-heartbeat text-gray-400 text-5xl mb-4"></i>
-                        <p class="text-gray-600">No healthcare plans available at the moment.</p>
-                        <p class="text-sm text-gray-500 mt-2">Please contact us for more information.</p>
-                    </div>
-                @endforelse
+                </div>
+                
+                <!-- Right Side - Image -->
+                <div class="relative">
+                    <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&h=400&fit=crop" 
+                         alt="MMHC Team" 
+                         class="rounded-2xl shadow-2xl w-full">
+                    <div class="absolute inset-0 bg-gradient-to-t from-blue-900/20 to-transparent rounded-2xl"></div>
+                </div>
             </div>
             
-            <!-- Bottom CTA -->
-            <div class="text-center mt-12">
-                <p class="text-gray-600 mb-4">Not sure which plan is right for you?</p>
-                <a href="#contact" class="text-blue-600 hover:text-blue-700 font-semibold">
-                    Contact our team for personalized recommendations →
-                </a>
+            <!-- Mission & Vision -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-20">
+                <!-- Mission -->
+                <div class="bg-gradient-to-br from-blue-50 to-green-50 rounded-2xl p-8 text-center">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-bullseye text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Our Mission</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        We at Med Miracle Healthcare are committed to making quality healthcare accessible and affordable through our monthly subscription plans. We provide nursing care at home, regular checkups, mind-body relaxation sessions and much more. Our mission is to solve the problems of non-empathetic healthcare, expensive medical equipment, poor medical environment, and incompetent staff by providing personalized, compassionate care at your doorstep.
+                    </p>
+                </div>
+                
+                <!-- Vision -->
+                <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-8 text-center">
+                    <div class="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-eye text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Our Vision</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        To become India's leading home healthcare provider, expanding our services beyond Patna, Ranchi, Bhopal, Noida, and Gurgaon to more cities. We envision a future where every family has access to affordable, professional healthcare services at home, with trained nursing staff who understand both the medical and psychological needs of patients.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Achievements & Media Coverage: only images added in Admin → Achievements & Media (no logo) -->
+            @if(isset($achievementMedia) && $achievementMedia->isNotEmpty())
+            <div id="achievement-media" class="achievement-media-section scroll-mt-24">
+                <h3 class="text-3xl font-bold text-gray-800 text-center mb-8">Achievements & Media Coverage</h3>
+                <div class="max-w-7xl mx-auto px-2 achievement-media-inner"
+                     x-data="{
+                         active: 0,
+                         total: {{ $achievementMedia->count() }},
+                         next() { this.active = (this.active + 1) % this.total },
+                         prev() { this.active = (this.active - 1 + this.total) % this.total }
+                     }"
+                     x-init="const advance = () => $data.next(); setInterval(advance, 5000)">
+                    <div class="achievement-media-carousel">
+                        @foreach($achievementMedia as $index => $item)
+                        <div x-show="active === {{ $index }}"
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0"
+                             x-transition:enter-end="opacity-100"
+                             x-transition:leave="transition ease-in duration-200"
+                             x-transition:leave-start="opacity-100"
+                             x-transition:leave-end="opacity-0"
+                             class="absolute inset-0 flex items-center justify-center p-3">
+                            <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#f3f4f6" width="400" height="300"/><text fill="#9ca3af" font-family="sans-serif" font-size="18" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">No image</text></svg>') }}" alt="{{ $item->caption ?? 'Achievement' }}" class="achievement-media-main-img">
+                            @if($item->caption)
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-2 rounded-b-2xl">
+                                <p class="text-white font-medium text-sm text-center">{{ $item->caption }}</p>
+                            </div>
+                            @endif
+                        </div>
+                        @endforeach
+                    </div>
+                    <div class="flex items-center justify-center gap-3 mt-4">
+                        <button @click="prev()" class="p-2 rounded-full bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-600 transition" aria-label="Previous">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div class="flex gap-2 items-center flex-wrap justify-center">
+                            @foreach($achievementMedia as $index => $item)
+                            <button @click="active = {{ $index }}" :class="active === {{ $index }} ? 'ring-2 ring-blue-600 ring-offset-1' : 'opacity-70 hover:opacity-100'" class="achievement-media-thumb rounded-lg overflow-hidden border border-gray-200 flex-shrink-0 transition" aria-label="Go to slide {{ $index + 1 }}">
+                                <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="60" viewBox="0 0 80 60"><rect fill="#f3f4f6" width="80" height="60"/></svg>') }}" alt="" class="w-full h-full object-cover pointer-events-none">
+                            </button>
+                            @endforeach
+                        </div>
+                        <button @click="next()" class="p-2 rounded-full bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-600 transition" aria-label="Next">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <!-- Values -->
+            <div class="mb-20">
+                <h3 class="text-3xl font-bold text-gray-800 text-center mb-12">Our Core Values</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-heart text-blue-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-2">Compassion</h4>
+                        <p class="text-gray-600 text-sm">Treating every patient with empathy and understanding</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-shield-alt text-green-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-2">Excellence</h4>
+                        <p class="text-gray-600 text-sm">Maintaining the highest standards in all our services</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-users text-purple-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-2">Integrity</h4>
+                        <p class="text-gray-600 text-sm">Building trust through transparency and honesty</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-lightbulb text-orange-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-2">Innovation</h4>
+                        <p class="text-gray-600 text-sm">Continuously improving through technology and creativity</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Awards & Achievements -->
+            <div class="mb-20">
+                <h3 class="text-3xl font-bold text-gray-800 text-center mb-12">Awards & Recognition</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Award 1 -->
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
+                        <div class="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-trophy text-white text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">Indian Icon of the Year</h4>
+                        <p class="text-gray-600 text-sm">Recognized for outstanding contribution to healthcare</p>
+                    </div>
+                    
+                    <!-- Award 2 -->
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
+                        <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-award text-white text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">India Excellence Award</h4>
+                        <p class="text-gray-600 text-sm">Fastest growing provider in healthcare segment</p>
+                    </div>
+                    
+                    <!-- Award 3 -->
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
+                        <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-globe text-white text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">International Excellence Award</h4>
+                        <p class="text-gray-600 text-sm">Powered by ACS for global healthcare standards</p>
+                    </div>
+                    
+                    <!-- Award 4 -->
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
+                        <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-star text-white text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">Best Home Nursing Services</h4>
+                        <p class="text-gray-600 text-sm">Leading in home healthcare delivery</p>
+                    </div>
+                    
+                    <!-- Award 5 -->
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
+                        <div class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-heartbeat text-white text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">Global Healthcare & Wellness Award</h4>
+                        <p class="text-gray-600 text-sm">Excellence in holistic healthcare approach</p>
+                    </div>
+                    
+                    <!-- Milestone -->
+                    <div class="bg-gradient-to-br from-blue-500 to-green-500 rounded-lg shadow-lg p-6 text-center hover-lift text-white">
+                        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-users text-blue-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold mb-2">10,000+ Success Stories</h4>
+                        <p class="text-sm">Successful patient outcomes across 5 cities</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Founder Section -->
+            <div class="text-center">
+                <h3 class="text-3xl font-bold text-gray-800 mb-12">Meet Our Founder</h3>
+                <div class="max-w-2xl mx-auto">
+                    <div class="bg-gradient-to-br from-blue-50 to-green-50 rounded-2xl shadow-xl p-8">
+                        @php $founderImagePath = \App\Models\SiteSetting::get('founder_image_path'); @endphp
+                        <img src="{{ ($founderImagePath && storage_asset($founderImagePath)) ? storage_asset($founderImagePath) : 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&h=200&fit=crop&crop=face' }}" 
+                             alt="Mantu Kumar - Founder" 
+                             class="w-32 h-32 rounded-full mx-auto mb-6 object-cover border-4 border-white shadow-lg">
+                        <h4 class="text-3xl font-bold text-gray-800 mb-3">Mantu Kumar</h4>
+                        <p class="text-blue-600 font-semibold text-xl mb-4">Founder & Visionary</p>
+                        <p class="text-gray-700 leading-relaxed mb-6">
+                            With a deep commitment to holistic well-being, Mantu Kumar has built Med Miracle Health Care into a leader in personalized home healthcare. His dedication to providing compassionate, evidence-based care has led to over <strong>10,000 successful patient outcomes</strong>, establishing MMHC as a trusted name in the industry.
+                        </p>
+                        <div class="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
+                            <span class="bg-white px-4 py-2 rounded-full shadow">🏆 Multiple Award Winner</span>
+                            <span class="bg-white px-4 py-2 rounded-full shadow">💼 BNI Member</span>
+                            <span class="bg-white px-4 py-2 rounded-full shadow">Entrepreneur</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -619,237 +777,79 @@
         </div>
     </section>
 
-    <!-- ABOUT US SECTION -->
-    <section id="about" class="py-20 bg-white">
+    <!-- PLANS SECTION -->
+    <section id="plans" class="py-20 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Section Header -->
             <div class="text-center mb-16">
                 <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                    About <span class="gradient-text">Med Miracle Health Care</span>
+                    Subscription <span class="gradient-text">Plans</span>
                 </h2>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Founded by Mantu Kumar with a vision to make quality healthcare accessible and affordable. India's newest home nursing subscription service with 10,000+ successful patient outcomes.
+                    Affordable monthly subscription plans for your family's healthcare needs. Starting at just Rs 999/month with 24x7 home nursing care.
                 </p>
             </div>
             
-            <!-- Main Content -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-20">
-                <!-- Left Side - Story -->
-                <div>
-                    <h3 class="text-3xl font-bold text-gray-800 mb-6">Our Story</h3>
-                    <div class="space-y-6 text-gray-600 leading-relaxed">
-                        <p>
-                            Meet our founder, Mantu Kumar, the visionary behind Med Miracle Health Care. With a deep commitment to holistic well-being, Mantu Kumar has built the company into a leader in personalized home healthcare.
-                        </p>
-                        <p>
-                            We at Med Miracle Healthcare are committed to making quality healthcare accessible and affordable. What sets us apart is our unique subscription model - starting at just Rs 999/month - that provides comprehensive nursing care at home, regular checkups, and body-mind relaxation sessions.
-                        </p>
-                        <p>
-                            His dedication to providing compassionate, evidence-based care has led to over 10,000 successful patient outcomes, establishing Med Miracle Health Care as a trusted name across Patna, Ranchi, Bhopal, Noida, and Gurgaon. We're proud to be India's first largest superhero nursing association.
-                        </p>
-                    </div>
-                </div>
-                
-                <!-- Right Side - Image -->
-                <div class="relative">
-                    <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&h=400&fit=crop" 
-                         alt="MMHC Team" 
-                         class="rounded-2xl shadow-2xl w-full">
-                    <div class="absolute inset-0 bg-gradient-to-t from-blue-900/20 to-transparent rounded-2xl"></div>
-                </div>
-            </div>
-            
-            <!-- Mission & Vision -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-20">
-                <!-- Mission -->
-                <div class="bg-gradient-to-br from-blue-50 to-green-50 rounded-2xl p-8 text-center">
-                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-bullseye text-white text-2xl"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Our Mission</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        We at Med Miracle Healthcare are committed to making quality healthcare accessible and affordable through our monthly subscription plans. We provide nursing care at home, regular checkups, mind-body relaxation sessions and much more. Our mission is to solve the problems of non-empathetic healthcare, expensive medical equipment, poor medical environment, and incompetent staff by providing personalized, compassionate care at your doorstep.
-                    </p>
-                </div>
-                
-                <!-- Vision -->
-                <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-8 text-center">
-                    <div class="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-eye text-white text-2xl"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Our Vision</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        To become India's leading home healthcare provider, expanding our services beyond Patna, Ranchi, Bhopal, Noida, and Gurgaon to more cities. We envision a future where every family has access to affordable, professional healthcare services at home, with trained nursing staff who understand both the medical and psychological needs of patients.
-                    </p>
-                </div>
-            </div>
-
-            <!-- Achievements & Media Coverage: only images added in Admin → Achievements & Media (no logo) -->
-            @if(isset($achievementMedia) && $achievementMedia->isNotEmpty())
-            <div id="achievement-media" class="achievement-media-section scroll-mt-24">
-                <h3 class="text-3xl font-bold text-gray-800 text-center mb-8">Achievements & Media Coverage</h3>
-                <div class="max-w-7xl mx-auto px-2 achievement-media-inner"
-                     x-data="{
-                         active: 0,
-                         total: {{ $achievementMedia->count() }},
-                         next() { this.active = (this.active + 1) % this.total },
-                         prev() { this.active = (this.active - 1 + this.total) % this.total }
-                     }"
-                     x-init="const advance = () => $data.next(); setInterval(advance, 5000)">
-                    <div class="achievement-media-carousel">
-                        @foreach($achievementMedia as $index => $item)
-                        <div x-show="active === {{ $index }}"
-                             x-transition:enter="transition ease-out duration-300"
-                             x-transition:enter-start="opacity-0"
-                             x-transition:enter-end="opacity-100"
-                             x-transition:leave="transition ease-in duration-200"
-                             x-transition:leave-start="opacity-100"
-                             x-transition:leave-end="opacity-0"
-                             class="absolute inset-0 flex items-center justify-center p-3">
-                            <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#f3f4f6" width="400" height="300"/><text fill="#9ca3af" font-family="sans-serif" font-size="18" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">No image</text></svg>') }}" alt="{{ $item->caption ?? 'Achievement' }}" class="achievement-media-main-img">
-                            @if($item->caption)
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-2 rounded-b-2xl">
-                                <p class="text-white font-medium text-sm text-center">{{ $item->caption }}</p>
+            <!-- Plans Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                @forelse($healthcarePlans as $plan)
+                    <div class="bg-white {{ $plan->is_popular ? 'rounded-2xl shadow-xl border-2 border-' . $plan->color_theme . '-500' : 'rounded-2xl shadow-lg' }} hover-lift p-8 relative">
+                        
+                        @if($plan->is_popular)
+                            <!-- Popular Badge -->
+                            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                                <span class="bg-{{ $plan->color_theme ?? 'blue' }}-500 text-white px-4 py-1 rounded-full text-xs font-semibold shadow-lg">
+                                    @if($plan->popular_label)
+                                        {{ $plan->popular_label }}
+                                    @else
+                                        ⭐ Most Popular
+                                    @endif
+                                </span>
                             </div>
-                            @endif
+                        @endif
+                        
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-{{ $plan->color_theme ?? 'blue' }}-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <i class="fas {{ $plan->icon_class ?? 'fa-heartbeat' }} text-{{ $plan->color_theme ?? 'blue' }}-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ $plan->name }}</h3>
+                            <p class="text-gray-600 mb-6">{{ $plan->description }}</p>
+                            <div class="mb-6">
+                                <span class="text-4xl font-bold text-gray-800">{{ $plan->formatted_price }}</span>
+                                <span class="text-gray-600">{{ $plan->duration_text }}</span>
+                            </div>
+                            
+                            <!-- Features -->
+                            <ul class="text-left space-y-3 mb-8">
+                                @foreach($plan->features as $feature)
+                                    <li class="flex items-center">
+                                        <i class="fas fa-check text-green-500 mr-3"></i>
+                                        <span class="text-gray-700">{{ $feature }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                            
+                            <a href="{{ $plan->button_link ?: route('auth.register') }}?role=patient&plan={{ strtolower(str_replace(' ', '_', $plan->name)) }}" 
+                               class="w-full bg-{{ $plan->color_theme ?? 'blue' }}-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-{{ $plan->color_theme ?? 'blue' }}-700 transition">
+                                {{ $plan->button_text ?? 'Get Started' }}
+                            </a>
                         </div>
-                        @endforeach
                     </div>
-                    <div class="flex items-center justify-center gap-3 mt-4">
-                        <button @click="prev()" class="p-2 rounded-full bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-600 transition" aria-label="Previous">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <div class="flex gap-2 items-center flex-wrap justify-center">
-                            @foreach($achievementMedia as $index => $item)
-                            <button @click="active = {{ $index }}" :class="active === {{ $index }} ? 'ring-2 ring-blue-600 ring-offset-1' : 'opacity-70 hover:opacity-100'" class="achievement-media-thumb rounded-lg overflow-hidden border border-gray-200 flex-shrink-0 transition" aria-label="Go to slide {{ $index + 1 }}">
-                                <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="60" viewBox="0 0 80 60"><rect fill="#f3f4f6" width="80" height="60"/></svg>') }}" alt="" class="w-full h-full object-cover pointer-events-none">
-                            </button>
-                            @endforeach
-                        </div>
-                        <button @click="next()" class="p-2 rounded-full bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-600 transition" aria-label="Next">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
+                @empty
+                    <div class="col-span-4 text-center py-12">
+                        <i class="fas fa-heartbeat text-gray-400 text-5xl mb-4"></i>
+                        <p class="text-gray-600">No healthcare plans available at the moment.</p>
+                        <p class="text-sm text-gray-500 mt-2">Please contact us for more information.</p>
                     </div>
-                </div>
-            </div>
-            @endif
-
-            <!-- Values -->
-            <div class="mb-20">
-                <h3 class="text-3xl font-bold text-gray-800 text-center mb-12">Our Core Values</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <div class="text-center">
-                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-heart text-blue-600 text-2xl"></i>
-                        </div>
-                        <h4 class="text-xl font-semibold text-gray-800 mb-2">Compassion</h4>
-                        <p class="text-gray-600 text-sm">Treating every patient with empathy and understanding</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-shield-alt text-green-600 text-2xl"></i>
-                        </div>
-                        <h4 class="text-xl font-semibold text-gray-800 mb-2">Excellence</h4>
-                        <p class="text-gray-600 text-sm">Maintaining the highest standards in all our services</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-users text-purple-600 text-2xl"></i>
-                        </div>
-                        <h4 class="text-xl font-semibold text-gray-800 mb-2">Integrity</h4>
-                        <p class="text-gray-600 text-sm">Building trust through transparency and honesty</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-lightbulb text-orange-600 text-2xl"></i>
-                        </div>
-                        <h4 class="text-xl font-semibold text-gray-800 mb-2">Innovation</h4>
-                        <p class="text-gray-600 text-sm">Continuously improving through technology and creativity</p>
-                    </div>
-                </div>
+                @endforelse
             </div>
             
-            <!-- Awards & Achievements -->
-            <div class="mb-20">
-                <h3 class="text-3xl font-bold text-gray-800 text-center mb-12">Awards & Recognition</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Award 1 -->
-                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
-                        <div class="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-trophy text-white text-2xl"></i>
-                        </div>
-                        <h4 class="text-lg font-bold text-gray-800 mb-2">Indian Icon of the Year</h4>
-                        <p class="text-gray-600 text-sm">Recognized for outstanding contribution to healthcare</p>
-                    </div>
-                    
-                    <!-- Award 2 -->
-                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
-                        <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-award text-white text-2xl"></i>
-                        </div>
-                        <h4 class="text-lg font-bold text-gray-800 mb-2">India Excellence Award</h4>
-                        <p class="text-gray-600 text-sm">Fastest growing provider in healthcare segment</p>
-                    </div>
-                    
-                    <!-- Award 3 -->
-                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
-                        <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-globe text-white text-2xl"></i>
-                        </div>
-                        <h4 class="text-lg font-bold text-gray-800 mb-2">International Excellence Award</h4>
-                        <p class="text-gray-600 text-sm">Powered by ACS for global healthcare standards</p>
-                    </div>
-                    
-                    <!-- Award 4 -->
-                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
-                        <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-star text-white text-2xl"></i>
-                        </div>
-                        <h4 class="text-lg font-bold text-gray-800 mb-2">Best Home Nursing Services</h4>
-                        <p class="text-gray-600 text-sm">Leading in home healthcare delivery</p>
-                    </div>
-                    
-                    <!-- Award 5 -->
-                    <div class="bg-white rounded-lg shadow-lg p-6 text-center hover-lift">
-                        <div class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-heartbeat text-white text-2xl"></i>
-                        </div>
-                        <h4 class="text-lg font-bold text-gray-800 mb-2">Global Healthcare & Wellness Award</h4>
-                        <p class="text-gray-600 text-sm">Excellence in holistic healthcare approach</p>
-                    </div>
-                    
-                    <!-- Milestone -->
-                    <div class="bg-gradient-to-br from-blue-500 to-green-500 rounded-lg shadow-lg p-6 text-center hover-lift text-white">
-                        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-users text-blue-600 text-2xl"></i>
-                        </div>
-                        <h4 class="text-lg font-bold mb-2">10,000+ Success Stories</h4>
-                        <p class="text-sm">Successful patient outcomes across 5 cities</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Founder Section -->
-            <div class="text-center">
-                <h3 class="text-3xl font-bold text-gray-800 mb-12">Meet Our Founder</h3>
-                <div class="max-w-2xl mx-auto">
-                    <div class="bg-gradient-to-br from-blue-50 to-green-50 rounded-2xl shadow-xl p-8">
-                        @php $founderImagePath = \App\Models\SiteSetting::get('founder_image_path'); @endphp
-                        <img src="{{ ($founderImagePath && storage_asset($founderImagePath)) ? storage_asset($founderImagePath) : 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&h=200&fit=crop&crop=face' }}" 
-                             alt="Mantu Kumar - Founder" 
-                             class="w-32 h-32 rounded-full mx-auto mb-6 object-cover border-4 border-white shadow-lg">
-                        <h4 class="text-3xl font-bold text-gray-800 mb-3">Mantu Kumar</h4>
-                        <p class="text-blue-600 font-semibold text-xl mb-4">Founder & Visionary</p>
-                        <p class="text-gray-700 leading-relaxed mb-6">
-                            With a deep commitment to holistic well-being, Mantu Kumar has built Med Miracle Health Care into a leader in personalized home healthcare. His dedication to providing compassionate, evidence-based care has led to over <strong>10,000 successful patient outcomes</strong>, establishing MMHC as a trusted name in the industry.
-                        </p>
-                        <div class="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
-                            <span class="bg-white px-4 py-2 rounded-full shadow">🏆 Multiple Award Winner</span>
-                            <span class="bg-white px-4 py-2 rounded-full shadow">💼 BNI Member</span>
-                            <span class="bg-white px-4 py-2 rounded-full shadow">Entrepreneur</span>
-                        </div>
-                    </div>
-                </div>
+            <!-- Bottom CTA -->
+            <div class="text-center mt-12">
+                <p class="text-gray-600 mb-4">Not sure which plan is right for you?</p>
+                <a href="#contact" class="text-blue-600 hover:text-blue-700 font-semibold">
+                    Contact our team for personalized recommendations →
+                </a>
             </div>
         </div>
     </section>

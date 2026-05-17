@@ -132,12 +132,12 @@
                         </span>
                         <div class="profile-section-title-text">
                             <h2 class="profile-section-h2">Profile information</h2>
-                            <p class="profile-section-sub">Name, email, phone, date of birth and address</p>
+                            <p class="profile-section-sub">Name, mobile, date of birth and address</p>
                         </div>
                     </div>
                     <a href="{{ route('profile.edit') }}" class="profile-section-cta">
                         <i class="fas fa-edit me-2"></i>
-                        <span class="profile-section-cta-label">Update email &amp; mobile</span>
+                        <span class="profile-section-cta-label">Update profile &amp; mobile</span>
                     </a>
                 </div>
             </div>
@@ -154,20 +154,6 @@
                     </div>
                 </div>
                 
-@if($user->displayEmail())
-                <!-- Email Card -->
-                <div class="app-info-card">
-                    <div class="app-info-icon email">
-                        <i class="fas fa-envelope"></i>
-                    </div>
-                    <div class="app-info-content">
-                        <div class="app-info-label">Email</div>
-                        <div class="app-info-value app-info-value-multiline">{{ $user->displayEmail() }}</div>
-                        <a href="{{ route('profile.edit') }}" class="profile-meta-edit-link">Edit in profile settings</a>
-                    </div>
-                </div>
-                
-                @endif
                 <!-- Phone Card -->
                 <div class="app-info-card">
                     <div class="app-info-icon phone">
@@ -175,13 +161,22 @@
                     </div>
                     <div class="app-info-content">
                         <div class="app-info-label">Phone</div>
-                        <div class="app-info-value app-info-value-multiline">{{ $user->phone ?? 'Not provided' }}</div>
-                        @if(! empty($user->phone) && $user->phone_verified_at && empty($user->pending_phone))
+                        <div class="app-info-value app-info-value-multiline">{{ $user->displayPhone() }}</div>
+                        @if($pendingDisplay = $user->displayPendingPhone())
+                            <span class="profile-verify-chip profile-verify-chip--pending" title="Enter the OTP on Edit Profile to activate this number">
+                                <i class="fas fa-clock" aria-hidden="true"></i>
+                                Pending verification: {{ $pendingDisplay }}
+                            </span>
+                            <a href="{{ route('profile.edit') }}" class="profile-meta-edit-link">Complete OTP verification</a>
+                        @elseif(! empty($user->phone) && $user->phone_verified_at)
                             <span class="profile-verify-chip" title="Mobile number confirmed with OTP on {{ $user->phone_verified_at->format('M j, Y') }}"><i class="fas fa-check-circle" aria-hidden="true"></i> Mobile verified</span>
-                        @elseif($user->isStaff() && ! $user->hasVerifiedPhone())
-                            <span class="profile-verify-chip profile-verify-chip--warn"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Mobile not verified — payouts on hold</span>
+                            <a href="{{ route('profile.edit') }}" class="profile-meta-edit-link">Edit in profile settings</a>
+                        @else
+                            @if($user->isStaff())
+                                <span class="profile-verify-chip profile-verify-chip--warn"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Mobile not verified — payouts on hold</span>
+                            @endif
+                            <a href="{{ route('profile.edit') }}" class="profile-meta-edit-link">Edit in profile settings</a>
                         @endif
-                        <a href="{{ route('profile.edit') }}" class="profile-meta-edit-link">Edit in profile settings</a>
                     </div>
                 </div>
                 
@@ -595,6 +590,11 @@
     color: #92400e;
     background: #fffbeb;
     border-color: #fcd34d;
+}
+.profile-verify-chip--pending {
+    color: #1e40af;
+    background: #eff6ff;
+    border-color: #93c5fd;
 }
 
 .profile-flash {

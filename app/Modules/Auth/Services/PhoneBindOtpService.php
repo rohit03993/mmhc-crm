@@ -85,4 +85,44 @@ class PhoneBindOtpService
             Cache::forget($key);
         }
     }
+
+    /**
+     * HMAC digest for profile contact OTP (also persisted on users.contact_update_otp_hash).
+     */
+    public function buildOtpDigest(int $userId, string $destinationPhone, string $otp): ?string
+    {
+        if (! preg_match('/^\d{6}$/', $otp)) {
+            return null;
+        }
+
+        $e164 = $this->sentDm->normalizeToE164($destinationPhone);
+        if ($e164 === null) {
+            return null;
+        }
+
+        $pepper = (string) config('services.phone_otp.pepper', config('app.key'));
+
+        return hash_hmac('sha256', $userId.':'.$e164.':'.$otp, $pepper);
+    }
+
+    /**
+     * Verify OTP using cache first, then a DB-stored digest (survives Redis/file cache issues on server).
+     */
+    public function verifyAndConsumeWithDbFallback(int $userId, string $destinationPhone, string $otp, ?string $storedDbDigest): bool
+    {
+        if ($this->verifyAndConsume($userId, $destinationPhone, $otp)) {
+            return true;
+        }
+
+        if (! is_string($storedDbDigest) || $storedDbDigest === '') {
+            return false;
+        }
+
+        $candidate = $this->buildOtpDigest($userId, $destinationPhone, $otp);
+        if ($candidate === null) {
+            return false;
+        }
+
+        return hash_equals($storedDbDigest, $candidate);
+    }
 }

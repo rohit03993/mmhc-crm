@@ -150,6 +150,45 @@ class User extends Authenticatable
     }
 
     /**
+     * Human-readable mobile for profile UI (+91 XXXXXXXXXX).
+     */
+    public function displayPhone(): string
+    {
+        return $this->formatPhoneForDisplay((string) ($this->phone ?? ''));
+    }
+
+    /**
+     * Human-readable pending mobile (+91 XXXXXXXXXX), or null if none pending.
+     */
+    public function displayPendingPhone(): ?string
+    {
+        if (! $this->hasPendingMobileContactVerification()) {
+            return null;
+        }
+
+        $formatted = $this->formatPhoneForDisplay((string) $this->pending_phone);
+
+        return $formatted === 'Not provided' ? null : $formatted;
+    }
+
+    private function formatPhoneForDisplay(string $raw): string
+    {
+        if ($raw === '') {
+            return 'Not provided';
+        }
+
+        $digits = preg_replace('/\D+/', '', $raw);
+        if (strlen($digits) === 12 && str_starts_with($digits, '91')) {
+            return '+91 '.substr($digits, 2);
+        }
+        if (strlen($digits) === 10) {
+            return '+91 '.$digits;
+        }
+
+        return $raw;
+    }
+
+    /**
      * Nurses/caregivers must verify account mobile (SMS) before earning-related actions.
      */
     public function staffMustVerifyMobileBeforeRewards(): bool

@@ -13,6 +13,7 @@ use App\Modules\Incentives\Models\IncentiveLedger;
 use App\Modules\Payments\Models\StaffPayment;
 use App\Modules\Payments\Services\StaffPayoutService;
 use App\Modules\Plans\Models\Subscription;
+use App\Modules\Auth\Services\UserService;
 use App\Modules\Profiles\Services\ProfileService;
 use App\Modules\Referrals\Models\Referral;
 use App\Modules\Rewards\Models\CaregiverReward;
@@ -30,9 +31,12 @@ class ProfileController extends Controller
 {
     protected $profileService;
 
-    public function __construct(ProfileService $profileService)
+    protected UserService $userService;
+
+    public function __construct(ProfileService $profileService, UserService $userService)
     {
         $this->profileService = $profileService;
+        $this->userService = $userService;
     }
 
     /**
@@ -215,7 +219,7 @@ class ProfileController extends Controller
         if ($emailChanged && User::query()->where('id', '!=', $user->id)->where('email', $requestedEmail)->exists()) {
             return redirect()->back()->withErrors(['email' => 'This email is already in use.'])->withInput();
         }
-        if ($phoneChanged && User::query()->where('id', '!=', $user->id)->where('phone', $normalizedRequestedPhone)->exists()) {
+        if ($phoneChanged && $this->userService->phoneAlreadyRegistered($normalizedRequestedPhone, $user->id)) {
             return redirect()->back()->withErrors(['phone' => 'This phone number is already in use.'])->withInput();
         }
 
@@ -271,11 +275,17 @@ class ProfileController extends Controller
         }
 
         $otpPayload = (string) ($send['otp'] ?? '');
+        $bindOtp = app(\App\Modules\Auth\Services\PhoneBindOtpService::class);
         if ($otpPayload !== '') {
-            app(\App\Modules\Auth\Services\PhoneBindOtpService::class)->storeOtp((int) $user->id, $normalizedRequestedPhone, $otpPayload);
+            $bindOtp->storeOtp((int) $user->id, $normalizedRequestedPhone, $otpPayload);
         }
 
+        $otpDigest = $otpPayload !== ''
+            ? $bindOtp->buildOtpDigest((int) $user->id, $normalizedRequestedPhone, $otpPayload)
+            : null;
+
         $user->forceFill([
+            'contact_update_otp_hash' => $otpDigest,
             'contact_update_otp_expires_at' => now()->addMinutes(5),
             'contact_update_otp_attempts' => 0,
             'contact_update_otp_sent_to' => (string) ($send['sent_to'] ?? ''),
@@ -306,10 +316,12 @@ class ProfileController extends Controller
             return redirect()->back()->with('error', 'Maximum OTP attempts reached. Please resend OTP.');
         }
 
-        $otpValid = app(\App\Modules\Auth\Services\PhoneBindOtpService::class)->verifyAndConsume(
+        $bindOtp = app(\App\Modules\Auth\Services\PhoneBindOtpService::class);
+        $otpValid = $bindOtp->verifyAndConsumeWithDbFallback(
             (int) $user->id,
             (string) $user->pending_phone,
-            (string) $request->otp_code
+            (string) $request->otp_code,
+            (string) ($user->contact_update_otp_hash ?? '')
         );
 
         if (! $otpValid) {
@@ -361,11 +373,17 @@ class ProfileController extends Controller
         }
 
         $otpPayload = (string) ($send['otp'] ?? '');
+        $bindOtp = app(\App\Modules\Auth\Services\PhoneBindOtpService::class);
         if ($otpPayload !== '') {
-            app(\App\Modules\Auth\Services\PhoneBindOtpService::class)->storeOtp((int) $user->id, $destination, $otpPayload);
+            $bindOtp->storeOtp((int) $user->id, $destination, $otpPayload);
         }
 
+        $otpDigest = $otpPayload !== ''
+            ? $bindOtp->buildOtpDigest((int) $user->id, $destination, $otpPayload)
+            : null;
+
         $user->forceFill([
+            'contact_update_otp_hash' => $otpDigest,
             'contact_update_otp_expires_at' => now()->addMinutes(5),
             'contact_update_otp_attempts' => 0,
             'contact_update_otp_sent_to' => (string) ($send['sent_to'] ?? ''),
