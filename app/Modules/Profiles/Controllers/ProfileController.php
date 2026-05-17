@@ -163,7 +163,7 @@ class ProfileController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'phone' => ['required', 'regex:/^[0-9]{10}$/'],
+            'phone' => ['required', new \App\Rules\IndianMobileTenDigits],
             'email' => [
                 Rule::requiredIf(fn () => ! $user->usesPlaceholderEmail()),
                 'nullable',

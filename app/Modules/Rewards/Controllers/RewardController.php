@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Core\User;
 use App\Modules\Rewards\Models\CaregiverReward;
 use App\Modules\Rewards\Services\RewardService;
+use App\Rules\IndianMobileTenDigits;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -25,6 +26,7 @@ class RewardController extends Controller
         $user = Auth::user();
 
         $rewards = CaregiverReward::where('user_id', $user->id)
+            ->with('patientUser')
             ->latest()
             ->paginate(10);
 
@@ -96,10 +98,10 @@ class RewardController extends Controller
                 'patient_name' => 'required|string|max:255',
                 'patient_phone_digits' => [
                     'required',
-                    'regex:/^[0-9]{10}$/',
+                    new IndianMobileTenDigits,
                     function (string $attribute, string $value, \Closure $fail) {
-                        $normalized = '+91'.$value;
-                        if (CaregiverReward::where('patient_phone', $normalized)->exists()) {
+                        $variants = app(\App\Modules\Auth\Services\UserService::class)->phoneStorageVariants($value);
+                        if (CaregiverReward::query()->whereIn('patient_phone', $variants)->exists()) {
                             $fail('This mobile number has already been submitted.');
                         }
                     },
@@ -129,7 +131,7 @@ class RewardController extends Controller
 
         $payload = [
             'patient_name' => $validated['patient_name'],
-            'patient_phone' => '+91'.$validated['patient_phone_digits'],
+            'patient_phone' => app(\App\Modules\Auth\Services\UserService::class)->formatPhoneStorage($validated['patient_phone_digits']),
             'patient_email' => $validated['patient_email'] ?? null,
             'patient_age' => (int) $validated['patient_age'],
             'patient_address' => $validated['patient_address'],
@@ -156,14 +158,7 @@ class RewardController extends Controller
         if ((int) $reward->user_id !== (int) Auth::id()) {
             abort(403);
         }
-        $user = Auth::user();
-        if ($user->staffMustVerifyMobileBeforeRewards()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Verify your account mobile under Profile before using patient rewards.',
-            ], 422);
-        }
-        if ($user->hasPendingMobileContactVerification()) {
+        if (Auth::user()->hasPendingMobileContactVerification()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please complete your pending profile contact verification first.',
@@ -199,14 +194,7 @@ class RewardController extends Controller
         if ((int) $reward->user_id !== (int) Auth::id()) {
             abort(403);
         }
-        $user = Auth::user();
-        if ($user->staffMustVerifyMobileBeforeRewards()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Verify your account mobile under Profile before using patient rewards.',
-            ], 422);
-        }
-        if ($user->hasPendingMobileContactVerification()) {
+        if (Auth::user()->hasPendingMobileContactVerification()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please complete your pending profile contact verification first.',
@@ -216,6 +204,31 @@ class RewardController extends Controller
             'otp_code' => ['required', 'digits:6'],
         ]);
         $res = $this->rewardService->verifyRewardOtp($reward, (string) $request->otp_code);
+
+        return response()->json($res, ($res['success'] ?? false) ? 200 : 422);
+    }
+
+    public function updatePatientPhone(Request $request, CaregiverReward $reward)
+    {
+        if ((int) $reward->user_id !== (int) Auth::id()) {
+            abort(403);
+        }
+
+        if (Auth::user()->hasPendingMobileContactVerification()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please complete your pending profile contact verification first.',
+            ], 422);
+        }
+
+        $request->validate([
+            'patient_phone' => ['required', new IndianMobileTenDigits],
+        ]);
+
+        $res = $this->rewardService->updatePatientPhone(
+            $reward,
+            (string) $request->input('patient_phone')
+        );
 
         return response()->json($res, ($res['success'] ?? false) ? 200 : 422);
     }

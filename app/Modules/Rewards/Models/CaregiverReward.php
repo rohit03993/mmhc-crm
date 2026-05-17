@@ -10,6 +10,7 @@ class CaregiverReward extends Model
 {
     protected $fillable = [
         'user_id',
+        'patient_user_id',
         'patient_name',
         'patient_phone',
         'patient_email',
@@ -44,6 +45,32 @@ class CaregiverReward extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Core\User::class);
+    }
+
+    public function patientUser(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Core\User::class, 'patient_user_id');
+    }
+
+    public function canChangePatientPhone(): bool
+    {
+        return ! $this->isPatientMobileOtpVerified() && ! $this->payment_processed;
+    }
+
+    /**
+     * Human-readable patient mobile (+91 XXXXXXXXXX).
+     */
+    public function getDisplayPatientPhoneAttribute(): string
+    {
+        return app(\App\Modules\Auth\Services\UserService::class)->formatPhoneDisplay($this->patient_phone);
+    }
+
+    /**
+     * 10-digit core for forms / OTP.
+     */
+    public function getPatientPhoneTenDigitsAttribute(): string
+    {
+        return app(\App\Modules\Auth\Services\UserService::class)->extractPhoneDigits((string) $this->patient_phone);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Modules\Rewards\Services;
 use App\Models\Core\User;
 use App\Modules\Auth\Services\ScopedSmsOtpRedisService;
 use App\Modules\Auth\Services\SmsOtpService;
+use App\Modules\Auth\Services\UserService;
 use App\Modules\Incentives\Models\IncentiveRuleSet;
 use App\Modules\Rewards\Models\CaregiverReward;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,10 @@ use Illuminate\Support\Facades\DB;
 class RewardService
 {
     public const POINT_VALUE = 10; // 1 point = ₹10
+
+    public function __construct(
+        private PatientRewardAccountService $patientRewardAccountService
+    ) {}
 
     /**
      * Create a reward entry and increment user's reward points.
@@ -23,10 +28,15 @@ class RewardService
 
     public function createPendingReward(User $user, array $data): CaregiverReward
     {
+        $storedPhone = app(UserService::class)->formatPhoneStorage($data['patient_phone'] ?? '');
+        if ($storedPhone === null) {
+            throw new \InvalidArgumentException('Invalid patient mobile number.');
+        }
+
         return CaregiverReward::create([
             'user_id' => $user->id,
             'patient_name' => $data['patient_name'],
-            'patient_phone' => $data['patient_phone'],
+            'patient_phone' => $storedPhone,
             'patient_email' => $data['patient_email'] ?? null,
             'patient_age' => $data['patient_age'] ?? null,
             'patient_address' => $data['patient_address'] ?? null,
@@ -44,36 +54,82 @@ class RewardService
      */
     public function sendVerificationOtp(CaregiverReward $reward): array
     {
-        if ($reward->verification_otp_sent_at && $reward->verification_otp_sent_at->gt(now()->subMinutes(15))) {
+        $otpExpired = $reward->verification_otp_expires_at
+            && now()->greaterThan($reward->verification_otp_expires_at);
+        $needsFreshOtp = $otpExpired
+            || empty($reward->verification_otp_hash)
+            || ! $reward->verification_otp_sent_at;
+
+        if (
+            $reward->verification_otp_sent_at
+            && $reward->verification_otp_sent_at->gt(now()->subMinutes(15))
+            && ! $needsFreshOtp
+        ) {
             return ['success' => false, 'message' => 'Please wait 15 minutes before requesting OTP again.'];
         }
 
+        $userService = app(UserService::class);
+        $storedPhone = $userService->formatPhoneStorage((string) $reward->patient_phone);
+        if ($storedPhone === null) {
+            return ['success' => false, 'message' => 'Patient mobile number is invalid for OTP.'];
+        }
+        if ($storedPhone !== $reward->patient_phone) {
+            $reward->forceFill(['patient_phone' => $storedPhone])->save();
+        }
+
         $otp = (string) random_int(100000, 999999);
-        $normalizedPhone = $this->normalizeIndianPhone((string) $reward->patient_phone);
+        $normalizedPhone = $this->normalizeIndianPhone($storedPhone);
         if (! $normalizedPhone) {
             return ['success' => false, 'message' => 'Patient mobile number is invalid for OTP.'];
         }
-        $send = app(SmsOtpService::class)->sendCustomOtp($normalizedPhone, $otp);
-        if (! ($send['success'] ?? false)) {
+
+        $sms = app(SmsOtpService::class);
+        $send = $sms->sendCustomOtp($normalizedPhone, $otp);
+        $localDevBypass = app()->environment('local') && ! ($send['success'] ?? false);
+
+        if (! ($send['success'] ?? false) && ! $localDevBypass) {
             return ['success' => false, 'message' => $send['message'] ?? 'Failed to send OTP on mobile.'];
         }
+
         $maskedDestination = $this->maskPhone($normalizedPhone);
 
-        app(ScopedSmsOtpRedisService::class)->store(
+        $scopedOtp = app(ScopedSmsOtpRedisService::class);
+        $scopedOtp->store(
+            ScopedSmsOtpRedisService::PURPOSE_PATIENT_REWARD,
+            (int) $reward->id,
+            $otp
+        );
+
+        $otpDigest = $scopedOtp->buildDigest(
             ScopedSmsOtpRedisService::PURPOSE_PATIENT_REWARD,
             (int) $reward->id,
             $otp
         );
 
         $reward->update([
-            'verification_otp_hash' => null,
+            'verification_otp_hash' => $otpDigest,
             'verification_otp_expires_at' => now()->addMinutes(5),
             'verification_otp_attempts' => 0,
             'verification_otp_sent_at' => now(),
             'verification_otp_sent_to' => $maskedDestination,
         ]);
 
-        return ['success' => true, 'message' => 'OTP sent successfully.', 'sent_to' => $reward->verification_otp_sent_to];
+        $message = 'OTP sent successfully to patient mobile.';
+        if ($localDevBypass) {
+            $message = "Local testing: SMS is not configured. Use OTP {$otp} (also in storage/logs/laravel.log).";
+            \Illuminate\Support\Facades\Log::info('Patient reward OTP (local dev)', [
+                'reward_id' => $reward->id,
+                'patient_phone' => $maskedDestination,
+                'otp' => $otp,
+            ]);
+        }
+
+        return [
+            'success' => true,
+            'message' => $message,
+            'sent_to' => $reward->verification_otp_sent_to,
+            'dev_otp' => $localDevBypass ? $otp : null,
+        ];
     }
 
     public function verifyRewardOtp(CaregiverReward $reward, string $otp): array
@@ -81,23 +137,25 @@ class RewardService
         if ($reward->isPatientMobileOtpVerified()) {
             return ['success' => true, 'message' => 'Already verified.'];
         }
-        if (! $reward->verification_otp_expires_at) {
-            return ['success' => false, 'message' => 'OTP not generated. Send OTP first.'];
-        }
-        if (! $reward->verification_otp_sent_at) {
-            return ['success' => false, 'message' => 'OTP not generated. Send OTP first.'];
+        if (! $reward->verification_otp_sent_at || ! $reward->verification_otp_expires_at) {
+            return ['success' => false, 'message' => 'OTP not sent yet. Tap “Resend OTP to patient mobile” first.'];
         }
         if (now()->greaterThan($reward->verification_otp_expires_at)) {
-            return ['success' => false, 'message' => 'OTP expired. Send OTP again.'];
+            return ['success' => false, 'message' => 'OTP expired. Tap “Resend OTP to patient mobile” and enter the new code.'];
+        }
+        if (empty($reward->verification_otp_hash)) {
+            return ['success' => false, 'message' => 'OTP session missing. Tap “Resend OTP to patient mobile” first.'];
         }
         if ((int) $reward->verification_otp_attempts >= 3) {
             return ['success' => false, 'message' => 'Maximum attempts reached. Send OTP again.'];
         }
 
-        $otpValid = app(ScopedSmsOtpRedisService::class)->verifyAndConsume(
+        $scopedOtp = app(ScopedSmsOtpRedisService::class);
+        $otpValid = $scopedOtp->verifyWithDbFallback(
             ScopedSmsOtpRedisService::PURPOSE_PATIENT_REWARD,
             (int) $reward->id,
-            $otp
+            $otp,
+            (string) ($reward->verification_otp_hash ?? '')
         );
 
         if (! $otpValid) {
@@ -133,6 +191,12 @@ class RewardService
                         $staff->applyPhoneVerifiedFromPatientRewardSelfMobileOtp();
                     }
                 }
+
+                try {
+                    $this->patientRewardAccountService->provisionFromVerifiedReward($locked);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
             }
             $staff = User::query()->find($locked->user_id);
             if ($staff) {
@@ -140,12 +204,72 @@ class RewardService
             }
         });
 
-        $staff = $reward->fresh()->user;
-        $message = ($staff && $staff->hasVerifiedPhone())
+        $reward = $reward->fresh(['patientUser']);
+        $staff = $reward->user;
+        $patientUid = $reward->patientUser?->unique_id;
+        $baseMessage = ($staff && $staff->hasVerifiedPhone())
             ? 'Reward verified and points credited.'
             : 'Patient mobile verified. Points credit after you verify your Profile mobile (SMS OTP).';
+        if ($patientUid) {
+            $baseMessage .= " Patient ID: {$patientUid}. They can sign in with this mobile via SMS OTP.";
+        }
 
-        return ['success' => true, 'message' => $message];
+        return ['success' => true, 'message' => $baseMessage, 'patient_unique_id' => $patientUid];
+    }
+
+    /**
+     * Change patient mobile on a pending reward and send OTP to the new number.
+     */
+    public function updatePatientPhone(CaregiverReward $reward, string $phoneInput): array
+    {
+        if (! $reward->canChangePatientPhone()) {
+            return ['success' => false, 'message' => 'Patient mobile cannot be changed after OTP verification or payout.'];
+        }
+
+        $userService = app(UserService::class);
+        $tenDigitPhone = $userService->parseTenDigitIndianMobile($phoneInput);
+        if ($tenDigitPhone === null) {
+            return ['success' => false, 'message' => 'Enter a valid 10-digit Indian mobile number (starting with 6, 7, 8, or 9).'];
+        }
+
+        $formattedPhone = $userService->formatPhoneStorage($tenDigitPhone);
+        $currentTen = $userService->parseTenDigitIndianMobile((string) $reward->patient_phone);
+
+        if ($currentTen === $tenDigitPhone) {
+            return $this->sendVerificationOtp($reward->fresh());
+        }
+
+        $variants = $userService->phoneStorageVariants($tenDigitPhone);
+        $duplicate = CaregiverReward::query()
+            ->where('id', '!=', $reward->id)
+            ->where(function ($q) use ($variants) {
+                $q->whereIn('patient_phone', $variants);
+            })
+            ->exists();
+        if ($duplicate) {
+            return ['success' => false, 'message' => 'This mobile number is already used on another patient reward entry.'];
+        }
+
+        if ($userService->applyMatchingPhone(
+            User::query()->whereIn('role', ['nurse', 'caregiver', 'admin']),
+            $tenDigitPhone
+        )->exists()) {
+            return ['success' => false, 'message' => 'This mobile belongs to a staff account. Use the patient’s personal number.'];
+        }
+
+        $reward->forceFill([
+            'patient_phone' => $formattedPhone,
+            'patient_user_id' => null,
+            'verification_status' => 'pending',
+            'verification_otp_hash' => null,
+            'verification_otp_expires_at' => null,
+            'verification_otp_attempts' => 0,
+            'verification_otp_sent_at' => null,
+            'verification_otp_sent_to' => null,
+            'verified_at' => null,
+        ])->save();
+
+        return $this->sendVerificationOtp($reward->fresh());
     }
 
     /**
@@ -196,20 +320,16 @@ class RewardService
         return round($pre, (int) $ruleSet->round_decimals);
     }
 
+    public function formatPatientPhoneForStorage(string $phone): ?string
+    {
+        return app(UserService::class)->formatPhoneStorage($phone);
+    }
+
     private function normalizeIndianPhone(string $phone): ?string
     {
-        $digits = preg_replace('/\D+/', '', $phone);
-        if (! $digits) {
-            return null;
-        }
-        if (strlen($digits) === 10) {
-            return '91'.$digits;
-        }
-        if (strlen($digits) === 12 && str_starts_with($digits, '91')) {
-            return $digits;
-        }
+        $ten = app(UserService::class)->parseTenDigitIndianMobile($phone);
 
-        return null;
+        return $ten !== null ? '91'.$ten : null;
     }
 
     private function maskPhone(string $normalizedPhone): string

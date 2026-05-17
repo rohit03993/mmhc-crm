@@ -180,6 +180,45 @@ class UserService
         return '+91'.$digits;
     }
 
+    public const INDIAN_MOBILE_TEN_PATTERN = '/^[6-9][0-9]{9}$/';
+
+    /**
+     * Parse and validate → 10-digit core, or null if invalid.
+     */
+    public function parseTenDigitIndianMobile(?string $input): ?string
+    {
+        if ($input === null || trim($input) === '') {
+            return null;
+        }
+
+        $ten = $this->extractPhoneDigits($input);
+
+        return preg_match(self::INDIAN_MOBILE_TEN_PATTERN, $ten) ? $ten : null;
+    }
+
+    /**
+     * Display: +91 XXXXXXXXXX
+     */
+    public function formatPhoneDisplay(?string $phone): string
+    {
+        $ten = $this->parseTenDigitIndianMobile($phone);
+        if ($ten === null) {
+            return $phone !== null && trim($phone) !== '' ? trim($phone) : '—';
+        }
+
+        return '+91 '.$ten;
+    }
+
+    /**
+     * Storage for reward/patient forms: +91XXXXXXXXXX
+     */
+    public function formatPhoneStorage(?string $input): ?string
+    {
+        $ten = $this->parseTenDigitIndianMobile($input);
+
+        return $ten !== null ? '+91'.$ten : null;
+    }
+
     /**
      * Extract 10-digit phone number from normalized format
      *

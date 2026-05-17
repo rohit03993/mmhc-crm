@@ -12,6 +12,7 @@ Route::middleware(['web', 'auth', 'role:caregiver,nurse'])
         Route::post('/', [RewardController::class, 'store'])->name('store');
         Route::post('/{reward}/send-otp', [RewardController::class, 'sendOtp'])->name('send-otp');
         Route::post('/{reward}/verify-otp', [RewardController::class, 'verifyOtp'])->name('verify-otp');
+        Route::post('/{reward}/update-patient-phone', [RewardController::class, 'updatePatientPhone'])->name('update-patient-phone');
         Route::post('/{reward}/send-otp-banner', [RewardController::class, 'resendOtpFromBanner'])->name('send-otp-banner');
         Route::post('/{reward}/verify-otp-banner', [RewardController::class, 'verifyOtpFromBanner'])->name('verify-otp-banner');
     });

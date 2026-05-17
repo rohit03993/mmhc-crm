@@ -32,15 +32,16 @@
                             <label class="form-label">Patient Mobile Number</label>
                             <div class="input-group">
                                 <span class="input-group-text">+91</span>
-                                <input type="text"
+                                <input type="tel"
                                        name="patient_phone"
                                        value="{{ old('patient_phone') }}"
-                                       pattern="[0-9]{10}"
+                                       pattern="[6-9][0-9]{9}"
                                        maxlength="10"
                                        inputmode="numeric"
                                        class="form-control @error('patient_phone_digits') is-invalid @enderror"
-                                       placeholder="Enter 10-digit mobile number"
-                                       required>
+                                       placeholder="9876543210"
+                                       required
+                                       oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
                             </div>
                             <small class="text-muted">Indian mobile numbers only. OTP is sent by SMS. Each number can be submitted once.</small>
                             @error('patient_phone_digits')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror

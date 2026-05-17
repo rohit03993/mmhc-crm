@@ -111,12 +111,19 @@
                                 <div class="reward-entry-info">
                                     <div class="reward-entry-name">{{ $reward->patient_name }}</div>
                                     <div class="reward-entry-meta">
-                                        <i class="fas fa-phone me-1"></i>{{ $reward->patient_phone }}
+                                        <i class="fas fa-phone me-1"></i>{{ $reward->display_patient_phone }}
                                         @if($reward->patient_age)
                                             <span class="mx-2">•</span>
                                             <i class="fas fa-birthday-cake me-1"></i>Age: {{ $reward->patient_age }}
                                         @endif
                                     </div>
+                                    @if($reward->patientUser?->unique_id)
+                                        <div class="reward-entry-meta mt-1">
+                                            <i class="fas fa-id-card me-1 text-success"></i>
+                                            <strong>{{ $reward->patientUser->unique_id }}</strong>
+                                            <span class="text-muted small">— patient can log in with this mobile</span>
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="reward-entry-badge-modern">
                                     @php
@@ -157,9 +164,39 @@
                                     <span>{{ $reward->created_at->format('M d, Y') }} • {{ $reward->created_at->diffForHumans() }}</span>
                                 </div>
                                 @if(in_array(\App\Modules\Payments\Services\StaffEarningStatusResolver::PENDING_PATIENT_OTP, $rewardBlockers, true))
-                                <div class="mt-2 d-flex gap-2">
-                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="sendRewardOtp({{ $reward->id }})">Send OTP to patient mobile</button>
-                                    <button type="button" class="btn btn-sm btn-success" onclick="verifyRewardOtp({{ $reward->id }})">Verify patient OTP</button>
+                                <div class="mt-3 p-3 rounded border bg-light reward-otp-panel" data-reward-id="{{ $reward->id }}">
+                                    <div class="small fw-semibold mb-1 text-primary">Patient mobile OTP</div>
+                                    <div class="small text-muted mb-2">Step 1: Resend OTP (or change number) → Step 2: Enter code from patient’s phone → Step 3: Verify</div>
+                                    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="sendRewardOtp({{ $reward->id }}, this)">
+                                            Resend OTP to patient mobile
+                                        </button>
+                                        @if($reward->canChangePatientPhone())
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-secondary btn-change-patient-phone"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#changePatientPhoneModal"
+                                                data-reward-id="{{ $reward->id }}"
+                                                data-patient-name="{{ $reward->patient_name }}"
+                                                data-current-phone="{{ $reward->patient_phone_ten_digits }}">
+                                            <i class="fas fa-edit me-1"></i>Change number
+                                        </button>
+                                        @endif
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2 align-items-stretch">
+                                        <input type="text"
+                                               class="form-control form-control-sm reward-otp-input"
+                                               id="reward-otp-{{ $reward->id }}"
+                                               maxlength="6"
+                                               pattern="[0-9]{6}"
+                                               inputmode="numeric"
+                                               placeholder="6-digit OTP from patient"
+                                               style="max-width: 180px;">
+                                        <button type="button" class="btn btn-sm btn-success" onclick="verifyRewardOtp({{ $reward->id }})">
+                                            Verify patient OTP
+                                        </button>
+                                    </div>
+                                    <div class="small mt-2 reward-otp-feedback text-muted" id="reward-otp-feedback-{{ $reward->id }}"></div>
                                 </div>
                                 @endif
                                 @foreach($statusMessages as $statusMessage)
@@ -193,8 +230,47 @@
     </div>
 </div>
 
-@include('auth::components.bottom-nav')
+<div class="modal fade" id="changePatientPhoneModal" tabindex="-1" aria-labelledby="changePatientPhoneModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title" id="changePatientPhoneModalLabel">
+                    <i class="fas fa-mobile-alt me-2 text-primary"></i>Change patient mobile
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <p class="text-muted small mb-3" id="changePatientPhoneModalHint">
+                    Update the mobile for this patient. A new OTP will be sent to the new number.
+                </p>
+                <label for="changePatientPhoneInput" class="form-label fw-semibold small">New 10-digit mobile</label>
+                <div class="input-group">
+                    <span class="input-group-text">+91</span>
+                    <input type="tel"
+                           class="form-control"
+                           id="changePatientPhoneInput"
+                           maxlength="10"
+                           pattern="[6-9][0-9]{9}"
+                           inputmode="numeric"
+                           placeholder="9876543210"
+                           autocomplete="tel">
+                </div>
+                <div id="changePatientPhoneModalError" class="small text-danger mt-2 d-none"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="changePatientPhoneSubmitBtn">
+                    <i class="fas fa-paper-plane me-1"></i>Update &amp; send OTP
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
+@include('auth::components.bottom-nav')
+@endsection
+
+@section('scripts')
 <style>
 .stats-card-modern {
     background: white;
@@ -381,33 +457,181 @@
 }
 </style>
 <script>
-function sendRewardOtp(rewardId) {
-    fetch(`/rewards/${rewardId}/send-otp`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json'
-        }
-    }).then(r => r.json()).then(data => {
-        alert(data.message || (data.success ? 'OTP sent' : 'Failed to send OTP'));
-        if (data.success) location.reload();
-    }).catch(() => alert('Failed to send OTP'));
+function rewardOtpFeedback(rewardId, message, isError) {
+    const el = document.getElementById('reward-otp-feedback-' + rewardId);
+    if (!el) return;
+    el.textContent = message || '';
+    el.className = 'small mt-2 reward-otp-feedback ' + (isError ? 'text-danger' : 'text-success');
 }
-function verifyRewardOtp(rewardId) {
-    const otp = prompt('Enter patient OTP (6 digits):');
-    if (!otp) return;
-    fetch(`/rewards/${rewardId}/verify-otp`, {
+async function rewardApiPost(url, body) {
+    const res = await fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json'
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify({ otp_code: otp })
-    }).then(r => r.json()).then(data => {
-        alert(data.message || (data.success ? 'Verified' : 'Verification failed'));
-        if (data.success) location.reload();
-    }).catch(() => alert('Failed to verify OTP'));
+        body: body ? JSON.stringify(body) : '{}'
+    });
+    let data = {};
+    try {
+        data = await res.json();
+    } catch (e) {
+        throw new Error(res.status === 419 ? 'Session expired — refresh the page and try again.' : 'Server error (' + res.status + ').');
+    }
+    if (!res.ok) {
+        if (!data.message && data.errors) {
+            const first = Object.values(data.errors).flat()[0];
+            if (first) data.message = first;
+        }
+        if (!data.message) {
+            data.message = 'Request failed (' + res.status + ').';
+        }
+        data.success = false;
+    }
+    return data;
+}
+let changePhoneRewardId = null;
+
+function getChangePatientPhoneModal() {
+    const el = document.getElementById('changePatientPhoneModal');
+    if (!el || typeof bootstrap === 'undefined') {
+        return null;
+    }
+    return bootstrap.Modal.getOrCreateInstance(el);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const modalEl = document.getElementById('changePatientPhoneModal');
+    if (modalEl && modalEl.parentElement !== document.body) {
+        document.body.appendChild(modalEl);
+    }
+    if (modalEl) {
+        modalEl.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            if (!btn || !btn.classList.contains('btn-change-patient-phone')) {
+                return;
+            }
+            changePhoneRewardId = parseInt(btn.getAttribute('data-reward-id'), 10);
+            const current = btn.getAttribute('data-current-phone') || '';
+            const name = btn.getAttribute('data-patient-name') || 'Patient';
+            const input = document.getElementById('changePatientPhoneInput');
+            const hint = document.getElementById('changePatientPhoneModalHint');
+            const err = document.getElementById('changePatientPhoneModalError');
+            if (input) {
+                input.value = current;
+            }
+            if (hint) {
+                hint.textContent = 'Update mobile for ' + name + '. A new OTP will be sent to the new number.';
+            }
+            if (err) {
+                err.textContent = '';
+                err.classList.add('d-none');
+            }
+            setTimeout(function () {
+                input && input.focus();
+            }, 200);
+        });
+    }
+
+    document.getElementById('changePatientPhoneSubmitBtn')?.addEventListener('click', function () {
+        if (!changePhoneRewardId) {
+            return;
+        }
+        submitChangePatientPhone(changePhoneRewardId);
+    });
+
+    const changePhoneInputEl = document.getElementById('changePatientPhoneInput');
+    changePhoneInputEl?.addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 10);
+    });
+    changePhoneInputEl?.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (changePhoneRewardId) {
+                submitChangePatientPhone(changePhoneRewardId);
+            }
+        }
+    });
+});
+async function sendRewardOtp(rewardId, btn) {
+    if (btn) btn.disabled = true;
+    rewardOtpFeedback(rewardId, 'Sending OTP…', false);
+    try {
+        const data = await rewardApiPost('/rewards/' + rewardId + '/send-otp');
+        if (data.success) {
+            rewardOtpFeedback(rewardId, data.message || 'OTP sent.', false);
+            if (data.dev_otp) {
+                const input = document.getElementById('reward-otp-' + rewardId);
+                if (input) input.value = data.dev_otp;
+            }
+        } else {
+            rewardOtpFeedback(rewardId, data.message || 'Failed to send OTP.', true);
+        }
+    } catch (e) {
+        rewardOtpFeedback(rewardId, e.message || 'Failed to send OTP.', true);
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+async function verifyRewardOtp(rewardId) {
+    const input = document.getElementById('reward-otp-' + rewardId);
+    const otp = (input?.value || '').replace(/\D/g, '');
+    if (otp.length !== 6) {
+        rewardOtpFeedback(rewardId, 'Enter the 6-digit OTP from the patient’s SMS.', true);
+        return;
+    }
+    rewardOtpFeedback(rewardId, 'Verifying…', false);
+    try {
+        const data = await rewardApiPost('/rewards/' + rewardId + '/verify-otp', { otp_code: otp });
+        if (data.success) {
+            rewardOtpFeedback(rewardId, data.message || 'Verified!', false);
+            setTimeout(() => location.reload(), 800);
+        } else {
+            rewardOtpFeedback(rewardId, data.message || 'Verification failed.', true);
+        }
+    } catch (e) {
+        rewardOtpFeedback(rewardId, e.message || 'Failed to verify OTP.', true);
+    }
+}
+async function submitChangePatientPhone(rewardId) {
+    const input = document.getElementById('changePatientPhoneInput');
+    const errEl = document.getElementById('changePatientPhoneModalError');
+    const submitBtn = document.getElementById('changePatientPhoneSubmitBtn');
+    const cleaned = (input?.value || '').replace(/\D/g, '');
+    if (!/^[6-9][0-9]{9}$/.test(cleaned)) {
+        if (errEl) {
+            errEl.textContent = 'Enter a valid 10-digit Indian mobile (first digit 6–9).';
+            errEl.classList.remove('d-none');
+        }
+        return;
+    }
+    if (errEl) errEl.classList.add('d-none');
+    if (submitBtn) submitBtn.disabled = true;
+    try {
+        const data = await rewardApiPost('/rewards/' + rewardId + '/update-patient-phone', { patient_phone: cleaned });
+        if (data.success) {
+            getChangePatientPhoneModal()?.hide();
+            if (data.dev_otp) {
+                const otpInput = document.getElementById('reward-otp-' + rewardId);
+                if (otpInput) otpInput.value = data.dev_otp;
+            }
+            setTimeout(function () { location.reload(); }, data.dev_otp ? 400 : 800);
+        } else {
+            if (errEl) {
+                errEl.textContent = data.message || 'Update failed.';
+                errEl.classList.remove('d-none');
+            }
+        }
+    } catch (e) {
+        if (errEl) {
+            errEl.textContent = e.message || 'Failed to update mobile.';
+            errEl.classList.remove('d-none');
+        }
+    } finally {
+        if (submitBtn) submitBtn.disabled = false;
+    }
 }
 </script>
 @endsection

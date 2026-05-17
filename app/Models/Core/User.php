@@ -154,7 +154,9 @@ class User extends Authenticatable
      */
     public function displayPhone(): string
     {
-        return $this->formatPhoneForDisplay((string) ($this->phone ?? ''));
+        $formatted = app(\App\Modules\Auth\Services\UserService::class)->formatPhoneDisplay($this->phone);
+
+        return $formatted === '—' ? 'Not provided' : $formatted;
     }
 
     /**
@@ -166,26 +168,9 @@ class User extends Authenticatable
             return null;
         }
 
-        $formatted = $this->formatPhoneForDisplay((string) $this->pending_phone);
+        $formatted = app(\App\Modules\Auth\Services\UserService::class)->formatPhoneDisplay($this->pending_phone);
 
-        return $formatted === 'Not provided' ? null : $formatted;
-    }
-
-    private function formatPhoneForDisplay(string $raw): string
-    {
-        if ($raw === '') {
-            return 'Not provided';
-        }
-
-        $digits = preg_replace('/\D+/', '', $raw);
-        if (strlen($digits) === 12 && str_starts_with($digits, '91')) {
-            return '+91 '.substr($digits, 2);
-        }
-        if (strlen($digits) === 10) {
-            return '+91 '.$digits;
-        }
-
-        return $raw;
+        return in_array($formatted, ['—', 'Not provided'], true) ? null : $formatted;
     }
 
     /**

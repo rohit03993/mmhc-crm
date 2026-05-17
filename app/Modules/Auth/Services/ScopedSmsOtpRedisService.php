@@ -51,14 +51,41 @@ class ScopedSmsOtpRedisService
         if (! is_string($stored) || $stored === '') {
             return false;
         }
-        $pepper = (string) config('services.phone_otp.pepper', config('app.key'));
-        $candidate = hash_hmac('sha256', "{$purpose}:{$id}:{$otp}", $pepper);
-        if (! hash_equals($stored, $candidate)) {
+        $candidate = $this->buildDigest($purpose, $id, $otp);
+        if ($candidate === null || ! hash_equals($stored, $candidate)) {
             return false;
         }
         Cache::forget($key);
 
         return true;
+    }
+
+    public function buildDigest(string $purpose, int $id, string $otp): ?string
+    {
+        if (! preg_match('/^\d{6}$/', $otp)) {
+            return null;
+        }
+        $pepper = (string) config('services.phone_otp.pepper', config('app.key'));
+
+        return hash_hmac('sha256', "{$purpose}:{$id}:{$otp}", $pepper);
+    }
+
+    /**
+     * Verify OTP using cache first, then optional DB-stored digest (server cache fallback).
+     */
+    public function verifyWithDbFallback(string $purpose, int $id, string $otp, ?string $storedDbDigest): bool
+    {
+        if ($this->verifyAndConsume($purpose, $id, $otp)) {
+            return true;
+        }
+
+        if (! is_string($storedDbDigest) || $storedDbDigest === '') {
+            return false;
+        }
+
+        $candidate = $this->buildDigest($purpose, $id, $otp);
+
+        return $candidate !== null && hash_equals($storedDbDigest, $candidate);
     }
 
     public function forget(string $purpose, int $id): void

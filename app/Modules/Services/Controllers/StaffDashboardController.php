@@ -824,9 +824,33 @@ class StaffDashboardController extends Controller
         $user = Auth::user();
         $rewardService = app(RewardService::class);
         $rewardService->syncStaffRewardPoints($user);
+
+        $patientAccountService = app(\App\Modules\Rewards\Services\PatientRewardAccountService::class);
+        CaregiverReward::query()
+            ->where('user_id', $user->id)
+            ->verified()
+            ->whereNull('patient_user_id')
+            ->each(function (CaregiverReward $reward) use ($patientAccountService) {
+                try {
+                    $patientAccountService->provisionFromVerifiedReward($reward);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            });
         $payoutService = app(StaffPayoutService::class);
 
+        $userService = app(\App\Modules\Auth\Services\UserService::class);
+        CaregiverReward::query()
+            ->where('user_id', $user->id)
+            ->each(function (CaregiverReward $reward) use ($userService) {
+                $formatted = $userService->formatPhoneStorage((string) $reward->patient_phone);
+                if ($formatted !== null && $formatted !== $reward->patient_phone) {
+                    $reward->forceFill(['patient_phone' => $formatted])->save();
+                }
+            });
+
         $rewards = CaregiverReward::where('user_id', $user->id)
+            ->with('patientUser')
             ->latest()
             ->paginate(10);
 

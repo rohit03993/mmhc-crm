@@ -126,6 +126,12 @@
                                     <i class="fas fa-phone text-primary"></i>
                                     <span>{{ $reward->patient_phone }}</span>
                                 </div>
+                                @if($reward->patientUser?->unique_id)
+                                <div class="reward-entry-detail-item">
+                                    <i class="fas fa-id-card text-success"></i>
+                                    <span><strong>{{ $reward->patientUser->unique_id }}</strong> <span class="text-muted small">(patient login)</span></span>
+                                </div>
+                                @endif
                                 @if($reward->patient_address)
                                     <div class="reward-entry-detail-item">
                                         <i class="fas fa-map-marker-alt text-danger"></i>
@@ -157,8 +163,15 @@
                                 </div>
                                 @if(in_array(\App\Modules\Payments\Services\StaffEarningStatusResolver::PENDING_PATIENT_OTP, $rewardBlockers, true))
                                 <div class="mt-2 d-flex gap-2 flex-wrap">
-                                    <button class="btn btn-sm btn-outline-primary" type="button" onclick="sendOtp({{ $reward->id }})">Send SMS OTP</button>
+                                    <button class="btn btn-sm btn-outline-primary" type="button" onclick="sendOtp({{ $reward->id }})">Resend SMS OTP</button>
                                     <button class="btn btn-sm btn-success" type="button" onclick="verifyOtp({{ $reward->id }})">Verify OTP</button>
+                                    @if($reward->canChangePatientPhone())
+                                    <button class="btn btn-sm btn-outline-secondary btn-change-patient-phone" type="button"
+                                            data-reward-id="{{ $reward->id }}"
+                                            data-current-phone="{{ substr(preg_replace('/\D/', '', (string) $reward->patient_phone), -10) }}">
+                                        <i class="fas fa-edit me-1"></i>Change number
+                                    </button>
+                                    @endif
                                 </div>
                                 @endif
                             </div>
@@ -616,5 +629,35 @@ function verifyOtp(rewardId) {
         if (data.success) location.reload();
     }).catch(() => alert('Failed to verify OTP.'));
 }
+function changeRewardPatientPhone(rewardId, currentPhone) {
+    const digits = (currentPhone || '').replace(/\D/g, '').slice(-10);
+    const next = prompt('Enter correct 10-digit patient mobile:', digits);
+    if (!next) return;
+    const cleaned = next.replace(/\D/g, '');
+    if (!/^[6-9][0-9]{9}$/.test(cleaned)) {
+        alert('Enter a valid 10-digit Indian mobile number.');
+        return;
+    }
+    fetch(`/rewards/${rewardId}/update-patient-phone`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ patient_phone: cleaned })
+    }).then(r => r.json()).then(data => {
+        alert(data.message || (data.success ? 'Mobile updated' : 'Update failed'));
+        if (data.success) location.reload();
+    }).catch(() => alert('Failed to update mobile'));
+}
+document.querySelectorAll('.btn-change-patient-phone').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        changeRewardPatientPhone(
+            parseInt(btn.getAttribute('data-reward-id'), 10),
+            btn.getAttribute('data-current-phone') || ''
+        );
+    });
+});
 </script>
 @endsection
