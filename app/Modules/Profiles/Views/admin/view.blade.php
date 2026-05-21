@@ -26,8 +26,19 @@
             <a href="{{ route('admin.users') }}" class="btn btn-light border rounded-pill px-3 shadow-sm">
                 <i class="fas fa-arrow-left me-2"></i>User management
             </a>
-            <a href="{{ route('admin.profiles') }}" class="btn btn-link text-muted">All profiles</a>
+            <a href="{{ route('admin.users') }}" class="btn btn-link text-muted">User management</a>
         </div>
+        @if($user->isStaff())
+            @if($user->hasVerifiedPhone())
+                <a href="{{ route('admin.staff.id-card', $user) }}" class="btn btn-primary rounded-pill px-3 shadow-sm">
+                    <i class="fas fa-id-card me-2"></i>View ID card
+                </a>
+            @else
+                <span class="btn btn-light border rounded-pill px-3 shadow-sm text-muted disabled" title="Verify mobile on Profile (SMS OTP) first">
+                    <i class="fas fa-id-card me-2"></i>ID card — verify mobile
+                </span>
+            @endif
+        @endif
     </div>
 
     <div class="row g-4">

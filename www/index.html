@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>MeD Miracle Health Care</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #e2e8f0;
+            color: #0f172a;
+            text-align: center;
+            padding: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <p>Loading MMHC CRM…</p>
+        <p class="small">If this screen stays visible, check <code>server.url</code> in <code>capacitor.config.ts</code> and your internet connection.</p>
+    </div>
+    <script>
+        // Fallback only when not using live server.url (Capacitor normally skips this file in production config).
+        window.location.replace('https://themmhc.com');
+    </script>
+</body>
+</html>

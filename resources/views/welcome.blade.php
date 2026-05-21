@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Med Miracle Health Care - Your Health is Our Priority</title>
     
     <!-- Favicon -->
@@ -115,12 +116,43 @@
         @media (max-width: 767px) {
             .achievement-media-carousel { min-height: 340px; height: 400px; }
         }
+
+        [x-cloak] { display: none !important; }
+
+        .mmhc-mobile-menu-btn {
+            min-width: 48px;
+            min-height: 48px;
+            padding: 0.5rem;
+            touch-action: manipulation;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+            z-index: 60;
+            background: transparent;
+            border: none;
+        }
+
+        #mmhcMobileMenuPanel {
+            position: relative;
+            z-index: 55;
+        }
+
+        #mmhcMobileMenuPanel.is-open {
+            display: block !important;
+        }
+
+        @media (max-width: 767px) {
+            #home { padding-top: 6.5rem !important; }
+            .text-5xl { font-size: 2rem !important; line-height: 1.25 !important; }
+            .text-6xl { font-size: 2.25rem !important; }
+        }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/capacitor-app.css') }}">
 </head>
 <body class="bg-gray-50">
 
     <!-- NAVIGATION BAR -->
-    <nav class="fixed w-full bg-white shadow-md z-50" x-data="{ mobileMenuOpen: false }">
+    <nav class="fixed w-full bg-white shadow-md z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <!-- Logo -->
@@ -149,15 +181,19 @@
                     </a>
                 </div>
                 
-                <!-- Mobile Menu Button -->
-                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-gray-700">
-                    <i class="fas fa-bars text-2xl"></i>
+                <!-- Mobile Menu Button (vanilla JS — reliable in Android WebView) -->
+                <button type="button"
+                        id="mmhcMobileMenuBtn"
+                        class="md:hidden text-gray-700 mmhc-mobile-menu-btn"
+                        aria-expanded="false"
+                        aria-controls="mmhcMobileMenuPanel">
+                    <i class="fas fa-bars text-2xl" aria-hidden="true"></i>
                 </button>
             </div>
         </div>
         
         <!-- Mobile Menu -->
-        <div x-show="mobileMenuOpen" x-cloak class="md:hidden bg-white border-t">
+        <div id="mmhcMobileMenuPanel" class="md:hidden bg-white border-t hidden" aria-hidden="true">
             <div class="px-4 py-4 space-y-3">
                 <a href="#home" class="block text-gray-700 hover:text-blue-600 font-medium">Home</a>
                 <a href="#plans" class="block text-gray-700 hover:text-blue-600 font-medium">Plans</a>
@@ -1150,5 +1186,30 @@
         </div>
     </footer>
 
+    <script src="{{ asset('js/capacitor-app.js') }}" defer></script>
+    <script>
+    (function () {
+        var btn = document.getElementById('mmhcMobileMenuBtn');
+        var panel = document.getElementById('mmhcMobileMenuPanel');
+        if (!btn || !panel) return;
+
+        function setOpen(open) {
+            panel.classList.toggle('hidden', !open);
+            panel.classList.toggle('is-open', open);
+            panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            setOpen(panel.classList.contains('hidden'));
+        });
+
+        panel.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', function () { setOpen(false); });
+        });
+    })();
+    </script>
 </body>
 </html>

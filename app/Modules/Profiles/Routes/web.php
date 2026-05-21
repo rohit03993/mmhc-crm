@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Modules\Profiles\Controllers\ProfileController;
 use App\Modules\Profiles\Controllers\DocumentController;
+use App\Modules\Profiles\Controllers\StaffIdCardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +25,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/verify-contact-otp', [ProfileController::class, 'verifyContactUpdateOtp'])->name('verify-contact-otp');
         Route::post('/resend-contact-otp', [ProfileController::class, 'resendContactUpdateOtp'])->name('resend-contact-otp');
         Route::post('/upload-avatar', [ProfileController::class, 'uploadAvatar'])->name('upload-avatar');
+        Route::get('/id-card', [StaffIdCardController::class, 'showOwn'])
+            ->middleware('role:nurse,caregiver')
+            ->name('id-card');
     });
     
     // Document Routes
@@ -39,5 +43,6 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/profiles', [ProfileController::class, 'adminIndex'])->name('profiles');
         Route::get('/profiles/{user}', [ProfileController::class, 'adminView'])->name('profiles.view');
+        Route::get('/staff/{user}/id-card', [StaffIdCardController::class, 'showForUser'])->name('staff.id-card');
     });
 });

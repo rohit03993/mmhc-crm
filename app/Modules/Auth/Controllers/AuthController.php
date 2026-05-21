@@ -599,6 +599,8 @@ class AuthController extends Controller
         }
 
         $users = User::query()
+            ->with('profile')
+            ->withCount('documents')
             ->when($segment === 'academics', fn ($q) => $q->whereIn('role', User::academicRoleSlugs())->with([
                 'academicInstitution:id,name,code',
                 'academicBatches:id,name,institution_id',

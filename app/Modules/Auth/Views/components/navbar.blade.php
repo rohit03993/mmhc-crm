@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand-lg navbar-light top-navbar">
     <div class="container-fluid">
         @auth
-            <button class="btn btn-link text-dark d-md-none me-1 px-2 py-0 border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mmhcAppSidebar" aria-controls="mmhcAppSidebar" aria-label="Open sidebar menu">
+            <button class="btn btn-link text-dark d-md-none me-1 px-2 border-0 mmhc-sidebar-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#mmhcAppSidebar" aria-controls="mmhcAppSidebar" aria-label="Open sidebar menu" style="min-width:48px;min-height:48px;touch-action:manipulation;">
                 <i class="fas fa-bars fa-lg"></i>
             </button>
         @endauth

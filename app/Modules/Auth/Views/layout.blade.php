@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'MeD Miracle Health Care') }} - @yield('title', 'Dashboard')</title>
@@ -18,6 +18,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     @yield('head')
+
+    <link rel="stylesheet" href="{{ asset('css/capacitor-app.css') }}">
     
     <style>
         .top-navbar {
@@ -543,6 +545,7 @@
         })();
     </script>
     @endif
+    <script src="{{ asset('js/capacitor-app.js') }}" defer></script>
     @yield('scripts')
 </body>
 </html>

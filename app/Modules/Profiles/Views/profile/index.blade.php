@@ -70,6 +70,17 @@
             <a href="{{ route('profile.edit') }}" class="app-btn-edit">
                 <i class="fas fa-edit me-2"></i>Edit Profile
             </a>
+            @if($user->isStaff())
+                @if($user->hasVerifiedPhone())
+                    <a href="{{ route('profile.id-card') }}" class="app-btn-edit mt-2" style="background: linear-gradient(135deg, #312e81, #1d4ed8);">
+                        <i class="fas fa-id-card me-2"></i>View ID Card
+                    </a>
+                @else
+                    <a href="{{ route('profile.edit') }}" class="app-btn-edit mt-2" style="background: #94a3b8;">
+                        <i class="fas fa-mobile-alt me-2"></i>Verify mobile for ID card
+                    </a>
+                @endif
+            @endif
         </div>
 
         @if($subscriptionSummary)

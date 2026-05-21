@@ -1,0 +1,47 @@
+/**
+ * Styles when body has .capacitor-app (set by capacitor-app.js in native WebView).
+ */
+
+html.capacitor-app,
+body.capacitor-app {
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 767px) {
+    body.capacitor-app .btn,
+    body.capacitor-app .nav-link,
+    body.capacitor-app .app-btn-edit,
+    body.capacitor-app .top-navbar .btn-link {
+        min-height: 44px;
+    }
+
+    body.capacitor-app input[type="file"],
+    body.capacitor-app input[type="text"],
+    body.capacitor-app input[type="tel"],
+    body.capacitor-app input[type="email"],
+    body.capacitor-app select,
+    body.capacitor-app textarea {
+        font-size: 16px;
+    }
+
+    /* Landing page (welcome) in WebView */
+    body.capacitor-app nav.fixed {
+        padding-top: env(safe-area-inset-top);
+    }
+
+    body.capacitor-app .mmhc-mobile-menu-btn {
+        min-width: 48px;
+        min-height: 48px;
+        z-index: 60;
+        position: relative;
+    }
+
+    body.capacitor-app #home {
+        padding-top: 6.5rem !important;
+    }
+
+    body.capacitor-app .text-5xl {
+        font-size: 2rem !important;
+        line-height: 1.2 !important;
+    }
+}

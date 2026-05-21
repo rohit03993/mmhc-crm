@@ -452,13 +452,11 @@ class ProfileController extends Controller
     }
 
     /**
-     * Admin: View all profiles
+     * Legacy URL — merged into User Management.
      */
     public function adminIndex()
     {
-        $users = User::with('profile')->withCount('documents')->paginate(10);
-
-        return view('profiles::admin.index', compact('users'));
+        return redirect()->route('admin.users');
     }
 
     /**
@@ -477,7 +475,7 @@ class ProfileController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return redirect()->route('admin.profiles')
+            return redirect()->route('admin.users')
                 ->with('error', 'Unable to load profile. Please try again.');
         }
 

@@ -116,15 +116,14 @@
             </div>
             @php
                 $showInstitutionColumn = ($segment ?? 'all') === 'academics';
-                $tableColCount = $showInstitutionColumn ? 12 : 10;
+                $tableColCount = $showInstitutionColumn ? 14 : 12;
             @endphp
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0 um-table">
                         <thead class="table-light">
                             <tr>
-                                <th class="text-nowrap ps-4">Unique ID</th>
-                                <th>Name</th>
+                                <th class="ps-4" style="min-width: 11rem;">User</th>
                                 <th>Email</th>
                                 <th>Phone</th>
                                 <th class="text-nowrap">Mobile verified</th>
@@ -134,6 +133,9 @@
                                     <th>Institution</th>
                                     <th>Batches</th>
                                 @endif
+                                <th class="text-nowrap">Profile</th>
+                                <th class="text-nowrap" style="min-width: 5.5rem;">Completion</th>
+                                <th class="text-nowrap">Docs</th>
                                 <th>Status</th>
                                 <th>Created</th>
                                 <th class="text-end pe-4">Actions</th>
@@ -143,14 +145,23 @@
                             @forelse($users as $user)
                                 <tr class="um-table__row">
                                     <td class="ps-4">
-                                        <a href="{{ route('admin.profiles.view', $user) }}" class="um-table__link um-table__id text-decoration-none">
-                                            <span class="badge rounded-pill bg-secondary">{{ $user->unique_id }}</span>
-                                        </a>
-                                    </td>
-                                    <td class="um-table__name">
-                                        <a href="{{ route('admin.profiles.view', $user) }}" class="um-name-link fw-semibold text-dark text-decoration-none" title="Open profile">
-                                            {{ $user->name }}
-                                        </a>
+                                        <div class="d-flex align-items-center gap-2 um-table__user-cell">
+                                            @if($user->profile?->avatar_path)
+                                                <img src="{{ Storage::url($user->profile->avatar_path) }}" alt="" class="um-avatar rounded-circle" width="40" height="40">
+                                            @else
+                                                <div class="um-avatar um-avatar--placeholder rounded-circle d-flex align-items-center justify-content-center">
+                                                    <i class="fas fa-user text-white small"></i>
+                                                </div>
+                                            @endif
+                                            <div class="min-w-0">
+                                                <a href="{{ route('admin.profiles.view', $user) }}" class="um-name-link fw-semibold text-dark text-decoration-none d-block text-truncate" title="Open full profile">
+                                                    {{ $user->name }}
+                                                </a>
+                                                <a href="{{ route('admin.profiles.view', $user) }}" class="um-table__link text-decoration-none">
+                                                    <span class="badge rounded-pill bg-secondary um-table__id">{{ $user->unique_id }}</span>
+                                                </a>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="text-muted small">{{ $user->email }}</td>
                                     <td class="text-muted small">{{ $user->phone ?: '—' }}</td>
@@ -208,27 +219,56 @@
                                         </td>
                                     @endif
                                     <td>
+                                        @if($user->profile && $user->profile->isComplete())
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle">Complete</span>
+                                        @elseif($user->profile)
+                                            <span class="badge bg-warning-subtle text-dark border">Incomplete</span>
+                                        @else
+                                            <span class="text-muted small">No profile</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($user->profile)
+                                            <div class="progress um-completion-bar" style="height: 6px; min-width: 4rem;">
+                                                <div class="progress-bar" style="width: {{ $user->profile->getCompletionPercentage() }}%"></div>
+                                            </div>
+                                            <span class="small text-muted">{{ $user->profile->getCompletionPercentage() }}%</span>
+                                        @else
+                                            <span class="text-muted small">—</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill">
+                                            {{ $user->documents_count ?? 0 }} docs
+                                        </span>
+                                    </td>
+                                    <td>
                                         <span class="badge rounded-pill {{ $user->is_active ? 'bg-success' : 'bg-warning text-dark' }}">
                                             {{ $user->is_active ? 'Active' : 'Inactive' }}
                                         </span>
                                     </td>
                                     <td class="text-muted small">{{ $user->created_at->format('M d, Y') }}</td>
                                     <td class="text-end pe-4">
-                                        <div class="btn-group btn-group-sm">
-                                            @if(in_array($user->role, ['nurse', 'caregiver']))
-                                                <a class="btn btn-outline-success rounded-start-pill"
+                                        <div class="btn-group btn-group-sm um-actions">
+                                            @if(in_array($user->role, ['nurse', 'caregiver'], true))
+                                                <a class="btn btn-outline-success"
                                                    href="{{ route('admin.staff.incentives', $user) }}"
-                                                   title="Full incentives">
+                                                   title="Incentives">
                                                     <i class="fas fa-chart-line"></i>
                                                 </a>
                                             @endif
-                                            <a href="{{ route('admin.profiles.view', $user) }}" class="btn btn-outline-primary @if(!in_array($user->role, ['nurse', 'caregiver'])) rounded-start-pill @endif" title="Profile &amp; stats">
-                                                <i class="fas fa-id-card"></i>
+                                            <a href="{{ route('admin.profiles.view', $user) }}" class="btn btn-outline-primary" title="Full profile &amp; stats">
+                                                <i class="fas fa-eye"></i>
                                             </a>
+                                            @if(in_array($user->role, ['nurse', 'caregiver'], true) && $user->hasVerifiedPhone())
+                                                <a href="{{ route('admin.staff.id-card', $user) }}" class="btn btn-outline-secondary" title="View ID card">
+                                                    <i class="fas fa-id-card"></i>
+                                                </a>
+                                            @endif
                                             <button type="button" class="btn btn-outline-warning" onclick="editUser({{ $user->id }})" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button type="button" class="btn btn-outline-secondary rounded-end-pill" onclick="toggleUserStatus({{ $user->id }})" title="{{ $user->is_active ? 'Deactivate' : 'Activate' }}">
+                                            <button type="button" class="btn btn-outline-secondary" onclick="toggleUserStatus({{ $user->id }})" title="{{ $user->is_active ? 'Deactivate' : 'Activate' }}">
                                                 <i class="fas fa-{{ $user->is_active ? 'ban' : 'check' }}"></i>
                                             </button>
                                         </div>
@@ -285,7 +325,12 @@
 .um-table__row:hover { background: #f8fafc; }
 .um-name-link:hover { color: #0d9488 !important; text-decoration: underline !important; }
 .um-table__link:hover .um-table__id .badge { background-color: #0f766e !important; }
-.um-table__name { max-width: 14rem; }
+.um-table__user-cell { max-width: 16rem; }
+.um-avatar { width: 40px; height: 40px; object-fit: cover; flex-shrink: 0; }
+.um-avatar--placeholder { width: 40px; height: 40px; background: linear-gradient(135deg, #312e81, #1d4ed8); flex-shrink: 0; }
+.um-completion-bar { margin-bottom: 2px; }
+.um-actions .btn { border-radius: 0.375rem !important; }
+.um-actions .btn + .btn { margin-left: 2px; }
 </style>
 
 <!-- Create User Modal -->

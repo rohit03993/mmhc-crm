@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\StorageController;
 use App\Modules\Profiles\Controllers\DocumentController;
 use App\Modules\Profiles\Controllers\ProfileController;
+use App\Modules\Profiles\Controllers\StaffIdCardController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 
@@ -56,6 +57,10 @@ Route::get('/landing', function () use ($buildLandingData) {
 
 Route::post('/webhooks/razorpay', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'razorpayWebhook'])
     ->name('webhooks.razorpay');
+
+// Public staff ID verification (QR on physical cards)
+Route::get('/verify/staff/{uniqueId}', [StaffIdCardController::class, 'verify'])
+    ->name('staff.verify');
 
 // Services module routes
 Route::middleware(['auth'])->group(function () {
@@ -125,6 +130,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/verify-contact-otp', [ProfileController::class, 'verifyContactUpdateOtp'])->name('verify-contact-otp');
         Route::post('/resend-contact-otp', [ProfileController::class, 'resendContactUpdateOtp'])->name('resend-contact-otp');
         Route::post('/upload-avatar', [ProfileController::class, 'uploadAvatar'])->name('upload-avatar');
+        Route::get('/id-card', [StaffIdCardController::class, 'showOwn'])
+            ->middleware('role:nurse,caregiver')
+            ->name('id-card');
     });
 
     // Document Routes
@@ -178,6 +186,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pending-payments', [\App\Modules\Auth\Controllers\DashboardController::class, 'pendingPayments'])->name('pending-payments');
         Route::get('/profiles', [ProfileController::class, 'adminIndex'])->name('profiles');
         Route::get('/profiles/{user}', [ProfileController::class, 'adminView'])->name('profiles.view');
+        Route::get('/staff/{user}/id-card', [StaffIdCardController::class, 'showForUser'])->name('staff.id-card');
 
         // Full site backup (DB + local uploads)
         Route::get('/backups', [SiteBackupController::class, 'index'])->name('backups.index');

@@ -13,6 +13,12 @@
 /.zed
 /auth.json
 /node_modules
+# Capacitor / Android (android/ is committed; local build outputs stay ignored)
+/android/.gradle
+/android/.idea
+/android/app/build
+/android/build
+/android/local.properties
 /public/build
 /public/hot
 /public/storage

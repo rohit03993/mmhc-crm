@@ -298,7 +298,7 @@
 
     @if(auth()->user()->isAdmin())
         <li class="nav-item">
-            <a class="nav-link text-white {{ request()->routeIs('admin.users') || request()->routeIs('admin.profiles*') ? 'active' : '' }}" href="{{ route('admin.users') }}">
+            <a class="nav-link text-white {{ request()->routeIs('admin.users') || request()->routeIs('admin.profiles*') || request()->routeIs('admin.staff.id-card') ? 'active' : '' }}" href="{{ route('admin.users') }}">
                 <i class="fas fa-users me-2"></i>
                 Manage Users
             </a>

@@ -385,13 +385,13 @@
                             </div>
                         </a>
                         
-                        <a href="{{ route('admin.profiles') }}" class="quick-action-btn">
+                        <a href="{{ route('admin.users') }}" class="quick-action-btn">
                             <div class="quick-action-icon bg-info">
                                 <i class="fas fa-users"></i>
                             </div>
                             <div class="quick-action-content">
                                 <div class="quick-action-title">Manage Users</div>
-                                <div class="quick-action-desc">View & Edit Profiles</div>
+                                <div class="quick-action-desc">Accounts, profiles &amp; documents</div>
                             </div>
                             <div class="quick-action-arrow">
                                 <i class="fas fa-chevron-right"></i>
