@@ -19,6 +19,7 @@
     
     @yield('head')
 
+    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}">
     <link rel="stylesheet" href="{{ asset('css/capacitor-app.css') }}">
     
     <style>
@@ -58,32 +59,10 @@
             background-color: #f1f5f9;
         }
         
-        /* Mobile App Background */
-        @media (max-width: 767px) {
+        /* Mobile spacing — details in public/css/mobile-crm.css */
+        @media (max-width: 767.98px) {
             .main-content {
-                background-color: transparent;
-                padding: 0;
-                padding-bottom: 80px !important; /* Space for fixed bottom navigation */
-                min-height: calc(100vh - 80px);
-            }
-            
-            .container-fluid {
-                padding-left: 0;
-                padding-right: 0;
-            }
-            
-            .row {
-                margin-left: 0;
-                margin-right: 0;
-            }
-        }
-        
-        /* Hide bottom nav on desktop */
-        @media (min-width: 768px) {
-            .app-bottom-nav {
-                display: none !important;
-                visibility: hidden !important;
-                opacity: 0 !important;
+                background-color: #f1f5f9;
             }
         }
 
@@ -294,7 +273,7 @@
         }
     </style>
 </head>
-<body>
+<body class="@if(auth()->check()) mmhc-crm-auth @endif">
     @if(auth()->check())
         @include('auth::components.navbar')
         <div class="offcanvas offcanvas-start sidebar d-md-none" tabindex="-1" id="mmhcAppSidebar" aria-labelledby="mmhcAppSidebarLabel" style="--bs-offcanvas-width: min(20rem, 92vw);">
@@ -521,6 +500,8 @@
 
                     @yield('content')
                 </main>
+
+                @include('auth::components.bottom-nav')
             @else
                 <!-- Auth pages -->
                 <main class="col-12">
@@ -545,6 +526,7 @@
         })();
     </script>
     @endif
+    <script src="{{ asset('js/mobile-crm.js') }}" defer></script>
     <script src="{{ asset('js/capacitor-app.js') }}" defer></script>
     @yield('scripts')
 </body>

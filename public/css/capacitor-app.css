@@ -1,5 +1,6 @@
 /**
- * Styles when body has .capacitor-app (set by capacitor-app.js in native WebView).
+ * Native WebView extras (body.capacitor-app from capacitor-app.js).
+ * Shared mobile rules live in mobile-crm.css (html.mmhc-mobile).
  */
 
 html.capacitor-app,
@@ -7,21 +8,17 @@ body.capacitor-app {
     -webkit-tap-highlight-color: transparent;
 }
 
-@media (max-width: 767px) {
-    body.capacitor-app .btn,
-    body.capacitor-app .nav-link,
-    body.capacitor-app .app-btn-edit,
-    body.capacitor-app .top-navbar .btn-link {
-        min-height: 44px;
+@media (max-width: 767.98px) {
+    body.capacitor-app {
+        padding-top: env(safe-area-inset-top);
     }
 
-    body.capacitor-app input[type="file"],
-    body.capacitor-app input[type="text"],
-    body.capacitor-app input[type="tel"],
-    body.capacitor-app input[type="email"],
-    body.capacitor-app select,
-    body.capacitor-app textarea {
-        font-size: 16px;
+    body.capacitor-app .top-navbar {
+        padding-top: 0;
+    }
+
+    body.capacitor-app .main-content {
+        padding-bottom: calc(4.75rem + env(safe-area-inset-bottom)) !important;
     }
 
     /* Landing page (welcome) in WebView */

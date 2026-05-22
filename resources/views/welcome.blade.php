@@ -147,9 +147,10 @@
             .text-6xl { font-size: 2.25rem !important; }
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}">
     <link rel="stylesheet" href="{{ asset('css/capacitor-app.css') }}">
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 mmhc-landing-page">
 
     <!-- NAVIGATION BAR -->
     <nav class="fixed w-full bg-white shadow-md z-50">
@@ -1186,6 +1187,7 @@
         </div>
     </footer>
 
+    <script src="{{ asset('js/mobile-crm.js') }}" defer></script>
     <script src="{{ asset('js/capacitor-app.js') }}" defer></script>
     <script>
     (function () {

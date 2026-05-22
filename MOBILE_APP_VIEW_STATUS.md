@@ -51,17 +51,14 @@
 
 ---
 
-### ✅ **3. ADMIN DASHBOARD** - **NOT YET OPTIMIZED** ⚠️
+### ✅ **3. ADMIN & ALL AUTH PAGES** - **GLOBAL MOBILE LAYER** ✅
 
 #### **Status:**
-- ⚠️ Admin dashboard still uses desktop-first layout
-- ⚠️ No mobile app container
-- ⚠️ No bottom navigation
-- ⚠️ No mobile header
-
-#### **Note:**
-- Admin dashboard optimization was planned for last phase
-- Can be done if needed
+- ✅ `public/css/mobile-crm.css` — global responsive rules (tables, forms, alerts, modals)
+- ✅ `public/js/mobile-crm.js` — mobile class + auto table scroll wrappers
+- ✅ Bottom nav on **every** logged-in page via `layout.blade.php`
+- ✅ **Menu** opens full sidebar offcanvas (all admin/staff/patient links — nothing removed)
+- ✅ Admin: Home, Users, Services + Menu; tables scroll horizontally
 
 ---
 
@@ -73,8 +70,8 @@
 3. ✅ **All Patient Pages** - Mobile optimized
 4. ✅ **Staff Accept/Reject** - Mobile optimized with enhanced UI
 
-### **⚠️ PENDING:**
-1. ⚠️ **Admin Dashboard** - Not yet optimized (planned for last phase)
+### **✅ ALSO COMPLETE:**
+1. ✅ **Global mobile CSS/JS** on all `auth::layout` pages (including admin)
 
 ---
 
@@ -84,7 +81,7 @@
 - ✅ Mobile app container (`mobile-app-container`)
 - ✅ Mobile header (`app-header-mobile`)
 - ✅ Bottom navigation (`app-bottom-nav`)
-- ✅ Mobile menu overlay (`app-mobile-menu-overlay`)
+- ✅ **Menu** opens full sidebar offcanvas (all links; replaces old limited overlay)
 - ✅ Card-based layouts
 - ✅ Pagination (10 items per page)
 - ✅ Responsive breakpoints

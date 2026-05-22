@@ -488,25 +488,6 @@
         <i class="fas fa-users"></i>
     </a>
 
-    <!-- Bottom Navigation Bar (Mobile Only) -->
-    <nav class="app-bottom-nav d-md-none">
-        <a href="{{ route('dashboard') }}" class="app-nav-item active">
-            <i class="fas fa-home"></i>
-            <span>Home</span>
-        </a>
-        <a href="{{ route('services.my-requests') }}" class="app-nav-item">
-            <i class="fas fa-list"></i>
-            <span>Requests</span>
-        </a>
-        <a href="{{ route('staff.index') }}" class="app-nav-item">
-            <i class="fas fa-users"></i>
-            <span>Staff</span>
-        </a>
-        <a href="{{ route('profile.index') }}" class="app-nav-item">
-            <i class="fas fa-user"></i>
-            <span>Profile</span>
-        </a>
-    </nav>
 </div>
 
 <!-- Mobile App Styling -->
