@@ -370,8 +370,91 @@
     color: #4f46e5 !important;
 }
 
-.app-menu-trigger {
-    cursor: pointer;
+/* Top navbar: one menu (left) + profile (right) */
+.mmhc-navbar-brand {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+}
+
+@media (max-width: 991.98px) {
+    .mmhc-navbar-brand {
+        justify-content: flex-start;
+    }
+}
+
+.mmhc-nav-profile-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 2px #e2e8f0;
+}
+
+.mmhc-nav-profile-btn::after {
+    display: none;
+}
+
+.mmhc-nav-profile-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.mmhc-nav-profile-img--sm {
+    width: 32px;
+    height: 32px;
+}
+
+.mmhc-nav-profile-initials {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mmhc-nav-profile-menu {
+    min-width: min(280px, 92vw);
+    border-radius: 12px;
+    padding: 0.25rem 0;
+}
+
+.mmhc-nav-profile-menu .dropdown-item {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0.65rem 1rem;
+}
+
+.mmhc-nav-bell {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-nav-profile-thumb {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.app-nav-item-profile.active .app-nav-profile-thumb {
+    box-shadow: 0 0 0 2px #4f46e5;
 }
 
 @media (min-width: 768px) {

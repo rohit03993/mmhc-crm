@@ -276,7 +276,7 @@
 <body class="@if(auth()->check()) mmhc-crm-auth @endif">
     @if(auth()->check())
         @include('auth::components.navbar')
-        <div class="offcanvas offcanvas-start sidebar d-md-none" tabindex="-1" id="mmhcAppSidebar" aria-labelledby="mmhcAppSidebarLabel" style="--bs-offcanvas-width: min(20rem, 92vw);">
+        <div class="offcanvas offcanvas-start sidebar d-lg-none" tabindex="-1" id="mmhcAppSidebar" aria-labelledby="mmhcAppSidebarLabel" style="--bs-offcanvas-width: min(20rem, 92vw);">
             <div class="offcanvas-header border-bottom border-secondary border-opacity-25">
                 <div class="d-flex align-items-center gap-2">
                     <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="" class="brand-logo brand-logo--sidebar" style="max-height: 2.25rem; width: auto;">
@@ -293,7 +293,7 @@
         <div class="row">
             @if(auth()->check())
                 <!-- Sidebar — desktop column; mobile uses offcanvas above -->
-                <nav class="col-md-3 col-lg-2 d-none d-md-block sidebar collapse">
+                <nav class="col-md-3 col-lg-2 d-none d-lg-block sidebar collapse">
                     <div class="position-sticky pt-3">
                         <div class="text-center mb-4">
                             <div class="brand-logo-card">

@@ -59,15 +59,22 @@
         </a>
     @endif
 
-    {{-- Full sidebar menu (all links) — nothing hidden vs desktop sidebar --}}
-    <button type="button"
-            class="app-nav-item app-menu-trigger"
-            data-bs-toggle="offcanvas"
-            data-bs-target="#mmhcAppSidebar"
-            aria-controls="mmhcAppSidebar"
-            aria-label="Open full menu">
-        <i class="fas fa-bars"></i>
-        <span>Menu</span>
-    </button>
+    @php
+        $bnUser = auth()->user();
+        $bnProfile = $bnUser->profile;
+        $bnAvatar = ($bnProfile && $bnProfile->avatar_path) ? \Illuminate\Support\Facades\Storage::url($bnProfile->avatar_path) : null;
+        $bnProfileActive = request()->routeIs('profile.*') || request()->routeIs('documents.*');
+        $bnProfileHref = (!$bnUser->isAdmin() && !$bnUser->hasAcademicRole())
+            ? route('profile.index')
+            : route('profile.edit');
+    @endphp
+    <a href="{{ $bnProfileHref }}" class="app-nav-item app-nav-item-profile {{ $bnProfileActive ? 'active' : '' }}" aria-label="My account">
+        @if($bnAvatar)
+            <img src="{{ $bnAvatar }}" alt="" class="app-nav-profile-thumb">
+        @else
+            <i class="fas fa-user-circle"></i>
+        @endif
+        <span>Account</span>
+    </a>
 </nav>
 @endonce
