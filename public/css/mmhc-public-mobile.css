@@ -1,0 +1,379 @@
+/**
+ * MMHC public pages — landing (welcome) + guest login/register mobile app UX.
+ */
+
+:root {
+    --mmhc-landing-nav-height: 4rem;
+    --mmhc-landing-nav-height-md: 5rem;
+}
+
+@media (max-width: 767.98px) {
+    /* ── Landing page ── */
+    body.mmhc-landing-page {
+        overflow-x: hidden;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    .mmhc-landing-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background: rgba(255, 255, 255, 0.96) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06), 0 4px 20px rgba(15, 23, 42, 0.06);
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    .mmhc-landing-nav__inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: var(--mmhc-landing-nav-height);
+        height: var(--mmhc-landing-nav-height);
+        gap: 0.75rem;
+    .mmhc-landing-nav .brand-logo-mobile {
+        height: 2.25rem;
+        width: auto;
+        max-width: min(52vw, 180px);
+        object-fit: contain;
+    }
+
+    .mmhc-mobile-menu-btn {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: #334155;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .mmhc-mobile-menu-btn.is-open {
+        background: #eff6ff;
+        border-color: #93c5fd;
+        color: #1d4ed8;
+    }
+
+    .mmhc-landing-mobile-menu {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 100%;
+        background: #fff;
+        border-bottom: 1px solid #e2e8f0;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+        max-height: min(70vh, calc(100dvh - var(--mmhc-landing-nav-height) - env(safe-area-inset-top)));
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 0.75rem 1rem calc(1rem + env(safe-area-inset-bottom));
+    }
+
+    .mmhc-landing-mobile-menu a {
+        display: flex;
+        align-items: center;
+        min-height: 48px;
+        padding: 0.65rem 0.85rem;
+        margin-bottom: 0.35rem;
+        border-radius: 12px;
+        font-weight: 600;
+        color: #334155;
+        text-decoration: none;
+    }
+
+    .mmhc-landing-mobile-menu a:hover,
+    .mmhc-landing-mobile-menu a:focus {
+        background: #f1f5f9;
+        color: #2563eb;
+    }
+
+    .mmhc-landing-mobile-menu__actions {
+        display: grid;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .mmhc-landing-mobile-menu__actions a {
+        justify-content: center;
+        margin-bottom: 0;
+    }
+
+    .mmhc-landing-mobile-menu__actions .btn-login-outline {
+        border: 1.5px solid #2563eb;
+        color: #2563eb;
+    }
+
+    .mmhc-landing-mobile-menu__actions .btn-register {
+        background: linear-gradient(135deg, #2563eb 0%, #059669 100%);
+        color: #fff !important;
+        border: none;
+    }
+
+    .mmhc-landing-hero {
+        padding-top: calc(var(--mmhc-landing-nav-height) + env(safe-area-inset-top, 0px) + 1.25rem) !important;
+        padding-bottom: 2.5rem !important;
+    }
+
+    .mmhc-landing-mobile-menu.is-open,
+    #mmhcMobileMenuPanel.is-open {
+        display: block !important;
+    }
+
+    .mmhc-mobile-menu-btn {
+        touch-action: manipulation;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body.mmhc-landing-page #home {
+        padding-top: calc(var(--mmhc-landing-nav-height) + env(safe-area-inset-top, 0px) + 1.25rem) !important;
+    }
+
+    body.mmhc-landing-page .text-5xl,
+    body.mmhc-landing-page .text-6xl {
+        font-size: 1.85rem !important;
+        line-height: 1.2 !important;
+    }
+
+    body.mmhc-landing-page .text-xl {
+        font-size: 1rem !important;
+        line-height: 1.55 !important;
+    }
+
+    body.mmhc-landing-page section {
+        scroll-margin-top: calc(var(--mmhc-landing-nav-height) + env(safe-area-inset-top, 0px) + 0.5rem);
+    }
+
+    body.mmhc-landing-page .max-w-7xl {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    body.mmhc-landing-menu-open {
+        overflow: hidden;
+    }
+
+    /* ── Guest login (mobile app style) ── */
+    body.mmhc-auth-guest,
+    html.mmhc-auth-guest {
+        overflow-x: hidden;
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+    }
+
+    body.mmhc-auth-guest {
+        background: #eef2ff;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    body.mmhc-auth-guest:has(.academics-login-wrapper),
+    html.mmhc-auth-guest:has(.academics-login-wrapper) {
+        overflow: auto !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    body.academics-login-page.mmhc-auth-guest,
+    html.academics-login-page.mmhc-auth-guest {
+        overflow: auto !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    .academics-login-wrapper {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        height: auto !important;
+        min-height: 100dvh;
+        max-height: none !important;
+        overflow: visible !important;
+        flex-direction: column;
+        background: linear-gradient(180deg, #312e81 0%, #1d4ed8 42%, #eef2ff 42%);
+    }
+
+    .academics-login-left {
+        order: 1;
+        flex: none;
+        min-height: 0;
+        max-height: none;
+        padding: 0.85rem 1rem 0.5rem;
+        overflow: visible;
+        background: transparent;
+    }
+
+    .academics-login-left::before,
+    .academics-login-left::after {
+        display: none;
+    }
+
+    .academics-left-featured,
+    .academics-left-thumbs {
+        display: none !important;
+    }
+
+    .academics-login-brand-stack .academics-badges {
+        display: none;
+    }
+
+    .academics-login-left-inner {
+        gap: 0.5rem;
+    }
+
+    .academics-login-left-img-wrap {
+        min-height: auto;
+        padding: 0.65rem 0.85rem;
+        margin-bottom: 0;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    .academics-login-left-img {
+        max-height: 56px;
+    }
+
+    .academics-hero-block {
+        text-align: center;
+    }
+
+    .academics-hero-kicker {
+        justify-content: center;
+        font-size: 0.62rem;
+    }
+
+    .academics-hero-title {
+        font-size: 1.15rem !important;
+    }
+
+    .academics-hero-sub {
+        font-size: 0.85rem !important;
+        margin-bottom: 0.35rem;
+    }
+
+    .academics-hero-desc {
+        display: none;
+    }
+
+    .academics-login-right {
+        order: 2;
+        flex: 1 1 auto;
+        padding: 1.15rem 1rem 1.25rem;
+        margin: 0 0.65rem 0.85rem;
+        border-radius: 20px;
+        background: #fff;
+        box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12);
+        overflow: visible;
+    }
+
+    .academics-login-right-inner {
+        max-width: 100%;
+    }
+
+    .academics-logo {
+        max-width: 120px;
+        margin: 0 auto 0.35rem;
+    }
+
+    .academics-portal-title {
+        display: block;
+        text-align: center;
+        width: 100%;
+        font-size: 1.35rem;
+        border-bottom: none;
+        margin-bottom: 0.25rem;
+    }
+
+    .academics-portal-desc {
+        text-align: center;
+        font-size: 0.82rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .academics-form-wrap .login-tabs {
+        display: flex;
+        gap: 0.35rem;
+        background: #f1f5f9;
+        padding: 0.25rem;
+        border-radius: 14px;
+    }
+
+    .academics-form-wrap .login-tabs .nav-link {
+        flex: 1;
+        text-align: center;
+        border: none !important;
+        margin: 0 !important;
+    }
+
+    .academics-login-footer {
+        text-align: center;
+        font-size: 0.72rem;
+        margin-top: 1rem;
+    }
+
+    .academics-login-footer a {
+        display: inline-block;
+        margin-left: 0.35rem;
+    }
+
+    .login-signup-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .login-signup-head {
+        text-align: center;
+    }
+
+    .remember-me-container {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.65rem;
+    }
+
+    body.mmhc-auth-guest .container-fluid,
+    body.mmhc-auth-guest .container-fluid > .row,
+    body.mmhc-auth-guest main.col-12 {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100%;
+    }
+
+    body.mmhc-auth-guest .container-fluid {
+        min-height: 100dvh;
+    }
+
+    /* ── Guest register (simple card layout) ── */
+    body.mmhc-auth-guest .container > .row.justify-content-center {
+        min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        align-items: center;
+        padding: 1rem 0.75rem;
+    }
+
+    body.mmhc-auth-guest .container .card.shadow-lg {
+        border-radius: 20px;
+        box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12) !important;
+        margin: 0 auto;
+    }
+
+    body.mmhc-auth-guest .container .card-body.p-5 {
+        padding: 1.5rem 1.25rem !important;
+    }
+}
+
+@media (min-width: 768px) {
+    .mmhc-landing-nav__inner {
+        min-height: var(--mmhc-landing-nav-height-md);
+        height: var(--mmhc-landing-nav-height-md);
+    }
+}

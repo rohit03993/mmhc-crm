@@ -9,7 +9,7 @@
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-    <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -119,47 +119,25 @@
 
         [x-cloak] { display: none !important; }
 
-        .mmhc-mobile-menu-btn {
-            min-width: 48px;
-            min-height: 48px;
-            padding: 0.5rem;
-            touch-action: manipulation;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-            position: relative;
-            z-index: 60;
-            background: transparent;
-            border: none;
-        }
-
-        #mmhcMobileMenuPanel {
-            position: relative;
-            z-index: 55;
-        }
-
-        #mmhcMobileMenuPanel.is-open {
-            display: block !important;
-        }
-
         @media (max-width: 767px) {
-            #home { padding-top: 6.5rem !important; }
             .text-5xl { font-size: 2rem !important; line-height: 1.25 !important; }
             .text-6xl { font-size: 2.25rem !important; }
         }
     </style>
     <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/mmhc-public-mobile.css') }}">
     <link rel="stylesheet" href="{{ asset('css/capacitor-app.css') }}">
 </head>
 <body class="bg-gray-50 mmhc-landing-page">
 
     <!-- NAVIGATION BAR -->
-    <nav class="fixed w-full bg-white shadow-md z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
+    <nav class="fixed w-full z-50 mmhc-landing-nav" id="mmhcLandingNav">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div class="mmhc-landing-nav__inner">
                 <!-- Logo -->
-                <div class="flex items-center">
-                    <a href="#home" class="flex items-center space-x-3">
-                        <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="h-12 w-auto">
+                <div class="flex items-center min-w-0 flex-1">
+                    <a href="#home" class="flex items-center min-w-0">
+                        <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo-mobile h-12 w-auto md:h-12">
                         <span class="sr-only">{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}</span>
                     </a>
                 </div>
@@ -194,21 +172,20 @@
         </div>
         
         <!-- Mobile Menu -->
-        <div id="mmhcMobileMenuPanel" class="md:hidden bg-white border-t hidden" aria-hidden="true">
-            <div class="px-4 py-4 space-y-3">
-                <a href="#home" class="block text-gray-700 hover:text-blue-600 font-medium">Home</a>
-                <a href="#plans" class="block text-gray-700 hover:text-blue-600 font-medium">Plans</a>
-                <a href="#about" class="block text-gray-700 hover:text-blue-600 font-medium">About</a>
-                <a href="#contact" class="block text-gray-700 hover:text-blue-600 font-medium">Contact</a>
-                <hr class="my-3">
-                <a href="{{ route('auth.login') }}" class="block w-full text-center px-5 py-2 text-blue-600 border border-blue-600 rounded-lg">Login</a>
-                <a href="{{ route('auth.register') }}" class="block w-full text-center px-5 py-2 bg-gradient-to-r from-blue-600 to-green-500 text-white rounded-lg">Register</a>
+        <div id="mmhcMobileMenuPanel" class="md:hidden hidden mmhc-landing-mobile-menu" aria-hidden="true">
+            <a href="#home"><i class="fas fa-home me-2 opacity-75"></i>Home</a>
+            <a href="#plans"><i class="fas fa-heartbeat me-2 opacity-75"></i>Plans</a>
+            <a href="#about"><i class="fas fa-info-circle me-2 opacity-75"></i>About</a>
+            <a href="#contact"><i class="fas fa-envelope me-2 opacity-75"></i>Contact</a>
+            <div class="mmhc-landing-mobile-menu__actions">
+                <a href="{{ route('auth.login') }}" class="btn-login-outline">Login</a>
+                <a href="{{ route('auth.register') }}" class="btn-register">Create account</a>
             </div>
         </div>
     </nav>
 
     <!-- HERO SECTION -->
-    <section id="home" class="pt-32 pb-20 gradient-bg relative overflow-hidden">
+    <section id="home" class="mmhc-landing-hero pt-32 pb-20 gradient-bg relative overflow-hidden">
         <!-- Animated Background Shapes -->
         <div class="absolute inset-0 opacity-10">
             <div class="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
@@ -1200,6 +1177,13 @@
             panel.classList.toggle('is-open', open);
             panel.setAttribute('aria-hidden', open ? 'false' : 'true');
             btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            btn.classList.toggle('is-open', open);
+            document.body.classList.toggle('mmhc-landing-menu-open', open);
+            var icon = btn.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-bars', !open);
+                icon.classList.toggle('fa-times', open);
+            }
         }
 
         btn.addEventListener('click', function (e) {

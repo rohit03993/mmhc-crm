@@ -7,7 +7,8 @@
         "dev": "vite",
         "cap:sync": "npx cap sync android",
         "cap:open": "npx cap open android",
-        "cap:run": "npx cap run android"
+        "cap:run": "npx cap run android",
+        "icons:android": "python scripts/generate-android-icons.py"
     },
     "dependencies": {
         "@capacitor/android": "^7.2.0",

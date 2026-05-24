@@ -10,31 +10,34 @@ body.capacitor-app {
 
 @media (max-width: 767.98px) {
     body.capacitor-app {
-        padding-top: env(safe-area-inset-top);
+        padding-top: 0;
     }
 
     body.capacitor-app .top-navbar {
-        padding-top: 0;
+        padding-top: env(safe-area-inset-top, 0px);
     }
 
     body.capacitor-app .main-content {
         padding-bottom: calc(4.75rem + env(safe-area-inset-bottom)) !important;
     }
 
-    /* Landing page (welcome) in WebView */
-    body.capacitor-app nav.fixed {
-        padding-top: env(safe-area-inset-top);
+    body.capacitor-app.mmhc-landing-page .mmhc-landing-nav {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    body.capacitor-app.mmhc-landing-page #home,
+    body.capacitor-app.mmhc-landing-page .mmhc-landing-hero {
+        padding-top: calc(var(--mmhc-landing-nav-height, 4rem) + env(safe-area-inset-top, 0px) + 1.25rem) !important;
     }
 
     body.capacitor-app .mmhc-mobile-menu-btn {
-        min-width: 48px;
-        min-height: 48px;
-        z-index: 60;
-        position: relative;
+        min-width: 44px;
+        min-height: 44px;
     }
 
-    body.capacitor-app #home {
-        padding-top: 6.5rem !important;
+    body.capacitor-app.mmhc-auth-guest {
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     body.capacitor-app .text-5xl {

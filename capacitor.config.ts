@@ -10,7 +10,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
  */
 const config: CapacitorConfig = {
     appId: 'com.themmhc.crm',
-    appName: 'MeD Miracle Health Care',
+    appName: 'MeD Miracle',
     webDir: 'www',
     server: {
         // Live site homepage; CRM pages load after splash.

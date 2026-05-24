@@ -659,25 +659,47 @@
         }
     }
 
-    /* Split login: no page scroll, fit viewport, gallery on left */
-    body:has(.academics-login-wrapper),
-    html:has(.academics-login-wrapper) {
-        overflow: hidden !important;
-        height: 100dvh !important;
-        max-height: 100dvh !important;
+    /* Split login: no page scroll, fit viewport, gallery on left (desktop only) */
+    @media (min-width: 992px) {
+        body:has(.academics-login-wrapper),
+        html:has(.academics-login-wrapper) {
+            overflow: hidden !important;
+            height: 100dvh !important;
+            max-height: 100dvh !important;
+        }
+        .academics-login-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 100dvh;
+            max-height: 100dvh;
+            display: flex;
+            background: #f8fafc;
+            z-index: 10;
+            overflow: hidden;
+        }
     }
+
+    @media (max-width: 991.98px) {
+        .academics-login-wrapper {
+            position: relative;
+            top: auto;
+            left: auto;
+            right: auto;
+            bottom: auto;
+            height: auto;
+            min-height: 100dvh;
+            max-height: none;
+            overflow: visible;
+            flex-direction: column;
+        }
+    }
+
     .academics-login-wrapper {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 100dvh;
-        max-height: 100dvh;
         display: flex;
         background: #f8fafc;
-        z-index: 10;
-        overflow: hidden;
     }
     .academics-login-left {
         flex: 0 0 50%;
@@ -1129,9 +1151,14 @@
         .academics-hero-title { font-size: 1.35rem; }
         .academics-hero-sub, .academics-hero-desc { font-size: 0.85rem; }
     }
-    /* Fallback when :has() not supported - use JS to add class */
-    body.academics-login-page,
-    body.academics-login-page html { overflow: hidden !important; height: 100% !important; }
+    /* Fallback when :has() not supported - desktop only */
+    @media (min-width: 992px) {
+        body.academics-login-page,
+        html.academics-login-page {
+            overflow: hidden !important;
+            height: 100% !important;
+        }
+    }
 </style>
 @endsection
 
@@ -1205,7 +1232,10 @@
 <script>
 (function() {
     var w = document.querySelector('.academics-login-wrapper');
-    if (w) { document.body.classList.add('academics-login-page'); }
+    if (w) {
+        document.body.classList.add('academics-login-page');
+        document.documentElement.classList.add('academics-login-page');
+    }
 })();
 
 (function() {

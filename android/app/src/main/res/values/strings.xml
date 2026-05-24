@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">MeD Miracle Health Care</string>
+    <string name="app_name">MeD Miracle</string>
     <string name="title_activity_main">MeD Miracle Health Care</string>
     <string name="package_name">com.themmhc.crm</string>
     <string name="custom_url_scheme">com.themmhc.crm</string>
