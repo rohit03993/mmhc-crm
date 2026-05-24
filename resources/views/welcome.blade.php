@@ -131,9 +131,9 @@
 <body class="bg-gray-50 mmhc-landing-page">
 
     <!-- NAVIGATION BAR -->
-    <nav class="fixed w-full z-50 mmhc-landing-nav" id="mmhcLandingNav">
+    <nav class="fixed w-full bg-white shadow-md z-50 mmhc-landing-nav" id="mmhcLandingNav">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-            <div class="mmhc-landing-nav__inner">
+            <div class="mmhc-landing-nav__inner flex justify-between items-center">
                 <!-- Logo -->
                 <div class="flex items-center min-w-0 flex-1">
                     <a href="#home" class="flex items-center min-w-0">

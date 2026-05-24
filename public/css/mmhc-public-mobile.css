@@ -7,6 +7,23 @@
     --mmhc-landing-nav-height-md: 5rem;
 }
 
+/* Landing nav — all viewports (desktop regressed when flex lived only inside mobile query) */
+.mmhc-landing-nav {
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06), 0 4px 20px rgba(15, 23, 42, 0.06);
+}
+
+.mmhc-landing-nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: var(--mmhc-landing-nav-height-md);
+    height: var(--mmhc-landing-nav-height-md);
+}
+
 @media (max-width: 767.98px) {
     /* ── Landing page ── */
     body.mmhc-landing-page {
@@ -15,25 +32,14 @@
     }
 
     .mmhc-landing-nav {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 100;
-        background: rgba(255, 255, 255, 0.96) !important;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06), 0 4px 20px rgba(15, 23, 42, 0.06);
         padding-top: env(safe-area-inset-top, 0px);
     }
 
     .mmhc-landing-nav__inner {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
         min-height: var(--mmhc-landing-nav-height);
         height: var(--mmhc-landing-nav-height);
-        gap: 0.75rem;
+    }
+
     .mmhc-landing-nav .brand-logo-mobile {
         height: 2.25rem;
         width: auto;
@@ -368,12 +374,5 @@
 
     body.mmhc-auth-guest .container .card-body.p-5 {
         padding: 1.5rem 1.25rem !important;
-    }
-}
-
-@media (min-width: 768px) {
-    .mmhc-landing-nav__inner {
-        min-height: var(--mmhc-landing-nav-height-md);
-        height: var(--mmhc-landing-nav-height-md);
     }
 }
