@@ -108,7 +108,11 @@
                 $communityImageUrl = storage_url($post->image_path) ?? storage_asset($post->image_path);
                 $communityImageFallback = 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600"><rect width="100%" height="100%" fill="#f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#64748b" font-family="Arial" font-size="28">Image unavailable</text></svg>');
             @endphp
-            <img src="{{ $communityImageUrl }}" alt="Post image" class="img-fluid rounded-3 mb-2 post-image" onerror="this.onerror=null;this.src='{{ $communityImageFallback }}';">
+            <div class="post-image-wrap mb-2">
+                <a href="{{ $communityImageUrl }}" target="_blank" rel="noopener noreferrer" class="post-image-link" aria-label="View full size image">
+                    <img src="{{ $communityImageUrl }}" alt="Post image" class="post-image" loading="lazy" onerror="this.onerror=null;this.src='{{ $communityImageFallback }}';">
+                </a>
+            </div>
         @endif
 
         @if($post->post_type === 'event')
