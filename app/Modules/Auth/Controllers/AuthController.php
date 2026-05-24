@@ -91,6 +91,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->remember)) {
             $request->session()->regenerate();
+            Auth::user()?->syncTrustedAccountPhoneState();
 
             return redirect()->intended($this->defaultPostLoginUrl());
         }
@@ -215,6 +216,7 @@ class AuthController extends Controller
         if (! $user->hasVerifiedPhone()) {
             $user->applyPhoneVerifiedFromLoginOtp();
         }
+        $user->syncTrustedAccountPhoneState();
 
         return redirect()->intended($this->defaultPostLoginUrl());
     }
@@ -226,7 +228,7 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
-        if ($user && ! $user->hasVerifiedPhone()) {
+        if ($user && ! $user->hasVerifiedPhone() && ! $user->isExemptFromPhoneVerification()) {
             return route('profile.verify-phone');
         }
 
@@ -239,7 +241,9 @@ class AuthController extends Controller
 
     protected function redirectAuthenticatedUser(User $user)
     {
-        if (! $user->hasVerifiedPhone()) {
+        $user->syncTrustedAccountPhoneState();
+
+        if (! $user->hasVerifiedPhone() && ! $user->isExemptFromPhoneVerification()) {
             return redirect()->route('profile.verify-phone');
         }
 
@@ -248,6 +252,18 @@ class AuthController extends Controller
 
     protected function redirectToPhoneVerification(User $user, ?string $successMessage = null)
     {
+        $user->syncTrustedAccountPhoneState();
+        $user = $user->fresh();
+
+        if ($user->hasVerifiedPhone() || $user->isExemptFromPhoneVerification()) {
+            $redirect = redirect()->route($user->hasAcademicRole() ? 'academics.dashboard' : 'dashboard');
+            if ($successMessage) {
+                $redirect = $redirect->with('success', $successMessage);
+            }
+
+            return $redirect;
+        }
+
         $send = app(PhoneVerificationService::class)->sendAccountVerificationOtp($user);
         $redirect = redirect()->route('profile.verify-phone');
 

@@ -125,9 +125,11 @@ class ProfileController extends Controller
     public function verifyPhone(PhoneVerificationService $phoneVerificationService)
     {
         $user = Auth::user();
+        $user->syncTrustedAccountPhoneState();
+        $user = $user->fresh();
 
-        if ($user->hasVerifiedPhone()) {
-            return $this->redirectAfterPhoneVerified($user->fresh());
+        if ($user->hasVerifiedPhone() || $user->isExemptFromPhoneVerification()) {
+            return $this->redirectAfterPhoneVerified($user);
         }
 
         if (! trim((string) ($user->phone ?? ''))) {
@@ -158,8 +160,10 @@ class ProfileController extends Controller
     public function sendVerifyPhoneOtp(PhoneVerificationService $phoneVerificationService)
     {
         $user = Auth::user();
+        $user->syncTrustedAccountPhoneState();
+        $user = $user->fresh();
 
-        if ($user->hasVerifiedPhone()) {
+        if ($user->hasVerifiedPhone() || $user->isExemptFromPhoneVerification()) {
             return $this->redirectAfterPhoneVerified($user);
         }
 
@@ -180,8 +184,10 @@ class ProfileController extends Controller
     {
         try {
             $user = Auth::user();
+            $user->syncTrustedAccountPhoneState();
+            $user = $user->fresh();
             $profile = $this->profileService->getProfile($user);
-            $effectivePhone = (string) ($user->pending_phone ?: $user->phone ?? '');
+            $effectivePhone = (string) ($user->phone ?? $user->pending_phone ?? '');
             $phoneDigits = preg_replace('/\D+/', '', $effectivePhone);
             $phoneForInput = strlen($phoneDigits) >= 10 ? substr($phoneDigits, -10) : $phoneDigits;
             $emailForInput = $user->usesPlaceholderEmail()
@@ -215,6 +221,8 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $user = Auth::user();
+        $user->syncTrustedAccountPhoneState();
+        $user = $user->fresh();
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -264,9 +272,9 @@ class ProfileController extends Controller
         $effectiveCurrentEmail = $user->usesPlaceholderEmail()
             ? ''
             : (string) ($user->pending_email ?: $user->email ?? '');
-        $effectiveCurrentPhone = $this->normalizeIndianPhone((string) ($user->pending_phone ?: $user->phone ?? ''));
+        $storedPhone = $this->normalizeIndianPhone((string) ($user->phone ?? ''));
         $emailChanged = $requestedEmail !== '' && strcasecmp($requestedEmail, $effectiveCurrentEmail) !== 0;
-        $phoneChanged = $effectiveCurrentPhone !== $normalizedRequestedPhone;
+        $phoneChanged = $storedPhone !== $normalizedRequestedPhone;
         if ($emailChanged && $phoneChanged) {
             return redirect()->back()
                 ->withErrors(['email' => 'Please update either email or phone at one time.'])
@@ -274,6 +282,10 @@ class ProfileController extends Controller
         }
 
         if (! $emailChanged && ! $phoneChanged) {
+            if ($user->hasPendingMobileContactVerification()) {
+                $user->clearPendingPhoneVerificationState();
+            }
+
             return redirect()->route('profile.index')->with('success', 'Profile updated successfully!');
         }
 
@@ -297,6 +309,18 @@ class ProfileController extends Controller
                 'contact_update_otp_sent_at' => null,
                 'contact_update_verified_at' => null,
             ])->save();
+
+            return redirect()->route('profile.index')->with('success', 'Profile updated successfully.');
+        }
+
+        // Trusted CRM admins may update mobile without SMS OTP.
+        if ($phoneChanged && $user->isExemptFromPhoneVerification()) {
+            $user->forceFill(array_merge([
+                'phone' => $normalizedRequestedPhone,
+                'phone_verified_at' => now(),
+                'phone_verified_source' => 'admin',
+                'phone_verified_by_admin_id' => null,
+            ], $user->pendingPhoneVerificationFieldClears()))->save();
 
             return redirect()->route('profile.index')->with('success', 'Profile updated successfully.');
         }

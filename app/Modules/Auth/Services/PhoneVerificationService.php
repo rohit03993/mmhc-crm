@@ -20,6 +20,12 @@ class PhoneVerificationService
      */
     public function sendAccountVerificationOtp(User $user, bool $forceResend = false): array
     {
+        if ($user->isExemptFromPhoneVerification()) {
+            $user->syncTrustedAccountPhoneState();
+
+            return ['success' => true, 'already_verified' => true, 'message' => 'Mobile already verified.'];
+        }
+
         if ($user->hasVerifiedPhone() && ! $user->hasPendingMobileContactVerification()) {
             return ['success' => true, 'already_verified' => true, 'message' => 'Mobile already verified.'];
         }

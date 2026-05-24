@@ -30,7 +30,7 @@ class EnsurePhoneVerified
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        if (! $user || $user->hasVerifiedPhone()) {
+        if (! $user || $user->hasVerifiedPhone() || $user->isExemptFromPhoneVerification()) {
             return $next($request);
         }
 

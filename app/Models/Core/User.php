@@ -288,11 +288,69 @@ class User extends Authenticatable
     }
 
     /**
+     * CRM / platform admins — trusted accounts; no SMS OTP gate for app access.
+     */
+    public function isExemptFromPhoneVerification(): bool
+    {
+        return in_array($this->role, ['admin', 'super_admin'], true);
+    }
+
+    /**
+     * Clear in-progress SMS OTP contact change (stuck pending state).
+     */
+    public function clearPendingPhoneVerificationState(): void
+    {
+        $this->forceFill($this->pendingPhoneVerificationFieldClears())->save();
+    }
+
+    /**
+     * Trusted admin accounts: mark stored mobile as verified and drop stale OTP pending rows.
+     */
+    public function syncTrustedAccountPhoneState(): void
+    {
+        if (! $this->isExemptFromPhoneVerification() || ! trim((string) ($this->phone ?? ''))) {
+            return;
+        }
+
+        $updates = [];
+        if ($this->hasPendingMobileContactVerification()) {
+            $updates = $this->pendingPhoneVerificationFieldClears();
+        }
+        if (! $this->hasVerifiedPhone()) {
+            $updates['phone_verified_at'] = now();
+            $updates['phone_verified_source'] = 'admin';
+            $updates['phone_verified_by_admin_id'] = null;
+        }
+
+        if ($updates !== []) {
+            $this->forceFill($updates)->save();
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function pendingPhoneVerificationFieldClears(): array
+    {
+        return [
+            'pending_phone' => null,
+            'pending_email' => null,
+            'contact_update_channel' => null,
+            'contact_update_otp_hash' => null,
+            'contact_update_otp_expires_at' => null,
+            'contact_update_otp_attempts' => 0,
+            'contact_update_otp_sent_to' => null,
+            'contact_update_otp_sent_at' => null,
+            'contact_update_verified_at' => null,
+        ];
+    }
+
+    /**
      * Any authenticated user must verify account mobile before using the app.
      */
     public function mustVerifyPhoneBeforeAppAccess(): bool
     {
-        return ! $this->hasVerifiedPhone();
+        return ! $this->isExemptFromPhoneVerification() && ! $this->hasVerifiedPhone();
     }
 
     public function applyPhoneVerifiedFromProfileContactOtp(): void

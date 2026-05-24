@@ -55,6 +55,8 @@ class AppServiceProvider extends ServiceProvider
 
             if (Auth::check()) {
                 $user = Auth::user();
+                $user->syncTrustedAccountPhoneState();
+                $user = $user->fresh();
                 $hasPendingContactUpdate = $user->hasPendingMobileContactVerification();
                 $needsPhoneVerification = $user->mustVerifyPhoneBeforeAppAccess();
                 $staffNeedsMobileVerification = $needsPhoneVerification && $user->isStaff();
