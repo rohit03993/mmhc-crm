@@ -220,7 +220,6 @@ class ProfileController extends Controller
             'name' => 'required|string|max:255',
             'phone' => ['required', new \App\Rules\IndianMobileTenDigits],
             'email' => [
-                Rule::requiredIf(fn () => ! $user->usesPlaceholderEmail()),
                 'nullable',
                 'email',
                 'max:255',
@@ -248,7 +247,14 @@ class ProfileController extends Controller
 
         $this->profileService->updateProfile($user, $profileData);
 
-        $requestedEmail = trim((string) $request->input('email'));
+        // Profile edit UI is mobile-first — email field is optional/hidden; preserve stored email when omitted.
+        if ($request->has('email')) {
+            $requestedEmail = trim((string) $request->input('email'));
+        } elseif ($user->usesPlaceholderEmail()) {
+            $requestedEmail = '';
+        } else {
+            $requestedEmail = (string) ($user->pending_email ?: $user->email ?? '');
+        }
         $requestedPhone = (string) $request->input('phone');
         $normalizedRequestedPhone = $this->normalizeIndianPhone($requestedPhone);
         if (! $normalizedRequestedPhone) {
