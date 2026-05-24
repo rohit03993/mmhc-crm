@@ -686,11 +686,14 @@ class AuthController extends Controller
             ? Batch::query()->orderBy('institution_id')->orderBy('name')->get(['id', 'institution_id', 'name', 'academic_year'])
             : collect();
 
-        $unverifiedPhoneCount = User::query()
+        $unverifiedPhoneQuery = User::query()
             ->whereNull('phone_verified_at')
             ->whereNotNull('phone')
             ->where('phone', '!=', '')
-            ->count();
+            ->when($segment === 'academics', fn ($q) => $q->whereIn('role', User::academicRoleSlugs()))
+            ->when($segment === 'healthcare', fn ($q) => $q->whereNotIn('role', User::academicRoleSlugs()));
+
+        $unverifiedPhoneCount = (clone $unverifiedPhoneQuery)->count();
 
         return view('auth::admin.users', compact('users', 'searchQuery', 'segment', 'institutions', 'batches', 'unverifiedPhoneCount'));
     }

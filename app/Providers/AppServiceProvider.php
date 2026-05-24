@@ -55,8 +55,6 @@ class AppServiceProvider extends ServiceProvider
 
             if (Auth::check()) {
                 $user = Auth::user();
-                $user->syncTrustedAccountPhoneState();
-                $user = $user->fresh();
                 $hasPendingContactUpdate = $user->hasPendingMobileContactVerification();
                 $needsPhoneVerification = $user->mustVerifyPhoneBeforeAppAccess();
                 $staffNeedsMobileVerification = $needsPhoneVerification && $user->isStaff();
@@ -64,9 +62,12 @@ class AppServiceProvider extends ServiceProvider
 
             if (Auth::check() && Auth::user()->isStaff()) {
                 $user = Auth::user();
-                $heldEarningsDueToUnverifiedMobile = app(StaffPayoutService::class)
-                    ->calculateHeldDueToUnverifiedMobile($user);
+                if (! $user->hasVerifiedPhone()) {
+                    $heldEarningsDueToUnverifiedMobile = app(StaffPayoutService::class)
+                        ->calculateHeldDueToUnverifiedMobile($user);
+                }
                 $pendingReferralOtpBanner = Referral::query()
+                    ->select(['id', 'referred_id', 'status', 'verification_status', 'created_at'])
                     ->where('referred_id', $user->id)
                     ->where('status', 'pending')
                     ->where('verification_status', 'pending')
@@ -95,13 +96,15 @@ class AppServiceProvider extends ServiceProvider
                 ];
 
                 $pendingRewardOtpBanner = CaregiverReward::query()
+                    ->select(['id', 'user_id', 'verification_status', 'created_at'])
                     ->where('user_id', $user->id)
                     ->where('verification_status', 'pending')
                     ->latest('id')
                     ->first();
 
                 $pendingServiceCompletionBanner = ServiceRequest::query()
-                    ->with('patient')
+                    ->select(['id', 'assigned_staff_id', 'status', 'completion_verified_at', 'patient_id', 'created_at'])
+                    ->with('patient:id,name')
                     ->where('assigned_staff_id', $user->id)
                     ->where('status', 'in_progress')
                     ->whereNull('completion_verified_at')

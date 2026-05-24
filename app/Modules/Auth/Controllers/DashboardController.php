@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Payments\Services\StaffPayoutService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
@@ -198,24 +199,25 @@ class DashboardController extends Controller
      */
     protected function getAdminStats()
     {
-        $stats = [
-            'total_users' => \App\Models\Core\User::count(),
-            'total_nurses' => \App\Models\Core\User::where('role', 'nurse')->count(),
-            'total_caregivers' => \App\Models\Core\User::where('role', 'caregiver')->count(),
-            'total_patients' => \App\Models\Core\User::where('role', 'patient')->count(),
-            'total_staff' => \App\Models\Core\User::whereIn('role', ['nurse', 'caregiver'])->count(),
-            'pending_approvals' => \App\Modules\Services\Models\ServiceRequest::where('status', 'completed')
-                ->whereNull('admin_approved_at')
-                ->count(),
-            'total_service_requests' => \App\Modules\Services\Models\ServiceRequest::count(),
-            'pending_service_requests' => \App\Modules\Services\Models\ServiceRequest::where('status', 'pending')->count(),
-            'in_progress_services' => \App\Modules\Services\Models\ServiceRequest::where('status', 'in_progress')->count(),
-        ];
+        return Cache::remember('admin_dashboard_stats', now()->addMinutes(2), function () {
+            $stats = [
+                'total_users' => \App\Models\Core\User::count(),
+                'total_nurses' => \App\Models\Core\User::where('role', 'nurse')->count(),
+                'total_caregivers' => \App\Models\Core\User::where('role', 'caregiver')->count(),
+                'total_patients' => \App\Models\Core\User::where('role', 'patient')->count(),
+                'total_staff' => \App\Models\Core\User::whereIn('role', ['nurse', 'caregiver'])->count(),
+                'pending_approvals' => \App\Modules\Services\Models\ServiceRequest::where('status', 'completed')
+                    ->whereNull('admin_approved_at')
+                    ->count(),
+                'total_service_requests' => \App\Modules\Services\Models\ServiceRequest::count(),
+                'pending_service_requests' => \App\Modules\Services\Models\ServiceRequest::where('status', 'pending')->count(),
+                'in_progress_services' => \App\Modules\Services\Models\ServiceRequest::where('status', 'in_progress')->count(),
+            ];
 
-        // Add financial statistics
-        $stats['financial'] = $this->getFinancialStats();
+            $stats['financial'] = $this->getFinancialStats();
 
-        return $stats;
+            return $stats;
+        });
     }
 
     /**
