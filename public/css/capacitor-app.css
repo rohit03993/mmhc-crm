@@ -48,6 +48,14 @@ body.capacitor-app {
         padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
+    body.capacitor-app.mmhc-landing-page {
+        padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    body.capacitor-app .mmhc-login-app .academics-login-right {
+        padding-top: calc(1rem + env(safe-area-inset-top, 0px));
+    }
+
     body.capacitor-app .text-5xl {
         font-size: 2rem !important;
         line-height: 1.2 !important;

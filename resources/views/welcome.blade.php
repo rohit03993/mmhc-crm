@@ -254,8 +254,8 @@
                     </div>
                 </div>
                 
-                <!-- Right Side - Image/Illustration -->
-                <div class="relative fade-in-up">
+                <!-- Right Side - Image/Illustration (desktop only) -->
+                <div class="relative fade-in-up hidden lg:block mmhc-landing-hero-visual">
                     <!-- Main Image Container -->
                     <div class="relative z-10 bg-white rounded-3xl shadow-2xl p-4">
                         <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=600&fit=crop" 
@@ -1162,8 +1162,14 @@
         </div>
     </section>
 
+    <!-- Mobile app: quick sign-in / register -->
+    <div class="mmhc-landing-mobile-bar md:hidden" role="navigation" aria-label="Quick actions">
+        <a href="{{ route('auth.login') }}" class="mmhc-landing-mobile-bar__btn mmhc-landing-mobile-bar__btn--outline">Sign in</a>
+        <a href="{{ route('auth.register') }}" class="mmhc-landing-mobile-bar__btn mmhc-landing-mobile-bar__btn--primary">Get started</a>
+    </div>
+
     <!-- FOOTER -->
-    <footer class="bg-gray-900 text-white py-8">
+    <footer class="bg-gray-900 text-white py-8 mmhc-landing-footer">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Bottom Bar -->
             <div class="flex flex-col md:flex-row justify-between items-center">

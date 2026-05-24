@@ -1164,7 +1164,7 @@
 
 @section('content')
 {{-- Unified sign-in: achievements / brand left, form right --}}
-<div class="academics-login-wrapper">
+<div class="academics-login-wrapper mmhc-login-app">
     <div class="academics-login-left">
         <div class="academics-login-left-inner">
             @if(isset($achievementMedia) && $achievementMedia->isNotEmpty())
