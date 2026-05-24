@@ -1,0 +1,85 @@
+<?php
+
+namespace App\Modules\Plans\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Modules\Plans\Services\StudentSubscriptionService;
+use App\Modules\Plans\Services\SubscriptionService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+
+class StudentSubscriptionController extends Controller
+{
+    public function offer(StudentSubscriptionService $studentSubscriptionService)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'student') {
+            return redirect()->route('dashboard');
+        }
+
+        if (! $user->hasVerifiedPhone()) {
+            return redirect()->route('profile.verify-phone');
+        }
+
+        if ($studentSubscriptionService->hasActiveStudentMembership($user)) {
+            return redirect()->route('academics.dashboard')
+                ->with('success', 'Your student membership is active.');
+        }
+
+        $pending = $studentSubscriptionService->getPendingStudentSubscription($user);
+        $plan = $studentSubscriptionService->getStudentPlan();
+        $display = $studentSubscriptionService->offerDisplay();
+
+        return view('plans::student-subscription.offer', compact('user', 'pending', 'plan', 'display'));
+    }
+
+    public function subscribe(
+        Request $request,
+        StudentSubscriptionService $studentSubscriptionService,
+        SubscriptionService $subscriptionService
+    ) {
+        $user = Auth::user();
+        if ($user->role !== 'student') {
+            abort(403);
+        }
+
+        if (! $user->hasVerifiedPhone()) {
+            return redirect()->route('profile.verify-phone');
+        }
+
+        if ($studentSubscriptionService->hasActiveStudentMembership($user)) {
+            return redirect()->route('academics.dashboard');
+        }
+
+        $pending = $studentSubscriptionService->getPendingStudentSubscription($user);
+        if ($pending) {
+            return redirect()->route('subscriptions.payment-confirmation', $pending->id)
+                ->with('info', 'Complete payment for your pending student membership.');
+        }
+
+        $plan = $studentSubscriptionService->getStudentPlan();
+        if (! $plan) {
+            return redirect()->route('student-subscription.offer')
+                ->with('error', 'Student membership is not configured yet. Please contact MMHC support.');
+        }
+
+        try {
+            $subscription = $subscriptionService->createSubscription($user, $plan, [
+                'payment_frequency' => $studentSubscriptionService->paymentFrequency(),
+                'notes' => 'Student journey launch membership',
+            ]);
+
+            return redirect()->route('subscriptions.payment-confirmation', $subscription->id)
+                ->with('success', 'Almost there! Complete your one-time payment of ₹'.number_format((float) $subscription->total_amount, 0).' to activate your membership.');
+        } catch (\Throwable $e) {
+            Log::error('Student subscription create failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('student-subscription.offer')
+                ->with('error', 'Could not start subscription. Please try again or contact support.');
+        }
+    }
+}

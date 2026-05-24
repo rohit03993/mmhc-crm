@@ -232,6 +232,15 @@ class AuthController extends Controller
             return route('profile.verify-phone');
         }
 
+        if ($user && $user->role === 'student') {
+            $studentSub = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
+            if ($studentSub->requiresStudentMembership($user)) {
+                return route('student-subscription.offer');
+            }
+
+            return route('academics.dashboard');
+        }
+
         if ($user && $user->hasAcademicRole()) {
             return route('academics.dashboard');
         }
@@ -245,6 +254,15 @@ class AuthController extends Controller
 
         if (! $user->hasVerifiedPhone() && ! $user->isExemptFromPhoneVerification()) {
             return redirect()->route('profile.verify-phone');
+        }
+
+        if ($user->role === 'student') {
+            $studentSub = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
+            if ($studentSub->requiresStudentMembership($user)) {
+                return redirect()->route('student-subscription.offer');
+            }
+
+            return redirect()->route('academics.dashboard');
         }
 
         return redirect()->route($user->hasAcademicRole() ? 'academics.dashboard' : 'dashboard');

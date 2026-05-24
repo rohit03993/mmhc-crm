@@ -152,6 +152,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{plan}', [\App\Modules\Plans\Controllers\PlanController::class, 'show'])->name('show');
     });
 
+    // Student journey membership (after phone verification)
+    Route::prefix('student-subscription')->name('student-subscription.')->group(function () {
+        Route::get('/offer', [\App\Modules\Plans\Controllers\StudentSubscriptionController::class, 'offer'])->name('offer');
+        Route::post('/subscribe', [\App\Modules\Plans\Controllers\StudentSubscriptionController::class, 'subscribe'])->name('subscribe');
+    });
+
     // MANUALLY REGISTER SUBSCRIPTIONS ROUTES TO ENSURE THEY WORK
     Route::prefix('subscriptions')->name('subscriptions.')->group(function () {
         Route::get('/', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'index'])->name('index');

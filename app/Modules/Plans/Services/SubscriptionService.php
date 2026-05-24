@@ -39,12 +39,16 @@ class SubscriptionService
         // Base amount (before GST)
         $baseAmount = $selectedOption['price'] ?? $plan->monthly_price ?? $plan->price;
 
-        // Calculate GST (18% on base amount)
-        $gstRate = (float) config('subscription.gst_rate', 18.00);
-        $gstAmount = ($baseAmount * $gstRate) / 100;
-
-        // Total amount (base + GST)
-        $totalAmount = $baseAmount + $gstAmount;
+        // GST (student launch can be GST-inclusive flat price)
+        if (! empty($selectedOption['price_includes_gst'])) {
+            $gstRate = 0.0;
+            $gstAmount = 0.0;
+            $totalAmount = $baseAmount;
+        } else {
+            $gstRate = (float) config('subscription.gst_rate', 18.00);
+            $gstAmount = ($baseAmount * $gstRate) / 100;
+            $totalAmount = $baseAmount + $gstAmount;
+        }
 
         $referrerId = $data['referrer_id'] ?? null;
         if ($referrerId) {
@@ -111,9 +115,15 @@ class SubscriptionService
         $totalYears = $payableYears + $careBenefitsYears;
 
         $baseAmount = (float) ($selectedOption['price'] ?? $plan->monthly_price ?? $plan->price ?? 0);
-        $gstRate = (float) config('subscription.gst_rate', 18.00);
-        $gstAmount = round(($baseAmount * $gstRate) / 100, 2);
-        $totalAmount = round($baseAmount + $gstAmount, 2);
+        if (! empty($selectedOption['price_includes_gst'])) {
+            $gstRate = 0.0;
+            $gstAmount = 0.0;
+            $totalAmount = round($baseAmount, 2);
+        } else {
+            $gstRate = (float) config('subscription.gst_rate', 18.00);
+            $gstAmount = round(($baseAmount * $gstRate) / 100, 2);
+            $totalAmount = round($baseAmount + $gstAmount, 2);
+        }
 
         $startDate = $subscription->start_date ?? now();
         if (! $startDate instanceof \Carbon\CarbonInterface) {

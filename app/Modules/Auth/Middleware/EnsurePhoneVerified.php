@@ -25,6 +25,8 @@ class EnsurePhoneVerified
         'staff.referrals.resend-otp',
         'rewards.verify-otp-banner',
         'rewards.send-otp-banner',
+        'student-subscription.offer',
+        'student-subscription.subscribe',
     ];
 
     public function handle(Request $request, Closure $next): Response

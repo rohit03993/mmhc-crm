@@ -211,7 +211,7 @@ class SubscriptionController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'plan_id' => 'required|exists:plans,id',
-            'payment_frequency' => 'required|in:monthly,half_yearly,annually,full_payment',
+            'payment_frequency' => 'required|in:monthly,half_yearly,annually,full_payment,student_launch',
             'auto_renew' => 'boolean',
             'notes' => 'nullable|string|max:500',
             'referrer_id' => 'nullable|exists:users,id',
@@ -225,6 +225,15 @@ class SubscriptionController extends Controller
 
         $user = Auth::user();
         $plan = Plan::findOrFail($request->plan_id);
+
+        if ($plan->isStudentPlan() && $user->role !== 'student') {
+            return redirect()->back()->with('error', 'This plan is only available to students.');
+        }
+
+        if ($user->role === 'student' && ! $plan->isStudentPlan()) {
+            return redirect()->route('student-subscription.offer')
+                ->with('info', 'Students must use the Student Journey membership plan.');
+        }
 
         // Check if user already has an active subscription
         $activeSubscription = $this->subscriptionService->getActiveSubscription($user);
@@ -787,10 +796,14 @@ class SubscriptionController extends Controller
             'gateway_payload' => $paymentPayload,
         ], Auth::user());
 
+        $user = Auth::user();
+        $redirectUrl = app(\App\Modules\Plans\Services\StudentSubscriptionService::class)
+            ->postPaymentRedirectUrl($user, $subscription->fresh());
+
         return response()->json([
             'success' => true,
             'message' => 'Payment verified successfully.',
-            'redirect_url' => route('subscriptions.show', $subscription),
+            'redirect_url' => $redirectUrl,
         ]);
     }
 

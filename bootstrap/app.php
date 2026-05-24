@@ -15,9 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Core\Middleware\CheckRole::class,
             'student.enrollment.approved' => \App\Modules\Academics\Middleware\EnsureStudentEnrollmentApproved::class,
             'phone.verified' => \App\Modules\Auth\Middleware\EnsurePhoneVerified::class,
+            'student.membership' => \App\Modules\Plans\Middleware\EnsureStudentMembershipSubscribed::class,
         ]);
 
         $middleware->appendToGroup('web', \App\Modules\Auth\Middleware\EnsurePhoneVerified::class);
+        $middleware->appendToGroup('web', \App\Modules\Plans\Middleware\EnsureStudentMembershipSubscribed::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

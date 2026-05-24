@@ -523,6 +523,16 @@ class ProfileController extends Controller
             return redirect()->route('auth.welcome.nursing-warrior');
         }
 
+        if ($user->role === 'student') {
+            $studentSub = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
+            if ($studentSub->requiresStudentMembership($user)) {
+                return redirect()->route('student-subscription.offer')
+                    ->with('success', 'Mobile verified! Complete your student membership to continue.');
+            }
+
+            return redirect()->route('academics.dashboard');
+        }
+
         if ($user->hasAcademicRole()) {
             return redirect()->route('academics.dashboard');
         }

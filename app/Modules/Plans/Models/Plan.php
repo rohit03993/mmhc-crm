@@ -14,6 +14,8 @@ class Plan extends Model
      */
     protected $fillable = [
         'name',
+        'slug',
+        'audience',
         'description',
         'price',
         'monthly_price',
@@ -75,6 +77,23 @@ class Plan extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order')->orderBy('price');
+    }
+
+    public function scopeForHealthcareAudience($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('audience')->orWhere('audience', 'healthcare');
+        });
+    }
+
+    public function scopeForStudentAudience($query)
+    {
+        return $query->where('audience', 'student');
+    }
+
+    public function isStudentPlan(): bool
+    {
+        return $this->audience === 'student';
     }
 
     /**

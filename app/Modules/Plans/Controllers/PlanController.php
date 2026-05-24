@@ -23,7 +23,7 @@ class PlanController extends Controller
     public function index()
     {
         try {
-            $plans = Plan::active()->ordered()->get();
+            $plans = Plan::active()->forHealthcareAudience()->ordered()->get();
         } catch (\Exception $e) {
             // If plans table doesn't exist or error, return empty collection
             $plans = collect([]);
@@ -38,6 +38,10 @@ class PlanController extends Controller
     public function show(Plan $plan)
     {
         if (! $plan->is_active) {
+            abort(404);
+        }
+
+        if ($plan->isStudentPlan() && (! auth()->check() || auth()->user()->role !== 'student')) {
             abort(404);
         }
 
