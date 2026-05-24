@@ -136,7 +136,8 @@
     }
 
     .top-navbar .navbar-brand .brand-logo--nav {
-        max-width: 110px;
+        max-width: 118px;
+        max-height: 2rem;
     }
 
     .top-navbar .navbar-collapse {
@@ -771,6 +772,64 @@
     color: #4f46e5 !important;
 }
 
+/* CRM shell: compact top bar + page title (auth::layout — students, staff, admin, academics) */
+.top-navbar {
+    --bs-navbar-padding-y: 0.3rem;
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+    min-height: 0;
+}
+
+.top-navbar .navbar-brand {
+    margin-right: 0.5rem;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.top-navbar .navbar-nav .nav-link {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+    font-size: 0.9rem;
+}
+
+.top-navbar .nav-link.dropdown-toggle {
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.top-navbar .nav-link.dropdown-toggle > span:not(.badge) {
+    max-width: 9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.top-navbar .nav-link .badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.2em 0.45em;
+}
+
+.top-navbar .brand-logo--nav {
+    max-width: 118px;
+    max-height: 2rem;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+.mmhc-page-title-bar {
+    padding-top: 0.65rem !important;
+    padding-bottom: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+.mmhc-page-title-bar .h2 {
+    font-size: 1.35rem;
+    line-height: 1.25;
+}
+
 /* Mobile: hamburger + logo + profile. Desktop (992px+): logo left | Dashboard Community | bell + profile — same as staff layout */
 .mmhc-navbar-brand {
     flex: 1;
@@ -834,8 +893,21 @@
 }
 
 .mmhc-nav-profile-img--sm {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
+}
+
+@media (min-width: 992px) {
+    .top-navbar .container-fluid {
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .top-navbar .mmhc-nav-bell {
+        min-width: 36px !important;
+        min-height: 36px !important;
+        padding: 0.25rem !important;
+    }
 }
 
 .mmhc-nav-profile-initials {
