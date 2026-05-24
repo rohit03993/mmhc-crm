@@ -35,6 +35,14 @@ body.capacitor-app {
         min-height: 44px;
     }
 
+    body.capacitor-app.mmhc-landing-page .mmhc-landing-mobile-menu {
+        top: calc(var(--mmhc-landing-nav-height, 4rem) + env(safe-area-inset-top, 0px));
+    }
+
+    body.capacitor-app.mmhc-landing-page .mmhc-landing-mobile-menu__link {
+        min-height: 48px;
+    }
+
     body.capacitor-app.mmhc-auth-guest {
         padding-top: env(safe-area-inset-top, 0px);
         padding-bottom: env(safe-area-inset-bottom, 0px);

@@ -131,8 +131,8 @@
 <body class="bg-gray-50 mmhc-landing-page">
 
     <!-- NAVIGATION BAR -->
-    <nav class="fixed w-full bg-white shadow-md z-50 mmhc-landing-nav" id="mmhcLandingNav">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+    <nav class="fixed w-full bg-white shadow-md z-50 mmhc-landing-nav relative" id="mmhcLandingNav">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="mmhc-landing-nav__inner flex justify-between items-center">
                 <!-- Logo -->
                 <div class="flex items-center min-w-0 flex-1">
@@ -171,17 +171,32 @@
             </div>
         </div>
         
-        <!-- Mobile Menu -->
-        <div id="mmhcMobileMenuPanel" class="md:hidden hidden mmhc-landing-mobile-menu" aria-hidden="true">
-            <a href="#home"><i class="fas fa-home me-2 opacity-75"></i>Home</a>
-            <a href="#plans"><i class="fas fa-heartbeat me-2 opacity-75"></i>Plans</a>
-            <a href="#about"><i class="fas fa-info-circle me-2 opacity-75"></i>About</a>
-            <a href="#contact"><i class="fas fa-envelope me-2 opacity-75"></i>Contact</a>
-            <div class="mmhc-landing-mobile-menu__actions">
-                <a href="{{ route('auth.login') }}" class="btn-login-outline">Login</a>
-                <a href="{{ route('auth.register') }}" class="btn-register">Create account</a>
+        <!-- Mobile Menu (Tailwind + mmhc classes — reliable in browser + Capacitor WebView) -->
+        <div id="mmhcMobileMenuPanel" class="md:hidden hidden mmhc-landing-mobile-menu bg-white border-t border-gray-200" aria-hidden="true">
+            <div class="mmhc-landing-mobile-menu__inner px-4 py-4 space-y-1">
+                <a href="#home" class="mmhc-landing-mobile-menu__link flex items-center text-gray-700 hover:text-blue-600 font-medium rounded-xl px-3 py-3">
+                    <i class="fas fa-home mr-3 w-5 text-center opacity-75" aria-hidden="true"></i>Home
+                </a>
+                <a href="#plans" class="mmhc-landing-mobile-menu__link flex items-center text-gray-700 hover:text-blue-600 font-medium rounded-xl px-3 py-3">
+                    <i class="fas fa-heartbeat mr-3 w-5 text-center opacity-75" aria-hidden="true"></i>Plans
+                </a>
+                <a href="#about" class="mmhc-landing-mobile-menu__link flex items-center text-gray-700 hover:text-blue-600 font-medium rounded-xl px-3 py-3">
+                    <i class="fas fa-info-circle mr-3 w-5 text-center opacity-75" aria-hidden="true"></i>About
+                </a>
+                <a href="#contact" class="mmhc-landing-mobile-menu__link flex items-center text-gray-700 hover:text-blue-600 font-medium rounded-xl px-3 py-3">
+                    <i class="fas fa-envelope mr-3 w-5 text-center opacity-75" aria-hidden="true"></i>Contact
+                </a>
+                <div class="mmhc-landing-mobile-menu__actions pt-3 mt-2 border-t border-gray-200 space-y-2">
+                    <a href="{{ route('auth.login') }}" class="block w-full text-center px-5 py-3 text-blue-600 border-2 border-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition">
+                        Login
+                    </a>
+                    <a href="{{ route('auth.register') }}" class="block w-full text-center px-5 py-3 bg-gradient-to-r from-blue-600 to-green-500 text-white rounded-xl font-semibold hover:shadow-lg transition">
+                        Create account
+                    </a>
+                </div>
             </div>
         </div>
+        <div id="mmhcMobileMenuBackdrop" class="mmhc-landing-mobile-menu-backdrop md:hidden hidden" aria-hidden="true"></div>
     </nav>
 
     <!-- HERO SECTION -->
@@ -1170,12 +1185,18 @@
     (function () {
         var btn = document.getElementById('mmhcMobileMenuBtn');
         var panel = document.getElementById('mmhcMobileMenuPanel');
+        var backdrop = document.getElementById('mmhcMobileMenuBackdrop');
         if (!btn || !panel) return;
 
         function setOpen(open) {
             panel.classList.toggle('hidden', !open);
             panel.classList.toggle('is-open', open);
             panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+            if (backdrop) {
+                backdrop.classList.toggle('hidden', !open);
+                backdrop.classList.toggle('is-open', open);
+                backdrop.setAttribute('aria-hidden', open ? 'false' : 'true');
+            }
             btn.setAttribute('aria-expanded', open ? 'true' : 'false');
             btn.classList.toggle('is-open', open);
             document.body.classList.toggle('mmhc-landing-menu-open', open);
@@ -1191,6 +1212,10 @@
             e.stopPropagation();
             setOpen(panel.classList.contains('hidden'));
         });
+
+        if (backdrop) {
+            backdrop.addEventListener('click', function () { setOpen(false); });
+        }
 
         panel.querySelectorAll('a').forEach(function (link) {
             link.addEventListener('click', function () { setOpen(false); });

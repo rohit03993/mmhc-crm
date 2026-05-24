@@ -13,6 +13,7 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06), 0 4px 20px rgba(15, 23, 42, 0.06);
+    overflow: visible;
 }
 
 .mmhc-landing-nav__inner {
@@ -67,60 +68,45 @@
         color: #1d4ed8;
     }
 
+    /* Fixed panel — stays above hero in browser + Capacitor WebView */
     .mmhc-landing-mobile-menu {
-        position: absolute;
+        position: fixed;
         left: 0;
         right: 0;
-        top: 100%;
+        top: calc(var(--mmhc-landing-nav-height) + env(safe-area-inset-top, 0px));
+        z-index: 60;
         background: #fff;
         border-bottom: 1px solid #e2e8f0;
         box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
-        max-height: min(70vh, calc(100dvh - var(--mmhc-landing-nav-height) - env(safe-area-inset-top)));
+        max-height: min(75vh, calc(100dvh - var(--mmhc-landing-nav-height) - env(safe-area-inset-top, 0px)));
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        padding: 0.75rem 1rem calc(1rem + env(safe-area-inset-bottom));
     }
 
-    .mmhc-landing-mobile-menu a {
-        display: flex;
-        align-items: center;
-        min-height: 48px;
-        padding: 0.65rem 0.85rem;
-        margin-bottom: 0.35rem;
-        border-radius: 12px;
-        font-weight: 600;
-        color: #334155;
+    .mmhc-landing-mobile-menu__inner {
+        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .mmhc-landing-mobile-menu__link {
         text-decoration: none;
+        -webkit-tap-highlight-color: transparent;
     }
 
-    .mmhc-landing-mobile-menu a:hover,
-    .mmhc-landing-mobile-menu a:focus {
+    .mmhc-landing-mobile-menu__link:active {
         background: #f1f5f9;
         color: #2563eb;
     }
 
-    .mmhc-landing-mobile-menu__actions {
-        display: grid;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
-        padding-top: 0.75rem;
-        border-top: 1px solid #e2e8f0;
+    .mmhc-landing-mobile-menu-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 55;
+        background: rgba(15, 23, 42, 0.45);
+        -webkit-tap-highlight-color: transparent;
     }
 
-    .mmhc-landing-mobile-menu__actions a {
-        justify-content: center;
-        margin-bottom: 0;
-    }
-
-    .mmhc-landing-mobile-menu__actions .btn-login-outline {
-        border: 1.5px solid #2563eb;
-        color: #2563eb;
-    }
-
-    .mmhc-landing-mobile-menu__actions .btn-register {
-        background: linear-gradient(135deg, #2563eb 0%, #059669 100%);
-        color: #fff !important;
-        border: none;
+    .mmhc-landing-mobile-menu-backdrop.is-open {
+        display: block !important;
     }
 
     .mmhc-landing-hero {
