@@ -27,7 +27,14 @@
                 <tbody>
                 @foreach($pendingRequests as $req)
                 <tr>
-                    <td>{{ $req->mentee->name ?? '—' }} <span class="text-muted small">({{ $req->mentee->role }})</span></td>
+                    <td>
+                        @if($req->mentee)
+                            <a href="{{ route('academics.mentorship.profile', $req->mentee) }}" class="fw-medium text-decoration-none">{{ $req->mentee->name }}</a>
+                            <span class="text-muted small">({{ $req->mentee->role }})</span>
+                        @else
+                            —
+                        @endif
+                    </td>
                     <td class="small">{{ Str::limit($req->request_message, 80) }}</td>
                     <td class="text-end">
                         <form action="{{ route('academics.mentorship.respond', $req) }}" method="POST" class="d-inline">
@@ -57,7 +64,13 @@
                 <tbody>
                 @foreach($pendingReviews as $share)
                 <tr>
-                    <td>{{ $share->submission->user->name ?? 'Student' }}</td>
+                    <td>
+                        @if($share->submission?->user)
+                            <a href="{{ route('academics.mentorship.profile', $share->submission->user) }}" class="fw-medium text-decoration-none">{{ $share->submission->user->name }}</a>
+                        @else
+                            Student
+                        @endif
+                    </td>
                     <td>{{ $share->submission->assignment->title ?? 'Assignment' }}</td>
                     <td class="text-end"><a href="{{ route('academics.mentorship.reviews.show', $share) }}" class="btn btn-sm btn-primary">Review</a></td>
                 </tr>
@@ -77,7 +90,16 @@
                 <table class="table mb-0">
                     <tbody>
                     @foreach($activeMentees as $m)
-                    <tr><td>{{ $m->mentee->name ?? '—' }}</td><td class="text-muted small">{{ ucfirst($m->mentee->role ?? '') }}</td></tr>
+                    <tr>
+                        <td>
+                            @if($m->mentee)
+                                <a href="{{ route('academics.mentorship.profile', $m->mentee) }}" class="fw-medium text-decoration-none">{{ $m->mentee->name }}</a>
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td class="text-muted small">{{ ucfirst($m->mentee->role ?? '') }}</td>
+                    </tr>
                     @endforeach
                     </tbody>
                 </table>

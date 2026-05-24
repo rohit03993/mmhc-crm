@@ -26,7 +26,13 @@
                         <tbody>
                             @foreach($myMentors as $m)
                             <tr>
-                                <td>{{ $m->mentor->name ?? '—' }}</td>
+                                <td>
+                                    @if($m->mentor)
+                                        <a href="{{ route('academics.mentorship.profile', $m->mentor) }}" class="fw-medium text-decoration-none">{{ $m->mentor->name }}</a>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
                                 <td>{{ $m->mentor->academicInstitution->name ?? 'Independent' }}</td>
                                 <td><span class="badge bg-{{ $m->status === 'active' ? 'success' : 'warning text-dark' }}">{{ ucfirst($m->status) }}</span></td>
                             </tr>

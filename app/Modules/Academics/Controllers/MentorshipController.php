@@ -160,6 +160,27 @@ class MentorshipController extends Controller
         return view('academics::mentorship.review', compact('share', 'existing'));
     }
 
+    public function profile(User $user)
+    {
+        $viewer = auth()->user();
+
+        if (in_array($viewer->role, ['super_admin', 'admin', 'institution_admin'], true)) {
+            return redirect()->route('academics.people.show', $user);
+        }
+
+        if ($viewer->id === $user->id) {
+            return redirect()->route('profile.index');
+        }
+
+        if (! $this->mentorshipService->canViewLimitedProfile($viewer, $user)) {
+            abort(403, 'You cannot view this profile.');
+        }
+
+        $profileData = $this->mentorshipService->buildLimitedProfile($user);
+
+        return view('academics::mentorship.profile', $profileData);
+    }
+
     public function reviewStore(Request $request, SubmissionMentorShare $share, MentorVerificationService $mentorVerification)
     {
         $user = auth()->user();

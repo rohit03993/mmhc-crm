@@ -114,6 +114,7 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
     // Cross-institute mentorship
     Route::middleware(['role:student,nurse,caregiver,faculty'])->prefix('mentorship')->name('mentorship.')->group(function () {
         Route::get('/', [MentorshipController::class, 'index'])->name('index');
+        Route::get('/profile/{user}', [MentorshipController::class, 'profile'])->name('profile')->whereNumber('user');
         Route::get('/browse', [MentorshipController::class, 'browse'])->name('browse');
         Route::post('/request', [MentorshipController::class, 'request'])->name('request');
         Route::post('/{mentorship}/respond', [MentorshipController::class, 'respond'])->name('respond')->whereNumber('mentorship');

@@ -22,9 +22,12 @@
         <div class="col-md-6 col-lg-4">
             <div class="card h-100 shadow-sm">
                 <div class="card-body">
-                    <h3 class="h6 mb-1">{{ $f->name }}</h3>
+                    <h3 class="h6 mb-1">
+                        <a href="{{ route('academics.mentorship.profile', $f) }}" class="text-decoration-none">{{ $f->name }}</a>
+                    </h3>
                     <p class="small text-muted mb-2">{{ $f->academicInstitution->name ?? 'Platform faculty' }}</p>
                     @if($f->qualification)<p class="small mb-2">{{ $f->qualification }}</p>@endif
+                    <a href="{{ route('academics.mentorship.profile', $f) }}" class="btn btn-sm btn-outline-primary w-100 mb-2">View profile</a>
                     <form action="{{ route('academics.mentorship.request') }}" method="POST">
                         @csrf
                         <input type="hidden" name="mentor_id" value="{{ $f->id }}">

@@ -4,6 +4,9 @@ namespace App\Modules\Academics\Services;
 
 use App\Models\Core\User;
 use App\Modules\Academics\Models\Mentorship;
+use App\Modules\Academics\Models\Subject;
+use App\Modules\Academics\Models\SubmissionMentorShare;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class MentorshipService
@@ -111,5 +114,115 @@ class MentorshipService
             ->where('mentee_id', $mentee->id)
             ->where('status', Mentorship::STATUS_ACTIVE)
             ->count();
+    }
+
+    /**
+     * Whether the viewer may open the limited mentorship profile (not admin CRM view).
+     */
+    public function canViewLimitedProfile(User $viewer, User $target): bool
+    {
+        if ($viewer->id === $target->id) {
+            return false;
+        }
+
+        if (in_array($viewer->role, ['super_admin', 'admin', 'institution_admin'], true)) {
+            return false;
+        }
+
+        if (in_array($viewer->role, self::menteeRoleSlugs(), true) && $target->role === 'faculty') {
+            return (bool) $target->is_active;
+        }
+
+        if ($viewer->role === 'faculty' && in_array($target->role, self::menteeRoleSlugs(), true)) {
+            return $this->facultyHasMentorshipContextWith($viewer, $target);
+        }
+
+        return false;
+    }
+
+    public function facultyHasMentorshipContextWith(User $faculty, User $mentee): bool
+    {
+        $hasMentorship = Mentorship::query()
+            ->where('mentor_id', $faculty->id)
+            ->where('mentee_id', $mentee->id)
+            ->whereIn('status', [
+                Mentorship::STATUS_PENDING,
+                Mentorship::STATUS_ACTIVE,
+                Mentorship::STATUS_DECLINED,
+            ])
+            ->exists();
+
+        if ($hasMentorship) {
+            return true;
+        }
+
+        return SubmissionMentorShare::query()
+            ->where('mentor_id', $faculty->id)
+            ->whereHas('submission', fn ($q) => $q->where('user_id', $mentee->id))
+            ->exists();
+    }
+
+    public function menteeHasMentorshipLinkWith(User $mentee, User $faculty): bool
+    {
+        return Mentorship::query()
+            ->where('mentee_id', $mentee->id)
+            ->where('mentor_id', $faculty->id)
+            ->exists();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function buildLimitedProfile(User $target): array
+    {
+        $target->load(['profile', 'academicInstitution']);
+
+        $batches = $target->academicBatches()
+            ->with('institution')
+            ->orderBy('name')
+            ->get();
+
+        $data = [
+            'person' => $target,
+            'profile' => $target->profile,
+            'institution' => $target->academicInstitution,
+            'batches' => $batches,
+            'subjectsTeaching' => collect(),
+            'activeMenteeCount' => null,
+            'activeMentorCount' => null,
+            'mentorshipStatus' => null,
+        ];
+
+        if ($target->role === 'faculty') {
+            $subjectIds = DB::table('academic_subject_faculty')
+                ->where('user_id', $target->id)
+                ->pluck('subject_id');
+            $data['subjectsTeaching'] = Subject::query()
+                ->whereIn('id', $subjectIds)
+                ->with('batch.institution')
+                ->orderBy('name')
+                ->limit(8)
+                ->get();
+            $data['activeMenteeCount'] = $this->activeMenteeCountFor($target);
+        }
+
+        if (in_array($target->role, self::menteeRoleSlugs(), true)) {
+            $data['activeMentorCount'] = $this->activeMentorCountFor($target);
+        }
+
+        $viewer = auth()->user();
+        if ($viewer && in_array($viewer->role, self::menteeRoleSlugs(), true) && $target->role === 'faculty') {
+            $data['mentorshipStatus'] = Mentorship::query()
+                ->where('mentee_id', $viewer->id)
+                ->where('mentor_id', $target->id)
+                ->value('status');
+        } elseif ($viewer && $viewer->role === 'faculty' && in_array($target->role, self::menteeRoleSlugs(), true)) {
+            $data['mentorshipStatus'] = Mentorship::query()
+                ->where('mentor_id', $viewer->id)
+                ->where('mentee_id', $target->id)
+                ->value('status');
+        }
+
+        return $data;
     }
 }
