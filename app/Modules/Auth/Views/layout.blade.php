@@ -274,13 +274,18 @@
         }
     </style>
 </head>
-<body class="@guest mmhc-auth-guest @endguest @if(auth()->check()) mmhc-crm-auth @endif @if(auth()->check() && request()->is('academics*')) mmhc-academics @endif @if(auth()->check() && trim($__env->yieldContent('page-title', '')) !== '') mmhc-has-page-title @endif">
+@php
+    $mmhcMinimalShell = auth()->check() && request()->routeIs('student-subscription.*', 'profile.verify-phone');
+    $mmhcLogoFallback = asset('images/med-logo.png');
+@endphp
+<body class="@guest mmhc-auth-guest @endguest @if(auth()->check()) mmhc-crm-auth @endif @if(auth()->check() && request()->is('academics*')) mmhc-academics @endif @if(auth()->check() && trim($__env->yieldContent('page-title', '')) !== '') mmhc-has-page-title @endif @if(!empty($mmhcMinimalShell)) mmhc-minimal-shell @endif">
     @if(auth()->check())
         @include('auth::components.navbar')
+        @if(empty($mmhcMinimalShell))
         <div class="offcanvas offcanvas-start sidebar d-lg-none" tabindex="-1" id="mmhcAppSidebar" aria-labelledby="mmhcAppSidebarLabel" style="--bs-offcanvas-width: min(20rem, 92vw);">
             <div class="offcanvas-header border-bottom border-secondary border-opacity-25">
                 <div class="d-flex align-items-center gap-2">
-                    <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="" class="brand-logo brand-logo--sidebar" style="max-height: 2.25rem; width: auto;">
+                    <img src="{{ $siteLogoUrl ?? $mmhcLogoFallback }}" alt="" class="brand-logo brand-logo--sidebar" style="max-height: 2.25rem; width: auto;" onerror="this.onerror=null;this.src='{{ $mmhcLogoFallback }}';">
                     <span class="text-white-50 small mb-0" id="mmhcAppSidebarLabel">Menu</span>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -289,16 +294,17 @@
                 @include('auth::components.app-sidebar-nav')
             </div>
         </div>
+        @endif
     @endif
     <div class="container-fluid">
         <div class="row">
-            @if(auth()->check())
+            @if(auth()->check() && empty($mmhcMinimalShell))
                 <!-- Sidebar — desktop column; mobile uses offcanvas above -->
                 <nav class="col-md-3 col-lg-2 d-none d-lg-block sidebar collapse">
                     <div class="position-sticky pt-3">
                         <div class="text-center mb-4">
                             <div class="brand-logo-card">
-                                <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--sidebar">
+                                <img src="{{ $siteLogoUrl ?? $mmhcLogoFallback }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--sidebar" onerror="this.onerror=null;this.src='{{ $mmhcLogoFallback }}';">
                             </div>
                             <div class="brand-tagline">{{ $siteTagline ?? 'Miracle Health Care' }}</div>
                         </div>
@@ -503,6 +509,28 @@
                 </main>
 
                 @include('auth::components.bottom-nav')
+            @elseif(auth()->check())
+                <main class="col-12 px-0 px-md-3 main-content mmhc-minimal-shell-main">
+                    @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show mx-3 mt-3" role="alert">
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+                    @if(session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show mx-3 mt-3" role="alert">
+                            {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+                    @if(session('info'))
+                        <div class="alert alert-info alert-dismissible fade show mx-3 mt-3" role="alert">
+                            {{ session('info') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+                    @yield('content')
+                </main>
             @else
                 <!-- Auth pages -->
                 <main class="col-12">

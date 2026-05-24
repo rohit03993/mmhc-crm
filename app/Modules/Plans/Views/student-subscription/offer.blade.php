@@ -1,5 +1,8 @@
 @extends('auth::layout')
 
+@section('title', 'Student membership')
+@section('page-title', 'Student membership')
+
 @section('content')
 @php
     $monthly = (int) ($display['monthly_reference_inr'] ?? 100);

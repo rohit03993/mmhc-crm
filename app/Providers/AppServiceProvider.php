@@ -10,6 +10,7 @@ use App\Modules\Services\Models\ServiceRequest;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -32,13 +33,18 @@ class AppServiceProvider extends ServiceProvider
         Paginator::defaultView('pagination.modern');
         Paginator::defaultSimpleView('pagination.modern-simple');
 
+        $fallbackLogo = asset('images/med-logo.png');
         if (Schema::hasTable('site_settings')) {
-            $logoPath = SiteSetting::get('logo_path');
-            View::share('siteLogoUrl', ($logoPath && storage_asset($logoPath)) ? storage_asset($logoPath) : asset('images/med-logo.png'));
+            $logoPath = trim((string) (SiteSetting::get('logo_path') ?? ''), '/');
+            $logoUrl = $fallbackLogo;
+            if ($logoPath !== '' && Storage::disk('public')->exists($logoPath)) {
+                $logoUrl = storage_asset($logoPath) ?: $fallbackLogo;
+            }
+            View::share('siteLogoUrl', $logoUrl);
             View::share('siteCompanyName', SiteSetting::get('company_name') ?: 'MeD Miracle Health Care');
             View::share('siteTagline', SiteSetting::get('tagline') ?: 'Miracle Health Care');
         } else {
-            View::share('siteLogoUrl', asset('images/med-logo.png'));
+            View::share('siteLogoUrl', $fallbackLogo);
             View::share('siteCompanyName', 'MeD Miracle Health Care');
             View::share('siteTagline', 'Miracle Health Care');
         }

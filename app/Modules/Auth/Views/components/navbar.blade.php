@@ -1,12 +1,14 @@
 <nav class="navbar navbar-expand-lg navbar-light top-navbar">
     <div class="container-fluid">
         @auth
+            @unless(request()->routeIs('student-subscription.*', 'profile.verify-phone'))
             <button class="btn btn-link text-dark d-lg-none me-1 px-2 border-0 mmhc-sidebar-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#mmhcAppSidebar" aria-controls="mmhcAppSidebar" aria-label="Open menu" style="min-width:48px;min-height:48px;touch-action:manipulation;">
                 <i class="fas fa-bars fa-lg"></i>
             </button>
+            @endunless
         @endauth
         <a class="navbar-brand mmhc-navbar-brand" href="{{ auth()->check() ? route('dashboard') : url('/') }}">
-            <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--nav">
+            <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--nav" onerror="this.onerror=null;this.src='{{ asset('images/med-logo.png') }}';">
             <span class="visually-hidden">{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}</span>
         </a>
 

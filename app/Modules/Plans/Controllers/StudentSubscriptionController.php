@@ -75,11 +75,18 @@ class StudentSubscriptionController extends Controller
         } catch (\Throwable $e) {
             Log::error('Student subscription create failed', [
                 'user_id' => $user->id,
+                'plan_id' => $plan->id,
+                'payment_frequency' => $studentSubscriptionService->paymentFrequency(),
                 'error' => $e->getMessage(),
             ]);
 
+            $message = 'Could not start subscription. Please try again or contact support.';
+            if (config('app.debug')) {
+                $message .= ' ('.$e->getMessage().')';
+            }
+
             return redirect()->route('student-subscription.offer')
-                ->with('error', 'Could not start subscription. Please try again or contact support.');
+                ->with('error', $message);
         }
     }
 }
