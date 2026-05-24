@@ -1,5 +1,8 @@
 @extends('auth::layout')
 
+@section('title', 'Payment Confirmation - MMHC CRM')
+@section('page-title', 'Payment Confirmation')
+
 @section('content')
 <!-- Mobile Header -->
 <div class="app-mobile-header d-md-none">
@@ -182,8 +185,13 @@
                     </form>
                 </div>
                 @else
-                <div class="alert alert-info mb-0">
-                    <i class="fas fa-info-circle me-2"></i>Manual screenshot payment is disabled. Please use Razorpay online payment.
+                <div class="alert alert-warning mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    @if((bool) config('payments.razorpay.enabled'))
+                        Manual screenshot payment is disabled. Please use Razorpay online payment above.
+                    @else
+                        Online payment is not configured on this server yet. Please contact MMHC support to complete your ₹{{ number_format((float) $subscription->total_amount, 0) }} payment.
+                    @endif
                 </div>
                 @endif
             </div>

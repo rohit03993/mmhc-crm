@@ -1,5 +1,8 @@
 @extends('auth::layout')
 
+@section('title', 'Subscription Details - MMHC CRM')
+@section('page-title', 'Subscription Details')
+
 @section('content')
 <!-- Mobile Header -->
 <div class="app-mobile-header d-md-none">

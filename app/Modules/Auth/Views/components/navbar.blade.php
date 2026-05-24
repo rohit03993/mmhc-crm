@@ -5,7 +5,7 @@
                 <i class="fas fa-bars fa-lg"></i>
             </button>
         @endauth
-        <a class="navbar-brand mmhc-navbar-brand" href="{{ auth()->check() ? route('dashboard') : url('/') }}">
+        <a class="navbar-brand mmhc-navbar-brand" href="{{ auth()->check() ? (auth()->user()->hasAcademicRole() ? route('academics.dashboard') : route('dashboard')) : url('/') }}">
             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--nav" onerror="this.onerror=null;this.src='{{ asset('images/med-logo.png') }}';">
             <span class="visually-hidden">{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}</span>
         </a>
@@ -66,24 +66,21 @@
         @endguest
 
         <div class="collapse navbar-collapse d-none d-lg-flex" id="navbarNav">
+            {{-- Top links: staff/patient/admin only. Academics use the left sidebar (same pattern on every academics page). --}}
+            @if(auth()->check() && !auth()->user()->hasAcademicRole())
             <ul class="navbar-nav me-auto">
-                @auth
-                    @unless(request()->routeIs('student-subscription.*'))
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('dashboard') }}">
+                        <a class="nav-link {{ request()->routeIs('dashboard', 'staff.dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                             <i class="fas fa-home me-1"></i>
                             Dashboard
                         </a>
                     </li>
-                    @endunless
-                    @if(!auth()->user()->hasAcademicRole())
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('community.index') }}">
-                                <i class="fas fa-users me-1"></i>
-                                Community
-                            </a>
-                        </li>
-                    @endif
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('community.*') ? 'active' : '' }}" href="{{ route('community.index') }}">
+                            <i class="fas fa-users me-1"></i>
+                            Community
+                        </a>
+                    </li>
 
                     @if(auth()->user()->isAdmin())
                         <li class="nav-item">
@@ -105,10 +102,10 @@
                             </a>
                         </li>
                     @endif
-                @endauth
             </ul>
+            @endif
 
-            <ul class="navbar-nav">
+            <ul class="navbar-nav ms-auto">
                 @auth
                     @if(!auth()->user()->hasAcademicRole())
                     <li class="nav-item dropdown me-2">
