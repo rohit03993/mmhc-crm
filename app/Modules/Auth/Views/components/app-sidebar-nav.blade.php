@@ -62,6 +62,18 @@
     @endif
     @if(auth()->user()->role === 'institution_admin')
     <li class="nav-item">
+        <a class="nav-link text-white {{ request()->routeIs('academics.enrollments.*') ? 'active' : '' }}" href="{{ route('academics.enrollments.index') }}">
+            <i class="fas fa-user-clock me-2"></i>
+            Pending enrollments
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-white {{ request()->routeIs('academics.students.*') ? 'active' : '' }}" href="{{ route('academics.students.index') }}">
+            <i class="fas fa-user-graduate me-2"></i>
+            Students
+        </a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link text-white {{ request()->routeIs('academics.batches.*') ? 'active' : '' }}" href="{{ route('academics.batches.index') }}">
             <i class="fas fa-layer-group me-2"></i>
             Batches
@@ -112,6 +124,12 @@
     @endif
     @if(auth()->user()->role === 'faculty')
     <li class="nav-item">
+        <a class="nav-link text-white {{ request()->routeIs('academics.mentorship.*') ? 'active' : '' }}" href="{{ route('academics.mentorship.index') }}">
+            <i class="fas fa-hands-helping me-2"></i>
+            Mentorship
+        </a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link text-white {{ request()->routeIs('academics.topics.*') ? 'active' : '' }}" href="{{ route('academics.topics.index') }}">
             <i class="fas fa-list-ul me-2"></i>
             Topics
@@ -143,6 +161,12 @@
     </li>
     @endif
     @if(auth()->user()->role === 'student')
+    <li class="nav-item">
+        <a class="nav-link text-white {{ request()->routeIs('academics.mentorship.*') ? 'active' : '' }}" href="{{ route('academics.mentorship.index') }}">
+            <i class="fas fa-hands-helping me-2"></i>
+            Mentorship
+        </a>
+    </li>
     <li class="nav-item">
         <a class="nav-link text-white {{ request()->routeIs('academics.my-assignments') || request()->routeIs('academics.submit.*') ? 'active' : '' }}" href="{{ route('academics.my-assignments') }}">
             <i class="fas fa-tasks me-2"></i>
@@ -229,6 +253,15 @@
             Dashboard
         </a>
     </li>
+
+    @if(in_array(auth()->user()->role, ['nurse', 'caregiver'], true))
+    <li class="nav-item">
+        <a class="nav-link text-white {{ request()->routeIs('academics.mentorship.*') ? 'active' : '' }}" href="{{ route('academics.mentorship.index') }}">
+            <i class="fas fa-hands-helping me-2"></i>
+            Mentorship
+        </a>
+    </li>
+    @endif
 
     <li class="nav-item">
         <a class="nav-link text-white {{ request()->routeIs('staff.assignments*') ? 'active' : '' }}" href="{{ route('staff.dashboard') }}#assignments">

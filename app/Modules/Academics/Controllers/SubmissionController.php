@@ -7,8 +7,11 @@ use App\Modules\Academics\Models\Assignment;
 use App\Modules\Academics\Models\Submission;
 use App\Modules\Academics\Services\ChecklistScoreService;
 use App\Modules\Academics\Services\ExamAccessService;
+use App\Modules\Academics\Models\SubmissionMentorShare;
+use App\Modules\Academics\Models\Mentorship;
+use App\Modules\Academics\Services\MentorVerificationService;
+use App\Modules\Academics\Services\MentorshipService;
 use App\Modules\Academics\Services\TopicCompletionService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class SubmissionController extends Controller
@@ -36,7 +39,7 @@ class SubmissionController extends Controller
         return view('academics::submissions.my-assignments', compact('assignments', 'examAccess'));
     }
 
-    public function create(Assignment $assignment, ExamAccessService $examAccess)
+    public function create(Assignment $assignment, ExamAccessService $examAccess, MentorshipService $mentorshipService)
     {
         $eligibleIds = $assignment->eligibleStudentIds();
         if (! in_array(auth()->id(), $eligibleIds)) {
@@ -49,10 +52,30 @@ class SubmissionController extends Controller
         ]);
         $existing = Submission::where('assignment_id', $assignment->id)->where('user_id', auth()->id())->first();
 
-        return view('academics::submissions.submit', compact('assignment', 'existing', 'examAccess'));
+        $activeMentors = collect();
+        $sharedMentorIds = [];
+        if (auth()->user()->role === 'student') {
+            $mentorIds = $mentorshipService->activeMentorIdsFor(auth()->user());
+            if ($mentorIds !== []) {
+                $activeMentors = \App\Models\Core\User::query()
+                    ->with('academicInstitution')
+                    ->whereIn('id', $mentorIds)
+                    ->orderBy('name')
+                    ->get();
+            }
+            if ($existing) {
+                $sharedMentorIds = SubmissionMentorShare::query()
+                    ->where('submission_id', $existing->id)
+                    ->pluck('mentor_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->all();
+            }
+        }
+
+        return view('academics::submissions.submit', compact('assignment', 'existing', 'examAccess', 'activeMentors', 'sharedMentorIds'));
     }
 
-    public function store(Request $request, Assignment $assignment, ChecklistScoreService $checklistScore)
+    public function store(Request $request, Assignment $assignment, ChecklistScoreService $checklistScore, MentorshipService $mentorshipService, MentorVerificationService $mentorVerification)
     {
         $eligibleIds = $assignment->eligibleStudentIds();
         if (! in_array(auth()->id(), $eligibleIds)) {
@@ -68,6 +91,10 @@ class SubmissionController extends Controller
         ];
         if ($needsChecklist) {
             $rules['checklist'] = ['nullable', 'array'];
+        }
+        if (auth()->user()->role === 'student') {
+            $rules['mentor_ids'] = ['nullable', 'array'];
+            $rules['mentor_ids.*'] = ['integer', 'exists:users,id'];
         }
         $request->validate($rules);
         $file = $request->file('file');
@@ -107,12 +134,36 @@ class SubmissionController extends Controller
         }
         if ($existing) {
             $existing->update($payload);
+            $submission = $existing;
         } else {
-            Submission::create(array_merge($payload, [
+            $submission = Submission::create(array_merge($payload, [
                 'assignment_id' => $assignment->id,
                 'user_id' => auth()->id(),
             ]));
         }
+
+        if (auth()->user()->role === 'student') {
+            $allowedMentorIds = $mentorshipService->activeMentorIdsFor(auth()->user());
+            $selected = array_values(array_intersect(
+                array_map('intval', (array) $request->input('mentor_ids', [])),
+                $allowedMentorIds
+            ));
+            SubmissionMentorShare::query()->where('submission_id', $submission->id)->delete();
+            foreach ($selected as $mentorId) {
+                $mentorshipId = Mentorship::query()
+                    ->where('mentee_id', auth()->id())
+                    ->where('mentor_id', $mentorId)
+                    ->where('status', Mentorship::STATUS_ACTIVE)
+                    ->value('id');
+                SubmissionMentorShare::create([
+                    'submission_id' => $submission->id,
+                    'mentor_id' => $mentorId,
+                    'mentorship_id' => $mentorshipId,
+                ]);
+            }
+            $mentorVerification->syncVerificationTimestamp($submission->fresh());
+        }
+
         TopicCompletionService::checkAndCompleteTopic($assignment->fresh());
 
         return redirect()->route('academics.my-assignments')->with('success', 'Submission saved successfully.');

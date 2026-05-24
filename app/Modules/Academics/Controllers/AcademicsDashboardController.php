@@ -10,6 +10,8 @@ use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Institution;
 use App\Modules\Academics\Models\Submission;
 use App\Modules\Academics\Services\AcademicScoreService;
+use App\Modules\Academics\Services\EnrollmentService;
+use App\Modules\Academics\Services\MentorshipService;
 use App\Modules\Profiles\Models\Document;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -60,14 +62,23 @@ class AcademicsDashboardController extends Controller
         $institutionStudentsCount = 0;
         $myStudentsCount = 0;
 
+        $spiBreakdown = null;
+        $meiBreakdown = null;
+        $fpiBreakdown = null;
+        $mei = 0;
+
         if ($user->role === 'student') {
             $myAssignmentsQuery = Assignment::whereHas('topic.subject.batch.students', fn ($q) => $q->where('users.id', $user->id));
             $myAssignmentsCount = $myAssignmentsQuery->count();
             $submittedIds = Submission::where('user_id', $user->id)->pluck('assignment_id')->toArray();
             $myPendingCount = $myAssignmentsQuery->whereNotIn('id', $submittedIds)->count();
-            $spi = AcademicScoreService::getSpi($user);
+            $spiBreakdown = AcademicScoreService::getSpiBreakdown($user);
+            $spi = $spiBreakdown['percent'];
         } elseif ($user->role === 'faculty') {
-            $fpi = AcademicScoreService::getFpi($user);
+            $fpiBreakdown = AcademicScoreService::getFpiBreakdown($user);
+            $fpi = $fpiBreakdown['percent'];
+            $meiBreakdown = $fpiBreakdown;
+            $mei = $fpiBreakdown['mentorship_percent'];
             $myStudentsCount = $this->facultyStudentsCount($user->id);
         } elseif ($user->role === 'institution_admin' && $user->academic_institution_id) {
             $institution = Institution::find($user->academic_institution_id);
@@ -91,6 +102,24 @@ class AcademicsDashboardController extends Controller
         }
 
         $insights = $this->dashboardInsights($user);
+        $enrollmentPendingCount = 0;
+        $mentorCount = 0;
+        $menteeCount = 0;
+
+        if ($user->role === 'institution_admin' && $user->academic_institution_id) {
+            $enrollmentPendingCount = app(EnrollmentService::class)->pendingCountForInstitution((int) $user->academic_institution_id);
+        } elseif (in_array($user->role, ['super_admin', 'admin'], true)) {
+            $enrollmentPendingCount = \App\Modules\Academics\Models\EnrollmentApplication::query()
+                ->where('status', 'pending')
+                ->count();
+        }
+
+        if ($user->isMenteeEligible()) {
+            $mentorCount = app(MentorshipService::class)->activeMentorCountFor($user);
+        }
+        if ($user->role === 'faculty') {
+            $menteeCount = app(MentorshipService::class)->activeMenteeCountFor($user);
+        }
 
         return view('academics::dashboard', [
             'user' => $user,
@@ -109,6 +138,13 @@ class AcademicsDashboardController extends Controller
             'institutionStudentsCount' => $institutionStudentsCount,
             'myStudentsCount' => $myStudentsCount,
             'insights' => $insights,
+            'enrollmentPendingCount' => $enrollmentPendingCount,
+            'mentorCount' => $mentorCount,
+            'menteeCount' => $menteeCount,
+            'spiBreakdown' => $spiBreakdown,
+            'meiBreakdown' => $meiBreakdown,
+            'fpiBreakdown' => $user->role === 'faculty' ? ($fpiBreakdown ?? null) : null,
+            'mei' => $mei,
         ]);
     }
 

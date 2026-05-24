@@ -69,6 +69,25 @@
         </div>
     @endif
 
+    @if($person->role === 'faculty' && isset($meiBreakdown))
+        <div class="card academics-overview-card mb-4">
+            <div class="card-body p-4">
+                <h2 class="h6 fw-bold mb-3">Faculty score (FPI)</h2>
+                <p class="display-6 mb-2">{{ $meiBreakdown['percent'] }}<span class="fs-6 text-muted">%</span></p>
+                <ul class="small text-muted mb-0">
+                    <li>Teaching (topics): {{ $meiBreakdown['teaching_percent'] }}%</li>
+                    <li>Mentorship: {{ $meiBreakdown['mentorship_percent'] }}%</li>
+                    <li>{{ $meiBreakdown['active_mentees'] }} students chose this faculty as mentor (+10 pts each)</li>
+                    <li>{{ $meiBreakdown['reviews_given'] }} assignment ratings given (+8 pts each)</li>
+                    @if($meiBreakdown['reviews_given'] > 0)
+                        <li>Average rating given: {{ $meiBreakdown['avg_rating'] }}/5</li>
+                    @endif
+                </ul>
+                <a href="{{ route('academics.mentorship.index') }}" class="btn btn-sm btn-outline-info mt-3">Open mentorship</a>
+            </div>
+        </div>
+    @endif
+
     <div class="d-flex flex-wrap gap-2">
         <a href="{{ route('academics.dashboard') }}" class="btn btn-outline-secondary btn-sm rounded-pill">Dashboard</a>
         @if(in_array(auth()->user()->role, ['super_admin', 'admin'], true))

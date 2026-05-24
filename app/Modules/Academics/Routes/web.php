@@ -10,6 +10,9 @@ use App\Modules\Academics\Controllers\FacultyController;
 use App\Modules\Academics\Controllers\InstitutionController;
 use App\Modules\Academics\Controllers\ReportController;
 use App\Modules\Academics\Controllers\SubjectController;
+use App\Modules\Academics\Controllers\EnrollmentController;
+use App\Modules\Academics\Controllers\MentorshipController;
+use App\Modules\Academics\Controllers\StudentController;
 use App\Modules\Academics\Controllers\SubmissionController;
 use App\Modules\Academics\Controllers\TopicController;
 use App\Modules\Academics\Controllers\TopicResourceController;
@@ -41,6 +44,16 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::post('/exams/{exam}/questions', [ExamController::class, 'storeQuestion'])->name('exams.questions.store')->whereNumber('exam');
         Route::post('/exams/{exam}/questions/{question}/reorder', [ExamController::class, 'reorderQuestion'])->name('exams.questions.reorder')->whereNumber(['exam', 'question']);
         Route::delete('/exams/{exam}/questions/{question}', [ExamController::class, 'destroyQuestion'])->name('exams.questions.destroy')->whereNumber(['exam', 'question']);
+    });
+
+    // Student: My Assignments & Submit
+    Route::middleware(['role:student', 'student.enrollment.approved'])->group(function () {
+        Route::get('/my-learning-resources', [TopicResourceController::class, 'studentTopicsIndex'])->name('learning-resources');
+        Route::get('/my-attendance', [AttendanceController::class, 'myAttendance'])->name('attendance.my');
+        Route::get('/my-assignments', [SubmissionController::class, 'index'])->name('my-assignments');
+        Route::get('/assignments/{assignment}/submit', [SubmissionController::class, 'create'])->name('submit.form');
+        Route::post('/assignments/{assignment}/submit', [SubmissionController::class, 'store'])->name('submit.store');
+        Route::get('/topic-library/{topic}', [TopicResourceController::class, 'studentLibrary'])->name('topics.student-library')->whereNumber('topic');
     });
 
     Route::middleware(['role:student'])->group(function () {
@@ -82,6 +95,30 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::get('/', [FacultyController::class, 'index'])->name('index');
         Route::get('/create', [FacultyController::class, 'create'])->name('create');
         Route::post('/', [FacultyController::class, 'store'])->name('store');
+    });
+
+    // Student management + enrollment approvals
+    Route::middleware(['role:super_admin,admin,institution_admin'])->prefix('students')->name('students.')->group(function () {
+        Route::get('/', [StudentController::class, 'index'])->name('index');
+        Route::get('/create', [StudentController::class, 'create'])->name('create');
+        Route::post('/', [StudentController::class, 'store'])->name('store');
+    });
+
+    Route::middleware(['role:super_admin,admin,institution_admin'])->prefix('enrollments')->name('enrollments.')->group(function () {
+        Route::get('/', [EnrollmentController::class, 'index'])->name('index');
+        Route::get('/{application}', [EnrollmentController::class, 'show'])->name('show')->whereNumber('application');
+        Route::post('/{application}/approve', [EnrollmentController::class, 'approve'])->name('approve')->whereNumber('application');
+        Route::post('/{application}/reject', [EnrollmentController::class, 'reject'])->name('reject')->whereNumber('application');
+    });
+
+    // Cross-institute mentorship
+    Route::middleware(['role:student,nurse,caregiver,faculty'])->prefix('mentorship')->name('mentorship.')->group(function () {
+        Route::get('/', [MentorshipController::class, 'index'])->name('index');
+        Route::get('/browse', [MentorshipController::class, 'browse'])->name('browse');
+        Route::post('/request', [MentorshipController::class, 'request'])->name('request');
+        Route::post('/{mentorship}/respond', [MentorshipController::class, 'respond'])->name('respond')->whereNumber('mentorship');
+        Route::get('/reviews/{share}', [MentorshipController::class, 'reviewForm'])->name('reviews.show')->whereNumber('share');
+        Route::post('/reviews/{share}', [MentorshipController::class, 'reviewStore'])->name('reviews.store')->whereNumber('share');
     });
 
     // Subject management
@@ -142,16 +179,6 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::get('/', [AttendanceController::class, 'index'])->name('index');
         Route::get('/mark', [AttendanceController::class, 'mark'])->name('mark');
         Route::post('/', [AttendanceController::class, 'store'])->name('store');
-    });
-
-    // Student: My Assignments & Submit
-    Route::middleware(['role:student'])->group(function () {
-        Route::get('/my-learning-resources', [TopicResourceController::class, 'studentTopicsIndex'])->name('learning-resources');
-        Route::get('/my-attendance', [AttendanceController::class, 'myAttendance'])->name('attendance.my');
-        Route::get('/my-assignments', [SubmissionController::class, 'index'])->name('my-assignments');
-        Route::get('/assignments/{assignment}/submit', [SubmissionController::class, 'create'])->name('submit.form');
-        Route::post('/assignments/{assignment}/submit', [SubmissionController::class, 'store'])->name('submit.store');
-        Route::get('/topic-library/{topic}', [TopicResourceController::class, 'studentLibrary'])->name('topics.student-library')->whereNumber('topic');
     });
 
     // Submission download (student own / faculty or admin for any)

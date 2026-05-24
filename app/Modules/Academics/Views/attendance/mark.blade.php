@@ -20,7 +20,7 @@
                     <input type="hidden" name="batch_id" value="{{ $batch->id }}">
                     <input type="hidden" name="date" value="{{ $date }}">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle mb-0 mmhc-no-mobile-cards">
                             <thead class="table-light">
                                 <tr>
                                     <th>Student</th>

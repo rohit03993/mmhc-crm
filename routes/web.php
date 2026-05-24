@@ -125,6 +125,8 @@ Route::middleware(['auth'])->group(function () {
     // Profile Routes
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
+        Route::get('/verify-phone', [ProfileController::class, 'verifyPhone'])->name('verify-phone');
+        Route::post('/verify-phone/send', [ProfileController::class, 'sendVerifyPhoneOtp'])->name('verify-phone.send');
         Route::get('/edit', [ProfileController::class, 'edit'])->name('edit');
         Route::put('/update', [ProfileController::class, 'update'])->name('update');
         Route::post('/verify-contact-otp', [ProfileController::class, 'verifyContactUpdateOtp'])->name('verify-contact-otp');

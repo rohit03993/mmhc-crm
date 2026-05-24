@@ -15,6 +15,7 @@ class Submission extends Model
         'file_path',
         'original_name',
         'submitted_at',
+        'mentor_verified_at',
         'notes',
         'checklist_answers',
         'checklist_points_earned',
@@ -23,6 +24,7 @@ class Submission extends Model
 
     protected $casts = [
         'submitted_at' => 'datetime',
+        'mentor_verified_at' => 'datetime',
         'checklist_answers' => 'array',
         'checklist_points_earned' => 'decimal:2',
         'checklist_points_possible' => 'decimal:2',
@@ -36,6 +38,16 @@ class Submission extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function mentorShares()
+    {
+        return $this->hasMany(SubmissionMentorShare::class, 'submission_id');
+    }
+
+    public function mentorReviews()
+    {
+        return $this->hasMany(SubmissionMentorReview::class, 'submission_id');
     }
 
     public function isLate(): bool

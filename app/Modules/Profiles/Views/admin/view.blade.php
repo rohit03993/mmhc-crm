@@ -269,10 +269,30 @@
                         <p class="apv-v mb-0">{{ $user->phone ?? '—' }}
                             @if($user->hasVerifiedPhone())
                                 <span class="badge bg-success ms-1">Mobile verified</span>
+                                @if($user->phone_verified_source === 'admin')
+                                    <span class="badge bg-primary ms-1">By admin{{ $user->phoneVerifiedByAdmin ? ': '.$user->phoneVerifiedByAdmin->name : '' }}</span>
+                                @else
+                                    <span class="text-muted small d-block mt-1">{{ $user->phoneVerificationSourceLabel() }} · {{ $user->phone_verified_at?->format('M j, Y') }}</span>
+                                @endif
                             @else
                                 <span class="badge bg-warning text-dark ms-1">Mobile not verified</span>
                             @endif
                         </p>
+                        @if($user->phone)
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                @if(! $user->hasVerifiedPhone())
+                                    <form method="POST" action="{{ route('admin.users.verify-phone', $user) }}" onsubmit="return confirm('Manually verify mobile? Unlocks app access and staff rewards/payouts.');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check-double me-1"></i>Verify mobile (admin)</button>
+                                    </form>
+                                @else
+                                    <form method="POST" action="{{ route('admin.users.revoke-phone-verification', $user) }}" onsubmit="return confirm('Revoke mobile verification?');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-undo me-1"></i>Revoke verification</button>
+                                    </form>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                     <div class="col-md-6">
                         <span class="apv-k">Date of birth</span>

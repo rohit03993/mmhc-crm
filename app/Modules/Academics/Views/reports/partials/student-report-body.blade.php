@@ -82,11 +82,38 @@
     <div class="col-6 col-md-3">
         <div class="card h-100 shadow-sm border-primary border-opacity-25 rounded-3">
             <div class="card-body text-center py-3">
-                <p class="small text-muted mb-1 text-uppercase fw-semibold" style="letter-spacing: .04em;">SPI (Progress)</p>
+                <p class="small text-muted mb-1 text-uppercase fw-semibold" style="letter-spacing: .04em;">SPI (Profile credit)</p>
                 <p class="h4 mb-0 text-primary fw-bold">{{ $spi }}%</p>
+                <p class="small text-muted mb-0 mt-1">Submitted + all shared mentors rated</p>
             </div>
         </div>
     </div>
+    @if(isset($spiBreakdown))
+    <div class="col-6 col-md-3">
+        <div class="card h-100 shadow-sm rounded-3">
+            <div class="card-body text-center py-3">
+                <p class="small text-muted mb-1">Fully credited</p>
+                <p class="h4 mb-0 fw-bold">{{ $spiBreakdown['verified'] }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card h-100 shadow-sm rounded-3">
+            <div class="card-body text-center py-3">
+                <p class="small text-muted mb-1">Awaiting mentor</p>
+                <p class="h4 mb-0 fw-bold text-warning">{{ $spiBreakdown['submitted_pending_mentor'] }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card h-100 shadow-sm rounded-3">
+            <div class="card-body text-center py-3">
+                <p class="small text-muted mb-1">Active mentors</p>
+                <p class="h4 mb-0 fw-bold">{{ $activeMentorCount ?? 0 }}</p>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 
 @isset($quizAttemptsPaginator)
@@ -236,6 +263,7 @@
                             <th>Subject / Topic</th>
                             <th>Due date</th>
                             <th>Status</th>
+                            <th>Mentor</th>
                             <th class="pe-3">Submitted at</th>
                         </tr>
                     </thead>
@@ -260,6 +288,18 @@
                                     <span class="badge rounded-pill bg-success">Submitted</span>
                                 @else
                                     <span class="badge rounded-pill bg-secondary">Pending</span>
+                                @endif
+                            </td>
+                            <td>
+                                @php $mStatus = $mentorStatusByAssignment[$a->id] ?? 'not_submitted'; @endphp
+                                @if($mStatus === 'verified')
+                                    <span class="badge rounded-pill bg-success">Mentor OK</span>
+                                @elseif($mStatus === 'pending')
+                                    <span class="badge rounded-pill bg-warning text-dark">Mentor pending</span>
+                                @elseif($mStatus === 'none' && $sub)
+                                    <span class="text-muted small">—</span>
+                                @else
+                                    <span class="text-muted small">—</span>
                                 @endif
                             </td>
                             <td class="pe-3 text-muted small">{{ $sub && $sub->submitted_at ? $sub->submitted_at->format('M d, Y H:i') : '—' }}</td>

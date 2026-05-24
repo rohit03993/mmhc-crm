@@ -273,7 +273,7 @@
         }
     </style>
 </head>
-<body class="@if(auth()->check()) mmhc-crm-auth @endif">
+<body class="@if(auth()->check()) mmhc-crm-auth @endif @if(auth()->check() && request()->is('academics*')) mmhc-academics @endif @if(auth()->check() && trim($__env->yieldContent('page-title', '')) !== '') mmhc-has-page-title @endif">
     @if(auth()->check())
         @include('auth::components.navbar')
         <div class="offcanvas offcanvas-start sidebar d-lg-none" tabindex="-1" id="mmhcAppSidebar" aria-labelledby="mmhcAppSidebarLabel" style="--bs-offcanvas-width: min(20rem, 92vw);">
@@ -383,14 +383,14 @@
                                 <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-warning fw-semibold text-dark">Verify mobile</a>
                             </div>
                         </div>
-                    @elseif(!empty($staffNeedsMobileVerification))
+                    @elseif(!empty($needsPhoneVerification) && ! request()->routeIs('profile.verify-phone'))
                         <div class="alert alert-warning app-alert" role="alert">
                             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap w-100">
                                 <div>
-                                    <div class="fw-semibold mb-1"><i class="fas fa-mobile-alt me-2"></i>Account mobile not verified</div>
-                                    <div class="small mb-0">Verify your mobile with SMS OTP in Profile to earn and receive patient rewards, referrals, and payouts.</div>
+                                    <div class="fw-semibold mb-1"><i class="fas fa-mobile-alt me-2"></i>Mobile verification required</div>
+                                    <div class="small mb-0">Verify your account mobile with SMS OTP to use all MMHC app features (dashboard, academics, bookings, community, and more).</div>
                                 </div>
-                                <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-outline-dark">Verify now</a>
+                                <a href="{{ route('profile.verify-phone') }}" class="btn btn-sm btn-outline-dark">Verify now</a>
                             </div>
                         </div>
                     @endif

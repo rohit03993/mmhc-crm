@@ -4,7 +4,8 @@ namespace App\Modules\Academics\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
-use App\Modules\Academics\Models\Subject;
+use App\Modules\Academics\Services\AcademicScoreService;
+use App\Modules\Academics\Services\MentorshipService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -40,6 +41,8 @@ class AcademicsPeopleController extends Controller
             'person' => $user,
             'batches' => $batches,
             'subjectsTeaching' => $subjectsTeaching,
+            'meiBreakdown' => $user->role === 'faculty' ? AcademicScoreService::getFpiBreakdown($user) : null,
+            'mentorCount' => $user->isMenteeEligible() ? app(MentorshipService::class)->activeMentorCountFor($user) : 0,
         ]);
     }
 

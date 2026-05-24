@@ -116,6 +116,21 @@
 
 @section('content')
 <div class="container-fluid py-3 py-md-4">
+    @if(auth()->user()->role === 'student' && auth()->user()->academic_enrollment_status === 'pending')
+        <div class="alert alert-warning">
+            <strong>Awaiting institute approval.</strong>
+            {{ auth()->user()->academicInstitution->name ?? 'Your institute' }} must approve your enrollment before you can access assignments and learning resources.
+            You can still request cross-institute mentors from the sidebar.
+        </div>
+    @elseif(auth()->user()->role === 'student' && auth()->user()->academic_enrollment_status === 'rejected')
+        <div class="alert alert-danger">Your enrollment request was not approved. Contact your institute admin.</div>
+    @endif
+    @if(($enrollmentPendingCount ?? 0) > 0 && in_array(auth()->user()->role, ['institution_admin', 'super_admin', 'admin']))
+        <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <span><strong>{{ $enrollmentPendingCount }}</strong> student enrollment request(s) awaiting review.</span>
+            <a href="{{ route('academics.enrollments.index') }}" class="btn btn-sm btn-primary">Review now</a>
+        </div>
+    @endif
     <div class="academics-dash-hero">
         <div class="academics-dash-hero__inner">
             <p class="academics-dash-hero__kicker mb-0">Academic workspace</p>
@@ -127,6 +142,8 @@
                 <a href="{{ route('academics.batches.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-layer-group me-1"></i>Batches</a>
                 <a href="{{ route('academics.subjects.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-book me-1"></i>Subjects</a>
                 <a href="{{ route('academics.faculty.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-chalkboard-teacher me-1"></i>Faculty</a>
+                <a href="{{ route('academics.students.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-graduate me-1"></i>Students</a>
+                <a href="{{ route('academics.enrollments.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-clock me-1"></i>Enrollments</a>
                 <a href="{{ route('academics.topics.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-list-ul me-1"></i>Topics</a>
                 <a href="{{ route('academics.assignments.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-tasks me-1"></i>Assignments</a>
                 <a href="{{ route('academics.exams.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-question-circle me-1"></i>Quizzes &amp; exams</a>
@@ -153,6 +170,8 @@
                 @if(auth()->user()->academic_institution_id)
                     <a href="{{ route('academics.institutions.show', auth()->user()->academic_institution_id) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-university me-1"></i>College overview</a>
                 @endif
+                <a href="{{ route('academics.enrollments.index') }}" class="btn btn-warning btn-sm"><i class="fas fa-user-clock me-1"></i>Pending enrollments @if(($enrollmentPendingCount ?? 0) > 0)({{ $enrollmentPendingCount }})@endif</a>
+                <a href="{{ route('academics.students.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-graduate me-1"></i>Students</a>
                 <a href="{{ route('academics.batches.index') }}" class="btn btn-primary btn-sm"><i class="fas fa-layer-group me-1"></i>Batches</a>
                 <a href="{{ route('academics.exams.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-question-circle me-1"></i>Exams</a>
                 <a href="{{ route('academics.subjects.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-book me-1"></i>Subjects</a>
@@ -199,7 +218,21 @@
                         SPI (Student Progress)
                     </h5>
                     <p class="card-text display-6 mb-1">{{ $spi }}<span class="fs-6 text-muted">%</span></p>
-                    <small class="text-muted">Assignments submitted</small>
+                    <small class="text-muted d-block">Counts toward profile when submitted + all shared mentors have rated.</small>
+                    @if(isset($spiBreakdown) && $spiBreakdown['total'] > 0)
+                        <ul class="small text-muted mb-0 mt-2 ps-3">
+                            <li>{{ $spiBreakdown['verified'] }} fully credited</li>
+                            @if($spiBreakdown['submitted_pending_mentor'] > 0)
+                                <li class="text-warning">{{ $spiBreakdown['submitted_pending_mentor'] }} awaiting mentor rating</li>
+                            @endif
+                            @if($spiBreakdown['not_submitted'] > 0)
+                                <li>{{ $spiBreakdown['not_submitted'] }} not submitted</li>
+                            @endif
+                        </ul>
+                    @endif
+                    @if(($mentorCount ?? 0) > 0)
+                        <p class="small mb-0 mt-2"><a href="{{ route('academics.mentorship.index') }}">{{ $mentorCount }} active mentor(s)</a></p>
+                    @endif
                 </div>
             </div>
         </div>
@@ -229,10 +262,39 @@
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title d-flex align-items-center mb-2">
                         <span class="rounded-circle bg-primary bg-opacity-10 p-2 me-2"><i class="fas fa-chart-line text-primary"></i></span>
-                        <span class="small">FPI</span>
+                        <span class="small">FPI (Faculty Score)</span>
                     </h5>
                     <p class="card-text display-6 mb-1">{{ $fpi }}<span class="fs-6 text-muted">%</span></p>
-                    <small class="text-muted">Topic completion</small>
+                    <small class="text-muted d-block">Teaching + mentorship on profile</small>
+                    @if(isset($fpiBreakdown))
+                        <ul class="small text-muted mb-0 mt-2 ps-3">
+                            <li>Teaching: {{ $fpiBreakdown['teaching_percent'] }}% · Mentorship: {{ $fpiBreakdown['mentorship_percent'] }}%</li>
+                            <li>{{ $fpiBreakdown['active_mentees'] }} students chose you as mentor</li>
+                            <li>{{ $fpiBreakdown['reviews_given'] }} ratings given (+8 pts each)</li>
+                            @if($fpiBreakdown['pending_reviews'] > 0)
+                                <li class="text-warning">{{ $fpiBreakdown['pending_reviews'] }} awaiting your rating</li>
+                            @endif
+                        </ul>
+                    @endif
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card h-100 border-info shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title d-flex align-items-center mb-2">
+                        <span class="rounded-circle bg-info bg-opacity-10 p-2 me-2"><i class="fas fa-hands-helping text-info"></i></span>
+                        <span class="small">Mentorship impact</span>
+                    </h5>
+                    <p class="card-text display-6 mb-1">{{ $fpiBreakdown['mentorship_percent'] ?? 0 }}<span class="fs-6 text-muted">%</span></p>
+                    <small class="text-muted">+10 pts per mentee · +8 pts per rating</small>
+                    @if(isset($fpiBreakdown))
+                        <ul class="small text-muted mb-0 mt-2 ps-3">
+                            <li>Mentee pts: {{ $fpiBreakdown['mentee_score'] }}/50</li>
+                            <li>Rating pts: {{ $fpiBreakdown['review_score'] }}/40</li>
+                        </ul>
+                    @endif
+                    <a href="{{ route('academics.mentorship.index') }}" class="btn btn-outline-info btn-sm mt-auto align-self-start">Rate submissions</a>
                 </div>
             </div>
         </div>
@@ -244,6 +306,7 @@
                         My Students
                     </h5>
                     <p class="card-text display-6 mb-2">{{ $myStudentsCount }}</p>
+                    <p class="small text-muted mb-2">{{ $fpiBreakdown['active_mentees'] ?? 0 }} cross-institute mentees</p>
                     <a href="{{ route('academics.reports.show', ['type' => 'student_submission']) }}" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Student report</a>
                 </div>
             </div>

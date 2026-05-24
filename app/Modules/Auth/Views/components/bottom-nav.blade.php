@@ -5,6 +5,43 @@
             <i class="fas fa-graduation-cap"></i>
             <span>Academics</span>
         </a>
+        @if(auth()->user()->role === 'student')
+        <a href="{{ route('academics.my-assignments') }}" class="app-nav-item {{ request()->routeIs('academics.my-assignments') || request()->routeIs('academics.submit.*') ? 'active' : '' }}">
+            <i class="fas fa-tasks"></i>
+            <span>Tasks</span>
+        </a>
+        <a href="{{ route('academics.mentorship.index') }}" class="app-nav-item {{ request()->routeIs('academics.mentorship.*') ? 'active' : '' }}">
+            <i class="fas fa-hands-helping"></i>
+            <span>Mentors</span>
+        </a>
+        @elseif(auth()->user()->role === 'faculty')
+        <a href="{{ route('academics.assignments.index') }}" class="app-nav-item {{ request()->routeIs('academics.assignments.*') ? 'active' : '' }}">
+            <i class="fas fa-tasks"></i>
+            <span>Tasks</span>
+        </a>
+        <a href="{{ route('academics.mentorship.index') }}" class="app-nav-item {{ request()->routeIs('academics.mentorship.*') ? 'active' : '' }}">
+            <i class="fas fa-hands-helping"></i>
+            <span>Mentors</span>
+        </a>
+        @elseif(auth()->user()->role === 'institution_admin')
+        <a href="{{ route('academics.students.index') }}" class="app-nav-item {{ request()->routeIs('academics.students.*') ? 'active' : '' }}">
+            <i class="fas fa-user-graduate"></i>
+            <span>Students</span>
+        </a>
+        <a href="{{ route('academics.enrollments.index') }}" class="app-nav-item {{ request()->routeIs('academics.enrollments.*') ? 'active' : '' }}">
+            <i class="fas fa-user-clock"></i>
+            <span>Pending</span>
+        </a>
+        @else
+        <a href="{{ route('academics.institutions.index') }}" class="app-nav-item {{ request()->routeIs('academics.institutions.*') ? 'active' : '' }}">
+            <i class="fas fa-university"></i>
+            <span>Institutes</span>
+        </a>
+        <a href="{{ route('academics.batches.index') }}" class="app-nav-item {{ request()->routeIs('academics.batches.*') ? 'active' : '' }}">
+            <i class="fas fa-layer-group"></i>
+            <span>Batches</span>
+        </a>
+        @endif
         <a href="{{ route('community.index') }}" class="app-nav-item {{ request()->routeIs('community.*') ? 'active' : '' }}">
             <i class="fas fa-users"></i>
             <span>Community</span>
@@ -40,6 +77,12 @@
             <i class="fas fa-home"></i>
             <span>Home</span>
         </a>
+        @if(in_array(auth()->user()->role, ['nurse', 'caregiver'], true))
+        <a href="{{ route('academics.mentorship.index') }}" class="app-nav-item {{ request()->routeIs('academics.mentorship.*') ? 'active' : '' }}">
+            <i class="fas fa-hands-helping"></i>
+            <span>Mentors</span>
+        </a>
+        @endif
         <a href="{{ route('staff.dashboard') }}#assignments" class="app-nav-item">
             <i class="fas fa-tasks"></i>
             <span>Jobs</span>

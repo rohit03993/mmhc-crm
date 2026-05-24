@@ -11,6 +11,7 @@ use App\Modules\Academics\Models\Institution;
 use App\Modules\Academics\Models\Subject;
 use App\Modules\Academics\Models\Submission;
 use App\Modules\Academics\Models\Topic;
+use App\Modules\Academics\Services\AcademicScoreService;
 use App\Modules\Academics\Services\StudentAcademicReportDataService;
 use App\Modules\Academics\Support\AcademicsTaxonomy;
 use Illuminate\Http\Request;
@@ -298,28 +299,25 @@ class ReportController extends Controller
                 }
                 $facultyIds = $facultyIdsQuery->pluck('user_id');
                 $faculty = User::whereIn('id', $facultyIds)->where('role', 'faculty')->orderBy('name')->get();
-                $rows = $faculty->map(function ($f) use ($institutionId, $batchId, $facultyBatchIds, $tax) {
-                    $topicQuery = Topic::whereHas('subject.faculty', fn ($q) => $q->where('user_id', $f->id));
-                    if ($facultyBatchIds !== null) {
-                        $topicQuery->whereHas('subject', fn ($q) => $q->whereIn('batch_id', $facultyBatchIds));
-                    }
-                    if ($institutionId) {
-                        $topicQuery->whereHas('subject.batch', fn ($q) => $q->where('institution_id', $institutionId));
-                    }
-                    if ($batchId) {
-                        $topicQuery->whereHas('subject', fn ($q) => $q->where('batch_id', $batchId));
-                    }
-                    if ($tax['teaching_method_key']) {
-                        $topicQuery->whereJsonContains('teaching_method_keys', $tax['teaching_method_key']);
-                    }
-                    $total = $topicQuery->count();
-                    $completed = (clone $topicQuery)->where('is_completed', true)->count();
-                    $fpi = $total > 0 ? (int) round(($completed / $total) * 100) : 0;
+                $rows = $faculty->map(function ($f) {
+                    $breakdown = AcademicScoreService::getFpiBreakdown($f);
 
-                    return [$f->name, $f->email, $total, $completed, $fpi];
+                    return [
+                        $f->name,
+                        $f->email,
+                        $breakdown['active_mentees'],
+                        $breakdown['reviews_given'],
+                        $breakdown['teaching_percent'],
+                        $breakdown['mentorship_percent'],
+                        $breakdown['percent'],
+                    ];
                 });
 
-                return ['title' => 'Faculty Performance Report', 'rows' => $rows, 'headers' => ['Faculty', 'Email', 'Topics total', 'Topics completed', 'FPI %']];
+                return [
+                    'title' => 'Faculty Performance Report',
+                    'rows' => $rows,
+                    'headers' => ['Faculty', 'Email', 'Mentees', 'Ratings given', 'Teaching %', 'Mentorship %', 'FPI %'],
+                ];
 
             case 'topic_completion':
                 $topicQuery = Topic::with('subject.batch.institution');
@@ -404,26 +402,10 @@ class ReportController extends Controller
                         $assignFilter->where('is_summative', true);
                     }
                     $eligibleIds = $assignFilter->pluck('id')->toArray();
-                    $assignmentsForStudent = Assignment::with('exams')->whereIn('id', $eligibleIds)->get();
-                    $total = $assignmentsForStudent->count();
-                    $submitted = 0;
-                    foreach ($assignmentsForStudent as $a) {
-                        if (Submission::where('user_id', $s->id)->where('assignment_id', $a->id)->exists()) {
-                            $submitted++;
-
-                            continue;
-                        }
-                        if ($a->assignment_type === Assignment::TYPE_QUIZ && $a->exams->isNotEmpty()) {
-                            $eids = $a->exams->pluck('id');
-                            if (AcademicExamAttempt::whereIn('exam_id', $eids)
-                                ->where('user_id', $s->id)
-                                ->where('status', AcademicExamAttempt::STATUS_SUBMITTED)
-                                ->exists()) {
-                                $submitted++;
-                            }
-                        }
-                    }
-                    $spi = $total > 0 ? (int) round(($submitted / $total) * 100) : 0;
+                    $counts = AcademicScoreService::countVerifiedAssignments($s, $eligibleIds);
+                    $total = $counts['total'];
+                    $submitted = $counts['verified'];
+                    $spi = $counts['percent'];
                     $rows[] = [$s->name, $s->email, $institutionNames, $batchNames, $total, $submitted, $spi, $s->id];
                 }
                 $result = ['title' => 'Student Submission Report', 'rows' => collect($rows), 'headers' => ['Student', 'Email', 'College', 'Batch(es)', 'Assignments total', 'Submitted', 'SPI %', 'Full report']];

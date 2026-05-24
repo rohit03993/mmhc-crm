@@ -5,8 +5,6 @@
 
 @section('content')
 <div class="container-fluid py-3">
-    <h2 class="h5 mb-4">Assignments for your batch</h2>
-
     <div class="card">
         <div class="card-body p-0">
             @if($assignments->isEmpty())
@@ -34,9 +32,6 @@
                                 <td>{{ $a->topic->name ?? '—' }} · {{ $a->topic->subject->name ?? '—' }}</td>
                                 <td>{{ $a->due_date ? $a->due_date->format('M d, Y') : '—' }}</td>
                                 <td>
-                                    <a href="{{ route('academics.topics.student-library', $a->topic_id) }}" class="btn btn-sm btn-outline-secondary">Topic library</a>
-                                </td>
-                                <td>
                                     @if($sub)
                                         <span class="badge bg-success">Submitted</span>
                                         @if($sub->isLate())
@@ -48,6 +43,9 @@
                                     @else
                                         <span class="badge bg-secondary">Pending</span>
                                     @endif
+                                </td>
+                                <td>
+                                    <a href="{{ route('academics.topics.student-library', $a->topic_id) }}" class="btn btn-sm btn-outline-secondary">Topic library</a>
                                 </td>
                                 <td class="text-end">
                                     @foreach($a->exams as $lex)

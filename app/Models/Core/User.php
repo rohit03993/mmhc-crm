@@ -21,6 +21,7 @@ class User extends Authenticatable
         'phone',
         'phone_verified_at',
         'phone_verified_source',
+        'phone_verified_by_admin_id',
         'login_via_phone_only',
         'pending_phone',
         'contact_update_channel',
@@ -50,6 +51,7 @@ class User extends Authenticatable
         'upi_id',
         'qr_code_path',
         'academic_institution_id',
+        'academic_enrollment_status',
     ];
 
     /**
@@ -200,10 +202,97 @@ class User extends Authenticatable
 
         return match ((string) $this->phone_verified_source) {
             'profile' => 'Profile contact OTP',
+            'login' => 'SMS login OTP',
             'referral' => 'Staff referral OTP (mobile)',
             'patient_reward' => 'Patient reward OTP (same mobile as account)',
+            'admin' => 'Verified manually by admin',
             default => 'Verified (legacy / unknown)',
         };
+    }
+
+    /**
+     * User-facing label for how mobile was verified (profile page).
+     */
+    public function phoneVerificationUserLabel(): ?string
+    {
+        if (! $this->phone_verified_at || ! $this->phone) {
+            return null;
+        }
+
+        $date = $this->phone_verified_at->format('M j, Y');
+
+        return match ((string) $this->phone_verified_source) {
+            'admin' => 'Verified by MMHC admin'
+                .($this->phoneVerifiedByAdmin ? ' ('.$this->phoneVerifiedByAdmin->name.')' : '')
+                .' on '.$date,
+            'profile' => 'Verified with SMS OTP on '.$date,
+            'login' => 'Verified via SMS login on '.$date,
+            'referral' => 'Verified via referral SMS on '.$date,
+            'patient_reward' => 'Verified via patient reward SMS on '.$date,
+            default => 'Mobile verified on '.$date,
+        };
+    }
+
+    public function phoneVerifiedByAdmin()
+    {
+        return $this->belongsTo(self::class, 'phone_verified_by_admin_id');
+    }
+
+    /**
+     * CRM admin confirmed this user's mobile (unlocks app, rewards, payouts).
+     */
+    public function applyPhoneVerifiedByAdmin(User $admin): void
+    {
+        $this->forceFill([
+            'phone' => $this->pending_phone ?: $this->phone,
+            'pending_phone' => null,
+            'pending_email' => null,
+            'contact_update_channel' => null,
+            'contact_update_otp_hash' => null,
+            'contact_update_otp_expires_at' => null,
+            'contact_update_otp_attempts' => 0,
+            'contact_update_otp_sent_to' => null,
+            'contact_update_otp_sent_at' => null,
+            'contact_update_verified_at' => null,
+            'phone_verified_at' => now(),
+            'phone_verified_source' => 'admin',
+            'phone_verified_by_admin_id' => $admin->id,
+        ])->save();
+    }
+
+    /**
+     * Admin revoked manual / any verification — user must verify again via SMS OTP.
+     */
+    public function revokePhoneVerification(): void
+    {
+        $this->forceFill([
+            'phone_verified_at' => null,
+            'phone_verified_source' => null,
+            'phone_verified_by_admin_id' => null,
+        ])->save();
+    }
+
+    /**
+     * User proved possession of account mobile via SMS login OTP.
+     */
+    public function applyPhoneVerifiedFromLoginOtp(): void
+    {
+        if ($this->hasVerifiedPhone()) {
+            return;
+        }
+        $this->forceFill([
+            'phone_verified_at' => now(),
+            'phone_verified_source' => 'login',
+            'phone_verified_by_admin_id' => null,
+        ])->save();
+    }
+
+    /**
+     * Any authenticated user must verify account mobile before using the app.
+     */
+    public function mustVerifyPhoneBeforeAppAccess(): bool
+    {
+        return ! $this->hasVerifiedPhone();
     }
 
     public function applyPhoneVerifiedFromProfileContactOtp(): void
@@ -211,6 +300,7 @@ class User extends Authenticatable
         $this->forceFill([
             'phone_verified_at' => now(),
             'phone_verified_source' => 'profile',
+            'phone_verified_by_admin_id' => null,
         ])->save();
     }
 
@@ -417,6 +507,40 @@ class User extends Authenticatable
     public function academicAttendances()
     {
         return $this->hasMany(\App\Modules\Academics\Models\Attendance::class, 'user_id');
+    }
+
+    public function mentorshipsAsMentee()
+    {
+        return $this->hasMany(\App\Modules\Academics\Models\Mentorship::class, 'mentee_id');
+    }
+
+    public function mentorshipsAsMentor()
+    {
+        return $this->hasMany(\App\Modules\Academics\Models\Mentorship::class, 'mentor_id');
+    }
+
+    public function enrollmentApplications()
+    {
+        return $this->hasMany(\App\Modules\Academics\Models\EnrollmentApplication::class, 'user_id');
+    }
+
+  /**
+     * Students with pending/rejected institute enrollment cannot access batch content.
+     */
+    public function hasApprovedAcademicEnrollment(): bool
+    {
+        if ($this->role !== 'student') {
+            return true;
+        }
+
+        $status = $this->academic_enrollment_status;
+
+        return $status === null || $status === 'approved';
+    }
+
+    public function isMenteeEligible(): bool
+    {
+        return in_array($this->role, \App\Modules\Academics\Services\MentorshipService::menteeRoleSlugs(), true);
     }
 
     /**

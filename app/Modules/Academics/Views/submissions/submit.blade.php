@@ -70,6 +70,24 @@
                     <small class="text-muted">Max 10MB. PDF, Word, text, or image.@if($assignment->assignment_type !== \App\Modules\Academics\Models\Assignment::TYPE_FILE_UPLOAD) For quiz-style work you can submit notes only or rely on the linked quiz.@endif</small>
                     @error('file')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
+                @if(isset($activeMentors) && $activeMentors->isNotEmpty())
+                <div class="mb-3">
+                    <label class="form-label">Share with mentor faculty (optional)</label>
+                    <p class="small text-muted mb-2">Select mentors who should see and rate this submission. This is independent of your institute grading.</p>
+                    @foreach($activeMentors as $mentor)
+                        <div class="form-check mb-1">
+                            <input type="checkbox" class="form-check-input" name="mentor_ids[]" value="{{ $mentor->id }}" id="mentor{{ $mentor->id }}"
+                                @checked(in_array($mentor->id, old('mentor_ids', $sharedMentorIds ?? []), true))>
+                            <label class="form-check-label" for="mentor{{ $mentor->id }}">
+                                {{ $mentor->name }}
+                                @if($mentor->academicInstitution)
+                                    <span class="text-muted small">· {{ $mentor->academicInstitution->name }}</span>
+                                @endif
+                            </label>
+                        </div>
+                    @endforeach
+                </div>
+                @endif
                 <div class="mb-3">
                     <label for="notes" class="form-label">Notes (optional)</label>
                     <textarea class="form-control" id="notes" name="notes" rows="2" maxlength="1000">{{ old('notes', $existing->notes ?? '') }}</textarea>

@@ -31,15 +31,56 @@
         });
     }
 
-    applyMobileClass();
-    wrapTables();
+    /** Convert list tables to labeled card rows on mobile. */
+    function enhanceMobileTables() {
+        if (!mq.matches) {
+            return;
+        }
+        var root = document.querySelector('.main-content');
+        if (!root) {
+            return;
+        }
+        root.querySelectorAll('table').forEach(function (table) {
+            if (table.classList.contains('mmhc-table-cards') || table.classList.contains('mmhc-no-mobile-cards')) {
+                return;
+            }
+            if (table.closest('.mmhc-no-mobile-cards')) {
+                return;
+            }
+            var thead = table.querySelector('thead');
+            if (!thead) {
+                return;
+            }
+            var headers = [];
+            thead.querySelectorAll('th').forEach(function (th) {
+                headers.push((th.textContent || '').trim());
+            });
+            if (headers.length === 0) {
+                return;
+            }
+            table.querySelectorAll('tbody tr').forEach(function (row) {
+                row.querySelectorAll('td').forEach(function (td, index) {
+                    if (!td.hasAttribute('data-label') && headers[index]) {
+                        td.setAttribute('data-label', headers[index]);
+                    }
+                });
+            });
+            table.classList.add('mmhc-table-cards');
+        });
+    }
+
+    function initMobileLayout() {
+        applyMobileClass();
+        wrapTables();
+        enhanceMobileTables();
+    }
+
+    initMobileLayout();
 
     if (typeof mq.addEventListener === 'function') {
-        mq.addEventListener('change', function () {
-            applyMobileClass();
-        });
+        mq.addEventListener('change', initMobileLayout);
     } else if (typeof mq.addListener === 'function') {
-        mq.addListener(applyMobileClass);
+        mq.addListener(initMobileLayout);
     }
 
     document.addEventListener('shown.bs.offcanvas', function (e) {

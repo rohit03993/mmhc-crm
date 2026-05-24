@@ -83,11 +83,8 @@ class BatchController extends Controller
         if ($user->role === 'institution_admin') {
             $institutions = $institutions->where('id', $user->academic_institution_id)->values();
         }
-        $studentsAvailable = User::where('role', 'student')->orderBy('name')->get();
-        $facultyAvailable = User::where('role', 'faculty')->orderBy('name')->get();
-        if ($user->role === 'institution_admin' && $user->academic_institution_id) {
-            $facultyAvailable = $facultyAvailable->where('academic_institution_id', $user->academic_institution_id);
-        }
+        $studentsAvailable = $this->studentsAvailableForBatch($batch);
+        $facultyAvailable = $this->facultyAvailableForBatch($batch);
 
         return view('academics::batches.edit', compact('batch', 'institutions', 'studentsAvailable', 'facultyAvailable'));
     }
@@ -126,14 +123,32 @@ class BatchController extends Controller
     public function updateAssignments(Request $request, Batch $batch, AcademicMembershipSyncService $membershipSync)
     {
         $this->authorizeBatch($batch);
-        $request->validate([
+        $batch->load(['students', 'faculty']);
+
+        $allowedStudentIds = $this->studentsAvailableForBatch($batch)->pluck('id')->all();
+        $allowedFacultyIds = $this->facultyAvailableForBatch($batch)->pluck('id')->all();
+
+        $validated = $request->validate([
             'student_ids' => 'nullable|array',
-            'student_ids.*' => 'exists:users,id',
+            'student_ids.*' => 'integer|exists:users,id',
             'faculty_ids' => 'nullable|array',
-            'faculty_ids.*' => 'exists:users,id',
+            'faculty_ids.*' => 'integer|exists:users,id',
         ]);
-        $studentIds = $request->input('student_ids', []);
-        $facultyIds = $request->input('faculty_ids', []);
+
+        $studentIds = array_values(array_map('intval', $validated['student_ids'] ?? []));
+        $facultyIds = array_values(array_map('intval', $validated['faculty_ids'] ?? []));
+
+        if (array_diff($studentIds, $allowedStudentIds) !== []) {
+            return redirect()->back()->withInput()->withErrors([
+                'student_ids' => 'One or more selected students do not belong to this institution.',
+            ]);
+        }
+
+        if (array_diff($facultyIds, $allowedFacultyIds) !== []) {
+            return redirect()->back()->withInput()->withErrors([
+                'faculty_ids' => 'One or more selected faculty do not belong to this institution.',
+            ]);
+        }
         $sync = [];
         foreach ($studentIds as $id) {
             $sync[$id] = ['type' => 'student'];
@@ -160,5 +175,51 @@ class BatchController extends Controller
         if ($user->role !== 'institution_admin') {
             abort(403, 'You cannot manage batches.');
         }
+    }
+
+    /**
+     * Students that may be assigned to this batch (scoped to the batch's institution).
+     */
+    protected function studentsAvailableForBatch(Batch $batch)
+    {
+        $institutionId = (int) $batch->institution_id;
+        $currentStudentIds = $batch->students->pluck('id');
+
+        return User::query()
+            ->where('role', 'student')
+            ->where(function ($query) use ($institutionId, $currentStudentIds) {
+                $query->where('academic_institution_id', $institutionId);
+                if ($currentStudentIds->isNotEmpty()) {
+                    $query->orWhereIn('id', $currentStudentIds);
+                }
+                if (in_array(auth()->user()->role, ['super_admin', 'admin'], true)) {
+                    $query->orWhereNull('academic_institution_id');
+                }
+            })
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Faculty that may be assigned to this batch (scoped to the batch's institution).
+     */
+    protected function facultyAvailableForBatch(Batch $batch)
+    {
+        $institutionId = (int) $batch->institution_id;
+        $currentFacultyIds = $batch->faculty->pluck('id');
+
+        return User::query()
+            ->where('role', 'faculty')
+            ->where(function ($query) use ($institutionId, $currentFacultyIds) {
+                $query->where('academic_institution_id', $institutionId);
+                if ($currentFacultyIds->isNotEmpty()) {
+                    $query->orWhereIn('id', $currentFacultyIds);
+                }
+                if (in_array(auth()->user()->role, ['super_admin', 'admin'], true)) {
+                    $query->orWhereNull('academic_institution_id');
+                }
+            })
+            ->orderBy('name')
+            ->get();
     }
 }

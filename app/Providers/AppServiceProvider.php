@@ -51,11 +51,17 @@ class AppServiceProvider extends ServiceProvider
             $hasPendingContactUpdate = false;
             $heldEarningsDueToUnverifiedMobile = null;
             $staffNeedsMobileVerification = false;
+            $needsPhoneVerification = false;
+
+            if (Auth::check()) {
+                $user = Auth::user();
+                $hasPendingContactUpdate = $user->hasPendingMobileContactVerification();
+                $needsPhoneVerification = $user->mustVerifyPhoneBeforeAppAccess();
+                $staffNeedsMobileVerification = $needsPhoneVerification && $user->isStaff();
+            }
 
             if (Auth::check() && Auth::user()->isStaff()) {
                 $user = Auth::user();
-                $hasPendingContactUpdate = $user->hasPendingMobileContactVerification();
-                $staffNeedsMobileVerification = ! $user->hasVerifiedPhone();
                 $heldEarningsDueToUnverifiedMobile = app(StaffPayoutService::class)
                     ->calculateHeldDueToUnverifiedMobile($user);
                 $pendingReferralOtpBanner = Referral::query()
@@ -108,6 +114,7 @@ class AppServiceProvider extends ServiceProvider
             $view->with('hasPendingContactUpdate', $hasPendingContactUpdate);
             $view->with('heldEarningsDueToUnverifiedMobile', $heldEarningsDueToUnverifiedMobile);
             $view->with('staffNeedsMobileVerification', $staffNeedsMobileVerification);
+            $view->with('needsPhoneVerification', $needsPhoneVerification);
         });
     }
 }

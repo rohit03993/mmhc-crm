@@ -79,6 +79,24 @@
                                 <span class="d-sm-none">Bulk delete</span>
                             </button>
                         @endif
+                        @if(($unverifiedPhoneCount ?? 0) > 0)
+                            <form method="POST" action="{{ route('admin.users.bulk-phone-reminders') }}" class="d-inline flex-shrink-0 align-self-start"
+                                  onsubmit="return confirm('Send verification OTP by SMS to up to 150 users with unverified mobiles? Each user receives a 6-digit code.');">
+                                @csrf
+                                <input type="hidden" name="limit" value="150">
+                                @if(($segment ?? 'all') !== 'all')
+                                    <input type="hidden" name="segment" value="{{ $segment }}">
+                                @endif
+                                @if(($searchQuery ?? '') !== '')
+                                    <input type="hidden" name="q" value="{{ $searchQuery }}">
+                                @endif
+                                <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill">
+                                    <i class="fas fa-sms me-1"></i>
+                                    <span class="d-none d-sm-inline">OTP remind {{ $unverifiedPhoneCount }} unverified</span>
+                                    <span class="d-sm-none">Remind ({{ $unverifiedPhoneCount }})</span>
+                                </button>
+                            </form>
+                        @endif
                     </div>
                     <form id="umUserSearchForm" method="GET" action="{{ route('admin.users') }}" class="um-filter-form" role="search" aria-label="Search and filter users">
                         <div class="um-filter-row d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2">
@@ -110,7 +128,7 @@
                             </div>
                         </div>
                         <p class="text-muted small mb-0 mt-2 um-filter-hint"><i class="fas fa-info-circle me-1 opacity-75"></i>Use the list filter with search. Phone: 10 digits or +91 — spaces ignored.</p>
-                        <p class="text-muted small mb-0 mt-1 um-filter-hint"><strong>Mobile verified</strong> means the account phone was confirmed by SMS OTP (profile contact change, staff referral onboarding, or patient reward where patient mobile matches this user&rsquo;s account mobile).</p>
+                        <p class="text-muted small mb-0 mt-1 um-filter-hint"><strong>Mobile verified</strong> means SMS OTP or admin manual verification. Admin verify unlocks app access and staff rewards/payouts.</p>
                     </form>
                 </div>
             </div>
@@ -168,6 +186,9 @@
                                     <td>
                                         @if($user->phone && $user->phone_verified_at)
                                             <span class="badge rounded-pill bg-success">Yes</span>
+                                            @if($user->phone_verified_source === 'admin')
+                                                <span class="badge rounded-pill bg-primary ms-1" title="Verified manually by admin">Admin</span>
+                                            @endif
                                         @elseif($user->phone)
                                             <span class="badge rounded-pill bg-warning text-dark">No</span>
                                         @else
@@ -268,6 +289,23 @@
                                             <button type="button" class="btn btn-outline-warning" onclick="editUser({{ $user->id }})" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </button>
+                                            @if($user->phone && ! $user->hasVerifiedPhone())
+                                                <form method="POST" action="{{ route('admin.users.verify-phone', $user) }}" class="d-inline"
+                                                      onsubmit="return confirm(@json('Manually verify mobile for '.$user->name.'? They will see verified by admin and can use the app + rewards.'));">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-outline-success" title="Admin verify mobile">
+                                                        <i class="fas fa-check-double"></i>
+                                                    </button>
+                                                </form>
+                                            @elseif($user->hasVerifiedPhone())
+                                                <form method="POST" action="{{ route('admin.users.revoke-phone-verification', $user) }}" class="d-inline"
+                                                      onsubmit="return confirm(@json('Revoke mobile verification for '.$user->name.'? They must verify again via SMS OTP.'));">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-outline-danger" title="Revoke mobile verification">
+                                                        <i class="fas fa-mobile-alt"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
                                             <button type="button" class="btn btn-outline-secondary" onclick="toggleUserStatus({{ $user->id }})" title="{{ $user->is_active ? 'Deactivate' : 'Activate' }}">
                                                 <i class="fas fa-{{ $user->is_active ? 'ban' : 'check' }}"></i>
                                             </button>
@@ -742,6 +780,29 @@ function editUser(userId) {
                         <div class="col-md-6 mb-3">
                             <label for="edit_address" class="form-label">Address</label>
                             <textarea class="form-control" id="edit_address" name="address" rows="2">${user.address || ''}</textarea>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-semibold">Mobile verification</label>
+                            <div class="alert ${user.has_verified_phone ? 'alert-success' : 'alert-warning'} mb-2 py-2 small">
+                                ${user.has_verified_phone
+                                    ? '<i class="fas fa-check-circle me-1"></i>Verified' + (user.phone_verified_at ? ' — ' + mmhcEscapeHtml(user.phone_verified_at) : '') + (user.phone_verified_source_label ? '<br><span class="text-muted">' + mmhcEscapeHtml(user.phone_verified_source_label) + (user.phone_verified_by_admin ? ' (' + mmhcEscapeHtml(user.phone_verified_by_admin) + ')' : '') + '</span>' : '')
+                                    : '<i class="fas fa-exclamation-triangle me-1"></i>Not verified — user cannot use the app until SMS OTP or you verify manually.'}
+                            </div>
+                            ${!user.has_verified_phone && user.phone ? `
+                                <form method="POST" action="/admin/users/${user.id}/verify-phone" class="d-inline me-2" onsubmit="return confirm('Manually verify this mobile? Unlocks app and staff rewards/payouts.');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check-double me-1"></i>Verify mobile (admin)</button>
+                                </form>
+                            ` : ''}
+                            ${user.has_verified_phone ? `
+                                <form method="POST" action="/admin/users/${user.id}/revoke-phone-verification" class="d-inline" onsubmit="return confirm('Revoke verification? User must verify again via SMS OTP.');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-undo me-1"></i>Revoke verification</button>
+                                </form>
+                            ` : ''}
                         </div>
                     </div>
                     <hr>

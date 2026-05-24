@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Core\User;
 use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Institution;
+use App\Modules\Academics\Services\EnrollmentService;
 use App\Modules\Auth\Services\UserService;
+use App\Modules\Auth\Services\PhoneVerificationService;
 use App\Modules\Auth\Services\SmsOtpService;
 use App\Modules\Referrals\Services\ReferralService;
 use Illuminate\Database\Eloquent\Builder;
@@ -40,7 +42,7 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return $this->redirectAuthenticatedUser(Auth::user());
         }
 
         $achievementMedia = \App\Models\AchievementMedia::ordered()->get();
@@ -54,7 +56,7 @@ class AuthController extends Controller
     public function showAcademicsLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return $this->redirectAuthenticatedUser(Auth::user());
         }
 
         return redirect()->route('auth.login', [], 302);
@@ -210,6 +212,10 @@ class AuthController extends Controller
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
+        if (! $user->hasVerifiedPhone()) {
+            $user->applyPhoneVerifiedFromLoginOtp();
+        }
+
         return redirect()->intended($this->defaultPostLoginUrl());
     }
 
@@ -220,11 +226,42 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
+        if ($user && ! $user->hasVerifiedPhone()) {
+            return route('profile.verify-phone');
+        }
+
         if ($user && $user->hasAcademicRole()) {
             return route('academics.dashboard');
         }
 
         return route('dashboard');
+    }
+
+    protected function redirectAuthenticatedUser(User $user)
+    {
+        if (! $user->hasVerifiedPhone()) {
+            return redirect()->route('profile.verify-phone');
+        }
+
+        return redirect()->route($user->hasAcademicRole() ? 'academics.dashboard' : 'dashboard');
+    }
+
+    protected function redirectToPhoneVerification(User $user, ?string $successMessage = null)
+    {
+        $send = app(PhoneVerificationService::class)->sendAccountVerificationOtp($user);
+        $redirect = redirect()->route('profile.verify-phone');
+
+        if ($successMessage) {
+            $redirect = $redirect->with('success', $successMessage);
+        }
+
+        if (($send['success'] ?? false) && empty($send['already_verified'])) {
+            $redirect = $redirect->with('success', trim(($successMessage ? $successMessage.' ' : '').'We sent a 6-digit OTP to your mobile.'));
+        } elseif (! ($send['success'] ?? false)) {
+            $redirect = $redirect->with('error', $send['message'] ?? 'Could not send verification OTP.');
+        }
+
+        return $redirect;
     }
 
     /**
@@ -233,7 +270,7 @@ class AuthController extends Controller
     public function showRegister(Request $request)
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return $this->redirectAuthenticatedUser(Auth::user());
         }
 
         if ($request->boolean('academics')) {
@@ -430,16 +467,14 @@ class AuthController extends Controller
                 default => 'Registration successful!'
             };
 
-            // Nurse/Caregiver: show Nursing Warrior welcome page with badge
+            // Nurse/Caregiver: verify mobile first, then Nursing Warrior welcome page
             if (in_array($userData['role'], ['nurse', 'caregiver'])) {
                 $request->session()->put('nursing_warrior_just_registered', true);
 
-                return redirect()->route('auth.welcome.nursing-warrior');
+                return $this->redirectToPhoneVerification($user, $roleMessage);
             }
 
-            // Patient: go to dashboard with success message
-            return redirect()->route('dashboard')
-                ->with('success', $roleMessage);
+            return $this->redirectToPhoneVerification($user, $roleMessage);
         });
     }
 
@@ -540,12 +575,27 @@ class AuthController extends Controller
                 $user->update(['qualification' => $request->input('qualification')]);
             }
 
+            if ($role === 'student') {
+                $user->update(['academic_enrollment_status' => 'pending']);
+                app(EnrollmentService::class)->createPendingApplication(
+                    $user,
+                    (int) $userData['academic_institution_id'],
+                    (array) $request->input('academic_batch_ids', [])
+                );
+                Auth::login($user);
+                $institutionName = Institution::find($userData['academic_institution_id'])?->name ?? 'your institute';
+
+                return $this->redirectToPhoneVerification(
+                    $user,
+                    "Registration received. {$institutionName} will review your enrollment after you verify your mobile."
+                );
+            }
+
             $this->syncUserAcademicBatches($user, $role, $userData['academic_institution_id'], $request);
 
             Auth::login($user);
 
-            return redirect()->route('academics.dashboard')
-                ->with('success', 'Welcome! You are enrolled under your selected batch(es).');
+            return $this->redirectToPhoneVerification($user, 'Welcome! Verify your mobile to access academics.');
         });
     }
 
@@ -620,7 +670,13 @@ class AuthController extends Controller
             ? Batch::query()->orderBy('institution_id')->orderBy('name')->get(['id', 'institution_id', 'name', 'academic_year'])
             : collect();
 
-        return view('auth::admin.users', compact('users', 'searchQuery', 'segment', 'institutions', 'batches'));
+        $unverifiedPhoneCount = User::query()
+            ->whereNull('phone_verified_at')
+            ->whereNotNull('phone')
+            ->where('phone', '!=', '')
+            ->count();
+
+        return view('auth::admin.users', compact('users', 'searchQuery', 'segment', 'institutions', 'batches', 'unverifiedPhoneCount'));
     }
 
     /**
@@ -765,26 +821,11 @@ class AuthController extends Controller
         $decryptedPassword = $user->decrypted_password;
 
         $user->loadMissing('academicBatches:id,name,institution_id');
+        $user->loadMissing('phoneVerifiedByAdmin:id,name');
 
         return response()->json([
             'success' => true,
-            'user' => [
-                'id' => $user->id,
-                'unique_id' => $user->unique_id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $phoneDisplay,
-                'role' => $user->role,
-                'address' => $user->address,
-                'pincode' => $user->pincode,
-                'date_of_birth' => $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : null,
-                'is_active' => $user->is_active,
-                'created_at' => $user->created_at->format('M d, Y'),
-                'plain_password' => $decryptedPassword, // Use decrypted password accessor
-                'reward_points' => $user->reward_points ?? 0,
-                'academic_institution_id' => $user->academic_institution_id,
-                'academic_batch_ids' => $user->academicBatches->pluck('id')->values()->all(),
-            ],
+            'user' => $this->adminUserJsonPayload($user, $phoneDisplay, $decryptedPassword),
         ]);
     }
 
@@ -800,25 +841,90 @@ class AuthController extends Controller
         $decryptedPassword = $user->decrypted_password;
 
         $user->loadMissing('academicBatches:id,name,institution_id');
+        $user->loadMissing('phoneVerifiedByAdmin:id,name');
 
         return response()->json([
             'success' => true,
-            'user' => [
-                'id' => $user->id,
-                'unique_id' => $user->unique_id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $phoneDisplay,
-                'role' => $user->role,
-                'address' => $user->address,
-                'pincode' => $user->pincode,
-                'date_of_birth' => $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : null,
-                'is_active' => $user->is_active,
-                'plain_password' => $decryptedPassword, // Use decrypted password accessor
-                'academic_institution_id' => $user->academic_institution_id,
-                'academic_batch_ids' => $user->academicBatches->pluck('id')->values()->all(),
-            ],
+            'user' => $this->adminUserJsonPayload($user, $phoneDisplay, $decryptedPassword),
         ]);
+    }
+
+  /**
+     * @return array<string, mixed>
+     */
+    private function adminUserJsonPayload(User $user, string $phoneDisplay, ?string $decryptedPassword): array
+    {
+        return [
+            'id' => $user->id,
+            'unique_id' => $user->unique_id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $phoneDisplay,
+            'role' => $user->role,
+            'address' => $user->address,
+            'pincode' => $user->pincode,
+            'date_of_birth' => $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : null,
+            'is_active' => $user->is_active,
+            'created_at' => $user->created_at->format('M d, Y'),
+            'plain_password' => $decryptedPassword,
+            'reward_points' => $user->reward_points ?? 0,
+            'academic_institution_id' => $user->academic_institution_id,
+            'academic_batch_ids' => $user->academicBatches->pluck('id')->values()->all(),
+            'phone_verified_at' => $user->phone_verified_at?->format('M d, Y g:i A'),
+            'phone_verified_source' => $user->phone_verified_source,
+            'phone_verified_source_label' => $user->phoneVerificationSourceLabel(),
+            'phone_verified_by_admin' => $user->phoneVerifiedByAdmin?->name,
+            'has_verified_phone' => $user->hasVerifiedPhone(),
+        ];
+    }
+
+    /**
+     * Admin: manually verify a user's mobile (unlocks app + staff rewards/payouts).
+     */
+    public function adminVerifyUserPhone(User $user, PhoneVerificationService $phoneVerificationService)
+    {
+        if (! trim((string) ($user->phone ?? ''))) {
+            return redirect()->back()->with('error', 'User has no mobile number on file. Add a phone first.');
+        }
+
+        if ($user->hasVerifiedPhone()) {
+            return redirect()->back()->with('warning', "'{$user->name}' is already mobile-verified.");
+        }
+
+        $phoneVerificationService->markVerifiedByAdmin($user, Auth::user());
+
+        return redirect()->back()->with('success', "Mobile verified for '{$user->name}' by admin. They can use the app and staff rewards/payouts will unlock.");
+    }
+
+    /**
+     * Admin: revoke mobile verification (user must verify via SMS OTP again).
+     */
+    public function adminRevokeUserPhoneVerification(User $user)
+    {
+        if (! $user->hasVerifiedPhone()) {
+            return redirect()->back()->with('warning', "'{$user->name}' does not have a verified mobile.");
+        }
+
+        $user->revokePhoneVerification();
+
+        return redirect()->back()->with('success', "Mobile verification revoked for '{$user->name}'. They must verify again via SMS OTP.");
+    }
+
+    /**
+     * Admin: send verification OTP SMS to all unverified users (batch).
+     */
+    public function bulkSendPhoneVerificationReminders(Request $request, PhoneVerificationService $phoneVerificationService)
+    {
+        $limit = (int) $request->input('limit', 150);
+        $stats = $phoneVerificationService->bulkSendVerificationReminders($limit);
+
+        $message = "Verification OTP sent to {$stats['sent']} user(s). Skipped: {$stats['skipped']}. Failed: {$stats['failed']}.";
+        if ($stats['failed'] > 0 && ! empty($stats['errors'])) {
+            $message .= ' Examples: '.implode(' | ', $stats['errors']);
+        }
+
+        return redirect()->route('admin.users', $request->only('segment', 'q'))
+            ->with($stats['sent'] > 0 ? 'success' : 'warning', $message);
     }
 
     /**
@@ -919,6 +1025,20 @@ class AuthController extends Controller
             $updateData['longitude'] = null;
             // Use sentinel POINT(0 0) for missing coordinates (required for NOT NULL constraint)
             $updateData['location'] = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
+        }
+
+        if ((string) $user->phone !== $normalizedPhone) {
+            $updateData['phone_verified_at'] = null;
+            $updateData['phone_verified_source'] = null;
+            $updateData['phone_verified_by_admin_id'] = null;
+            $updateData['pending_phone'] = null;
+            $updateData['contact_update_channel'] = null;
+            $updateData['contact_update_otp_hash'] = null;
+            $updateData['contact_update_otp_expires_at'] = null;
+            $updateData['contact_update_otp_attempts'] = 0;
+            $updateData['contact_update_otp_sent_to'] = null;
+            $updateData['contact_update_otp_sent_at'] = null;
+            $updateData['contact_update_verified_at'] = null;
         }
 
         $user->update($updateData);

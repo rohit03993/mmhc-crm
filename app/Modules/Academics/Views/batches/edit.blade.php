@@ -51,6 +51,9 @@
     <div class="card">
         <div class="card-body">
             <h5 class="card-title mb-3">Assign students & faculty</h5>
+            @if($errors->has('student_ids') || $errors->has('faculty_ids'))
+                <div class="alert alert-danger small">{{ $errors->first('student_ids') ?: $errors->first('faculty_ids') }}</div>
+            @endif
             <form action="{{ route('academics.batches.assignments.update', $batch) }}" method="POST">
                 @csrf
                 <div class="row g-4">

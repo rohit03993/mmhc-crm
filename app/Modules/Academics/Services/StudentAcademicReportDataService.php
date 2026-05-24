@@ -6,6 +6,7 @@ use App\Models\Core\User;
 use App\Modules\Academics\Models\AcademicExamAttempt;
 use App\Modules\Academics\Models\Assignment;
 use App\Modules\Academics\Models\Attendance;
+use App\Modules\Academics\Models\Mentorship;
 use App\Modules\Academics\Models\Submission;
 use App\Modules\Profiles\Models\Document;
 use Carbon\Carbon;
@@ -117,7 +118,20 @@ class StudentAcademicReportDataService
             ->paginate(8, ['*'], 'docpage')
             ->withQueryString();
 
-        $spi = AcademicScoreService::getSpi($user);
+        $spiBreakdown = AcademicScoreService::getSpiBreakdown($user);
+        $spi = $spiBreakdown['percent'];
+        $verification = app(MentorVerificationService::class);
+        $mentorStatusByAssignment = [];
+        foreach ($assignmentsPaginator as $assignment) {
+            $sub = $submissionsByAssignment->get($assignment->id);
+            $mentorStatusByAssignment[$assignment->id] = $verification->assignmentMentorStatus($user, $assignment, $sub);
+        }
+
+        $activeMentorCount = Mentorship::query()
+            ->where('mentee_id', $user->id)
+            ->where('status', Mentorship::STATUS_ACTIVE)
+            ->count();
+
         $periodLabel = $dateRange['label'];
 
         $quizAttemptsPaginator = AcademicExamAttempt::query()
@@ -139,6 +153,9 @@ class StudentAcademicReportDataService
             'quizAttemptsPaginator' => $quizAttemptsPaginator,
             'submissionsByAssignment' => $submissionsByAssignment,
             'spi' => $spi,
+            'spiBreakdown' => $spiBreakdown,
+            'mentorStatusByAssignment' => $mentorStatusByAssignment,
+            'activeMentorCount' => $activeMentorCount,
             'currentPeriod' => $period,
             'periodLabel' => $periodLabel,
         ];

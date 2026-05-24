@@ -14,6 +14,7 @@ use App\Modules\Payments\Models\StaffPayment;
 use App\Modules\Payments\Services\StaffPayoutService;
 use App\Modules\Plans\Models\Subscription;
 use App\Modules\Auth\Services\UserService;
+use App\Modules\Auth\Services\PhoneVerificationService;
 use App\Modules\Profiles\Services\ProfileService;
 use App\Modules\Referrals\Models\Referral;
 use App\Modules\Rewards\Models\CaregiverReward;
@@ -99,7 +100,7 @@ class ProfileController extends Controller
     public function index()
     {
         try {
-            $user = Auth::user();
+            $user = Auth::user()->loadMissing('phoneVerifiedByAdmin:id,name');
             $profile = $this->profileService->getProfile($user);
             $subscriptionSummary = $this->getPatientSubscriptionSummary($user);
             $documentCategoryCounts = $this->getProfileDocumentCategoryCounts($user);
@@ -116,6 +117,60 @@ class ProfileController extends Controller
             return redirect()->route('dashboard')
                 ->with('error', 'Unable to load profile. Please try again.');
         }
+    }
+
+    /**
+     * Dedicated mobile verification gate (required before using the app).
+     */
+    public function verifyPhone(PhoneVerificationService $phoneVerificationService)
+    {
+        $user = Auth::user();
+
+        if ($user->hasVerifiedPhone()) {
+            return $this->redirectAfterPhoneVerified($user->fresh());
+        }
+
+        if (! trim((string) ($user->phone ?? ''))) {
+            return redirect()->route('profile.edit')
+                ->with('error', 'Add your mobile number in Profile first, then verify it with SMS OTP.');
+        }
+
+        if (! $user->hasPendingMobileContactVerification()) {
+            $send = $phoneVerificationService->sendAccountVerificationOtp($user);
+            if (! ($send['success'] ?? false) && empty($send['already_verified'])) {
+                return view('profiles::profile.verify-phone', [
+                    'user' => $user,
+                    'otpSentTo' => null,
+                    'sendError' => $send['message'] ?? 'Could not send OTP.',
+                ]);
+            }
+        }
+
+        $user = $user->fresh();
+
+        return view('profiles::profile.verify-phone', [
+            'user' => $user,
+            'otpSentTo' => (string) ($user->contact_update_otp_sent_to ?? $user->displayPhone()),
+            'sendError' => null,
+        ]);
+    }
+
+    public function sendVerifyPhoneOtp(PhoneVerificationService $phoneVerificationService)
+    {
+        $user = Auth::user();
+
+        if ($user->hasVerifiedPhone()) {
+            return $this->redirectAfterPhoneVerified($user);
+        }
+
+        $send = $phoneVerificationService->sendAccountVerificationOtp($user, forceResend: true);
+        if (! ($send['success'] ?? false)) {
+            return redirect()->route('profile.verify-phone')
+                ->with('error', $send['message'] ?? 'Could not send OTP.');
+        }
+
+        return redirect()->route('profile.verify-phone')
+            ->with('success', 'Verification OTP sent to your mobile.');
     }
 
     /**
@@ -331,6 +386,8 @@ class ProfileController extends Controller
             return redirect()->back()->with('error', $remaining > 0 ? "Invalid OTP. {$remaining} attempt(s) left." : 'Invalid OTP. No attempts left.');
         }
 
+        $wasPhoneChange = (string) $user->phone !== (string) $user->pending_phone;
+
         $updates = [
             'contact_update_verified_at' => now(),
             'contact_update_otp_hash' => null,
@@ -353,7 +410,12 @@ class ProfileController extends Controller
             app(\App\Modules\Rewards\Services\RewardService::class)->syncStaffRewardPoints($user->fresh());
         }
 
-        return redirect()->route('profile.index')->with('success', 'Contact updated and verified successfully.');
+        if ($wasPhoneChange) {
+            return redirect()->route('profile.index')->with('success', 'Contact updated and verified successfully.');
+        }
+
+        return $this->redirectAfterPhoneVerified($user->fresh())
+            ->with('success', 'Mobile number verified successfully.');
     }
 
     public function resendContactUpdateOtp()
@@ -423,6 +485,19 @@ class ProfileController extends Controller
     private function maskPhone(string $normalizedPhone): string
     {
         return str_repeat('*', max(0, strlen($normalizedPhone) - 4)).substr($normalizedPhone, -4);
+    }
+
+    protected function redirectAfterPhoneVerified(User $user)
+    {
+        if (session()->pull('nursing_warrior_just_registered', false)) {
+            return redirect()->route('auth.welcome.nursing-warrior');
+        }
+
+        if ($user->hasAcademicRole()) {
+            return redirect()->route('academics.dashboard');
+        }
+
+        return redirect()->route('dashboard');
     }
 
     /**
@@ -495,6 +570,7 @@ class ProfileController extends Controller
         }
 
         $profileStats = $this->buildAdminProfileStats($user);
+        $user->loadMissing('phoneVerifiedByAdmin:id,name');
         $academicAdminSummary = $this->buildAcademicAdminSummary($user);
 
         $incentiveDetailsData = $user->isStaff()

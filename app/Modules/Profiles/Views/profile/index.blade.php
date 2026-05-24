@@ -180,7 +180,11 @@
                             </span>
                             <a href="{{ route('profile.edit') }}" class="profile-meta-edit-link">Complete OTP verification</a>
                         @elseif(! empty($user->phone) && $user->phone_verified_at)
-                            <span class="profile-verify-chip" title="Mobile number confirmed with OTP on {{ $user->phone_verified_at->format('M j, Y') }}"><i class="fas fa-check-circle" aria-hidden="true"></i> Mobile verified</span>
+                            @if($user->phone_verified_source === 'admin')
+                                <span class="profile-verify-chip profile-verify-chip--admin" title="{{ $user->phoneVerificationUserLabel() }}"><i class="fas fa-user-shield" aria-hidden="true"></i> {{ $user->phoneVerificationUserLabel() }}</span>
+                            @else
+                                <span class="profile-verify-chip" title="{{ $user->phoneVerificationUserLabel() }}"><i class="fas fa-check-circle" aria-hidden="true"></i> {{ $user->phoneVerificationUserLabel() }}</span>
+                            @endif
                             <a href="{{ route('profile.edit') }}" class="profile-meta-edit-link">Edit in profile settings</a>
                         @else
                             @if($user->isStaff())

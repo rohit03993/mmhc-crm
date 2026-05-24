@@ -8,7 +8,7 @@
     <h2 class="h5 mb-3">Generate report</h2>
 
     <div class="alert alert-light border mb-4 mb-md-3">
-        <strong>Student submission report</strong> – Use report type <strong>Student submission</strong> to see each student’s assignments submitted and SPI %.
+        <strong>Student submission report</strong> – SPI % reflects assignments fully credited (submitted + all shared mentors rated when applicable).
     </div>
 
     <div class="card shadow-sm">
