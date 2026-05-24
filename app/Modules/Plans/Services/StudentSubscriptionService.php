@@ -96,6 +96,24 @@ class StudentSubscriptionService
         return $plan && (int) $subscription->plan_id === (int) $plan->id;
     }
 
+    public function allowsManualPayment(?Subscription $subscription = null): bool
+    {
+        if ((bool) config('payments.subscription.manual_enabled', false)) {
+            return true;
+        }
+
+        if ($subscription && $this->isStudentPlanSubscription($subscription)) {
+            return (bool) config('student_subscription.manual_payment_enabled', true);
+        }
+
+        return false;
+    }
+
+    public function shouldAutoActivateOnManualProof(): bool
+    {
+        return (bool) config('student_subscription.auto_activate_on_manual_proof', true);
+    }
+
     public function postPaymentRedirectUrl(User $user, Subscription $subscription): string
     {
         if ($user->role === 'student' && $this->isStudentPlanSubscription($subscription) && $subscription->payment_status === 'paid') {

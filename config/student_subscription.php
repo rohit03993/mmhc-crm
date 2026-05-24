@@ -14,6 +14,18 @@ return [
 
     'payment_frequency' => 'student_launch',
 
+    /*
+    | When global SUBSCRIPTION_MANUAL_PAYMENT_ENABLED is false, students can still
+    | pay via UPI + screenshot on the payment-confirmation page.
+    */
+    'manual_payment_enabled' => env('STUDENT_SUBSCRIPTION_MANUAL_PAYMENT', true),
+
+    /*
+    | After screenshot upload, activate membership immediately (no admin wait).
+    | Set false if you want admin to verify every student payment manually.
+    */
+    'auto_activate_on_manual_proof' => env('STUDENT_SUBSCRIPTION_AUTO_ACTIVATE_MANUAL', true),
+
     'display' => [
         'monthly_reference_inr' => 100,
         'duration_years' => 10,

@@ -75,8 +75,17 @@
                 <div class="payment-methods mb-4">
                     @php
                         $razorpayEnabled = (bool) config('payments.razorpay.enabled');
-                        $manualPaymentEnabled = (bool) config('payments.subscription.manual_enabled', true);
+                        $manualPaymentEnabled = $manualPaymentEnabled ?? (bool) config('payments.subscription.manual_enabled', false);
+                        $isStudentMembership = $isStudentMembership ?? false;
                     @endphp
+
+                    @if($isStudentMembership)
+                    <div class="alert alert-info small mb-3">
+                        <i class="fas fa-graduation-cap me-1"></i>
+                        <strong>Student membership (₹{{ number_format((float) $subscription->total_amount, 0) }} one-time).</strong>
+                        Pay online with Razorpay or use UPI and upload your payment screenshot below.
+                    </div>
+                    @endif
 
                     @if($razorpayEnabled)
                     <div class="payment-method-card text-center mb-3">
@@ -184,14 +193,13 @@
                         </button>
                     </form>
                 </div>
-                @else
+                @elseif(!$razorpayEnabled && !$manualPaymentEnabled)
                 <div class="alert alert-warning mb-0">
                     <i class="fas fa-info-circle me-2"></i>
-                    @if((bool) config('payments.razorpay.enabled'))
-                        Manual screenshot payment is disabled. Please use Razorpay online payment above.
-                    @else
-                        Online payment is not configured on this server yet. Please contact MMHC support to complete your ₹{{ number_format((float) $subscription->total_amount, 0) }} payment.
-                    @endif
+                    Payment is not configured on this server. Ask MMHC to enable
+                    <code>RAZORPAY_ENABLED=true</code> or
+                    <code>STUDENT_SUBSCRIPTION_MANUAL_PAYMENT=true</code>
+                    in <code>.env</code>, then run <code>php artisan config:clear</code>.
                 </div>
                 @endif
             </div>

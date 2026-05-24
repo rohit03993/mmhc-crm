@@ -656,7 +656,28 @@ class SubscriptionController extends Controller
         // Reload subscription to get latest data (in case screenshot was just submitted)
         $subscription->refresh();
 
-        return view('plans::subscriptions.payment-confirmation', compact('subscription'));
+        $studentSubscriptionService = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
+
+        // Students who uploaded proof earlier (partially_paid) but were never activated
+        if ($subscription->payment_status === 'partially_paid'
+            && ($subscription->payment_screenshot || $subscription->transaction_id)
+            && $studentSubscriptionService->isStudentPlanSubscription($subscription)
+            && $studentSubscriptionService->shouldAutoActivateOnManualProof()) {
+            $this->subscriptionService->verifyPayment($subscription, Auth::user());
+
+            return redirect()
+                ->route('academics.dashboard')
+                ->with('success', 'Your student membership payment is confirmed. Welcome!');
+        }
+
+        $manualPaymentEnabled = $studentSubscriptionService->allowsManualPayment($subscription);
+        $isStudentMembership = $studentSubscriptionService->isStudentPlanSubscription($subscription);
+
+        return view('plans::subscriptions.payment-confirmation', compact(
+            'subscription',
+            'manualPaymentEnabled',
+            'isStudentMembership'
+        ));
     }
 
     /**
@@ -870,7 +891,8 @@ class SubscriptionController extends Controller
             abort(403);
         }
 
-        if (! (bool) config('payments.subscription.manual_enabled', true)) {
+        $studentSubscriptionService = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
+        if (! $studentSubscriptionService->allowsManualPayment($subscription)) {
             return redirect()->route('subscriptions.payment-confirmation', $subscription)
                 ->with('error', 'Manual payment proof is disabled. Please complete payment via Razorpay.');
         }
@@ -932,7 +954,15 @@ class SubscriptionController extends Controller
             // Update subscription with payment proof
             $subscription->update($data);
 
-            // Update payment status to partially_paid (waiting for admin verification)
+            if ($studentSubscriptionService->isStudentPlanSubscription($subscription)
+                && $studentSubscriptionService->shouldAutoActivateOnManualProof()) {
+                $this->subscriptionService->verifyPayment($subscription, Auth::user());
+
+                return redirect()
+                    ->route('academics.dashboard')
+                    ->with('success', 'Payment received! Your student membership is now active.');
+            }
+
             $subscription->update([
                 'payment_status' => 'partially_paid',
             ]);
