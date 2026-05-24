@@ -771,7 +771,7 @@
     color: #4f46e5 !important;
 }
 
-/* Top navbar: one menu (left) + profile (right) */
+/* Mobile: hamburger + logo + profile. Desktop (992px+): logo left | Dashboard Community | bell + profile — same as staff layout */
 .mmhc-navbar-brand {
     flex: 1;
     min-width: 0;
@@ -781,6 +781,30 @@
 @media (max-width: 991.98px) {
     .mmhc-navbar-brand {
         justify-content: flex-start;
+    }
+}
+
+@media (min-width: 992px) {
+    .top-navbar > .container-fluid {
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+
+    .mmhc-navbar-brand {
+        flex: 0 0 auto;
+        justify-content: flex-start;
+        margin-right: 0.5rem;
+    }
+
+    .top-navbar .navbar-collapse {
+        display: flex !important;
+        flex: 1 1 auto;
+        align-items: center;
+        justify-content: space-between;
+        max-height: none;
+        overflow: visible;
+        margin-top: 0;
+        padding-bottom: 0;
     }
 }
 

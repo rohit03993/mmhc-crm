@@ -13,7 +13,6 @@
         @auth
         {{-- Mobile: notifications + profile (replaces 2nd hamburger / navbar-toggler) --}}
         <div class="d-flex d-lg-none align-items-center gap-1 ms-auto mmhc-navbar-mobile-actions">
-            @if(!auth()->user()->hasAcademicRole())
             <div class="dropdown">
                 <a class="btn btn-link text-dark position-relative mmhc-nav-bell px-2" href="#" id="communityNotificationDropdownMobile" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications" style="min-width:44px;min-height:44px;">
                     <i class="fas fa-bell fa-lg"></i>
@@ -54,7 +53,6 @@
                     @endforelse
                 </ul>
             </div>
-            @endif
             @include('auth::components.navbar-profile-mobile')
         </div>
         @endauth
@@ -74,14 +72,12 @@
                             Dashboard
                         </a>
                     </li>
-                    @if(!auth()->user()->hasAcademicRole())
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('community.*') ? 'active' : '' }}" href="{{ route('community.index') }}">
-                                <i class="fas fa-users me-1"></i>
-                                Community
-                            </a>
-                        </li>
-                    @endif
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('community.*') ? 'active' : '' }}" href="{{ route('community.index') }}">
+                            <i class="fas fa-users me-1"></i>
+                            Community
+                        </a>
+                    </li>
 
                     @if(auth()->user()->isAdmin())
                         <li class="nav-item">
@@ -108,7 +104,6 @@
 
             <ul class="navbar-nav">
                 @auth
-                    @if(!auth()->user()->hasAcademicRole())
                     <li class="nav-item dropdown me-2">
                         <a class="nav-link position-relative" href="#" id="communityNotificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-bell"></i>
@@ -149,7 +144,6 @@
                             @endforelse
                         </ul>
                     </li>
-                    @endif
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             @php
