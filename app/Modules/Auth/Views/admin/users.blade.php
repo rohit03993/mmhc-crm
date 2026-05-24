@@ -134,198 +134,31 @@
             </div>
             @php
                 $showInstitutionColumn = ($segment ?? 'all') === 'academics';
-                $tableColCount = $showInstitutionColumn ? 14 : 12;
+                $tableColCount = $showInstitutionColumn ? 6 : 5;
             @endphp
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0 um-table">
+                <div class="um-table-wrap">
+                    <table class="table table-hover align-middle mb-0 um-table mmhc-no-mobile-cards">
                         <thead class="table-light">
                             <tr>
-                                <th class="ps-4" style="min-width: 11rem;">User</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th class="text-nowrap">Mobile verified</th>
-                                <th class="text-nowrap">Mobile proof</th>
-                                <th>Role</th>
+                                <th class="ps-4">User</th>
+                                <th>Contact</th>
                                 @if($showInstitutionColumn)
-                                    <th>Institution</th>
-                                    <th>Batches</th>
+                                    <th class="um-col-institution">Institution</th>
                                 @endif
-                                <th class="text-nowrap">Profile</th>
-                                <th class="text-nowrap" style="min-width: 5.5rem;">Completion</th>
-                                <th class="text-nowrap">Docs</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th class="text-end pe-4">Actions</th>
+                                <th class="um-col-profile">Profile</th>
+                                <th class="um-col-status">Status</th>
+                                <th class="text-end pe-4 um-col-actions">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($users as $user)
-                                <tr class="um-table__row">
-                                    <td class="ps-4">
-                                        <div class="d-flex align-items-center gap-2 um-table__user-cell">
-                                            @if($user->profile?->avatar_path)
-                                                <img src="{{ Storage::url($user->profile->avatar_path) }}" alt="" class="um-avatar rounded-circle" width="40" height="40">
-                                            @else
-                                                <div class="um-avatar um-avatar--placeholder rounded-circle d-flex align-items-center justify-content-center">
-                                                    <i class="fas fa-user text-white small"></i>
-                                                </div>
-                                            @endif
-                                            <div class="min-w-0">
-                                                <a href="{{ route('admin.profiles.view', $user) }}" class="um-name-link fw-semibold text-dark text-decoration-none d-block text-truncate" title="Open full profile">
-                                                    {{ $user->name }}
-                                                </a>
-                                                <a href="{{ route('admin.profiles.view', $user) }}" class="um-table__link text-decoration-none">
-                                                    <span class="badge rounded-pill bg-secondary um-table__id">{{ $user->unique_id }}</span>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="text-muted small">{{ $user->email }}</td>
-                                    <td class="text-muted small">{{ $user->phone ?: '—' }}</td>
-                                    <td>
-                                        @if($user->phone && $user->phone_verified_at)
-                                            <span class="badge rounded-pill bg-success">Yes</span>
-                                            @if($user->phone_verified_source === 'admin')
-                                                <span class="badge rounded-pill bg-primary ms-1" title="Verified manually by admin">Admin</span>
-                                            @endif
-                                        @elseif($user->phone)
-                                            <span class="badge rounded-pill bg-warning text-dark">No</span>
-                                        @else
-                                            <span class="text-muted small">—</span>
-                                        @endif
-                                    </td>
-                                    <td class="small text-muted">{{ $user->phoneVerificationSourceLabel() }}</td>
-                                    <td>
-                                        @php
-                                            $roleBadge = match ($user->role) {
-                                                'admin' => 'bg-danger',
-                                                'super_admin' => 'bg-dark',
-                                                'institution_admin' => 'text-bg-primary',
-                                                'faculty' => 'bg-info text-dark',
-                                                'student' => 'text-bg-secondary',
-                                                'nurse' => 'bg-info text-dark',
-                                                'caregiver' => 'bg-primary',
-                                                'patient' => 'bg-success',
-                                                default => 'bg-secondary',
-                                            };
-                                            $roleLabel = match ($user->role) {
-                                                'institution_admin' => 'Inst. admin',
-                                                'super_admin' => 'Academic admin',
-                                                default => ucfirst(str_replace('_', ' ', $user->role)),
-                                            };
-                                        @endphp
-                                        <span class="badge rounded-pill {{ $roleBadge }}" @if($user->role === 'super_admin') title="Platform admin for all colleges — protected from bulk delete" @endif>{{ $roleLabel }}</span>
-                                    </td>
-                                    @if($showInstitutionColumn)
-                                        <td class="small">
-                                            @if($user->role === 'super_admin')
-                                                <span class="text-dark fw-medium">All institutions</span>
-                                                <span class="d-block text-muted" style="font-size: 0.75rem;">Platform scope</span>
-                                            @elseif($user->academicInstitution)
-                                                <span class="text-dark fw-medium">{{ $user->academicInstitution->name }}</span>
-                                                @if($user->academicInstitution->code)
-                                                    <span class="text-muted">({{ $user->academicInstitution->code }})</span>
-                                                @endif
-                                            @else
-                                                <span class="text-muted">&mdash;</span>
-                                            @endif
-                                        </td>
-                                        <td class="small text-muted">
-                                            @if(in_array($user->role, ['faculty', 'student'], true) && $user->academicBatches->isNotEmpty())
-                                                {{ $user->academicBatches->pluck('name')->join(', ') }}
-                                            @else
-                                                &mdash;
-                                            @endif
-                                        </td>
-                                    @endif
-                                    <td>
-                                        @if($user->profile && $user->profile->isComplete())
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle">Complete</span>
-                                        @elseif($user->profile)
-                                            <span class="badge bg-warning-subtle text-dark border">Incomplete</span>
-                                        @else
-                                            <span class="text-muted small">No profile</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($user->profile)
-                                            <div class="progress um-completion-bar" style="height: 6px; min-width: 4rem;">
-                                                <div class="progress-bar" style="width: {{ $user->profile->getCompletionPercentage() }}%"></div>
-                                            </div>
-                                            <span class="small text-muted">{{ $user->profile->getCompletionPercentage() }}%</span>
-                                        @else
-                                            <span class="text-muted small">—</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill">
-                                            {{ $user->documents_count ?? 0 }} docs
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge rounded-pill {{ $user->is_active ? 'bg-success' : 'bg-warning text-dark' }}">
-                                            {{ $user->is_active ? 'Active' : 'Inactive' }}
-                                        </span>
-                                    </td>
-                                    <td class="text-muted small">{{ $user->created_at->format('M d, Y') }}</td>
-                                    <td class="text-end pe-4">
-                                        <div class="btn-group btn-group-sm um-actions">
-                                            @if(in_array($user->role, ['nurse', 'caregiver'], true))
-                                                <a class="btn btn-outline-success"
-                                                   href="{{ route('admin.staff.incentives', $user) }}"
-                                                   title="Incentives">
-                                                    <i class="fas fa-chart-line"></i>
-                                                </a>
-                                            @endif
-                                            <a href="{{ route('admin.profiles.view', $user) }}" class="btn btn-outline-primary" title="Full profile &amp; stats">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            @if(in_array($user->role, ['nurse', 'caregiver'], true) && $user->hasVerifiedPhone())
-                                                <a href="{{ route('admin.staff.id-card', $user) }}" class="btn btn-outline-secondary" title="View ID card">
-                                                    <i class="fas fa-id-card"></i>
-                                                </a>
-                                            @endif
-                                            <button type="button" class="btn btn-outline-warning" onclick="editUser({{ $user->id }})" title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            @if($user->phone && ! $user->hasVerifiedPhone())
-                                                <form method="POST" action="{{ route('admin.users.verify-phone', $user) }}" class="d-inline"
-                                                      onsubmit="return confirm(@json('Manually verify mobile for '.$user->name.'? They will see verified by admin and can use the app + rewards.'));">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-outline-success" title="Admin verify mobile">
-                                                        <i class="fas fa-check-double"></i>
-                                                    </button>
-                                                </form>
-                                            @elseif($user->hasVerifiedPhone())
-                                                <form method="POST" action="{{ route('admin.users.revoke-phone-verification', $user) }}" class="d-inline"
-                                                      onsubmit="return confirm(@json('Revoke mobile verification for '.$user->name.'? They must verify again via SMS OTP.'));">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-outline-danger" title="Revoke mobile verification">
-                                                        <i class="fas fa-mobile-alt"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                            <button type="button" class="btn btn-outline-secondary" onclick="toggleUserStatus({{ $user->id }})" title="{{ $user->is_active ? 'Deactivate' : 'Activate' }}">
-                                                <i class="fas fa-{{ $user->is_active ? 'ban' : 'check' }}"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="{{ $tableColCount }}" class="text-center text-muted py-5">
-                                        <i class="fas fa-users fa-2x mb-2 opacity-50"></i><br>
-                                        @if(($searchQuery ?? '') !== '')
-                                            No users match &ldquo;{{ \Illuminate\Support\Str::limit($searchQuery, 60) }}&rdquo; with this filter. Try clearing search or switching segment.
-                                        @elseif(($segment ?? 'all') !== 'all')
-                                            No users in this segment yet. Try &ldquo;Everyone&rdquo; or seed academic demo data.
-                                        @else
-                                            No users found
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforelse
+                            @include('auth::admin.partials.users-table-rows', [
+                                'users' => $users,
+                                'showInstitutionColumn' => $showInstitutionColumn,
+                                'tableColCount' => $tableColCount,
+                                'searchQuery' => $searchQuery ?? '',
+                                'segment' => $segment ?? 'all',
+                            ])
                         </tbody>
                     </table>
                 </div>
@@ -359,16 +192,61 @@
     min-height: calc(1.5em + 0.5rem + 2px);
 }
 .um-filter-hint { line-height: 1.4; }
-.um-table thead th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 700; border-bottom: 1px solid #e2e8f0; }
+.um-table-wrap { overflow-x: visible; width: 100%; }
+.um-table { table-layout: fixed; width: 100%; }
+.um-table thead th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 700; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+.um-table td { vertical-align: middle; word-break: break-word; }
+.um-col-user { width: 18%; }
+.um-col-contact { width: 22%; }
+.um-col-institution { width: 18%; }
+.um-col-profile { width: 16%; }
+.um-col-status { width: 10%; }
+.um-col-actions { width: 4.5rem; }
 .um-table__row:hover { background: #f8fafc; }
 .um-name-link:hover { color: #0d9488 !important; text-decoration: underline !important; }
 .um-table__link:hover .um-table__id .badge { background-color: #0f766e !important; }
-.um-table__user-cell { max-width: 16rem; }
+.um-table__user-cell { max-width: 100%; }
 .um-avatar { width: 40px; height: 40px; object-fit: cover; flex-shrink: 0; }
 .um-avatar--placeholder { width: 40px; height: 40px; background: linear-gradient(135deg, #312e81, #1d4ed8); flex-shrink: 0; }
-.um-completion-bar { margin-bottom: 2px; }
-.um-actions .btn { border-radius: 0.375rem !important; }
-.um-actions .btn + .btn { margin-left: 2px; }
+.um-completion-bar { margin-bottom: 0; max-width: 100%; }
+.um-actions-dropdown .dropdown-menu { min-width: 12rem; }
+.um-actions-dropdown .dropdown-item { font-size: 0.875rem; }
+@media (max-width: 1199.98px) {
+    .um-table-wrap { overflow-x: visible; }
+    .um-table { table-layout: auto; }
+    .um-col-user, .um-col-contact, .um-col-institution, .um-col-profile, .um-col-status { width: auto; }
+}
+@media (max-width: 767.98px) {
+    .um-table-wrap { overflow-x: visible; padding: 0.75rem; }
+    .um-table thead { display: none; }
+    .um-table, .um-table tbody, .um-table tr, .um-table td { display: block; width: 100%; }
+    .um-table tbody tr {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem 0.875rem;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+    .um-table tbody td {
+        border: 0;
+        padding: 0.35rem 0;
+        text-align: left !important;
+    }
+    .um-table tbody td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 0.2rem;
+    }
+    .um-table tbody td.um-col-actions::before { display: none; }
+    .um-table tbody td.um-col-actions { padding-top: 0.5rem; }
+    .um-table tbody td.ps-4, .um-table tbody td.pe-4 { padding-left: 0 !important; padding-right: 0 !important; }
+}
 </style>
 
 <!-- Create User Modal -->

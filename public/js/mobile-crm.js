@@ -21,7 +21,7 @@
             return;
         }
         root.querySelectorAll('table').forEach(function (table) {
-            if (table.closest('.table-responsive') || table.closest('.mmhc-table-scroll')) {
+            if (table.closest('.table-responsive') || table.closest('.mmhc-table-scroll') || table.closest('.um-table-wrap') || table.classList.contains('mmhc-no-mobile-cards')) {
                 return;
             }
             var wrap = document.createElement('div');
