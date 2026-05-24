@@ -79,12 +79,21 @@
 
         .brand-logo {
             display: block;
-            width: 100%;
+            width: auto;
             max-width: 160px;
             height: auto;
         }
 
+        .top-navbar .brand-logo--nav {
+            width: auto;
+            max-width: 118px;
+            max-height: 2rem;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
         .brand-logo--sidebar {
+            width: 100%;
             max-width: 180px;
             margin: 0 auto;
         }

@@ -811,12 +811,21 @@
     padding: 0.2em 0.45em;
 }
 
+.top-navbar .navbar-brand.mmhc-navbar-brand {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    min-width: 7.5rem;
+    margin-right: 0.75rem;
+}
+
 .top-navbar .brand-logo--nav {
     max-width: 118px;
     max-height: 2rem;
-    width: auto;
+    width: auto !important;
     height: auto;
     object-fit: contain;
+    flex-shrink: 0;
 }
 
 .mmhc-page-title-bar {
@@ -830,34 +839,41 @@
     line-height: 1.25;
 }
 
-/* Mobile: hamburger + logo + profile. Desktop (992px+): logo left | Dashboard Community | bell + profile — same as staff layout */
-.mmhc-navbar-brand {
-    flex: 1;
-    min-width: 0;
-    justify-content: center;
+/* Top bar: logo always visible; same row as admin/staff on desktop */
+.mmhc-topnav-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
 }
 
 @media (max-width: 991.98px) {
-    .mmhc-navbar-brand {
+    .mmhc-topnav-inner .mmhc-navbar-brand {
+        flex: 1 1 auto;
+        min-width: 5rem;
         justify-content: flex-start;
     }
 }
 
 @media (min-width: 992px) {
-    .top-navbar > .container-fluid {
+    .mmhc-topnav-inner {
         flex-wrap: nowrap;
-        align-items: center;
     }
 
-    .mmhc-navbar-brand {
+    .mmhc-topnav-inner .mmhc-navbar-brand {
         flex: 0 0 auto;
-        justify-content: flex-start;
-        margin-right: 0.5rem;
+        min-width: 7.5rem;
+        order: 1;
     }
 
-    .top-navbar .navbar-collapse {
-        display: flex !important;
+    .mmhc-topnav-inner .mmhc-navbar-mobile-actions {
+        order: 3;
+    }
+
+    .mmhc-topnav-inner > .navbar-collapse,
+    .mmhc-topnav-inner > #navbarNav {
+        order: 2;
         flex: 1 1 auto;
+        display: flex !important;
         align-items: center;
         justify-content: space-between;
         max-height: none;
