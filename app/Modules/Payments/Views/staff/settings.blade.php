@@ -1,6 +1,7 @@
 @extends('auth::layout')
 
 @section('title', 'Payment Settings - Staff')
+@section('page-title', 'Payment Settings')
 
 @section('head')
 <style>
@@ -30,8 +31,15 @@
 @endsection
 
 @section('content')
+<div class="mobile-app-container">
+<div class="app-mobile-header d-md-none">
+    <div class="d-flex align-items-center">
+        <a href="{{ route('staff.dashboard') }}" class="app-back-btn"><i class="fas fa-arrow-left"></i></a>
+        <h5 class="app-header-title text-white mb-0 ms-2">Payment Settings</h5>
+    </div>
+</div>
 <div class="container-fluid px-3 px-md-4 py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-none d-md-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">
             <i class="fas fa-cog me-2"></i>Payment Settings
         </h2>
@@ -121,6 +129,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 @endsection
 

@@ -197,9 +197,6 @@
         </div>
     </div>
 </div>
-
-@include('auth::components.bottom-nav')
-
 <style>
 .subscription-plan-detail-card {
     background: #fff;

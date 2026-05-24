@@ -308,9 +308,9 @@
                 <!-- Main content -->
                 <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-0 px-md-4 main-content">
                     <!-- Page title (all breakpoints; sidebar is offcanvas on small screens) -->
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom px-3 px-md-0">
-                        <h1 class="h2">@yield('page-title', 'Dashboard')</h1>
-                        <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom px-3 px-md-0 mmhc-page-title-bar">
+                        <h1 class="h2 mb-0 min-w-0 pe-2">@yield('page-title', 'Dashboard')</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0 flex-shrink-0 mmhc-page-title-badges">
                             <div class="btn-group me-2">
                                 <span class="badge bg-primary">{{ auth()->user()->unique_id }}</span>
                                 <span class="badge bg-secondary">{{ ucfirst(auth()->user()->role) }}</span>

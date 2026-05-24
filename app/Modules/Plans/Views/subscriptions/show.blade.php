@@ -254,9 +254,6 @@
         </div>
     </div>
 </div>
-
-@include('auth::components.bottom-nav')
-
 <style>
 /* Mobile padding for bottom nav - prevents content from being blocked */
 @media (max-width: 767px) {

@@ -190,9 +190,6 @@
         </div>
     </div>
 </div>
-
-@include('auth::components.bottom-nav')
-
 <!-- Upload Screenshot Popup Modal -->
 <div id="uploadScreenshotPopup" class="upload-popup-modal" style="display: none;">
     <div class="upload-popup-content">

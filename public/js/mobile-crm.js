@@ -69,8 +69,23 @@
         });
     }
 
+    function markMobileAppShell() {
+        document.body.classList.remove('mmhc-mobile-app-shell');
+        if (!mq.matches) {
+            return;
+        }
+        var main = document.querySelector('.main-content');
+        if (!main) {
+            return;
+        }
+        if (main.querySelector('.mobile-app-container, .app-mobile-header, .app-header-mobile, .community-page')) {
+            document.body.classList.add('mmhc-mobile-app-shell');
+        }
+    }
+
     function initMobileLayout() {
         applyMobileClass();
+        markMobileAppShell();
         wrapTables();
         enhanceMobileTables();
     }

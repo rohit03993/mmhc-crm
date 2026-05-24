@@ -255,8 +255,6 @@
             </div>
         </div>
     </div>
-
-    @include('auth::components.bottom-nav')
 </div>
 
 <style>

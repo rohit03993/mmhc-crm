@@ -288,7 +288,6 @@
     </div>
 
     <!-- Bottom Navigation -->
-    @include('auth::components.bottom-nav')
 </div>
 
 <style>

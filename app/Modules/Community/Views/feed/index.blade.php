@@ -1,6 +1,7 @@
 @extends('auth::layout')
 
 @section('title', 'Community Feed')
+@section('page-title', 'Community')
 
 @section('content')
 <div class="container-fluid px-2 px-md-3 py-3 community-page">

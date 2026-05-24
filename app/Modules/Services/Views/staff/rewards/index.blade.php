@@ -1,8 +1,10 @@
 @extends('auth::layout')
 
 @section('title', 'Patient Rewards - Staff Dashboard')
+@section('page-title', 'Patient Rewards')
 
 @section('content')
+<div class="mobile-app-container">
 <!-- Mobile Header -->
 <div class="app-mobile-header d-md-none">
     <div class="d-flex align-items-center">
@@ -266,8 +268,7 @@
         </div>
     </div>
 </div>
-
-@include('auth::components.bottom-nav')
+</div>
 @endsection
 
 @section('scripts')

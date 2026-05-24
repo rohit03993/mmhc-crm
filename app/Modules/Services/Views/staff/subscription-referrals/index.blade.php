@@ -1,8 +1,10 @@
 @extends('auth::layout')
 
 @section('title', 'Subscription Referrals - Staff Dashboard')
+@section('page-title', 'Subscription Referrals')
 
 @section('content')
+<div class="mobile-app-container">
 <!-- Mobile Header -->
 <div class="app-mobile-header d-md-none">
     <div class="d-flex align-items-center">
@@ -170,9 +172,7 @@
         </div>
     </div>
 </div>
-
-@include('auth::components.bottom-nav')
-
+</div>
 <style>
 .stats-card-modern {
     background: white;

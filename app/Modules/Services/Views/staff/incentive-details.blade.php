@@ -25,6 +25,5 @@
 </div>
 
 @if(! $isAdminViewer)
-    @include('auth::components.bottom-nav')
 @endif
 @endsection

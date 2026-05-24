@@ -721,7 +721,6 @@
     </div>
 
     <!-- Bottom Navigation Bar (Mobile Only) - Using Shared Component -->
-    @include('auth::components.bottom-nav')
 </div>
 
 <!-- Comprehensive Mobile-First Styling -->

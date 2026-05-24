@@ -1,6 +1,10 @@
 @extends('auth::layout')
 
+@section('title', 'My Subscriptions')
+@section('page-title', 'Subscriptions')
+
 @section('content')
+<div class="mobile-app-container">
 <!-- Mobile Header -->
 <div class="app-mobile-header d-md-none">
     <div class="d-flex align-items-center">
@@ -328,9 +332,7 @@
         @endforelse
     </div>
 </div>
-
-@include('auth::components.bottom-nav')
-
+</div>
 <style>
 .subscription-card {
     background: #fff;

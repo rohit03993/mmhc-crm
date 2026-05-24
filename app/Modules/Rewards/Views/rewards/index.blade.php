@@ -201,7 +201,6 @@
     </div>
 
     <!-- Bottom Navigation Bar (Mobile Only) -->
-    @include('auth::components.bottom-nav')
 </div>
 
 <!-- Mobile-First Styling -->
