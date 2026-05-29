@@ -15,10 +15,11 @@ return [
     'payment_frequency' => 'student_launch',
 
     /*
-    | When global SUBSCRIPTION_MANUAL_PAYMENT_ENABLED is false, students can still
-    | pay via UPI + screenshot on the payment-confirmation page.
+    | When Razorpay is OFF, students can pay via UPI + screenshot (if true).
+    | When Razorpay is ON, manual path only appears if manual_with_razorpay is true.
     */
     'manual_payment_enabled' => env('STUDENT_SUBSCRIPTION_MANUAL_PAYMENT', true),
+    'manual_with_razorpay' => env('STUDENT_SUBSCRIPTION_MANUAL_WITH_RAZORPAY', false),
 
     /*
     | After screenshot upload, activate membership immediately (no admin wait).

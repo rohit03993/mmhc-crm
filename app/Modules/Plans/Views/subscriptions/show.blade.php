@@ -184,7 +184,7 @@
                                 <div class="payment-method-card text-center">
                                     <h6 class="mb-3"><i class="fas fa-mobile-alt me-2"></i>UPI Payment</h6>
                                     <div class="upi-id-box">
-                                        <input type="hidden" id="upiId" value="{{ config('subscription.upi_id', 'mmhc@paytm') }}">
+                                        <input type="hidden" id="upiId" value="{{ \App\Modules\Plans\Support\SubscriptionSettings::upiId() }}">
                                         <button type="button" 
                                                 class="btn btn-primary btn-lg w-100" 
                                                 onclick="openUPI()">

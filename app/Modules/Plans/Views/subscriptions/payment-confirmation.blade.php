@@ -23,8 +23,16 @@
                     <div class="payment-icon mb-3">
                         <i class="fas fa-check-circle text-success" style="font-size: 64px;"></i>
                     </div>
-                    <h3 class="mb-2">Payment Confirmation</h3>
-                    <p class="text-muted">Please upload your payment screenshot to complete the process</p>
+                    <h3 class="mb-2">Complete your payment</h3>
+                    <p class="text-muted mb-0">
+                        @if(!empty($razorpayEnabled) && empty($manualPaymentEnabled))
+                            Pay securely with Razorpay to activate your subscription.
+                        @elseif(!empty($razorpayEnabled) && !empty($manualPaymentEnabled))
+                            Pay with Razorpay (recommended) or use manual UPI and upload proof below.
+                        @else
+                            Complete payment via UPI and upload your screenshot below.
+                        @endif
+                    </p>
                 </div>
 
                 <!-- Subscription Details -->
@@ -74,8 +82,8 @@
                 @if($subscription->payment_status !== 'paid')
                 <div class="payment-methods mb-4">
                     @php
-                        $razorpayEnabled = (bool) config('payments.razorpay.enabled');
-                        $manualPaymentEnabled = $manualPaymentEnabled ?? (bool) config('payments.subscription.manual_enabled', false);
+                        $razorpayEnabled = $razorpayEnabled ?? (bool) config('payments.razorpay.enabled');
+                        $manualPaymentEnabled = $manualPaymentEnabled ?? false;
                         $isStudentMembership = $isStudentMembership ?? false;
                     @endphp
 
@@ -83,7 +91,11 @@
                     <div class="alert alert-info small mb-3">
                         <i class="fas fa-graduation-cap me-1"></i>
                         <strong>Student membership (₹{{ number_format((float) $subscription->total_amount, 0) }} one-time).</strong>
-                        Pay online with Razorpay or use UPI and upload your payment screenshot below.
+                        @if($razorpayEnabled)
+                            Pay with Razorpay to unlock academics immediately.
+                        @else
+                            Use UPI below and upload your payment screenshot.
+                        @endif
                     </div>
                     @endif
 
@@ -102,13 +114,16 @@
                     @endif
 
                     @if($manualPaymentEnabled)
+                    @if($razorpayEnabled)
+                    <p class="text-center text-muted small my-2">— or pay manually —</p>
+                    @endif
                     <div class="payment-method-card text-center">
-                        <h6 class="mb-3"><i class="fas fa-mobile-alt me-2"></i>Make Payment</h6>
+                        <h6 class="mb-3"><i class="fas fa-mobile-alt me-2"></i>Manual UPI payment</h6>
                         <div class="upi-id-box">
                             @php
-                                $upiId = config('subscription.upi_id', 'mmhc@paytm');
+                                $upiId = \App\Modules\Plans\Support\SubscriptionSettings::upiId();
                                 $amount = $subscription->total_amount;
-                                $merchantName = config('subscription.upi_merchant_name', 'MMHC');
+                                $merchantName = \App\Modules\Plans\Support\SubscriptionSettings::upiMerchantName();
                                 // Generate UPI payment link (works on mobile, tries on desktop too)
                                 $upiLink = "upi://pay?pa=" . urlencode($upiId) . "&pn=" . urlencode($merchantName) . "&am=" . number_format($amount, 2, '.', '') . "&cu=INR&tn=MMHC Subscription Payment";
                                 // Generate QR code data

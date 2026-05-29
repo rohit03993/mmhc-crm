@@ -3,11 +3,18 @@
 return [
     'provider' => env('PAYMENT_PROVIDER', 'manual'),
     'mode' => env('PAYMENT_MODE', 'test'),
+    /*
+    | Subscription checkout (patients / healthcare plans): use Razorpay (payments.razorpay).
+    | Manual UPI + screenshot is a fallback when Razorpay is off, or if manual_with_razorpay is true.
+    */
     'subscription' => [
         'manual_enabled' => env('SUBSCRIPTION_MANUAL_PAYMENT_ENABLED', false),
+        'manual_with_razorpay' => env('SUBSCRIPTION_MANUAL_WITH_RAZORPAY', false),
     ],
     'staff_payout' => [
         'manual_enabled' => env('STAFF_PAYOUT_MANUAL_ENABLED', true),
+        // MMHC policy: staff payouts are recorded manually (bank/UPI + proof). RazorpayX stays off unless explicitly enabled.
+        'razorpayx_allowed' => env('STAFF_PAYOUT_RAZORPAYX_ALLOWED', false),
     ],
 
     'razorpay' => [

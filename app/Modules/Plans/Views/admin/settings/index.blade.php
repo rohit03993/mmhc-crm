@@ -11,7 +11,13 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.subscription-settings.update') }}" method="POST" enctype="multipart/form-data">
+                    @if(session('success'))
+                        <div class="alert alert-success">{{ session('success') }}</div>
+                    @endif
+                    @if(session('error'))
+                        <div class="alert alert-danger">{{ session('error') }}</div>
+                    @endif
+                    <form action="{{ route('admin.subscription-settings.update') }}" method="POST">
                         @csrf
                         @method('PUT')
                         
@@ -47,7 +53,7 @@
                                    value="{{ old('upi_id', $upiId) }}"
                                    placeholder="mmhc@paytm"
                                    required>
-                            <small class="text-muted">UPI ID for manual subscription payments</small>
+                            <small class="text-muted">UPI ID for manual subscription payments. Saved in the database and used on patient/student payment pages.</small>
                             @error('upi_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

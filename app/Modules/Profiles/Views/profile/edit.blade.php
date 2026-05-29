@@ -73,6 +73,8 @@
 
         <!-- Profile Form Card -->
         <div class="app-form-container">
+            @include('profiles::profile.partials.avatar-upload', ['profile' => $profile, 'variant' => 'edit'])
+
             <form method="POST" action="{{ route('profile.update') }}">
                 @csrf
                 @method('PUT')

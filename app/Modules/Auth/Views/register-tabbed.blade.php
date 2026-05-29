@@ -37,7 +37,7 @@
                             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--auth" style="max-height: 50px; display: block;">
                         </div>
                         <h2 class="mt-2 mb-1" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; font-size: 1.5rem;">{{ isset($warrior) && $warrior ? 'Join as Nursing Warrior' : 'Create your account' }}</h2>
-                        <p class="text-muted mb-3" style="font-size: 0.9rem;">{{ isset($warrior) && $warrior ? 'Register as Nurse Warrior or Caregiver Warrior' : 'Join MMHC for home care & community services (patient, nurse, caregiver)' }}</p>
+                        <p class="text-muted mb-3" style="font-size: 0.9rem;">{{ isset($warrior) && $warrior ? 'Register as Nurse Warrior or Caregiver Warrior' : 'Mobile number required — no email needed. Sign in later with SMS OTP on the Phone tab.' }}</p>
                         @if(empty($warrior) && empty($patientOnly))
                         <div class="register-portal-switch row g-2 g-md-3 mb-0 justify-content-center">
                             <div class="col-12 col-md-5 col-lg-5">

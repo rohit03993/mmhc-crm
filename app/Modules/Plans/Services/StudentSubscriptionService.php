@@ -98,15 +98,13 @@ class StudentSubscriptionService
 
     public function allowsManualPayment(?Subscription $subscription = null): bool
     {
-        if ((bool) config('payments.subscription.manual_enabled', false)) {
-            return true;
+        if (! $subscription) {
+            return app(SubscriptionPaymentService::class)->isRazorpayEnabled()
+                ? (bool) config('student_subscription.manual_with_razorpay', false)
+                : (bool) config('student_subscription.manual_payment_enabled', true);
         }
 
-        if ($subscription && $this->isStudentPlanSubscription($subscription)) {
-            return (bool) config('student_subscription.manual_payment_enabled', true);
-        }
-
-        return false;
+        return app(SubscriptionPaymentService::class)->allowsManualPayment($subscription);
     }
 
     public function shouldAutoActivateOnManualProof(): bool

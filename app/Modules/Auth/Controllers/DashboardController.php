@@ -21,8 +21,28 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        if ($user && $user->hasAcademicRole()) {
+        if (! $user) {
+            return redirect()->route('auth.login');
+        }
+
+        if ($user->hasAcademicRole()) {
             return redirect()->route('academics.dashboard');
+        }
+
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        if ($user->isStaff()) {
+            return redirect()->route('staff.dashboard');
+        }
+
+        if ($user->isPatient()) {
+            return view('auth::dashboard', [
+                'user' => $user,
+                'stats' => $this->getUserStats($user),
+                'recent_activity' => $this->getRecentActivity($user),
+            ]);
         }
 
         return redirect()->route('community.index');

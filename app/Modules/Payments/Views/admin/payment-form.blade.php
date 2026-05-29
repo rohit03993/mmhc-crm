@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', toggleAdminPaymentModeFields);
                     @error('upi_id')
                         <div class="text-danger small mt-1">{{ $message }}</div>
                     @enderror
-                    <small class="text-muted">This UPI will be visible in staff account and used for Razorpay payout.</small>
+                    <small class="text-muted">Shown in the staff account and used when you pay them via UPI (manual payout).</small>
                 </form>
             </div>
         </div>
@@ -351,12 +351,15 @@ document.addEventListener('DOMContentLoaded', toggleAdminPaymentModeFields);
             @endif
             <!-- Payment Instructions -->
             <div class="alert alert-info mb-3">
-                <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i><strong>Payment Process:</strong></h6>
+                <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i><strong>Manual payout process:</strong></h6>
                 <ol class="mb-0 ps-3">
-                    <li><strong>Razorpay payout:</strong> System initiates direct payout to staff UPI and records payout status.</li>
-                    <li><strong>Manual payout:</strong> Admin pays externally and uploads transaction proof for full audit trail.</li>
-                    <li><strong>Auto-settlement:</strong> Pending items are marked settled after successful processing/recording.</li>
+                    <li>Pay the staff member via bank transfer or UPI (use their UPI / QR on the left if needed).</li>
+                    <li>Enter the amount, transaction ID, and upload a payment screenshot below.</li>
+                    <li>Submit to record the payout and mark pending items as settled.</li>
                 </ol>
+                @if($razorpayXPayoutAllowed)
+                    <p class="small text-muted mb-0 mt-2">Optional: RazorpayX automatic payout is enabled on this server — you may choose it in Payment mode.</p>
+                @endif
             </div>
 
             <div class="card border-0 shadow-sm">
@@ -387,30 +390,34 @@ document.addEventListener('DOMContentLoaded', toggleAdminPaymentModeFields);
                         @csrf
                         <input type="hidden" name="payment_type" value="{{ $paymentType }}">
 
-                        <div class="mb-3">
-                            <label class="form-label">Payment mode <span class="text-danger">*</span></label>
-                            <select name="payment_mode" id="paymentModeSelect" class="form-select" onchange="toggleAdminPaymentModeFields()">
-                                <option value="razorpayx" @selected(old('payment_mode', 'razorpayx') === 'razorpayx') {{ !$razorpayXEnabled ? 'disabled' : '' }}>
-                                    Razorpay UPI payout (direct to staff)
-                                </option>
-                                @if($manualPayoutEnabled)
-                                    <option value="manual" @selected(old('payment_mode') === 'manual')>
-                                        Manual payout (with transaction proof)
+                        @if($razorpayXPayoutAllowed && $manualPayoutEnabled)
+                            <div class="mb-3">
+                                <label class="form-label">Payment mode <span class="text-danger">*</span></label>
+                                <select name="payment_mode" id="paymentModeSelect" class="form-select" onchange="toggleAdminPaymentModeFields()">
+                                    <option value="manual" @selected(old('payment_mode', 'manual') === 'manual')>
+                                        Manual payout (transaction ID + screenshot)
                                     </option>
-                                @endif
-                            </select>
-                            <small id="gatewayModeHint" class="text-muted">Razorpay payout requires valid RazorpayX credentials and staff UPI.</small>
-                        </div>
-
-                        @if(!$razorpayXEnabled)
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                Razorpay payout is not available right now. Configure `RAZORPAYX_*` credentials.
+                                    <option value="razorpayx" @selected(old('payment_mode') === 'razorpayx')>
+                                        RazorpayX UPI payout (automatic)
+                                    </option>
+                                </select>
+                                <small id="gatewayModeHint" class="text-muted">RazorpayX requires staff UPI and valid gateway credentials.</small>
                             </div>
-                        @elseif(!$staff->upi_id)
-                            <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                Staff UPI is missing for Razorpay payout. Add staff UPI below or use manual mode (if enabled).
+                            @if(!$staff->upi_id)
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Staff UPI is missing for RazorpayX. Add UPI on the left or use manual payout.
+                                </div>
+                            @endif
+                        @elseif($manualPayoutEnabled)
+                            <input type="hidden" name="payment_mode" value="manual">
+                            <div class="alert alert-secondary py-2 small mb-3">
+                                <i class="fas fa-hand-holding-usd me-1"></i>
+                                <strong>Manual payout only</strong> — pay staff outside the app, then record proof here.
+                            </div>
+                        @else
+                            <div class="alert alert-danger mb-3">
+                                Manual staff payouts are disabled in configuration. Contact system administrator.
                             </div>
                         @endif
 

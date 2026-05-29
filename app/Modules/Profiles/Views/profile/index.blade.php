@@ -45,15 +45,7 @@
 
         <!-- Profile Header Card -->
         <div class="app-profile-header">
-            <div class="app-profile-avatar">
-                @if($profile->avatar_path)
-                    <img src="{{ Storage::url($profile->avatar_path) }}" alt="Profile">
-                @else
-                    <div class="app-avatar-placeholder">
-                        <i class="fas fa-user"></i>
-                    </div>
-                @endif
-            </div>
+            @include('profiles::profile.partials.avatar-upload', ['profile' => $profile, 'variant' => 'header'])
             <h3 class="app-profile-name">{{ $user->name }}</h3>
             <div class="app-profile-badges">
                 <span class="app-badge app-badge-primary">{{ ucfirst($user->role) }}</span>

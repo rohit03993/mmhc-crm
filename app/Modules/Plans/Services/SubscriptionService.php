@@ -45,7 +45,7 @@ class SubscriptionService
             $gstAmount = 0.0;
             $totalAmount = $baseAmount;
         } else {
-            $gstRate = (float) config('subscription.gst_rate', 18.00);
+            $gstRate = \App\Modules\Plans\Support\SubscriptionSettings::gstRate();
             $gstAmount = ($baseAmount * $gstRate) / 100;
             $totalAmount = $baseAmount + $gstAmount;
         }
@@ -120,7 +120,7 @@ class SubscriptionService
             $gstAmount = 0.0;
             $totalAmount = round($baseAmount, 2);
         } else {
-            $gstRate = (float) config('subscription.gst_rate', 18.00);
+            $gstRate = \App\Modules\Plans\Support\SubscriptionSettings::gstRate();
             $gstAmount = round(($baseAmount * $gstRate) / 100, 2);
             $totalAmount = round($baseAmount + $gstAmount, 2);
         }
@@ -237,7 +237,7 @@ class SubscriptionService
 
         // New subscription amount
         $newBaseAmount = $selectedOption['price'] ?? $newPlan->monthly_price ?? $newPlan->price;
-        $gstRate = (float) config('subscription.gst_rate', 18.00);
+        $gstRate = \App\Modules\Plans\Support\SubscriptionSettings::gstRate();
         $newGstAmount = ($newBaseAmount * $gstRate) / 100;
         $newTotalAmount = $newBaseAmount + $newGstAmount;
 

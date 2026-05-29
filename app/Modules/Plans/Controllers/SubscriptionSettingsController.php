@@ -3,8 +3,8 @@
 namespace App\Modules\Plans\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Plans\Support\SubscriptionSettings;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -15,15 +15,15 @@ class SubscriptionSettingsController extends Controller
      */
     public function index()
     {
-        $gstRate = config('subscription.gst_rate', 18.00);
-        $upiId = config('subscription.upi_id', 'mmhc@paytm');
-        $merchantName = config('subscription.upi_merchant_name', 'MMHC');
-
-        return view('plans::admin.settings.index', compact('gstRate', 'upiId', 'merchantName'));
+        return view('plans::admin.settings.index', [
+            'gstRate' => SubscriptionSettings::gstRate(),
+            'upiId' => SubscriptionSettings::upiId(),
+            'merchantName' => SubscriptionSettings::upiMerchantName(),
+        ]);
     }
 
     /**
-     * Update subscription settings
+     * Update subscription settings (persisted in site_settings DB).
      */
     public function update(Request $request)
     {
@@ -41,44 +41,21 @@ class SubscriptionSettingsController extends Controller
 
         try {
             $validated = $validator->validated();
-            $configPath = config_path('subscription.php');
 
-            // Build config content deterministically to avoid regex mismatches and malformed PHP.
-            $gstRate = (float) $validated['gst_rate'];
-            $upiId = var_export((string) $validated['upi_id'], true);
-            $merchantName = var_export((string) $validated['upi_merchant_name'], true);
-
-            $configContent = <<<PHP
-<?php
-
-return [
-    'gst_rate' => env('SUBSCRIPTION_GST_RATE', {$gstRate}),
-    'upi_id' => env('SUBSCRIPTION_UPI_ID', {$upiId}),
-    'upi_merchant_name' => env('SUBSCRIPTION_UPI_MERCHANT_NAME', {$merchantName}),
-];
-
-PHP;
-
-            File::put($configPath, $configContent);
-
-            // Cache clear should not block successful save if command is unavailable.
-            try {
-                \Artisan::call('config:clear');
-            } catch (\Throwable $cacheError) {
-                Log::warning('Subscription settings saved, but config cache clear failed', [
-                    'message' => $cacheError->getMessage(),
-                ]);
-            }
+            SubscriptionSettings::persist([
+                'gst_rate' => $validated['gst_rate'],
+                'upi_id' => $validated['upi_id'],
+                'upi_merchant_name' => $validated['upi_merchant_name'],
+            ]);
 
             return redirect()->back()
-                ->with('success', 'Subscription settings updated successfully!');
+                ->with('success', 'Subscription settings saved. UPI ID and GST will apply immediately on payment pages.');
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Subscription settings update failed', [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return redirect()->back()

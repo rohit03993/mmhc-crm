@@ -491,7 +491,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <p class="small text-muted mt-2 mb-0">Shows the latest 20 payouts for this staff profile, including RazorpayX and manual records.</p>
+                        <p class="small text-muted mt-2 mb-0">Shows the latest 20 payouts for this staff profile (manual and gateway records).</p>
                     @else
                         <div class="text-center text-muted py-4">
                             <i class="fas fa-receipt fa-2x mb-2 opacity-50"></i>

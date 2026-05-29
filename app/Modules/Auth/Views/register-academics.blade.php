@@ -196,7 +196,7 @@
                                 <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--auth" style="max-height: 50px; display: block;">
                             </div>
                             <h2 class="mt-2 mb-1" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; font-size: 1.5rem;">Sign up for your institute (Academics)</h2>
-                            <p class="text-muted mb-3" style="font-size: 0.9rem;">Student or faculty at a college already registered on MMHC.</p>
+                            <p class="text-muted mb-3" style="font-size: 0.9rem;">Mobile number required — no email needed. Sign in later with SMS OTP on the Phone tab.</p>
 
                             <div class="register-portal-switch row g-2 g-md-3 mb-0 justify-content-center">
                                 <div class="col-12 col-md-5 col-lg-5">

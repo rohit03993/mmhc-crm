@@ -26,6 +26,18 @@ class AdminPaymentController extends Controller
     ) {}
 
     /**
+     * RazorpayX staff payout is opt-in only (manual payouts are the default policy).
+     */
+    protected function staffPayoutRazorpayXAllowed(): bool
+    {
+        if (! (bool) config('payments.staff_payout.razorpayx_allowed', false)) {
+            return false;
+        }
+
+        return $this->razorpayXService->isEnabled();
+    }
+
+    /**
      * Show admin payment management dashboard
      */
     public function index(Request $request)
@@ -162,7 +174,7 @@ class AdminPaymentController extends Controller
         $paymentDetails = $this->getPaymentDetails($staff, $paymentType);
         $selectedTypePending = (float) ($pendingPayments[$paymentType]['amount'] ?? 0);
         $canAutoSettle = $selectedTypePending > 0;
-        $razorpayXEnabled = $this->razorpayXService->isEnabled();
+        $razorpayXPayoutAllowed = $this->staffPayoutRazorpayXAllowed();
         $manualPayoutEnabled = (bool) config('payments.staff_payout.manual_enabled', true);
 
         // Ensure paymentDetails is always a collection
@@ -178,7 +190,7 @@ class AdminPaymentController extends Controller
             'selectedTypePending',
             'canAutoSettle',
             'allowedTypes',
-            'razorpayXEnabled',
+            'razorpayXPayoutAllowed',
             'manualPayoutEnabled'
         ));
     }
@@ -248,7 +260,11 @@ class AdminPaymentController extends Controller
 
         $admin = Auth::user();
         $requestedAmount = (float) $request->amount;
+        $razorpayXPayoutAllowed = $this->staffPayoutRazorpayXAllowed();
         $paymentMode = $request->input('payment_mode', 'manual');
+        if (! $razorpayXPayoutAllowed) {
+            $paymentMode = 'manual';
+        }
         $manualPayoutEnabled = (bool) config('payments.staff_payout.manual_enabled', true);
         $pendingPayments = $this->calculatePendingPayments($staff);
         $maxPayableForType = (float) ($pendingPayments[$request->payment_type]['amount'] ?? 0);
@@ -260,6 +276,12 @@ class AdminPaymentController extends Controller
         }
 
         $usingRazorpayX = $paymentMode === 'razorpayx';
+        if ($usingRazorpayX && ! $razorpayXPayoutAllowed) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Automatic Razorpay payouts are disabled. Record the payment manually with transaction ID and screenshot.');
+        }
+
         if ($usingRazorpayX && ! $this->razorpayXService->isEnabled()) {
             return redirect()->back()
                 ->withInput()

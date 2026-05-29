@@ -10,6 +10,9 @@ use App\Modules\Academics\Services\EnrollmentService;
 use App\Modules\Auth\Services\UserService;
 use App\Modules\Auth\Services\PhoneVerificationService;
 use App\Modules\Auth\Services\SmsOtpService;
+use App\Modules\Auth\Support\PostLoginRedirect;
+use App\Models\SiteSetting;
+use Illuminate\Support\Facades\Password;
 use App\Modules\Referrals\Services\ReferralService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -93,7 +96,7 @@ class AuthController extends Controller
             $request->session()->regenerate();
             Auth::user()?->syncTrustedAccountPhoneState();
 
-            return redirect()->intended($this->defaultPostLoginUrl());
+            return redirect()->intended(PostLoginRedirect::urlFor(Auth::user()));
         }
 
         return redirect()->back()
@@ -218,54 +221,127 @@ class AuthController extends Controller
         }
         $user->syncTrustedAccountPhoneState();
 
-        return redirect()->intended($this->defaultPostLoginUrl());
-    }
-
-    /**
-     * Default destination after email or phone login when no intended URL is stored.
-     */
-    protected function defaultPostLoginUrl(): string
-    {
-        $user = Auth::user();
-
-        if ($user && ! $user->hasVerifiedPhone() && ! $user->isExemptFromPhoneVerification()) {
-            return route('profile.verify-phone');
-        }
-
-        if ($user && $user->role === 'student') {
-            $studentSub = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
-            if ($studentSub->requiresStudentMembership($user)) {
-                return route('student-subscription.offer');
-            }
-
-            return route('academics.dashboard');
-        }
-
-        if ($user && $user->hasAcademicRole()) {
-            return route('academics.dashboard');
-        }
-
-        return route('dashboard');
+        return redirect()->intended(PostLoginRedirect::urlFor(Auth::user()));
     }
 
     protected function redirectAuthenticatedUser(User $user)
     {
         $user->syncTrustedAccountPhoneState();
 
-        if (! $user->hasVerifiedPhone() && ! $user->isExemptFromPhoneVerification()) {
-            return redirect()->route('profile.verify-phone');
+        return redirect(PostLoginRedirect::urlFor($user->fresh()));
+    }
+
+    /**
+     * Whether outbound email can deliver password-reset links.
+     */
+    protected function passwordResetMailReady(): bool
+    {
+        $mailer = (string) config('mail.default');
+
+        if (in_array($mailer, ['log', 'array'], true)) {
+            return false;
         }
 
-        if ($user->role === 'student') {
-            $studentSub = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
-            if ($studentSub->requiresStudentMembership($user)) {
-                return redirect()->route('student-subscription.offer');
+        return filled(config('mail.from.address'));
+    }
+
+    public function showForgotPassword()
+    {
+        if (Auth::check()) {
+            return redirect(PostLoginRedirect::urlFor(Auth::user()));
+        }
+
+        $supportEmail = Schema::hasTable('site_settings')
+            ? (string) SiteSetting::get('contact_email', '')
+            : '';
+
+        return view('auth::forgot-password', [
+            'mailReady' => $this->passwordResetMailReady(),
+            'supportEmail' => filled($supportEmail) ? $supportEmail : null,
+        ]);
+    }
+
+    public function sendForgotPasswordLink(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $email = strtolower(trim((string) $request->input('email')));
+        $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
+
+        if ($user && ($user->requiresPhoneLogin() || $user->usesPlaceholderEmail())) {
+            return redirect()->back()
+                ->withErrors(['email' => 'This account signs in with mobile SMS OTP. Open the Phone tab on the sign-in page and use your registered number.'])
+                ->withInput();
+        }
+
+        if (! $this->passwordResetMailReady()) {
+            return redirect()->back()
+                ->withErrors(['email' => 'Password reset by email is not available on this server. Use SMS OTP or contact MMHC support.'])
+                ->withInput();
+        }
+
+        if ($user) {
+            Password::sendResetLink(['email' => $user->email]);
+        }
+
+        return redirect()->back()
+            ->with('status', 'If that email is registered, we sent a password reset link. Check your inbox and spam folder.');
+    }
+
+    public function showResetPassword(Request $request, string $token)
+    {
+        return view('auth::reset-password', [
+            'token' => $token,
+            'email' => (string) $request->query('email', old('email', '')),
+        ]);
+    }
+
+    public function resetPasswordFromLink(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $email = strtolower(trim((string) $request->input('email')));
+        $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
+
+        if ($user && ($user->requiresPhoneLogin() || $user->usesPlaceholderEmail())) {
+            return redirect()->route('auth.login')
+                ->withErrors(['email' => 'This account uses mobile SMS OTP. Sign in on the Phone tab.'])
+                ->with('login_tab', 'phone');
+        }
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                    'plain_password' => $password,
+                ])->save();
             }
+        );
 
-            return redirect()->route('academics.dashboard');
+        if ($status === Password::PASSWORD_RESET) {
+            return redirect()->route('auth.login')
+                ->with('success_otp', 'Password updated. Sign in with your email and new password.')
+                ->with('login_tab', 'email');
         }
 
-        return redirect()->route($user->hasAcademicRole() ? 'academics.dashboard' : 'dashboard');
+        return redirect()->back()
+            ->withErrors(['email' => __($status)])
+            ->withInput();
     }
 
     protected function redirectToPhoneVerification(User $user, ?string $successMessage = null)
@@ -274,7 +350,7 @@ class AuthController extends Controller
         $user = $user->fresh();
 
         if ($user->hasVerifiedPhone() || $user->isExemptFromPhoneVerification()) {
-            $redirect = redirect()->route($user->hasAcademicRole() ? 'academics.dashboard' : 'dashboard');
+            $redirect = redirect(PostLoginRedirect::urlFor($user));
             if ($successMessage) {
                 $redirect = $redirect->with('success', $successMessage);
             }
@@ -643,10 +719,10 @@ class AuthController extends Controller
         }
         $user = Auth::user();
         if (! in_array($user->role, ['nurse', 'caregiver'])) {
-            return redirect()->route('dashboard');
+            return redirect(PostLoginRedirect::urlFor($user));
         }
         if (! $request->session()->pull('nursing_warrior_just_registered', false)) {
-            return redirect()->route('dashboard');
+            return redirect(PostLoginRedirect::urlFor($user));
         }
 
         $pendingReferralOtp = \App\Modules\Referrals\Models\Referral::query()

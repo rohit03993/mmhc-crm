@@ -670,12 +670,15 @@ class SubscriptionController extends Controller
                 ->with('success', 'Your student membership payment is confirmed. Welcome!');
         }
 
-        $manualPaymentEnabled = $studentSubscriptionService->allowsManualPayment($subscription);
+        $subscriptionPaymentService = app(\App\Modules\Plans\Services\SubscriptionPaymentService::class);
+        $manualPaymentEnabled = $subscriptionPaymentService->allowsManualPayment($subscription);
+        $razorpayEnabled = $subscriptionPaymentService->isRazorpayEnabled();
         $isStudentMembership = $studentSubscriptionService->isStudentPlanSubscription($subscription);
 
         return view('plans::subscriptions.payment-confirmation', compact(
             'subscription',
             'manualPaymentEnabled',
+            'razorpayEnabled',
             'isStudentMembership'
         ));
     }

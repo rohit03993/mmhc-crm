@@ -1284,10 +1284,18 @@ function togglePassword() {
     }
 }
 
-// Auto-focus email field on page load
+// Auto-focus the active sign-in tab field on page load
 document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('otp')) {
+        document.getElementById('otp').focus();
+        return;
+    }
+    if (document.querySelector('#tab-phone.active') && document.getElementById('login_phone')) {
+        document.getElementById('login_phone').focus();
+        return;
+    }
     const emailInput = document.getElementById('email');
-    if (emailInput && !emailInput.value) {
+    if (emailInput && document.querySelector('#tab-email.active')) {
         emailInput.focus();
     }
 });

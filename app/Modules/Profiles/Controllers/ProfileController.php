@@ -553,7 +553,7 @@ class ProfileController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid image file. Please upload a valid image (max 2MB).',
-            ]);
+            ], 422);
         }
 
         $user = Auth::user();
