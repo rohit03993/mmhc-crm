@@ -10,8 +10,38 @@ class RazorpayService
     public function isEnabled(): bool
     {
         return (bool) config('payments.razorpay.enabled')
-            && ! empty(config('payments.razorpay.key_id'))
+            && $this->hasApiCredentials();
+    }
+
+    public function hasApiCredentials(): bool
+    {
+        return ! empty(config('payments.razorpay.key_id'))
             && ! empty(config('payments.razorpay.key_secret'));
+    }
+
+    public function hasWebhookSecret(): bool
+    {
+        return (string) config('payments.razorpay.webhook_secret') !== '';
+    }
+
+    /**
+     * Plain-English hint when checkout cannot start (for admin / logs).
+     */
+    public function configurationHint(): string
+    {
+        if (! config('payments.razorpay.enabled')) {
+            return 'Set RAZORPAY_ENABLED=true in .env';
+        }
+
+        if (empty(config('payments.razorpay.key_id'))) {
+            return 'Add RAZORPAY_KEY_ID from Razorpay → Account & Settings → API keys (Live mode).';
+        }
+
+        if (empty(config('payments.razorpay.key_secret'))) {
+            return 'Add RAZORPAY_KEY_SECRET from the same API keys page. If you only saved Key ID, click Regenerate Key — the secret is shown once.';
+        }
+
+        return 'Razorpay is configured.';
     }
 
     public function getKeyId(): ?string

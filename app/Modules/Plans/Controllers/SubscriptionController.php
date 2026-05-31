@@ -739,7 +739,7 @@ class SubscriptionController extends Controller
         if (! $this->razorpayService->isEnabled()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Razorpay is not enabled for this environment.',
+                'message' => 'Razorpay checkout is not configured. '.$this->razorpayService->configurationHint(),
             ], 422);
         }
 

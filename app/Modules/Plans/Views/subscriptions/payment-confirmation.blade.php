@@ -240,8 +240,12 @@
                 @elseif(!$razorpayEnabled && !$manualPaymentEnabled)
                 <div class="alert alert-warning mb-0">
                     <i class="fas fa-info-circle me-2"></i>
-                    Online payment is not configured. Ask MMHC to set
-                    <code>RAZORPAY_ENABLED=true</code> and Razorpay keys in <code>.env</code>, then run <code>php artisan config:clear</code>.
+                    Online payment is not configured. In server <code>.env</code> set:
+                    <code>RAZORPAY_ENABLED=true</code>,
+                    <code>RAZORPAY_KEY_ID</code> and <code>RAZORPAY_KEY_SECRET</code>
+                    (Razorpay → Account &amp; Settings → <strong>API keys</strong>, Live mode),
+                    plus <code>RAZORPAY_WEBHOOK_SECRET</code> (Webhooks tab).
+                    Then run <code>php artisan config:clear</code>.
                 </div>
                 @endif
             </div>
@@ -596,7 +600,7 @@
 </style>
 
 <script>
-const razorpayEnabled = @json((bool) config('payments.razorpay.enabled'));
+const razorpayEnabled = @json(!empty($razorpayEnabled));
 
 async function startRazorpayCheckout() {
     if (!razorpayEnabled) {
@@ -969,7 +973,7 @@ if (paymentForm) {
     });
 }
 </script>
-@if(config('payments.razorpay.enabled'))
+@if(!empty($razorpayEnabled))
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 @endif
 @endsection

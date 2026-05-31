@@ -20,6 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', \App\Modules\Auth\Middleware\EnsurePhoneVerified::class);
         $middleware->appendToGroup('web', \App\Modules\Plans\Middleware\EnsureStudentMembershipSubscribed::class);
+
+        // Razorpay server callbacks (no session / CSRF token)
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/razorpay',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
