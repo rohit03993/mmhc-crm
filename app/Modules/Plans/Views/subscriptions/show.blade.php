@@ -141,62 +141,35 @@
                         @if($subscription->payment_status === 'failed')
                         <div class="alert alert-danger mb-3">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            <strong>Payment Rejected:</strong> Your previous payment was rejected. Please make payment again.
+                            <strong>Payment Rejected:</strong> Your previous payment was rejected. Please pay again.
                         </div>
                         @endif
-                        
-                        <div class="payment-instructions">
-                            <!-- Payment Breakdown -->
-                            <div class="payment-breakdown mb-3">
-                                <h6 class="mb-3"><i class="fas fa-calculator text-primary me-2"></i>Payment Breakdown</h6>
-                                <div class="breakdown-item">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Base Amount:</span>
-                                        <strong>₹{{ number_format($subscription->base_amount ?? $subscription->total_amount, 2) }}</strong>
-                                    </div>
-                                </div>
-                                <div class="breakdown-item">
-                                    <div class="d-flex justify-content-between">
-                                        <span>GST ({{ number_format($subscription->gst_rate ?? 18, 2) }}%):</span>
-                                        <strong>₹{{ number_format($subscription->gst_amount ?? 0, 2) }}</strong>
-                                    </div>
-                                </div>
-                                <div class="breakdown-item total-amount">
-                                    <div class="d-flex justify-content-between">
-                                        <span><strong>Total Amount:</strong></span>
-                                        <strong class="text-primary" style="font-size: 1.2em;">₹{{ number_format($subscription->total_amount, 2) }}</strong>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div class="alert alert-info">
-                                <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Payment Instructions</h6>
-                                <ol class="mb-0 ps-3">
-                                    <li>Click on "Pay ₹{{ number_format($subscription->total_amount, 2) }}" button below to open your payment app</li>
-                                    <li>Make payment of <strong>₹{{ number_format($subscription->total_amount, 2) }}</strong> (amount will be pre-filled)</li>
-                                    <li>After payment, you will be redirected to upload payment screenshot</li>
-                                    <li>Admin will verify payment and activate your subscription</li>
-                                </ol>
-                            </div>
-
-                            <!-- UPI Payment Button -->
-                            <div class="payment-methods">
-                                <div class="payment-method-card text-center">
-                                    <h6 class="mb-3"><i class="fas fa-mobile-alt me-2"></i>UPI Payment</h6>
-                                    <div class="upi-id-box">
-                                        <input type="hidden" id="upiId" value="{{ \App\Modules\Plans\Support\SubscriptionSettings::upiId() }}">
-                                        <button type="button" 
-                                                class="btn btn-primary btn-lg w-100" 
-                                                onclick="openUPI()">
-                                            <i class="fas fa-external-link-alt me-2"></i>Pay ₹{{ number_format($subscription->total_amount, 2) }}
-                                        </button>
-                                        <small class="text-muted d-block mt-2">
-                                            Opens PhonePe, Paytm, or Google Pay automatically
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
+                        @if(!empty($razorpayEnabled))
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-bolt me-2"></i>
+                            Pay securely with Razorpay (UPI, cards, wallets). You will receive a tax invoice immediately after payment.
                         </div>
+                        <a href="{{ route('subscriptions.payment-confirmation', $subscription) }}" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-credit-card me-2"></i>Pay ₹{{ number_format($subscription->total_amount, 2) }} via Razorpay
+                        </a>
+                        @else
+                        <div class="alert alert-warning mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Online payment is not configured on this server. Ask MMHC to enable <code>RAZORPAY_ENABLED=true</code> in <code>.env</code>.
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+
+                    @if($subscription->payment_status === 'paid')
+                    <div class="detail-section">
+                        <h5 class="section-title">
+                            <i class="fas fa-file-invoice text-primary me-2"></i>Invoice
+                        </h5>
+                        <a href="{{ route('subscriptions.invoice', $subscription) }}" class="btn btn-outline-primary" target="_blank">
+                            <i class="fas fa-download me-1"></i>View / download invoice
+                        </a>
                     </div>
                     @endif
 
@@ -390,63 +363,5 @@
     }
 }
 </style>
-
-<script>
-// UPI Deep Linking - Opens payment apps automatically and redirects to confirmation page
-function openUPI() {
-    const upiId = document.getElementById('upiId').value;
-    const amount = {{ $subscription->total_amount }};
-    const merchantName = '{{ config("subscription.upi_merchant_name", "MMHC") }}';
-    const confirmationUrl = '{{ route("subscriptions.payment-confirmation", $subscription) }}?from_upi=1';
-    
-    // UPI deep link format: upi://pay?pa=UPI_ID&pn=MERCHANT&am=AMOUNT&cu=INR
-    const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(merchantName)}&am=${amount.toFixed(2)}&cu=INR&tn=MMHC Subscription Payment`;
-    
-    // Store flag to show popup when user returns
-    sessionStorage.setItem('showPaymentPopup', 'true');
-    
-    // Try to open UPI app
-    window.location.href = upiLink;
-    
-    // Fallback: Redirect to confirmation page after delay (if UPI app doesn't open)
-    setTimeout(() => {
-        if (document.hasFocus()) {
-            window.location.href = confirmationUrl;
-        }
-    }, 1500);
-}
-
-// Removed copyUPIId function - UPI ID is now hidden for security
-    upiId.select();
-    upiId.setSelectionRange(0, 99999);
-    
-    // Use modern clipboard API if available
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(upiId.value).then(() => {
-            showCopyFeedback();
-        });
-    } else {
-        // Fallback for older browsers
-        document.execCommand('copy');
-        showCopyFeedback();
-    }
-}
-
-function showCopyFeedback() {
-    const btn = event?.target?.closest('button') || document.querySelector('button[onclick*="copyUPIId"]');
-    if (btn) {
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
-        btn.classList.add('btn-success');
-        btn.classList.remove('btn-outline-primary');
-        
-        setTimeout(() => {
-            btn.innerHTML = originalText;
-            btn.classList.remove('btn-success');
-            btn.classList.add('btn-outline-primary');
-        }, 2000);
-    }
-}
-</script>
 @endsection
 

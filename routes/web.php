@@ -164,6 +164,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/subscribe', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'subscribe'])->name('subscribe');
         Route::get('/payment-screenshot/{id}', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'viewPaymentScreenshot'])->name('payment-screenshot')->where('id', '[0-9]+');
         Route::get('/{subscription}/payment-confirmation', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'showPaymentConfirmation'])->name('payment-confirmation');
+        Route::get('/{subscription}/invoice', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'invoice'])->name('invoice');
         Route::post('/{subscription}/razorpay/order', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'createRazorpayOrder'])->name('razorpay.order');
         Route::post('/{subscription}/razorpay/verify', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'verifyRazorpayPayment'])->name('razorpay.verify');
         Route::post('/{subscription}/submit-payment', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'submitPayment'])->name('submit-payment');

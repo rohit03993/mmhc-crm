@@ -48,8 +48,17 @@ class PaymentController extends Controller
      */
     public function invoice(Payment $payment)
     {
-        // Invoice generation logic
-        return view('plans::payments.invoice', compact('payment'));
+        if ($payment->user_id !== auth()->id() && ! auth()->user()?->isAdmin()) {
+            abort(403);
+        }
+
+        $subscription = $payment->subscription()->with(['plan', 'user'])->firstOrFail();
+
+        return view('plans::subscriptions.invoice', [
+            'subscription' => $subscription,
+            'payment' => $payment,
+            'continueUrl' => null,
+        ]);
     }
 
     /**

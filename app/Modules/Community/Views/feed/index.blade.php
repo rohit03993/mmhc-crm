@@ -21,7 +21,7 @@
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
             <div>
                 <h2 class="mb-2"><i class="fas fa-users me-2"></i>Community Hub</h2>
-                <p class="mb-0 text-white-75">Share wins, ask for support, and stay aligned as one care team.</p>
+                <p class="mb-0 text-white-75">One place for your MMHC family — updates, support, and event notices. Sign in with your mobile; no email needed.</p>
             </div>
             <span class="badge rounded-pill text-bg-light px-3 py-2">
                 <i class="fas fa-bolt me-1 text-warning"></i>Main Experience
@@ -42,6 +42,8 @@
             </div>
         </div>
     </div>
+
+    @include('community::feed.partials.member-guidance')
 
     @if(isset($pinnedAnnouncements) && $pinnedAnnouncements->isNotEmpty())
     <div class="card mb-3 border-0 shadow-sm community-surface-card">
@@ -149,7 +151,11 @@
             <div class="card-body text-center py-5">
                 <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                 <h5>No posts yet</h5>
-                <p class="text-muted mb-0">Be the first to share something in the community.</p>
+                @if(auth()->user()->isAdmin() || auth()->user()->isNurse() || auth()->user()->isCaregiver())
+                    <p class="text-muted mb-0">Be the first to share an update with the team using the form above.</p>
+                @else
+                    <p class="text-muted mb-0">When staff or admin share updates, they will appear here. You can react and comment on any post.</p>
+                @endif
             </div>
         </div>
     @endif
@@ -319,6 +325,18 @@
         font-size: 0.78rem;
         flex-shrink: 0;
     }
+    .community-page .author-avatar--photo {
+        object-fit: cover;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.35);
+        display: block;
+    }
+    .community-page .community-phone-tip {
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    }
+    .community-page .community-reader-card {
+        border-left: 3px solid #2563eb;
+    }
     /* Show full post image (no crop); cap very tall images; tap opens full size */
     .community-page .post-image-wrap {
         background: #f1f5f9;
@@ -346,11 +364,28 @@
         object-fit: contain;
         object-position: center;
     }
-    .community-page .reaction-scroll { overflow-x: auto; padding-bottom: 0.25rem; }
-    .community-page .reaction-scroll::-webkit-scrollbar { height: 6px; }
-    .community-page .reaction-scroll::-webkit-scrollbar-thumb {
-        background: rgba(100, 116, 139, 0.45);
-        border-radius: 999px;
+    .community-page .reaction-actions {
+        overflow: visible;
+    }
+    .community-page .reaction-actions__inner {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .community-page .reaction-actions__inner form {
+        margin: 0;
+    }
+    .community-page .reaction-actions__inner .reaction-form-btn {
+        width: 100%;
+        white-space: nowrap;
+    }
+    .community-page .reaction-actions__meta {
+        flex: 1 1 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
     }
     .community-page .action-btn {
         min-width: 30px;
@@ -376,6 +411,10 @@
         padding-inline: 0.8rem;
         color: #334155;
         background: #f8fafc;
+        min-height: 36px;
+    }
+    .community-page .post-card .form-control {
+        min-height: 42px;
     }
     .community-page .submit-post-btn {
         min-height: 40px;
@@ -436,10 +475,25 @@
         .community-page .post-meta-actions {
             justify-content: flex-start;
         }
-        .community-page .reaction-scroll .btn {
-            white-space: nowrap;
-            font-size: 0.8rem;
-            padding: 0.3rem 0.6rem;
+        .community-page .reaction-actions__inner form.reaction-form {
+            flex: 1 1 calc(50% - 0.25rem);
+            max-width: calc(50% - 0.25rem);
+        }
+        .community-page .reaction-actions__inner .reaction-form-btn {
+            font-size: 0.78rem;
+            padding: 0.35rem 0.5rem;
+            min-height: 38px;
+        }
+        .community-page .reaction-actions__meta form {
+            flex: 1 1 calc(50% - 0.25rem);
+            max-width: calc(50% - 0.25rem);
+        }
+        .community-page .reaction-actions__meta .reaction-form-btn,
+        .community-page .reaction-actions__meta .btn {
+            width: 100%;
+            font-size: 0.78rem;
+            padding: 0.35rem 0.5rem;
+            min-height: 38px;
         }
         .community-page .post-image-wrap,
         .community-page .post-image {

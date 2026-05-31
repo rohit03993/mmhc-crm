@@ -187,7 +187,12 @@ class SubscriptionController extends Controller
                     ->with('error', 'Subscription plan not found. Please contact support.');
             }
 
-            return view('plans::subscriptions.show', compact('subscription'));
+            $subscriptionPaymentService = app(\App\Modules\Plans\Services\SubscriptionPaymentService::class);
+
+            return view('plans::subscriptions.show', [
+                'subscription' => $subscription,
+                'razorpayEnabled' => $subscriptionPaymentService->isRazorpayEnabled(),
+            ]);
 
         } catch (\Exception $e) {
             \Log::error('Error showing subscription', [
@@ -453,6 +458,9 @@ class SubscriptionController extends Controller
         );
         $leaderboardPaginator->withQueryString();
 
+        $studentSubscriptionService = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
+        $studentPlanId = $studentSubscriptionService->getStudentPlan()?->id;
+
         return view('plans::admin.subscriptions.index', [
             'subscriptions' => $subscriptions,
             'stats' => $stats,
@@ -462,6 +470,8 @@ class SubscriptionController extends Controller
             'rankByUserId' => $rankByUserId,
             'topSubscriber' => $subscriberLeaderboard->first(),
             'filterUser' => $filterUser,
+            'studentPlanId' => $studentPlanId,
+            'studentAutoActivateManual' => $studentSubscriptionService->shouldAutoActivateOnManualProof(),
         ]);
     }
 
@@ -638,6 +648,37 @@ class SubscriptionController extends Controller
     }
 
     /**
+     * Show or print tax invoice for a paid subscription.
+     */
+    public function invoice(Subscription $subscription)
+    {
+        if ($subscription->user_id !== Auth::id() && ! Auth::user()->isAdmin()) {
+            abort(403);
+        }
+
+        if ($subscription->payment_status !== 'paid') {
+            return redirect()
+                ->route('subscriptions.payment-confirmation', $subscription)
+                ->with('info', 'Complete payment first to view your invoice.');
+        }
+
+        $subscription->load(['plan', 'user']);
+
+        $payment = app(\App\Modules\Plans\Services\SubscriptionInvoiceService::class)
+            ->ensurePaymentRecord($subscription);
+
+        if (! $payment) {
+            abort(404, 'Invoice could not be generated for this subscription.');
+        }
+
+        return view('plans::subscriptions.invoice', [
+            'subscription' => $subscription,
+            'payment' => $payment,
+            'continueUrl' => request()->query('continue'),
+        ]);
+    }
+
+    /**
      * Show payment confirmation page (after UPI payment attempt)
      */
     public function showPaymentConfirmation(Subscription $subscription)
@@ -649,7 +690,7 @@ class SubscriptionController extends Controller
 
         // Only show confirmation page if payment is pending
         if ($subscription->payment_status === 'paid') {
-            return redirect()->route('subscriptions.show', $subscription->id)
+            return redirect()->route('subscriptions.invoice', $subscription)
                 ->with('info', 'Payment has already been completed.');
         }
 
@@ -665,8 +706,11 @@ class SubscriptionController extends Controller
             && $studentSubscriptionService->shouldAutoActivateOnManualProof()) {
             $this->subscriptionService->verifyPayment($subscription, Auth::user());
 
+            $redirectUrl = app(\App\Modules\Plans\Services\StudentSubscriptionService::class)
+                ->postPaymentRedirectUrl(Auth::user(), $subscription->fresh());
+
             return redirect()
-                ->route('academics.dashboard')
+                ->to($redirectUrl)
                 ->with('success', 'Your student membership payment is confirmed. Welcome!');
         }
 
@@ -828,6 +872,7 @@ class SubscriptionController extends Controller
             'success' => true,
             'message' => 'Payment verified successfully.',
             'redirect_url' => $redirectUrl,
+            'invoice_url' => route('subscriptions.invoice', $subscription),
         ]);
     }
 
@@ -961,9 +1006,12 @@ class SubscriptionController extends Controller
                 && $studentSubscriptionService->shouldAutoActivateOnManualProof()) {
                 $this->subscriptionService->verifyPayment($subscription, Auth::user());
 
+                $redirectUrl = $studentSubscriptionService
+                    ->postPaymentRedirectUrl(Auth::user(), $subscription->fresh());
+
                 return redirect()
-                    ->route('academics.dashboard')
-                    ->with('success', 'Payment received! Your student membership is now active.');
+                    ->to($redirectUrl)
+                    ->with('success', 'Payment received! Your membership is now active.');
             }
 
             $subscription->update([
@@ -1233,6 +1281,9 @@ class SubscriptionController extends Controller
         ]);
 
         $subscription->refresh();
+
+        app(\App\Modules\Plans\Services\SubscriptionInvoiceService::class)
+            ->ensurePaymentRecord($subscription);
 
         if ($subscription->referrer_id) {
             try {

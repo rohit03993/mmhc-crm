@@ -18,7 +18,7 @@ return [
     | When Razorpay is OFF, students can pay via UPI + screenshot (if true).
     | When Razorpay is ON, manual path only appears if manual_with_razorpay is true.
     */
-    'manual_payment_enabled' => env('STUDENT_SUBSCRIPTION_MANUAL_PAYMENT', true),
+    'manual_payment_enabled' => env('STUDENT_SUBSCRIPTION_MANUAL_PAYMENT', false),
     'manual_with_razorpay' => env('STUDENT_SUBSCRIPTION_MANUAL_WITH_RAZORPAY', false),
 
     /*

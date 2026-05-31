@@ -33,6 +33,7 @@ Route::middleware(['auth'])->group(function () {
 
         // IMPORTANT: More specific routes MUST come before the generic {subscription} route
         Route::get('/{subscription}/payment-confirmation', [SubscriptionController::class, 'showPaymentConfirmation'])->name('payment-confirmation');
+        Route::get('/{subscription}/invoice', [SubscriptionController::class, 'invoice'])->name('invoice');
         Route::post('/{subscription}/razorpay/order', [SubscriptionController::class, 'createRazorpayOrder'])->name('razorpay.order');
         Route::post('/{subscription}/razorpay/verify', [SubscriptionController::class, 'verifyRazorpayPayment'])->name('razorpay.verify');
         Route::post('/{subscription}/submit-payment', [SubscriptionController::class, 'submitPayment'])->name('submit-payment');

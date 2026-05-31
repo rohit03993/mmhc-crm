@@ -23,6 +23,35 @@
                 </div>
 
     <!-- Info Banner -->
+    @auth
+        @if(auth()->user()->isPatient() && empty($patientCheckoutAvailable))
+        <div class="alert alert-warning mb-4">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-exclamation-triangle me-2 mt-1"></i>
+                <div>
+                    <strong>Checkout not configured.</strong> Online payment (Razorpay) or manual UPI must be enabled on this server before you can subscribe. Please contact MMHC support.
+                </div>
+            </div>
+        </div>
+        @elseif(auth()->user()->isPatient())
+        <div class="alert alert-info mb-4">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-info-circle me-2 mt-1"></i>
+                <div>
+                    <strong>How payment works:</strong>
+                    @if(!empty($razorpayEnabled))
+                        Pay online with Razorpay (cards, UPI, wallets).
+                        @if($patientManualEnabled && $patientManualWithRazorpay)
+                            Manual UPI + screenshot is also available at checkout.
+                        @endif
+                    @else
+                        Complete payment via UPI and upload proof — MMHC verifies within 24 hours.
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
+    @endauth
     <div class="alert alert-info mb-4">
         <div class="d-flex align-items-start">
             <i class="fas fa-info-circle me-2 mt-1"></i>
@@ -89,9 +118,15 @@
                 <div class="plan-actions">
                     @auth
                         @if(auth()->user()->isPatient())
+                            @if(empty($patientCheckoutAvailable))
+                            <button class="btn btn-secondary w-100" disabled title="Payment not configured on server">
+                                Checkout unavailable
+                            </button>
+                            @else
                             <a href="{{ route('plans.show', $plan) }}" class="btn btn-primary w-100">
                                 <i class="fas fa-arrow-right me-2"></i>Subscribe Now
                             </a>
+                            @endif
                         @else
                             <button class="btn btn-secondary w-100" disabled>
                                 Only for Patients

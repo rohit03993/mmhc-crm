@@ -427,6 +427,9 @@ class SubscriptionService
 
         $subscription->refresh();
 
+        app(\App\Modules\Plans\Services\SubscriptionInvoiceService::class)
+            ->ensurePaymentRecord($subscription);
+
         if ($subscription->referrer_id) {
             try {
                 app(\App\Modules\Incentives\Services\IncentiveCalculatorService::class)

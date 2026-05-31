@@ -43,3 +43,19 @@ if (! function_exists('storage_asset')) {
         return '/storage/' . $path;
     }
 }
+
+if (! function_exists('mmhc_app_logo_url')) {
+    /**
+     * Fixed horizontal company logo for the authenticated CRM shell (nav + sidebar).
+     * Uses med-logo-app.png (248×76) — not the square med-logo.png Android icon asset.
+     */
+    function mmhc_app_logo_url(): string
+    {
+        $path = public_path('images/med-logo-app.png');
+        if (! is_file($path)) {
+            return asset('images/med-logo.png');
+        }
+
+        return asset('images/med-logo-app.png');
+    }
+}

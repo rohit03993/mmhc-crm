@@ -16,7 +16,7 @@
             <h2 class="mb-1">
                 <i class="fas fa-clock me-2 text-warning"></i>Pending Payments
             </h2>
-            <p class="text-muted mb-0">Money owed TO COMPANY by patients/customers</p>
+            <p class="text-muted mb-0">Money owed TO COMPANY by patients/customers (student auto-activate rows hidden)</p>
         </div>
         <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-1"></i>Back to Dashboard

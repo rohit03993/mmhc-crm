@@ -29,11 +29,19 @@ class EnsureStudentMembershipSubscribed
         'subscriptions.show',
         'subscriptions.subscribe',
         'subscriptions.payment-confirmation',
+        'subscriptions.invoice',
         'subscriptions.submit-payment',
         'subscriptions.razorpay.order',
         'subscriptions.razorpay.verify',
         'subscriptions.destroy',
         'subscriptions.payment-screenshot',
+        'subscriptions.cancel',
+        'subscriptions.renew',
+    ];
+
+    /** @var list<string> */
+    protected array $allowedRoutePrefixes = [
+        'community.',
     ];
 
     public function handle(Request $request, Closure $next): Response
@@ -49,12 +57,27 @@ class EnsureStudentMembershipSubscribed
         }
 
         $routeName = $request->route()?->getName();
-        if ($routeName && in_array($routeName, $this->allowedRouteNames, true)) {
+        if ($routeName && $this->isAllowedRoute($routeName)) {
             return $next($request);
         }
 
         return redirect()
             ->route('student-subscription.offer')
             ->with('info', 'Please complete your student membership subscription to continue.');
+    }
+
+    protected function isAllowedRoute(string $routeName): bool
+    {
+        if (in_array($routeName, $this->allowedRouteNames, true)) {
+            return true;
+        }
+
+        foreach ($this->allowedRoutePrefixes as $prefix) {
+            if (str_starts_with($routeName, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

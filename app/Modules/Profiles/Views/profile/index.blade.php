@@ -43,37 +43,7 @@
             </div>
         @endif
 
-        <!-- Profile Header Card -->
-        <div class="app-profile-header">
-            @include('profiles::profile.partials.avatar-upload', ['profile' => $profile, 'variant' => 'header'])
-            <h3 class="app-profile-name">{{ $user->name }}</h3>
-            <div class="app-profile-badges">
-                <span class="app-badge app-badge-primary">{{ ucfirst($user->role) }}</span>
-                <span class="app-badge app-badge-secondary">{{ $user->unique_id }}</span>
-            </div>
-            
-            <div class="app-profile-completion">
-                <div class="app-progress-bar">
-                    <div class="app-progress-fill" style="width: {{ $profile->getCompletionPercentage() }}%"></div>
-                </div>
-                <small>Profile {{ $profile->getCompletionPercentage() }}% Complete</small>
-            </div>
-            
-            <a href="{{ route('profile.edit') }}" class="app-btn-edit">
-                <i class="fas fa-edit me-2"></i>Edit Profile
-            </a>
-            @if($user->isStaff())
-                @if($user->hasVerifiedPhone())
-                    <a href="{{ route('profile.id-card') }}" class="app-btn-edit mt-2" style="background: linear-gradient(135deg, #312e81, #1d4ed8);">
-                        <i class="fas fa-id-card me-2"></i>View ID Card
-                    </a>
-                @else
-                    <a href="{{ route('profile.edit') }}" class="app-btn-edit mt-2" style="background: #94a3b8;">
-                        <i class="fas fa-mobile-alt me-2"></i>Verify mobile for ID card
-                    </a>
-                @endif
-            @endif
-        </div>
+        @include('profiles::profile.partials.profile-top-section')
 
         @if($subscriptionSummary)
             <div class="profile-subscription-banner">
@@ -125,93 +95,8 @@
         </div>
         @endif
 
-        <!-- Profile Details - Modern Card Grid -->
+        @if(($user->role === 'caregiver' && $profile) || ($profile && $profile->bio))
         <div class="app-detail-section">
-            <div class="profile-section-heading">
-                <div class="profile-section-heading-row">
-                    <div class="profile-section-title-block">
-                        <span class="profile-section-icon-badge" aria-hidden="true">
-                            <i class="fas fa-id-card"></i>
-                        </span>
-                        <div class="profile-section-title-text">
-                            <h2 class="profile-section-h2">Profile information</h2>
-                            <p class="profile-section-sub">Name, mobile, date of birth and address</p>
-                        </div>
-                    </div>
-                    <a href="{{ route('profile.edit') }}" class="profile-section-cta">
-                        <i class="fas fa-edit me-2"></i>
-                        <span class="profile-section-cta-label">Update profile &amp; mobile</span>
-                    </a>
-                </div>
-            </div>
-            
-            <div class="app-info-grid">
-                <!-- Full Name Card -->
-                <div class="app-info-card">
-                    <div class="app-info-icon name">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="app-info-content">
-                        <div class="app-info-label">Full Name</div>
-                        <div class="app-info-value">{{ $user->name }}</div>
-                    </div>
-                </div>
-                
-                <!-- Phone Card -->
-                <div class="app-info-card">
-                    <div class="app-info-icon phone">
-                        <i class="fas fa-phone"></i>
-                    </div>
-                    <div class="app-info-content">
-                        <div class="app-info-label">Phone</div>
-                        <div class="app-info-value app-info-value-multiline">{{ $user->displayPhone() }}</div>
-                        @if($pendingDisplay = $user->displayPendingPhone())
-                            <span class="profile-verify-chip profile-verify-chip--pending" title="Enter the OTP on Edit Profile to activate this number">
-                                <i class="fas fa-clock" aria-hidden="true"></i>
-                                Pending verification: {{ $pendingDisplay }}
-                            </span>
-                            <a href="{{ route('profile.edit') }}" class="profile-meta-edit-link">Complete OTP verification</a>
-                        @elseif(! empty($user->phone) && $user->phone_verified_at)
-                            @if($user->phone_verified_source === 'admin')
-                                <span class="profile-verify-chip profile-verify-chip--admin" title="{{ $user->phoneVerificationUserLabel() }}"><i class="fas fa-user-shield" aria-hidden="true"></i> {{ $user->phoneVerificationUserLabel() }}</span>
-                            @else
-                                <span class="profile-verify-chip" title="{{ $user->phoneVerificationUserLabel() }}"><i class="fas fa-check-circle" aria-hidden="true"></i> {{ $user->phoneVerificationUserLabel() }}</span>
-                            @endif
-                            <a href="{{ route('profile.edit') }}" class="profile-meta-edit-link">Edit in profile settings</a>
-                        @else
-                            @if($user->isStaff())
-                                <span class="profile-verify-chip profile-verify-chip--warn"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Mobile not verified — payouts on hold</span>
-                            @endif
-                            <a href="{{ route('profile.edit') }}" class="profile-meta-edit-link">Edit in profile settings</a>
-                        @endif
-                    </div>
-                </div>
-                
-                <!-- Date of Birth Card -->
-                <div class="app-info-card">
-                    <div class="app-info-icon dob">
-                        <i class="fas fa-birthday-cake"></i>
-                    </div>
-                    <div class="app-info-content">
-                        <div class="app-info-label">Date of Birth</div>
-                        <div class="app-info-value">{{ $user->getFormattedDateOfBirth() }}</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Address Card - Full Width -->
-            @if($user->address)
-            <div class="app-info-card-full">
-                <div class="app-info-icon-full address">
-                    <i class="fas fa-map-marker-alt"></i>
-                </div>
-                <div class="app-info-content-full">
-                    <div class="app-info-label">Address</div>
-                    <div class="app-info-value">{{ $user->address }}</div>
-                </div>
-            </div>
-            @endif
-            
             <!-- Professional Information for Caregivers -->
             @if($user->role === 'caregiver' && $profile)
             <div class="app-info-grid">
@@ -264,6 +149,7 @@
             </div>
             @endif
         </div>
+        @endif
 
         <!-- Upload documents -->
         <div class="app-detail-section profile-upload-section">
@@ -451,7 +337,7 @@
 <style>
 /* Profile page shell (desktop) */
 .profile-page-root {
-    max-width: 920px;
+    max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
 }

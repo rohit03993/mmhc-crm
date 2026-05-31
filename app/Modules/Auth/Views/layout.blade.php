@@ -19,7 +19,10 @@
     
     @yield('head')
 
-    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260601b">
+    @auth
+    <link rel="stylesheet" href="{{ asset('css/mmhc-member-nav.css') }}?v=20260602">
+    @endauth
     <link rel="stylesheet" href="{{ asset('css/mmhc-public-mobile.css') }}">
     <link rel="stylesheet" href="{{ asset('css/capacitor-app.css') }}">
     
@@ -80,37 +83,66 @@
         .brand-logo {
             display: block;
             width: auto;
-            max-width: 160px;
             height: auto;
+            object-fit: contain;
+        }
+
+        /* Top nav — same for admin, student, staff (fixed height like admin screenshot) */
+        .top-navbar .mmhc-navbar-brand {
+            display: inline-flex;
+            align-items: center;
+            padding: 0;
+            margin-right: 1rem;
+            max-width: none;
+            min-width: 0;
+            overflow: visible;
+            flex: 0 0 auto;
         }
 
         .top-navbar .brand-logo--nav {
+            display: block;
+            height: 2.5rem;
             width: auto;
-            max-width: 118px;
-            max-height: 2rem;
+            aspect-ratio: 248 / 76;
+            max-width: none;
+            max-height: none;
             object-fit: contain;
+            object-position: left center;
             flex-shrink: 0;
         }
 
-        .brand-logo--sidebar {
-            width: 100%;
-            max-width: 180px;
-            margin: 0 auto;
-        }
-
-        .brand-logo--auth {
-            max-width: 200px;
-            margin: 0 auto 1.25rem;
+        /* Sidebar — frosted card + tagline (admin layout) */
+        .mmhc-sidebar-brand {
+            padding: 1.6rem 1rem 1.25rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+            margin-bottom: 1.5rem;
         }
 
         .brand-logo-card {
             background: linear-gradient(160deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.06) 100%);
             border: 1px solid rgba(255,255,255,0.28);
             border-radius: 20px;
-            padding: 1.5rem 1.25rem;
-            margin-bottom: 0.5rem;
+            padding: 1rem 0.85rem;
+            margin-bottom: 0.65rem;
             box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
             backdrop-filter: blur(10px);
+            line-height: 0;
+        }
+
+        .brand-logo--sidebar {
+            display: block;
+            width: 100%;
+            max-width: 168px;
+            height: auto;
+            aspect-ratio: 248 / 76;
+            max-height: none;
+            margin: 0 auto;
+            object-fit: contain;
+        }
+
+        .brand-logo--auth {
+            max-width: 200px;
+            margin: 0 auto 1.25rem;
         }
 
         .brand-tagline {
@@ -169,9 +201,9 @@
         }
 
         .sidebar .text-center {
-            padding: 1.6rem 1rem 1.25rem;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.25);
-            margin-bottom: 1.5rem;
+            padding: 0;
+            border-bottom: none;
+            margin-bottom: 0;
         }
 
         /* Global readability baseline across CRM pages */
@@ -279,21 +311,16 @@
         }
     </style>
 </head>
-@php
-    $mmhcLogoFallback = asset('images/med-logo.png');
-@endphp
-<body class="@guest mmhc-auth-guest @endguest @if(auth()->check()) mmhc-crm-auth @endif @if(auth()->check() && request()->is('academics*')) mmhc-academics @endif @if(auth()->check() && trim($__env->yieldContent('page-title', '')) !== '') mmhc-has-page-title @endif">
+<body class="@guest mmhc-auth-guest @endguest @if(auth()->check()) mmhc-crm-auth mmhc-app-shell @endif @if(auth()->check() && request()->is('academics*')) mmhc-academics @endif @if(auth()->check() && trim($__env->yieldContent('page-title', '')) !== '') mmhc-has-page-title @endif">
     @if(auth()->check())
         @include('auth::components.navbar')
         <div class="offcanvas offcanvas-start sidebar d-lg-none" tabindex="-1" id="mmhcAppSidebar" aria-labelledby="mmhcAppSidebarLabel" style="--bs-offcanvas-width: min(20rem, 92vw);">
-            <div class="offcanvas-header border-bottom border-secondary border-opacity-25">
-                <div class="d-flex align-items-center gap-2">
-                    <img src="{{ $siteLogoUrl ?? $mmhcLogoFallback }}" alt="" class="brand-logo brand-logo--sidebar" style="max-height: 2.25rem; width: auto;" onerror="this.onerror=null;this.src='{{ $mmhcLogoFallback }}';">
-                    <span class="text-white-50 small mb-0" id="mmhcAppSidebarLabel">Menu</span>
-                </div>
+            <div class="offcanvas-header border-bottom border-secondary border-opacity-25 py-2">
+                <span class="text-white-50 small mb-0" id="mmhcAppSidebarLabel">Menu</span>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
-            <div class="offcanvas-body p-0 pt-2">
+            <div class="offcanvas-body p-0 pt-0">
+                @include('auth::components.brand-sidebar-block')
                 @include('auth::components.app-sidebar-nav')
             </div>
         </div>
@@ -304,12 +331,7 @@
                 <!-- Sidebar — desktop column; mobile uses offcanvas above -->
                 <nav class="col-md-3 col-lg-2 d-none d-lg-block sidebar collapse">
                     <div class="position-sticky pt-3">
-                        <div class="text-center mb-4">
-                            <div class="brand-logo-card">
-                                <img src="{{ $siteLogoUrl ?? $mmhcLogoFallback }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--sidebar" onerror="this.onerror=null;this.src='{{ $mmhcLogoFallback }}';">
-                            </div>
-                            <div class="brand-tagline">{{ $siteTagline ?? 'Miracle Health Care' }}</div>
-                        </div>
+                        @include('auth::components.brand-sidebar-block')
                         @include('auth::components.app-sidebar-nav')
                     </div>
                 </nav>

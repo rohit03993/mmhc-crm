@@ -5,6 +5,7 @@ namespace App\Modules\Plans\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Plans\Models\Plan;
 use App\Modules\Plans\Services\PlanService;
+use App\Modules\Plans\Services\SubscriptionPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -29,7 +30,20 @@ class PlanController extends Controller
             $plans = collect([]);
         }
 
-        return view('plans::plans.index', compact('plans'));
+        $paymentService = app(SubscriptionPaymentService::class);
+        $razorpayEnabled = $paymentService->isRazorpayEnabled();
+        $patientManualEnabled = (bool) config('payments.subscription.manual_enabled', false);
+        $patientManualWithRazorpay = (bool) config('payments.subscription.manual_with_razorpay', false);
+        $patientCheckoutAvailable = $razorpayEnabled
+            || ($patientManualEnabled && (! $razorpayEnabled || $patientManualWithRazorpay));
+
+        return view('plans::plans.index', compact(
+            'plans',
+            'razorpayEnabled',
+            'patientManualEnabled',
+            'patientManualWithRazorpay',
+            'patientCheckoutAvailable'
+        ));
     }
 
     /**

@@ -10,6 +10,8 @@
         $paymentProvider === 'manual' => 'MANUAL PROOF',
         default => 'N/A',
     };
+    $studentService = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
+    $isStudentMembership = $studentService->isStudentPlanSubscription($subscription);
 @endphp
 <div class="container-fluid px-3 py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -18,8 +20,20 @@
                 <i class="fas fa-arrow-left me-2"></i>Back to Subscriptions
             </a>
             <h4 class="page-title mb-0 mt-2">Subscription Details</h4>
+            @if($isStudentMembership)
+                <span class="badge mt-2" style="background:#4f46e5;">
+                    <i class="fas fa-graduation-cap me-1"></i>Student membership
+                </span>
+            @endif
         </div>
     </div>
+
+    @if($isStudentMembership && $studentService->shouldAutoActivateOnManualProof())
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        Student auto-activate is enabled — Razorpay and manual proof should activate membership without admin verify. Use verify/reject only if a payment is stuck.
+    </div>
+    @endif
 
     <div class="row">
         <div class="col-12 col-lg-8">

@@ -135,9 +135,25 @@
         padding-top: env(safe-area-inset-top);
     }
 
+    /* Mobile / Capacitor: top bar logo (horizontal med-logo-app.png) */
     .top-navbar .navbar-brand .brand-logo--nav {
-        max-width: 118px;
-        max-height: 2rem;
+        height: 2.25rem;
+        width: auto;
+        aspect-ratio: 248 / 76;
+        max-width: none;
+        max-height: none;
+        object-fit: contain;
+        object-position: left center;
+    }
+
+    /* Mobile offcanvas sidebar — same brand block as desktop */
+    .offcanvas.sidebar .mmhc-sidebar-brand {
+        padding: 1.25rem 1rem 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .offcanvas.sidebar .brand-logo--sidebar {
+        max-width: 155px;
     }
 
     .top-navbar .navbar-collapse {
@@ -780,6 +796,77 @@
     min-height: 0;
 }
 
+/* Hamburger menu — all mobile/tablet + Capacitor (every role; hidden on lg+ via d-lg-none) */
+.top-navbar .mmhc-sidebar-toggle {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0;
+    margin: 0 0.35rem 0 0;
+    border: none;
+    border-radius: 12px;
+    background: #f1f5f9;
+    color: #334155;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: none;
+    text-decoration: none;
+    line-height: 1;
+    vertical-align: middle;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    cursor: pointer;
+}
+
+.top-navbar .mmhc-sidebar-toggle:hover,
+.top-navbar .mmhc-sidebar-toggle:focus {
+    background: #e2e8f0;
+    color: #1e293b;
+    box-shadow: none;
+    outline: none;
+}
+
+.top-navbar .mmhc-sidebar-toggle:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+
+.mmhc-hamburger {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 18px;
+    height: 14px;
+    pointer-events: none;
+}
+
+.mmhc-hamburger span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.top-navbar .mmhc-topnav-inner {
+    align-items: center;
+}
+
+@media (max-width: 991.98px) {
+    .top-navbar .mmhc-topnav-inner {
+        min-height: 3.5rem;
+    }
+
+    body.capacitor-app .top-navbar .mmhc-sidebar-toggle {
+        margin-left: 0.15rem;
+    }
+}
+
 .top-navbar .navbar-brand {
     margin-right: 0.5rem;
     padding-top: 0;
@@ -812,20 +899,38 @@
 }
 
 .top-navbar .navbar-brand.mmhc-navbar-brand {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     flex: 0 0 auto;
-    min-width: 7.5rem;
-    margin-right: 0.75rem;
+    max-width: none;
+    min-width: 0;
+    margin-right: 1rem;
+    overflow: visible;
 }
 
 .top-navbar .brand-logo--nav {
-    max-width: 118px;
-    max-height: 2rem;
-    width: auto !important;
-    height: auto;
+    height: 2.5rem;
+    width: auto;
+    aspect-ratio: 248 / 76;
+    max-width: none;
+    max-height: none;
     object-fit: contain;
+    object-position: left center;
     flex-shrink: 0;
+    display: block;
+}
+
+.mmhc-nav-notifications-btn--classic {
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    background: transparent;
+    padding: 0.35rem 0.5rem;
+}
+
+.top-navbar--admin .mmhc-nav-notifications-btn--classic:hover {
+    background: transparent;
+    color: #2563eb;
 }
 
 .mmhc-page-title-bar {
@@ -848,9 +953,11 @@
 
 @media (max-width: 991.98px) {
     .mmhc-topnav-inner .mmhc-navbar-brand {
-        flex: 1 1 auto;
-        min-width: 5rem;
+        flex: 0 0 auto;
+        max-width: none;
+        min-width: 0;
         justify-content: flex-start;
+        overflow: visible;
     }
 }
 
@@ -861,8 +968,10 @@
 
     .mmhc-topnav-inner .mmhc-navbar-brand {
         flex: 0 0 auto;
-        min-width: 7.5rem;
+        max-width: none;
+        min-width: 0;
         order: 1;
+        overflow: visible;
     }
 
     .mmhc-topnav-inner .mmhc-navbar-mobile-actions {

@@ -15,6 +15,9 @@ class DatabaseSeeder extends Seeder
         // Seed Healthcare Plans first (for landing page and plans module)
         $this->call(HealthcarePlansSeeder::class);
 
+        // Student Journey Membership plan (₹1,200 launch — required for student payment gate)
+        $this->call(StudentMembershipPlanSeeder::class);
+
         // Demo images for Achievements & Media carousel (landing page)
         $this->call(AchievementMediaSeeder::class);
 

@@ -1,6 +1,10 @@
 @php
     $avatarUrl = $profile->avatar_path ? Storage::url($profile->avatar_path) : null;
-    $sizeClass = ($variant ?? 'header') === 'edit' ? 'mmhc-avatar-upload--edit' : 'mmhc-avatar-upload--header';
+    $sizeClass = match ($variant ?? 'header') {
+        'edit' => 'mmhc-avatar-upload--edit',
+        'apv' => 'mmhc-avatar-upload--apv',
+        default => 'mmhc-avatar-upload--header',
+    };
 @endphp
 
 <div class="mmhc-avatar-upload {{ $sizeClass }}" id="mmhcAvatarUpload" data-upload-url="{{ route('profile.upload-avatar') }}">

@@ -76,6 +76,8 @@ def main() -> None:
     master_white.save(RESOURCES / "icon.png", format="PNG", optimize=True)
     master_foreground.save(RESOURCES / "icon-foreground.png", format="PNG", optimize=True)
     master_white.save(PUBLIC_IMAGES / "med-logo.png", format="PNG", optimize=True)
+    logo_rgb = logo.convert("RGB")
+    logo_rgb.save(PUBLIC_IMAGES / "med-logo-app.png", format="PNG", optimize=True)
 
     for folder, px in DENSITIES.items():
         out_dir = RES / folder

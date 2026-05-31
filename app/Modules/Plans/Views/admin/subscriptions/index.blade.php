@@ -352,12 +352,27 @@
 
         <div class="subscriptions-list">
             @forelse($subscriptions as $subscription)
+            @php
+                $isStudentMembershipRow = $studentPlanId && (int) $subscription->plan_id === (int) $studentPlanId;
+            @endphp
             <div class="subscription-card">
                 <div class="subscription-card-header">
                     <div>
                         <div class="d-flex flex-wrap align-items-center gap-2">
                             @if(isset($rankByUserId[$subscription->user_id]))
                                 <span class="badge bg-dark bg-opacity-10 text-dark border" title="Subscriber revenue rank">#{{ $rankByUserId[$subscription->user_id] }}</span>
+                            @endif
+                            @if($isStudentMembershipRow)
+                                <span class="badge bg-indigo text-white" style="background:#4f46e5;" title="Student journey membership">
+                                    <i class="fas fa-graduation-cap me-1"></i>Student
+                                </span>
+                                @if($studentAutoActivateManual ?? false)
+                                    <span class="badge bg-light text-dark border" title="Manual proof auto-activates — no admin verify queue">Auto-activate</span>
+                                @endif
+                            @else
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">
+                                    <i class="fas fa-user-injured me-1"></i>Patient
+                                </span>
                             @endif
                             <h5 class="subscription-user-name mb-0">
                                 <a href="{{ route('admin.subscriptions.subscriber', $subscription->user_id) }}" class="text-decoration-none text-dark">
@@ -410,6 +425,11 @@
 
                     @if($subscription->payment_status !== 'paid' && ($subscription->payment_screenshot || $subscription->transaction_id))
                     <div class="payment-actions mt-3">
+                        @if($isStudentMembershipRow && ($studentAutoActivateManual ?? false))
+                            <p class="small text-muted mb-2 mb-md-0">
+                                <i class="fas fa-bolt me-1"></i>Student auto-activate is on — Razorpay or manual proof should activate without admin action.
+                            </p>
+                        @else
                         <form action="{{ route('admin.subscriptions.verify-payment', $subscription) }}"
                               method="POST"
                               class="d-inline me-2">
@@ -423,6 +443,7 @@
                                 onclick="showRejectModal({{ $subscription->id }})">
                             <i class="fas fa-times-circle me-1"></i>Reject
                         </button>
+                        @endif
                     </div>
                     @endif
                 </div>

@@ -38,6 +38,12 @@
                         <div class="alert alert-info">{{ session('info') }}</div>
                     @endif
 
+                    <div class="alert alert-light border small mb-4">
+                        <i class="fas fa-unlock-alt text-primary me-1"></i>
+                        While payment is pending you can still use <strong>Profile</strong> and <strong>Community</strong>.
+                        Academics unlocks after membership is active.
+                    </div>
+
                     @if(!$plan)
                         <div class="alert alert-warning mb-0">
                             Student membership is not set up on this server yet. Please contact MMHC support.
@@ -71,6 +77,9 @@
                                 <i class="fas fa-credit-card me-2"></i>Complete payment (₹{{ number_format((float) $pending->total_amount, 0) }})
                             </a>
                             <p class="text-center text-muted small mb-0">You already started checkout. Tap above to finish payment.</p>
+                            @if(config('payments.razorpay.enabled'))
+                                <p class="text-center text-muted small mt-2 mb-0"><i class="fas fa-bolt me-1"></i>Razorpay checkout available on the next screen.</p>
+                            @endif
                         @else
                             <form method="POST" action="{{ route('student-subscription.subscribe') }}">
                                 @csrf
@@ -79,7 +88,7 @@
                                 </button>
                             </form>
                             <p class="text-center text-muted small mt-3 mb-0">
-                                After payment (online or UPI screenshot), your {{ $years }}-year student membership is activated.
+                                After Razorpay payment, your {{ $years }}-year student membership activates immediately and you can download your invoice.
                                 Institute enrollment approval is separate and may still be pending.
                             </p>
                         @endif

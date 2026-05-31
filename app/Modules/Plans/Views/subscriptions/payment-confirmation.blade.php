@@ -4,13 +4,23 @@
 @section('page-title', 'Payment Confirmation')
 
 @section('content')
+@php
+    $isStudentMembership = $isStudentMembership ?? app(\App\Modules\Plans\Services\StudentSubscriptionService::class)->isStudentPlanSubscription($subscription);
+    $checkoutBackUrl = $isStudentMembership ? route('student-subscription.offer') : route('subscriptions.show', $subscription);
+    $checkoutBackLabel = $isStudentMembership ? 'Back to membership offer' : 'Back to subscription';
+    $priceIncludesGst = (bool) data_get(
+        $subscription->plan->payment_options ?? [],
+        $subscription->payment_frequency.'.price_includes_gst',
+        false
+    );
+@endphp
 <!-- Mobile Header -->
 <div class="app-mobile-header d-md-none">
     <div class="d-flex align-items-center">
-        <a href="{{ route('subscriptions.show', $subscription) }}" class="btn btn-link text-white p-0 me-3">
+        <a href="{{ $checkoutBackUrl }}" class="btn btn-link text-white p-0 me-3">
             <i class="fas fa-arrow-left"></i>
         </a>
-        <h5 class="text-white mb-0">Payment Confirmation</h5>
+        <h5 class="text-white mb-0">{{ $isStudentMembership ? 'Student membership payment' : 'Payment Confirmation' }}</h5>
     </div>
 </div>
 
@@ -23,10 +33,10 @@
                     <div class="payment-icon mb-3">
                         <i class="fas fa-check-circle text-success" style="font-size: 64px;"></i>
                     </div>
-                    <h3 class="mb-2">Complete your payment</h3>
+                    <h3 class="mb-2">{{ $isStudentMembership ? 'Complete your student membership' : 'Complete your payment' }}</h3>
                     <p class="text-muted mb-0">
                         @if(!empty($razorpayEnabled) && empty($manualPaymentEnabled))
-                            Pay securely with Razorpay to activate your subscription.
+                            Pay securely with Razorpay to activate your {{ $isStudentMembership ? 'membership' : 'subscription' }}.
                         @elseif(!empty($razorpayEnabled) && !empty($manualPaymentEnabled))
                             Pay with Razorpay (recommended) or use manual UPI and upload proof below.
                         @else
@@ -57,6 +67,15 @@
                     
                     <!-- Payment Breakdown -->
                     <div class="payment-breakdown mt-3">
+                        @if($priceIncludesGst)
+                        <div class="breakdown-item total-amount">
+                            <div class="d-flex justify-content-between">
+                                <span><strong>Total (GST inclusive):</strong></span>
+                                <strong class="text-primary" style="font-size: 1.2em;">₹{{ number_format($subscription->total_amount, 2) }}</strong>
+                            </div>
+                            <small class="text-muted d-block mt-1">Launch price includes applicable GST — no extra charges.</small>
+                        </div>
+                        @else
                         <div class="breakdown-item">
                             <div class="d-flex justify-content-between">
                                 <span>Base Amount:</span>
@@ -75,6 +94,7 @@
                                 <strong class="text-primary" style="font-size: 1.2em;">₹{{ number_format($subscription->total_amount, 2) }}</strong>
                             </div>
                         </div>
+                        @endif
                     </div>
                 </div>
 
@@ -158,10 +178,19 @@
                     <h4 class="text-success mb-3">Payment Screenshot Submitted Successfully!</h4>
                     <div class="alert alert-success">
                         <i class="fas fa-info-circle me-2"></i>
-                        <strong>Thank you!</strong> You have submitted the screenshot successfully. Our team will contact you within 24 hours and activate the subscription if payment is done.
+                        @if($isStudentMembership)
+                            <strong>Thank you!</strong> Your payment proof is saved.
+                            @if(config('student_subscription.auto_activate_on_manual_proof', true))
+                                If you are not redirected automatically, refresh this page or open Academics from the menu.
+                            @else
+                                MMHC will verify your payment and activate your student membership within 24 hours.
+                            @endif
+                        @else
+                            <strong>Thank you!</strong> You have submitted the screenshot successfully. Our team will contact you within 24 hours and activate the subscription if payment is done.
+                        @endif
                     </div>
-                    <a href="{{ route('subscriptions.show', $subscription) }}" class="btn btn-primary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Subscription
+                    <a href="{{ $checkoutBackUrl }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-2"></i>{{ $checkoutBackLabel }}
                     </a>
                 </div>
                 @elseif($manualPaymentEnabled)
@@ -211,10 +240,8 @@
                 @elseif(!$razorpayEnabled && !$manualPaymentEnabled)
                 <div class="alert alert-warning mb-0">
                     <i class="fas fa-info-circle me-2"></i>
-                    Payment is not configured on this server. Ask MMHC to enable
-                    <code>RAZORPAY_ENABLED=true</code> or
-                    <code>STUDENT_SUBSCRIPTION_MANUAL_PAYMENT=true</code>
-                    in <code>.env</code>, then run <code>php artisan config:clear</code>.
+                    Online payment is not configured. Ask MMHC to set
+                    <code>RAZORPAY_ENABLED=true</code> and Razorpay keys in <code>.env</code>, then run <code>php artisan config:clear</code>.
                 </div>
                 @endif
             </div>
@@ -612,7 +639,7 @@ async function startRazorpayCheckout() {
 
         const rzp = new Razorpay(options);
         rzp.on('payment.failed', function () {
-            alert('Payment failed or cancelled. You can retry or use screenshot upload.');
+            alert('Payment failed or cancelled. Please try again.');
         });
         rzp.open();
     } catch (error) {

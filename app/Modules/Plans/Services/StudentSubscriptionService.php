@@ -5,6 +5,7 @@ namespace App\Modules\Plans\Services;
 use App\Models\Core\User;
 use App\Modules\Plans\Models\Plan;
 use App\Modules\Plans\Models\Subscription;
+use Illuminate\Support\Facades\Schema;
 
 class StudentSubscriptionService
 {
@@ -21,11 +22,14 @@ class StudentSubscriptionService
     public function getStudentPlan(): ?Plan
     {
         $slug = (string) config('student_subscription.plan_slug', 'student-journey-launch');
+        $query = Plan::query()->where('is_active', true);
 
-        return Plan::query()
-            ->where('slug', $slug)
-            ->where('is_active', true)
-            ->first();
+        if (Schema::hasColumn('plans', 'slug')) {
+            return (clone $query)->where('slug', $slug)->first();
+        }
+
+        // Fallback when slug migration has not been run yet
+        return (clone $query)->where('name', 'Student Journey Membership')->first();
     }
 
     public function requiresStudentMembership(User $user): bool
@@ -112,10 +116,24 @@ class StudentSubscriptionService
         return (bool) config('student_subscription.auto_activate_on_manual_proof', true);
     }
 
+    /**
+     * Student memberships with auto-activate skip the admin manual-verify queue.
+     */
+    public function isExcludedFromAdminPendingQueue(Subscription $subscription): bool
+    {
+        return $this->isStudentPlanSubscription($subscription)
+            && $this->shouldAutoActivateOnManualProof();
+    }
+
     public function postPaymentRedirectUrl(User $user, Subscription $subscription): string
     {
-        if ($user->role === 'student' && $this->isStudentPlanSubscription($subscription) && $subscription->payment_status === 'paid') {
-            return route('academics.dashboard');
+        if ($subscription->payment_status === 'paid') {
+            $invoiceUrl = route('subscriptions.invoice', $subscription);
+            if ($user->role === 'student' && $this->isStudentPlanSubscription($subscription)) {
+                return $invoiceUrl.'?continue='.urlencode(route('academics.dashboard'));
+            }
+
+            return $invoiceUrl;
         }
 
         return route('subscriptions.show', $subscription);

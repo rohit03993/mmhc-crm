@@ -25,6 +25,15 @@ class DashboardController extends Controller
             return redirect()->route('auth.login');
         }
 
+        if ($user->role === 'student') {
+            $studentSub = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
+            if ($studentSub->requiresStudentMembership($user)) {
+                return redirect()->route('student-subscription.offer');
+            }
+
+            return redirect()->route('academics.dashboard');
+        }
+
         if ($user->hasAcademicRole()) {
             return redirect()->route('academics.dashboard');
         }
@@ -78,6 +87,8 @@ class DashboardController extends Controller
     {
         $filterType = $request->get('type', 'all'); // 'subscriptions', 'services', 'all'
 
+        $studentSubscriptionService = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
+
         // Get pending subscription payments
         $pendingSubscriptions = \App\Modules\Plans\Models\Subscription::with(['user', 'plan'])
             ->where(function ($query) {
@@ -106,7 +117,9 @@ class DashboardController extends Controller
                     });
             })
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->reject(fn ($subscription) => $studentSubscriptionService->isExcludedFromAdminPendingQueue($subscription))
+            ->values();
 
         // Get pending service payments (unpaid balance)
         $pendingServices = \App\Modules\Services\Models\ServiceRequest::with(['patient', 'serviceType', 'assignedStaff'])
