@@ -25,6 +25,12 @@
 </div>
 
 <div class="container-fluid px-3 py-4">
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
     <div class="row">
         <div class="col-12 col-lg-8 mx-auto">
             <!-- Payment Confirmation Card -->
@@ -67,13 +73,33 @@
                     
                     <!-- Payment Breakdown -->
                     <div class="payment-breakdown mt-3">
+                        @php
+                            $originalTotal = (float) ($subscription->amount_before_discount ?? $subscription->total_amount);
+                            $couponDiscount = (float) ($subscription->discount_amount ?? 0);
+                        @endphp
+                        @if($couponDiscount > 0)
+                        <div class="breakdown-item">
+                            <div class="d-flex justify-content-between">
+                                <span>Membership price</span>
+                                <strong>₹{{ number_format($originalTotal, 2) }}</strong>
+                            </div>
+                        </div>
+                        <div class="breakdown-item text-success">
+                            <div class="d-flex justify-content-between">
+                                <span>Coupon ({{ $subscription->coupon_code }})</span>
+                                <strong>− ₹{{ number_format($couponDiscount, 2) }}</strong>
+                            </div>
+                        </div>
+                        @endif
                         @if($priceIncludesGst)
                         <div class="breakdown-item total-amount">
                             <div class="d-flex justify-content-between">
-                                <span><strong>Total (GST inclusive):</strong></span>
+                                <span><strong>Total to pay (GST inclusive):</strong></span>
                                 <strong class="text-primary" style="font-size: 1.2em;">₹{{ number_format($subscription->total_amount, 2) }}</strong>
                             </div>
+                            @if(!$couponDiscount)
                             <small class="text-muted d-block mt-1">Launch price includes applicable GST — no extra charges.</small>
+                            @endif
                         </div>
                         @else
                         <div class="breakdown-item">
@@ -96,6 +122,27 @@
                         </div>
                         @endif
                     </div>
+
+                    @if($subscription->payment_status !== 'paid' && ($isStudentMembership ?? false))
+                    <div class="mt-3 p-3 bg-light rounded-3 border">
+                        <label class="form-label small fw-semibold mb-2"><i class="fas fa-ticket-alt me-1"></i>Coupon code</label>
+                        @if($couponDiscount > 0)
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="badge bg-success fs-6">{{ $subscription->coupon_code }}</span>
+                                <form method="POST" action="{{ route('subscriptions.remove-coupon', $subscription) }}" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Remove</button>
+                                </form>
+                            </div>
+                        @else
+                            <form method="POST" action="{{ route('subscriptions.apply-coupon', $subscription) }}" class="input-group">
+                                @csrf
+                                <input type="text" name="coupon_code" class="form-control text-uppercase" placeholder="Enter code" required maxlength="64">
+                                <button type="submit" class="btn btn-outline-primary">Apply</button>
+                            </form>
+                        @endif
+                    </div>
+                    @endif
                 </div>
 
                 <!-- UPI Payment Button (if not paid yet) -->

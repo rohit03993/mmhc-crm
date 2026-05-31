@@ -10,24 +10,24 @@ class StudentMembershipPlanSeeder extends Seeder
 {
     public function run(): void
     {
-        $launchPrice = (float) config('student_subscription.display.launch_price_inr', 1200);
+        $membershipPrice = (float) config('student_subscription.display.launch_price_inr', 12000);
         $years = (int) config('student_subscription.display.duration_years', 10);
         $slug = (string) config('student_subscription.plan_slug', 'student-journey-launch');
         $frequency = (string) config('student_subscription.payment_frequency', 'student_launch');
 
         $attributes = [
             'name' => 'Student Journey Membership',
-            'description' => '10-year student academics & healthcare journey membership. Launch offer: one-time payment for students only.',
-            'price' => $launchPrice,
+            'description' => '10-year student academics & healthcare journey membership. One-time payment for students only.',
+            'price' => $membershipPrice,
             'monthly_price' => (float) config('student_subscription.display.monthly_reference_inr', 100),
             'members_included' => '1 student',
             'currency' => 'INR',
             'duration_days' => $years * 365,
             'payment_options' => [
                 $frequency => [
-                    'price' => $launchPrice,
-                    'label' => 'Launch offer — one-time',
-                    'description' => "{$years}-year student membership (launch pricing)",
+                    'price' => $membershipPrice,
+                    'label' => '10-year membership — one-time',
+                    'description' => "{$years}-year student membership (₹100/month equivalent)",
                     'payable_years' => $years,
                     'care_benefits_years' => 0,
                     'price_includes_gst' => true,

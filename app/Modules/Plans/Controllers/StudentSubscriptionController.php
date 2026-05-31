@@ -4,6 +4,7 @@ namespace App\Modules\Plans\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Plans\Services\StudentSubscriptionService;
+use App\Modules\Plans\Services\SubscriptionCouponService;
 use App\Modules\Plans\Services\SubscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -37,7 +38,8 @@ class StudentSubscriptionController extends Controller
     public function subscribe(
         Request $request,
         StudentSubscriptionService $studentSubscriptionService,
-        SubscriptionService $subscriptionService
+        SubscriptionService $subscriptionService,
+        SubscriptionCouponService $couponService
     ) {
         $user = Auth::user();
         if ($user->role !== 'student') {
@@ -70,6 +72,21 @@ class StudentSubscriptionController extends Controller
                 'notes' => 'Student journey launch membership',
             ]);
 
+            $couponCode = trim((string) $request->input('coupon_code', ''));
+            if ($couponCode !== '') {
+                $original = (float) $subscription->total_amount;
+                $result = $couponService->validateForCheckout($couponCode, $user, $original, 'student');
+                if (! $result['valid']) {
+                    $subscription->delete();
+
+                    return redirect()->route('student-subscription.offer')
+                        ->withInput()
+                        ->with('error', $result['message']);
+                }
+                $couponService->applyToSubscription($subscription, $result['coupon']);
+                $subscription->refresh();
+            }
+
             return redirect()->route('subscriptions.payment-confirmation', $subscription->id)
                 ->with('success', 'Almost there! Complete your one-time payment of ₹'.number_format((float) $subscription->total_amount, 0).' to activate your membership.');
         } catch (\Throwable $e) {
@@ -88,5 +105,35 @@ class StudentSubscriptionController extends Controller
             return redirect()->route('student-subscription.offer')
                 ->with('error', $message);
         }
+    }
+
+    public function validateCoupon(Request $request, SubscriptionCouponService $couponService, StudentSubscriptionService $studentSubscriptionService)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'student') {
+            abort(403);
+        }
+
+        $request->validate([
+            'coupon_code' => 'required|string|max:64',
+        ]);
+
+        $plan = $studentSubscriptionService->getStudentPlan();
+        $original = $couponService->studentLaunchAmount($plan);
+        $result = $couponService->validateForCheckout(
+            $request->input('coupon_code'),
+            $user,
+            $original,
+            'student'
+        );
+
+        return response()->json([
+            'success' => $result['valid'],
+            'message' => $result['message'],
+            'original_amount' => $result['original_amount'] ?? $original,
+            'discount_amount' => $result['discount'] ?? 0,
+            'final_amount' => $result['final_amount'] ?? $original,
+            'coupon_code' => $result['valid'] ? $result['coupon']->code : null,
+        ], $result['valid'] ? 200 : 422);
     }
 }

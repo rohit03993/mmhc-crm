@@ -156,6 +156,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('student-subscription')->name('student-subscription.')->group(function () {
         Route::get('/offer', [\App\Modules\Plans\Controllers\StudentSubscriptionController::class, 'offer'])->name('offer');
         Route::post('/subscribe', [\App\Modules\Plans\Controllers\StudentSubscriptionController::class, 'subscribe'])->name('subscribe');
+        Route::post('/validate-coupon', [\App\Modules\Plans\Controllers\StudentSubscriptionController::class, 'validateCoupon'])->name('validate-coupon');
     });
 
     // MANUALLY REGISTER SUBSCRIPTIONS ROUTES TO ENSURE THEY WORK
@@ -167,6 +168,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{subscription}/invoice', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'invoice'])->name('invoice');
         Route::post('/{subscription}/razorpay/order', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'createRazorpayOrder'])->name('razorpay.order');
         Route::post('/{subscription}/razorpay/verify', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'verifyRazorpayPayment'])->name('razorpay.verify');
+        Route::post('/{subscription}/apply-coupon', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'applyCoupon'])->name('apply-coupon');
+        Route::post('/{subscription}/remove-coupon', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'removeCoupon'])->name('remove-coupon');
         Route::post('/{subscription}/submit-payment', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'submitPayment'])->name('submit-payment');
         Route::delete('/{subscription}', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'destroy'])->name('destroy');
         Route::post('/{subscription}/cancel', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'cancel'])->name('cancel');
@@ -280,6 +283,13 @@ Route::middleware(['auth'])->group(function () {
         // Subscription Settings Routes
         Route::get('/subscription-settings', [\App\Modules\Plans\Controllers\SubscriptionSettingsController::class, 'index'])->name('subscription-settings');
         Route::put('/subscription-settings', [\App\Modules\Plans\Controllers\SubscriptionSettingsController::class, 'update'])->name('subscription-settings.update');
+
+        Route::get('/subscription-coupons', [\App\Modules\Plans\Controllers\AdminSubscriptionCouponController::class, 'index'])->name('subscription-coupons.index');
+        Route::get('/subscription-coupons/create', [\App\Modules\Plans\Controllers\AdminSubscriptionCouponController::class, 'create'])->name('subscription-coupons.create');
+        Route::post('/subscription-coupons', [\App\Modules\Plans\Controllers\AdminSubscriptionCouponController::class, 'store'])->name('subscription-coupons.store');
+        Route::get('/subscription-coupons/{coupon}/edit', [\App\Modules\Plans\Controllers\AdminSubscriptionCouponController::class, 'edit'])->name('subscription-coupons.edit');
+        Route::put('/subscription-coupons/{coupon}', [\App\Modules\Plans\Controllers\AdminSubscriptionCouponController::class, 'update'])->name('subscription-coupons.update');
+        Route::delete('/subscription-coupons/{coupon}', [\App\Modules\Plans\Controllers\AdminSubscriptionCouponController::class, 'destroy'])->name('subscription-coupons.destroy');
 
         // Staff Payment Management Routes
         Route::prefix('payments')->name('payments.')->group(function () {

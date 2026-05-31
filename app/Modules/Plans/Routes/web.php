@@ -36,6 +36,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{subscription}/invoice', [SubscriptionController::class, 'invoice'])->name('invoice');
         Route::post('/{subscription}/razorpay/order', [SubscriptionController::class, 'createRazorpayOrder'])->name('razorpay.order');
         Route::post('/{subscription}/razorpay/verify', [SubscriptionController::class, 'verifyRazorpayPayment'])->name('razorpay.verify');
+        Route::post('/{subscription}/apply-coupon', [SubscriptionController::class, 'applyCoupon'])->name('apply-coupon');
+        Route::post('/{subscription}/remove-coupon', [SubscriptionController::class, 'removeCoupon'])->name('remove-coupon');
         Route::post('/{subscription}/submit-payment', [SubscriptionController::class, 'submitPayment'])->name('submit-payment');
         Route::delete('/{subscription}', [SubscriptionController::class, 'destroy'])->name('destroy');
         Route::post('/{subscription}/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');

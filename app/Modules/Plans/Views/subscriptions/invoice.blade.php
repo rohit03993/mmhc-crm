@@ -105,12 +105,18 @@
                                 · Valid {{ $subscription->start_date->format('d M Y') }} – {{ $subscription->end_date->format('d M Y') }}
                             </span>
                         </td>
-                        <td class="text-end">₹{{ number_format((float) $subscription->total_amount, 2) }}</td>
+                        <td class="text-end">₹{{ number_format((float) ($subscription->amount_before_discount ?? $subscription->total_amount), 2) }}</td>
                     </tr>
                     @if(!$priceIncludesGst && ($subscription->gst_amount ?? 0) > 0)
                     <tr>
                         <td class="invoice-meta">Includes GST ({{ number_format($subscription->gst_rate ?? 18, 2) }}%)</td>
                         <td class="text-end">₹{{ number_format((float) $subscription->gst_amount, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($subscription->discount_amount ?? 0) > 0)
+                    <tr>
+                        <td class="invoice-meta">Coupon ({{ $subscription->coupon_code }})</td>
+                        <td class="text-end text-success">− ₹{{ number_format((float) $subscription->discount_amount, 2) }}</td>
                     </tr>
                     @endif
                 </tbody>

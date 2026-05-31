@@ -21,6 +21,10 @@ class Subscription extends Model
         'end_date',
         'care_benefits_years',
         'payable_years',
+        'subscription_coupon_id',
+        'coupon_code',
+        'amount_before_discount',
+        'discount_amount',
         'base_amount',
         'gst_amount',
         'gst_rate',
@@ -62,6 +66,8 @@ class Subscription extends Model
         'gst_amount' => 'decimal:2',
         'gst_rate' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'amount_before_discount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'gateway_payload' => 'array',
         'referral_commission_amount' => 'decimal:2',
@@ -90,6 +96,11 @@ class Subscription extends Model
     public function plan()
     {
         return $this->belongsTo(Plan::class);
+    }
+
+    public function coupon()
+    {
+        return $this->belongsTo(SubscriptionCoupon::class, 'subscription_coupon_id');
     }
 
     /**

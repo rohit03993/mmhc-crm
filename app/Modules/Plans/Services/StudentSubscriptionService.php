@@ -5,6 +5,7 @@ namespace App\Modules\Plans\Services;
 use App\Models\Core\User;
 use App\Modules\Plans\Models\Plan;
 use App\Modules\Plans\Models\Subscription;
+use App\Modules\Plans\Models\SubscriptionCoupon;
 use Illuminate\Support\Facades\Schema;
 
 class StudentSubscriptionService
@@ -76,13 +77,79 @@ class StudentSubscriptionService
             return null;
         }
 
-        return Subscription::query()
+        $pending = Subscription::query()
             ->where('user_id', $user->id)
             ->where('plan_id', $plan->id)
             ->where('status', 'pending')
             ->where('payment_status', '!=', 'paid')
             ->latest('id')
             ->first();
+
+        if (! $pending) {
+            return null;
+        }
+
+        return $this->syncPendingCheckoutPricing($pending);
+    }
+
+    /**
+     * Align unpaid student checkout with the current plan catalogue (e.g. after admin price change).
+     */
+    public function syncPendingCheckoutPricing(Subscription $pending): Subscription
+    {
+        if ($pending->payment_status === 'paid' || $pending->status !== 'pending') {
+            return $pending;
+        }
+
+        if (! $this->isStudentPlanSubscription($pending)) {
+            return $pending;
+        }
+
+        $previousTotal = (float) $pending->total_amount;
+        $coupon = $pending->subscription_coupon_id
+            ? SubscriptionCoupon::find($pending->subscription_coupon_id)
+            : null;
+
+        try {
+            app(SubscriptionService::class)->reconcileSubscriptionFromPlanCatalogue($pending, false);
+        } catch (\Throwable) {
+            return $pending->fresh() ?? $pending;
+        }
+
+        $pending->refresh();
+
+        if ($coupon && $coupon->is_active) {
+            try {
+                app(SubscriptionCouponService::class)->applyToSubscription($pending, $coupon);
+            } catch (\Throwable) {
+                $pending->update([
+                    'subscription_coupon_id' => null,
+                    'coupon_code' => null,
+                    'amount_before_discount' => null,
+                    'discount_amount' => 0,
+                ]);
+            }
+        } else {
+            $pending->update([
+                'subscription_coupon_id' => null,
+                'coupon_code' => null,
+                'amount_before_discount' => null,
+                'discount_amount' => 0,
+                'total_amount' => $pending->total_amount,
+                'base_amount' => $pending->base_amount,
+            ]);
+        }
+
+        $pending->refresh();
+
+        if (abs($previousTotal - (float) $pending->total_amount) >= 0.01) {
+            $pending->update([
+                'razorpay_order_id' => null,
+                'gateway_status' => null,
+            ]);
+        }
+
+        return $pending->fresh();
     }
 
     /**

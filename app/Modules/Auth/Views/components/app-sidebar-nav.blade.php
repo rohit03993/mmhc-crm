@@ -440,6 +440,13 @@
         </li>
 
         <li class="nav-item">
+            <a class="nav-link text-white {{ request()->routeIs('admin.subscription-coupons*') ? 'active' : '' }}" href="{{ route('admin.subscription-coupons.index') }}">
+                <i class="fas fa-ticket-alt me-2"></i>
+                Coupons
+            </a>
+        </li>
+
+        <li class="nav-item">
             <a class="nav-link text-white {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" href="{{ route('admin.payments.index') }}">
                 <i class="fas fa-money-bill-wave me-2"></i>
                 Staff Payments

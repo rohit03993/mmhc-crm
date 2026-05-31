@@ -678,6 +678,49 @@ class SubscriptionController extends Controller
         ]);
     }
 
+    public function applyCoupon(Request $request, Subscription $subscription)
+    {
+        if ($subscription->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $request->validate(['coupon_code' => 'required|string|max:64']);
+
+        $studentService = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
+        $couponService = app(\App\Modules\Plans\Services\SubscriptionCouponService::class);
+
+        $audience = $studentService->isStudentPlanSubscription($subscription) ? 'student' : 'patient';
+        $original = (float) ($subscription->amount_before_discount ?? $subscription->total_amount);
+
+        $result = $couponService->validateForCheckout(
+            $request->input('coupon_code'),
+            Auth::user(),
+            $original,
+            $audience
+        );
+
+        if (! $result['valid']) {
+            return redirect()->back()->with('error', $result['message']);
+        }
+
+        $couponService->applyToSubscription($subscription, $result['coupon']);
+
+        return redirect()->back()
+            ->with('success', 'Coupon applied! New total: ₹'.number_format((float) $subscription->fresh()->total_amount, 2));
+    }
+
+    public function removeCoupon(Subscription $subscription)
+    {
+        if ($subscription->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $couponService = app(\App\Modules\Plans\Services\SubscriptionCouponService::class);
+        $couponService->removeFromSubscription($subscription);
+
+        return redirect()->back()->with('success', 'Coupon removed. Original price restored.');
+    }
+
     /**
      * Show payment confirmation page (after UPI payment attempt)
      */
@@ -698,6 +741,10 @@ class SubscriptionController extends Controller
         $subscription->refresh();
 
         $studentSubscriptionService = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
+
+        if ($studentSubscriptionService->isStudentPlanSubscription($subscription)) {
+            $subscription = $studentSubscriptionService->syncPendingCheckoutPricing($subscription);
+        }
 
         // Students who uploaded proof earlier (partially_paid) but were never activated
         if ($subscription->payment_status === 'partially_paid'
@@ -734,6 +781,11 @@ class SubscriptionController extends Controller
     {
         if ($subscription->user_id !== Auth::id()) {
             abort(403);
+        }
+
+        $studentService = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
+        if ($studentService->isStudentPlanSubscription($subscription)) {
+            $subscription = $studentService->syncPendingCheckoutPricing($subscription);
         }
 
         if (! $this->razorpayService->isEnabled()) {
@@ -1284,6 +1336,9 @@ class SubscriptionController extends Controller
 
         app(\App\Modules\Plans\Services\SubscriptionInvoiceService::class)
             ->ensurePaymentRecord($subscription);
+
+        app(\App\Modules\Plans\Services\SubscriptionCouponService::class)
+            ->recordRedemption($subscription);
 
         if ($subscription->referrer_id) {
             try {

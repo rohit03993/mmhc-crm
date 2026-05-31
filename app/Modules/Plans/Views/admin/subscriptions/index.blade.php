@@ -135,6 +135,9 @@
         <a href="{{ route('admin.plans') }}" class="btn btn-primary">
             <i class="fas fa-cog me-2"></i>Manage plans
         </a>
+        <a href="{{ route('admin.subscription-coupons.index') }}" class="btn btn-outline-primary">
+            <i class="fas fa-ticket-alt me-2"></i>Coupons
+        </a>
     </div>
 
     @if(isset($stats))
