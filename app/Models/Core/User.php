@@ -421,6 +421,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Admin user list pagination sizes.
+     *
+     * @return list<int>
+     */
+    public static function adminListPerPageOptions(): array
+    {
+        return [10, 20, 30, 40, 50];
+    }
+
+    /**
      * Check if user has an academic module role (redirect to /academics after login).
      */
     public function hasAcademicRole(): bool

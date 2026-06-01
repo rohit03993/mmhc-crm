@@ -118,7 +118,7 @@
                                        inputmode="search"
                                        aria-label="Search users">
                                 @if(($searchQuery ?? '') !== '')
-                                    <a href="{{ route('admin.users', array_filter(['segment' => $segment !== 'all' ? $segment : null])) }}" class="btn btn-outline-secondary border" title="Clear search text">Clear</a>
+                                    <a href="{{ route('admin.users', array_filter(['segment' => $segment !== 'all' ? $segment : null, 'per_page' => ($perPage ?? 10) !== 10 ? $perPage : null])) }}" class="btn btn-outline-secondary border" title="Clear search text">Clear</a>
                                 @endif
                             </div>
                             <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 flex-shrink-0">
@@ -127,6 +127,12 @@
                                     <option value="all" @selected($segment === 'all')>Everyone</option>
                                     <option value="academics" @selected($segment === 'academics')>Academics only</option>
                                     <option value="healthcare" @selected($segment === 'healthcare')>Healthcare &amp; ops</option>
+                                </select>
+                                <label class="visually-hidden" for="umPerPage">Users per page</label>
+                                <select name="per_page" id="umPerPage" class="form-select form-select-sm um-per-page-select" aria-label="Users per page" onchange="this.form.submit()" title="Users per page">
+                                    @foreach(\App\Models\Core\User::adminListPerPageOptions() as $option)
+                                        <option value="{{ $option }}" @selected(($perPage ?? 10) === $option)>{{ $option }} / page</option>
+                                    @endforeach
                                 </select>
                                 <button type="submit" class="btn btn-primary btn-sm px-4 um-search-submit">
                                     <i class="fas fa-search me-1 d-none d-sm-inline"></i>Search
@@ -172,12 +178,29 @@
                     </table>
                 </div>
 
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 p-3 border-top bg-light">
-                    <div class="small text-muted">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 p-3 border-top bg-light um-pagination-bar">
+                    <div class="d-flex flex-wrap align-items-center gap-2 small text-muted">
                         @if($users->total() > 0)
-                            Page {{ $users->currentPage() }} of {{ $users->lastPage() }}
-                            · {{ number_format($users->total()) }} users
+                            <span>Page {{ $users->currentPage() }} of {{ $users->lastPage() }}</span>
+                            <span class="text-muted">·</span>
+                            <span><strong>{{ number_format($users->total()) }}</strong> users</span>
+                            <span class="text-muted">·</span>
+                            <span>Showing {{ $users->firstItem() }}–{{ $users->lastItem() }}</span>
                         @endif
+                        <form method="GET" action="{{ route('admin.users') }}" class="d-inline-flex align-items-center gap-1 ms-md-2 um-per-page-form">
+                            @if($segment !== 'all')
+                                <input type="hidden" name="segment" value="{{ $segment }}">
+                            @endif
+                            @if(($searchQuery ?? '') !== '')
+                                <input type="hidden" name="q" value="{{ $searchQuery }}">
+                            @endif
+                            <label for="umPerPageFooter" class="mb-0 text-nowrap">Per page</label>
+                            <select name="per_page" id="umPerPageFooter" class="form-select form-select-sm" style="width:auto; min-width:4.5rem;" onchange="this.form.submit()">
+                                @foreach(\App\Models\Core\User::adminListPerPageOptions() as $option)
+                                    <option value="{{ $option }}" @selected(($perPage ?? 10) === $option)>{{ $option }}</option>
+                                @endforeach
+                            </select>
+                        </form>
                     </div>
                     @if($users->hasPages())
                         <div>{{ $users->withQueryString()->links() }}</div>
@@ -197,6 +220,14 @@
     cursor: pointer;
     min-width: 11.5rem;
     border-radius: 0.5rem;
+}
+.um-per-page-select {
+    cursor: pointer;
+    min-width: 6.5rem;
+    border-radius: 0.5rem;
+}
+.um-pagination-bar .um-per-page-form select {
+    cursor: pointer;
 }
 @media (min-width: 768px) {
     .um-segment-select { max-width: 14rem; }
@@ -396,6 +427,9 @@
                 @endif
                 @if(($searchQuery ?? '') !== '')
                     <input type="hidden" name="q" value="{{ $searchQuery }}">
+                @endif
+                @if(($perPage ?? 10) !== 10)
+                    <input type="hidden" name="per_page" value="{{ $perPage }}">
                 @endif
                 <div id="bulkDeleteUserIdInputs"></div>
                 <div class="modal-body">

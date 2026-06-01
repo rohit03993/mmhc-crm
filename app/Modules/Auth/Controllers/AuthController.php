@@ -759,6 +759,8 @@ class AuthController extends Controller
             $segment = 'all';
         }
 
+        $perPage = $this->resolveAdminUsersPerPage($request);
+
         $users = User::query()
             ->with('profile')
             ->withCount('documents')
@@ -770,7 +772,7 @@ class AuthController extends Controller
             ->when($searchQuery !== '', fn ($query) => $this->applyAdminUserSearch($query, $searchQuery))
             ->when($segment === 'academics', fn ($q) => $q->orderByRaw("CASE role WHEN 'super_admin' THEN 0 WHEN 'institution_admin' THEN 1 WHEN 'faculty' THEN 2 WHEN 'student' THEN 3 ELSE 4 END"))
             ->orderBy('name')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
         $institutions = Schema::hasTable('academic_institutions')
@@ -790,7 +792,29 @@ class AuthController extends Controller
 
         $unverifiedPhoneCount = (clone $unverifiedPhoneQuery)->count();
 
-        return view('auth::admin.users', compact('users', 'searchQuery', 'segment', 'institutions', 'batches', 'unverifiedPhoneCount'));
+        return view('auth::admin.users', compact('users', 'searchQuery', 'segment', 'institutions', 'batches', 'unverifiedPhoneCount', 'perPage'));
+    }
+
+    private function resolveAdminUsersPerPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 10);
+
+        return in_array($perPage, User::adminListPerPageOptions(), true) ? $perPage : 10;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function adminUsersListQueryParams(Request $request): array
+    {
+        return array_filter([
+            'segment' => $request->query('segment') !== 'all' ? $request->query('segment') : null,
+            'q' => $request->filled('q') ? $request->query('q') : null,
+            'page' => $request->query('page'),
+            'per_page' => $this->resolveAdminUsersPerPage($request) !== 10
+                ? $this->resolveAdminUsersPerPage($request)
+                : null,
+        ], fn ($v) => $v !== null && $v !== '');
     }
 
     /**
@@ -1283,7 +1307,7 @@ class AuthController extends Controller
         }
 
         return redirect()
-            ->route('admin.users', $request->only('segment', 'q', 'page'))
+            ->route('admin.users', $this->adminUsersListQueryParams($request))
             ->with($result->failed > 0 && $result->deleted === 0 ? 'error' : 'success', $message);
     }
 
@@ -1300,7 +1324,7 @@ class AuthController extends Controller
         $deletionService->delete($user, $request->user());
 
         return redirect()
-            ->route('admin.users', $request->only('segment', 'q'))
+            ->route('admin.users', $this->adminUsersListQueryParams($request))
             ->with('success', "Account {$uniqueId} has been permanently removed.");
     }
 
