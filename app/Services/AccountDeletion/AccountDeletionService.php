@@ -41,6 +41,7 @@ class AccountDeletionService
     public function delete(User $target, User $actor): DeletionResult
     {
         $this->policy->assertDeletable($target, $actor);
+        $this->assertDeletionSchemaReady();
 
         $stats = [];
 
@@ -58,15 +59,17 @@ class AccountDeletionService
 
                 $target->delete();
 
-                UserDeletionLog::create([
-                    'admin_id' => $actor->id,
-                    'target_user_id' => $target->id,
-                    'target_role' => $target->role,
-                    'target_unique_id' => $target->unique_id,
-                    'original_phone' => $released['phone'],
-                    'original_email' => $released['email'],
-                    'stats' => $stats,
-                ]);
+                if (Schema::hasTable('user_deletion_logs')) {
+                    UserDeletionLog::create([
+                        'admin_id' => $actor->id,
+                        'target_user_id' => $target->id,
+                        'target_role' => $target->role,
+                        'target_unique_id' => $target->unique_id,
+                        'original_phone' => $released['phone'],
+                        'original_email' => $released['email'],
+                        'stats' => $stats,
+                    ]);
+                }
             });
         } catch (\Throwable $e) {
             Log::error('Account deletion failed', [
@@ -86,8 +89,9 @@ class AccountDeletionService
     /**
      * @param  list<int>  $userIds
      */
-    public function deleteMany(array $userIds, User $actor, int $max = 50): BulkDeletionResult
+    public function deleteMany(array $userIds, User $actor, ?int $max = null): BulkDeletionResult
     {
+        $max = $max ?? max(User::adminListPerPageOptions());
         $userIds = array_values(array_unique(array_map('intval', $userIds)));
         $userIds = array_slice($userIds, 0, $max);
 
@@ -139,16 +143,28 @@ class AccountDeletionService
         $stats = [];
         $id = $user->id;
 
-        $stats['sessions'] = DB::table('sessions')->where('user_id', $id)->delete();
+        if (Schema::hasTable('sessions')) {
+            $stats['sessions'] = DB::table('sessions')->where('user_id', $id)->delete();
+        }
 
-        $stats['community_notifications'] = CommunityNotification::query()
-            ->where(fn ($q) => $q->where('recipient_user_id', $id)->orWhere('actor_user_id', $id))
-            ->delete();
+        if (Schema::hasTable('community_notifications')) {
+            $stats['community_notifications'] = CommunityNotification::query()
+                ->where(fn ($q) => $q->where('recipient_user_id', $id)->orWhere('actor_user_id', $id))
+                ->delete();
+        }
 
-        $stats['community_posts'] = CommunityPost::query()->where('user_id', $id)->delete();
-        $stats['community_comments'] = CommunityComment::query()->where('user_id', $id)->delete();
-        $stats['community_reactions'] = CommunityReaction::query()->where('user_id', $id)->delete();
-        $stats['community_event_interests'] = CommunityEventInterest::query()->where('user_id', $id)->delete();
+        if (Schema::hasTable('community_posts')) {
+            $stats['community_posts'] = CommunityPost::query()->where('user_id', $id)->delete();
+        }
+        if (Schema::hasTable('community_comments')) {
+            $stats['community_comments'] = CommunityComment::query()->where('user_id', $id)->delete();
+        }
+        if (Schema::hasTable('community_reactions')) {
+            $stats['community_reactions'] = CommunityReaction::query()->where('user_id', $id)->delete();
+        }
+        if (Schema::hasTable('community_event_interests')) {
+            $stats['community_event_interests'] = CommunityEventInterest::query()->where('user_id', $id)->delete();
+        }
 
         $stats['files_removed'] = $this->deleteUserFiles($user);
 
@@ -191,6 +207,12 @@ class AccountDeletionService
 
         $patientRequestIds = ServiceRequest::query()->where('patient_id', $id)->pluck('id');
         if ($patientRequestIds->isNotEmpty()) {
+            if (Schema::hasTable('incentive_ledger')) {
+                IncentiveLedger::query()
+                    ->where('source_type', IncentiveLedger::SOURCE_SERVICE_REQUEST)
+                    ->whereIn('source_id', $patientRequestIds)
+                    ->delete();
+            }
             DailyService::query()->whereIn('service_request_id', $patientRequestIds)->delete();
         }
         $stats['service_requests_patient'] = ServiceRequest::query()->where('patient_id', $id)->delete();
@@ -206,6 +228,12 @@ class AccountDeletionService
 
         $subscriptionIds = Subscription::query()->where('user_id', $id)->pluck('id');
         if ($subscriptionIds->isNotEmpty()) {
+            if (Schema::hasTable('incentive_ledger')) {
+                IncentiveLedger::query()
+                    ->where('source_type', IncentiveLedger::SOURCE_SUBSCRIPTION_SALE)
+                    ->whereIn('source_id', $subscriptionIds)
+                    ->delete();
+            }
             $stats['subscription_payments'] = Payment::query()->whereIn('subscription_id', $subscriptionIds)->delete();
         }
         $stats['subscriptions'] = Subscription::query()->where('user_id', $id)->delete();
@@ -218,8 +246,21 @@ class AccountDeletionService
         return $stats;
     }
 
+    private function assertDeletionSchemaReady(): void
+    {
+        if (! Schema::hasColumn('users', 'deleted_at')) {
+            throw ValidationException::withMessages([
+                'user' => 'Database not ready: run php artisan migrate on the server (missing users.deleted_at for account deletion).',
+            ]);
+        }
+    }
+
     private function snapshotReferralIdentities(User $user): void
     {
+        if (! Schema::hasColumn('referrals', 'referrer_name_snapshot')) {
+            return;
+        }
+
         Referral::query()->where('referrer_id', $user->id)->each(function (Referral $referral) use ($user) {
             $referral->update([
                 'referrer_name_snapshot' => $referral->referrer_name_snapshot ?: $user->name,
@@ -287,22 +328,26 @@ class AccountDeletionService
             $count++;
         }
 
-        $user->loadMissing(['profile', 'documents']);
+        $user->loadMissing(['profile']);
 
         if ($user->profile?->avatar_path && Storage::disk('public')->exists($user->profile->avatar_path)) {
             Storage::disk('public')->delete($user->profile->avatar_path);
             $count++;
         }
 
-        foreach ($user->documents as $document) {
+        Document::query()->where('user_id', $user->id)->each(function (Document $document) use (&$count) {
             if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
                 Storage::disk('public')->delete($document->file_path);
                 $count++;
             }
-        }
+        });
 
-        if (is_array($user->documents)) {
-            foreach ($user->documents as $doc) {
+        $legacyDocs = $user->getAttributes()['documents'] ?? null;
+        if (is_string($legacyDocs)) {
+            $legacyDocs = json_decode($legacyDocs, true);
+        }
+        if (is_array($legacyDocs)) {
+            foreach ($legacyDocs as $doc) {
                 $path = is_array($doc) ? ($doc['path'] ?? $doc['file_path'] ?? null) : null;
                 if ($path && Storage::disk('public')->exists($path)) {
                     Storage::disk('public')->delete($path);
@@ -311,12 +356,14 @@ class AccountDeletionService
             }
         }
 
-        CommunityPost::query()->where('user_id', $user->id)->whereNotNull('image_path')->each(function (CommunityPost $post) use (&$count) {
+        if (Schema::hasTable('community_posts')) {
+            CommunityPost::query()->where('user_id', $user->id)->whereNotNull('image_path')->each(function (CommunityPost $post) use (&$count) {
             if ($post->image_path && Storage::disk('public')->exists($post->image_path)) {
                 Storage::disk('public')->delete($post->image_path);
                 $count++;
             }
-        });
+            });
+        }
 
         return $count;
     }

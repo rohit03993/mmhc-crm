@@ -1291,8 +1291,8 @@ class AuthController extends Controller
     public function bulkDeleteUsers(Request $request, AccountDeletionService $deletionService)
     {
         $validated = $request->validate([
-            'user_ids' => 'required|array|min:1|max:50',
-            'user_ids.*' => 'integer|exists:users,id',
+            'user_ids' => 'required|array|min:1|max:'.max(User::adminListPerPageOptions()),
+            'user_ids.*' => 'integer|distinct|exists:users,id',
             'confirm_phrase' => 'required|in:DELETE',
         ]);
 
@@ -1304,6 +1304,11 @@ class AuthController extends Controller
         }
         if ($result->failed > 0) {
             $message .= " Failed {$result->failed}.";
+        }
+
+        $firstFailure = collect($result->rows)->first(fn ($row) => empty($row['success']));
+        if ($firstFailure && ! empty($firstFailure['message'])) {
+            $message .= ' Reason: '.$firstFailure['message'];
         }
 
         return redirect()
