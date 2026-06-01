@@ -45,6 +45,37 @@
 
         @include('profiles::profile.partials.profile-top-section')
 
+        @if(!empty($membershipSummary) && ($membershipSummary['has_paid_membership'] ?? false))
+            <div class="profile-subscription-banner profile-subscription-banner--student">
+                <div class="profile-subscription-banner-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="profile-subscription-banner-body">
+                    @if($membershipSummary['active'])
+                        <div class="profile-subscription-title">Student membership active</div>
+                        <div class="profile-subscription-meta">
+                            {{ $membershipSummary['active']->plan->name ?? 'Student Journey Membership' }}
+                            <span class="text-muted">·</span>
+                            Valid through {{ $membershipSummary['active']->end_date->format('M j, Y') }}
+                        </div>
+                        <div class="profile-subscription-meta text-success mt-1">
+                            <i class="fas fa-check-circle me-1"></i>Payment received — your invoice is available anytime as proof.
+                        </div>
+                    @else
+                        <div class="profile-subscription-title">Membership payment on record</div>
+                        <div class="profile-subscription-meta text-muted">
+                            Download your tax invoice for proof of payment.
+                        </div>
+                    @endif
+                </div>
+                @if($membershipSummary['invoice_url'])
+                    <a href="{{ $membershipSummary['invoice_url'] }}" class="profile-subscription-cta" target="_blank" rel="noopener">
+                        <i class="fas fa-file-invoice me-1"></i>Invoice
+                    </a>
+                @endif
+            </div>
+        @endif
+
         @if($subscriptionSummary)
             <div class="profile-subscription-banner">
                 <div class="profile-subscription-banner-icon">

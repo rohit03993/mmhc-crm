@@ -21,7 +21,15 @@ class SubscriptionInvoiceService
             ->where('status', 'completed')
             ->first();
 
+        $collected = (float) ($subscription->paid_amount > 0
+            ? $subscription->paid_amount
+            : $subscription->total_amount);
+
         if ($existing) {
+            if (abs((float) $existing->amount - $collected) >= 0.01) {
+                $existing->update(['amount' => $collected]);
+            }
+
             return $existing;
         }
 
@@ -31,10 +39,10 @@ class SubscriptionInvoiceService
                 : 'manual'
         );
 
-        return Payment::create([
+        $payment = Payment::create([
             'user_id' => $subscription->user_id,
             'subscription_id' => $subscription->id,
-            'amount' => $subscription->total_amount,
+            'amount' => $collected,
             'currency' => $subscription->plan->currency ?? 'INR',
             'status' => 'completed',
             'payment_method' => $method,
@@ -46,5 +54,9 @@ class SubscriptionInvoiceService
             'receipt_number' => Payment::generateReceiptNumber(),
             'paid_at' => $subscription->payment_verified_at ?? now(),
         ]);
+
+        SubscriptionPaymentHistoryService::bustAdminDashboardCache();
+
+        return $payment;
     }
 }

@@ -231,7 +231,8 @@
                                     From {{ $stats['financial']['active_subscriptions_count'] }} active subscriptions
                                 </div>
                                 <div class="breakdown-hint">
-                                    <small class="text-muted">Money received from patient subscription payments</small>
+                                    <small class="text-muted d-block">Patient plans: ₹{{ number_format($stats['financial']['patient_subscription_revenue'] ?? 0, 2) }}</small>
+                                    <small class="text-muted d-block">Student membership: ₹{{ number_format($stats['financial']['student_subscription_revenue'] ?? 0, 2) }}</small>
                                 </div>
                             </div>
                         </div>
@@ -264,6 +265,48 @@
                             </div>
                         </div>
                     </div>
+
+                    @if(!empty($stats['financial']['recent_subscription_payments']) && $stats['financial']['recent_subscription_payments']->isNotEmpty())
+                    <hr class="my-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0"><i class="fas fa-receipt me-2"></i>Recent subscription payments</h6>
+                        <a href="{{ route('admin.plan-payments') }}" class="small text-decoration-none">View all customer payments →</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>User</th>
+                                    <th>Plan</th>
+                                    <th class="text-end">Amount</th>
+                                    <th>Invoice</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($stats['financial']['recent_subscription_payments'] as $recentPayment)
+                                    <tr>
+                                        <td>{{ optional($recentPayment->paid_at)->format('d M Y') ?? '—' }}</td>
+                                        <td>
+                                            @if($recentPayment->user)
+                                                <a href="{{ route('admin.profiles.view', $recentPayment->user) }}" class="text-decoration-none">{{ $recentPayment->user->name }}</a>
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td>{{ $recentPayment->subscription->plan->name ?? '—' }}</td>
+                                        <td class="text-end fw-semibold">₹{{ number_format((float) $recentPayment->amount, 2) }}</td>
+                                        <td>
+                                            @if($recentPayment->subscription)
+                                                <a href="{{ route('subscriptions.invoice', $recentPayment->subscription) }}" class="btn btn-sm btn-outline-primary rounded-pill" target="_blank" rel="noopener">View</a>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
                     
                     <!-- Monthly Recurring Revenue -->
                     @if($stats['financial']['monthly_recurring_revenue'] > 0)

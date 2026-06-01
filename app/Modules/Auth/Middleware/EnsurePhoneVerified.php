@@ -31,6 +31,10 @@ class EnsurePhoneVerified
 
     public function handle(Request $request, Closure $next): Response
     {
+        if ($request->is('media-file')) {
+            return $next($request);
+        }
+
         $user = $request->user();
         if (! $user || $user->hasVerifiedPhone() || $user->isExemptFromPhoneVerification()) {
             return $next($request);

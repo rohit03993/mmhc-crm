@@ -102,6 +102,8 @@ class SubscriptionCouponService
             'total_amount' => $final,
             'base_amount' => $final,
             'gst_amount' => 0,
+            'razorpay_order_id' => null,
+            'gateway_status' => null,
         ]);
 
         return $subscription->fresh();
@@ -125,6 +127,8 @@ class SubscriptionCouponService
             'total_amount' => $original,
             'base_amount' => $original,
             'gst_amount' => 0,
+            'razorpay_order_id' => null,
+            'gateway_status' => null,
         ]);
 
         return $subscription->fresh();

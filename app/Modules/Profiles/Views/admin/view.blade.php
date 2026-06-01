@@ -220,6 +220,33 @@
                 </div>
             @endif
 
+            @if($user->role === 'student' && !empty($profileStats['student']))
+                @php $st = $profileStats['student']; @endphp
+                <div class="apv-card mt-4">
+                    <h2 class="apv-card__title"><i class="fas fa-graduation-cap me-2 text-primary"></i>Membership</h2>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="apv-stat">
+                                <span class="apv-stat__label">Active membership</span>
+                                <span class="apv-stat__val">{{ $st['has_active_membership'] ? 'Yes' : 'No' }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="apv-stat">
+                                <span class="apv-stat__label">Payments made</span>
+                                <span class="apv-stat__val">{{ $st['paid_count'] }}</span>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="apv-stat apv-stat--accent">
+                                <span class="apv-stat__label">Total collected</span>
+                                <span class="apv-stat__val">₹{{ number_format($st['lifetime_paid'], 2) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             @if($user->isPatient() && $profileStats['patient'])
                 @php $p = $profileStats['patient']; @endphp
                 <div class="apv-card mt-4">
@@ -314,6 +341,10 @@
                     @endif
                 </div>
             </div>
+
+            @if(in_array($user->role, ['student', 'patient'], true))
+                @include('profiles::admin.partials.subscription-payments-card')
+            @endif
 
             @isset($studentAcademic)
                 <div class="mb-4">

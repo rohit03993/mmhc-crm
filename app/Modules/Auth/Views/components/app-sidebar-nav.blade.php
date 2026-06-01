@@ -447,6 +447,13 @@
         </li>
 
         <li class="nav-item">
+            <a class="nav-link text-white {{ request()->routeIs('admin.plan-payments*') ? 'active' : '' }}" href="{{ route('admin.plan-payments') }}">
+                <i class="fas fa-file-invoice-dollar me-2"></i>
+                Customer Payments
+            </a>
+        </li>
+
+        <li class="nav-item">
             <a class="nav-link text-white {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" href="{{ route('admin.payments.index') }}">
                 <i class="fas fa-money-bill-wave me-2"></i>
                 Staff Payments

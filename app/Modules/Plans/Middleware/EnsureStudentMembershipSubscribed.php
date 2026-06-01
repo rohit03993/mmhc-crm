@@ -40,6 +40,7 @@ class EnsureStudentMembershipSubscribed
         'subscriptions.payment-screenshot',
         'subscriptions.cancel',
         'subscriptions.renew',
+        'storage.serve',
     ];
 
     /** @var list<string> */
@@ -49,6 +50,11 @@ class EnsureStudentMembershipSubscribed
 
     public function handle(Request $request, Closure $next): Response
     {
+        // Uploaded files (community photos, avatars) must load even before membership payment
+        if ($request->is('media-file')) {
+            return $next($request);
+        }
+
         $user = $request->user();
         if (! $user) {
             return $next($request);

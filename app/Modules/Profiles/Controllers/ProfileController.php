@@ -13,6 +13,7 @@ use App\Modules\Incentives\Models\IncentiveLedger;
 use App\Modules\Payments\Models\StaffPayment;
 use App\Modules\Payments\Services\StaffPayoutService;
 use App\Modules\Plans\Models\Subscription;
+use App\Modules\Plans\Services\SubscriptionPaymentHistoryService;
 use App\Modules\Auth\Services\UserService;
 use App\Modules\Auth\Services\PhoneVerificationService;
 use App\Modules\Profiles\Services\ProfileService;
@@ -103,12 +104,15 @@ class ProfileController extends Controller
             $user = Auth::user()->loadMissing('phoneVerifiedByAdmin:id,name');
             $profile = $this->profileService->getProfile($user);
             $subscriptionSummary = $this->getPatientSubscriptionSummary($user);
+            $membershipSummary = app(SubscriptionPaymentHistoryService::class)
+                ->getStudentMembershipSummary($user);
             $documentCategoryCounts = $this->getProfileDocumentCategoryCounts($user);
 
             return view('profiles::profile.index', compact(
                 'user',
                 'profile',
                 'subscriptionSummary',
+                'membershipSummary',
                 'documentCategoryCounts'
             ));
         } catch (\Exception $e) {
@@ -629,6 +633,10 @@ class ProfileController extends Controller
                 ->get()
             : collect();
 
+        $subscriptionPaymentHistory = in_array($user->role, ['student', 'patient'], true)
+            ? app(SubscriptionPaymentHistoryService::class)->getPaidSubscriptionsForUser($user)
+            : collect();
+
         return view('profiles::admin.view', compact(
             'user',
             'profile',
@@ -638,7 +646,8 @@ class ProfileController extends Controller
             'profileDocumentsPaginator',
             'incentiveDetailsData',
             'staffPaymentPending',
-            'staffPaymentHistory'
+            'staffPaymentHistory',
+            'subscriptionPaymentHistory'
         ));
     }
 
@@ -772,6 +781,25 @@ class ProfileController extends Controller
                 'services_completed' => (clone $base)->where('status', 'completed')->count(),
                 'subscriptions_total' => $user->subscriptions()->count(),
                 'has_active_subscription' => $user->hasActiveSubscription(),
+                'lifetime_paid' => (float) app(SubscriptionPaymentHistoryService::class)
+                    ->paidSubscriptionsQuery()
+                    ->where('user_id', $user->id)
+                    ->sum('paid_amount'),
+            ];
+        }
+
+        if ($user->role === 'student') {
+            $studentService = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
+            $out['student'] = [
+                'has_active_membership' => $studentService->hasActiveStudentMembership($user),
+                'paid_count' => app(SubscriptionPaymentHistoryService::class)
+                    ->paidSubscriptionsQuery()
+                    ->where('user_id', $user->id)
+                    ->count(),
+                'lifetime_paid' => (float) app(SubscriptionPaymentHistoryService::class)
+                    ->paidSubscriptionsQuery()
+                    ->where('user_id', $user->id)
+                    ->sum('paid_amount'),
             ];
         }
 

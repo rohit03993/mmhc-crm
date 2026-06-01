@@ -3,8 +3,13 @@
 namespace App\Modules\Auth\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Core\User;
+use App\Modules\Auth\Services\LocationService;
 use App\Modules\Payments\Services\StaffPayoutService;
+use App\Modules\Services\Models\ServiceRequest;
+use App\Modules\Services\Models\ServiceType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
@@ -47,11 +52,14 @@ class DashboardController extends Controller
         }
 
         if ($user->isPatient()) {
-            return view('auth::dashboard', [
-                'user' => $user,
-                'stats' => $this->getUserStats($user),
-                'recent_activity' => $this->getRecentActivity($user),
-            ]);
+            return view('auth::dashboard', array_merge(
+                [
+                    'user' => $user,
+                    'stats' => $this->getUserStats($user),
+                    'recent_activity' => $this->getRecentActivity($user),
+                ],
+                $this->getPatientDashboardViewData($user)
+            ));
         }
 
         return redirect()->route('community.index');
@@ -160,6 +168,50 @@ class DashboardController extends Controller
     }
 
     /**
+     * Data required by auth::dashboard for patients (staff carousel, requests, pricing).
+     *
+     * @return array{
+     *     available_nurses: Collection,
+     *     available_caregivers: Collection,
+     *     service_types: Collection,
+     *     recent_requests: \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * }
+     */
+    protected function getPatientDashboardViewData(User $user): array
+    {
+        $pincode = trim((string) ($user->pincode ?? ''));
+
+        if ($pincode !== '') {
+            $availableNurses = LocationService::getNearbyStaff($pincode, 'nurse')->take(3);
+            $availableCaregivers = LocationService::getNearbyStaff($pincode, 'caregiver')->take(3);
+        } else {
+            $availableNurses = User::query()
+                ->where('role', 'nurse')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->limit(3)
+                ->get();
+            $availableCaregivers = User::query()
+                ->where('role', 'caregiver')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->limit(3)
+                ->get();
+        }
+
+        return [
+            'available_nurses' => $availableNurses,
+            'available_caregivers' => $availableCaregivers,
+            'service_types' => ServiceType::active()->ordered()->get(),
+            'recent_requests' => ServiceRequest::query()
+                ->where('patient_id', $user->id)
+                ->with(['serviceType', 'assignedStaff'])
+                ->orderByDesc('created_at')
+                ->paginate(5),
+        ];
+    }
+
+    /**
      * Get user statistics (for patients)
      */
     protected function getUserStats($user)
@@ -258,44 +310,11 @@ class DashboardController extends Controller
      */
     protected function getFinancialStats()
     {
-        // 1. Subscription Revenue
-        // Total revenue from subscriptions with paid status or active status with paid amount
-        $totalSubscriptionRevenue = \App\Modules\Plans\Models\Subscription::where(function ($query) {
-            $query->where('payment_status', 'paid')
-                ->orWhere(function ($q) {
-                    $q->where('status', 'active')
-                        ->whereNotNull('paid_amount')
-                        ->where('paid_amount', '>', 0);
-                });
-        })
-            ->sum('paid_amount');
+        $subscriptionMetrics = app(\App\Modules\Plans\Services\SubscriptionPaymentHistoryService::class)
+            ->getSubscriptionRevenueMetrics();
 
-        // If paid_amount is not reliable, use total_amount as fallback
-        if ($totalSubscriptionRevenue == 0) {
-            $totalSubscriptionRevenue = \App\Modules\Plans\Models\Subscription::where(function ($query) {
-                $query->where('payment_status', 'paid')
-                    ->orWhere('status', 'active');
-            })
-                ->sum('total_amount');
-        }
-
-        // Active subscription revenue (only active subscriptions)
-        $subscriptionRevenue = \App\Modules\Plans\Models\Subscription::where('status', 'active')
-            ->where(function ($query) {
-                $query->whereNotNull('paid_amount')
-                    ->where('paid_amount', '>', 0)
-                    ->orWhereNotNull('total_amount')
-                    ->where('total_amount', '>', 0);
-            })
-            ->sum('paid_amount');
-
-        if ($subscriptionRevenue == 0) {
-            $subscriptionRevenue = \App\Modules\Plans\Models\Subscription::where('status', 'active')
-                ->sum('total_amount');
-        }
-
-        // Active subscriptions count
-        $activeSubscriptionsCount = \App\Modules\Plans\Models\Subscription::where('status', 'active')->count();
+        $totalSubscriptionRevenue = $subscriptionMetrics['total_subscription_revenue'];
+        $activeSubscriptionsCount = $subscriptionMetrics['active_subscriptions_count'];
 
         // 2. Service Revenue
         // Total revenue from service requests (prepaid_amount from completed/in_progress services)
@@ -393,18 +412,7 @@ class DashboardController extends Controller
         // 6. This Month Revenue
         $thisMonthStart = now()->startOfMonth();
 
-        // Subscriptions paid this month (use payment_verified_at or created_at as fallback)
-        $thisMonthSubscriptionRevenue = \App\Modules\Plans\Models\Subscription::where(function ($query) use ($thisMonthStart) {
-            $query->where('payment_status', 'paid')
-                ->where(function ($q) use ($thisMonthStart) {
-                    $q->where('payment_verified_at', '>=', $thisMonthStart)
-                        ->orWhere(function ($q2) use ($thisMonthStart) {
-                            $q2->whereNull('payment_verified_at')
-                                ->where('created_at', '>=', $thisMonthStart);
-                        });
-                });
-        })
-            ->sum('paid_amount');
+        $thisMonthSubscriptionRevenue = $subscriptionMetrics['this_month_subscription_revenue'];
 
         // Services paid this month (use created_at as proxy for payment date, or admin_approved_at for completed services)
         $thisMonthServiceRevenue = \App\Modules\Services\Models\ServiceRequest::where(function ($query) use ($thisMonthStart) {
@@ -456,7 +464,11 @@ class DashboardController extends Controller
 
         return [
             'total_subscription_revenue' => round($totalSubscriptionRevenue, 2),
-            'active_subscription_revenue' => round($subscriptionRevenue, 2),
+            'student_subscription_revenue' => $subscriptionMetrics['student_subscription_revenue'],
+            'patient_subscription_revenue' => $subscriptionMetrics['patient_subscription_revenue'],
+            'this_month_student_subscription_revenue' => $subscriptionMetrics['this_month_student_subscription_revenue'],
+            'this_month_patient_subscription_revenue' => $subscriptionMetrics['this_month_patient_subscription_revenue'],
+            'recent_subscription_payments' => $subscriptionMetrics['recent_subscription_payments'],
             'active_subscriptions_count' => $activeSubscriptionsCount,
             'total_service_revenue' => round($serviceRevenue, 2),
             'total_revenue' => round($totalSubscriptionRevenue + $serviceRevenue, 2),
