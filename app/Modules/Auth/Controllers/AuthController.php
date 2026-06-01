@@ -14,6 +14,7 @@ use App\Modules\Auth\Support\PostLoginRedirect;
 use App\Models\SiteSetting;
 use Illuminate\Support\Facades\Password;
 use App\Modules\Referrals\Services\ReferralService;
+use App\Services\AccountDeletion\AccountDeletionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -1258,6 +1259,49 @@ class AuthController extends Controller
             'message' => 'Password reset successfully!',
             'new_password' => $newPassword,
         ]);
+    }
+
+    /**
+     * Delete selected users from the admin list (Admin only).
+     */
+    public function bulkDeleteUsers(Request $request, AccountDeletionService $deletionService)
+    {
+        $validated = $request->validate([
+            'user_ids' => 'required|array|min:1|max:50',
+            'user_ids.*' => 'integer|exists:users,id',
+            'confirm_phrase' => 'required|in:DELETE',
+        ]);
+
+        $result = $deletionService->deleteMany($validated['user_ids'], $request->user());
+
+        $message = "Removed {$result->deleted} account(s).";
+        if ($result->skipped > 0) {
+            $message .= " Skipped {$result->skipped} protected.";
+        }
+        if ($result->failed > 0) {
+            $message .= " Failed {$result->failed}.";
+        }
+
+        return redirect()
+            ->route('admin.users', $request->only('segment', 'q', 'page'))
+            ->with($result->failed > 0 && $result->deleted === 0 ? 'error' : 'success', $message);
+    }
+
+    /**
+     * Delete a single user (Admin only).
+     */
+    public function destroyUser(Request $request, User $user, AccountDeletionService $deletionService)
+    {
+        $request->validate([
+            'confirm_phrase' => 'required|in:DELETE',
+        ]);
+
+        $uniqueId = $user->unique_id;
+        $deletionService->delete($user, $request->user());
+
+        return redirect()
+            ->route('admin.users', $request->only('segment', 'q'))
+            ->with('success', "Account {$uniqueId} has been permanently removed.");
     }
 
     /**

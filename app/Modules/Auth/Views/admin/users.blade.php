@@ -68,17 +68,23 @@
                             @if($segment !== 'all')
                                 <p class="text-muted small mb-0">{{ $segment === 'academics' ? 'College roles only. Academic admin is listed first and is protected from bulk delete (same as CRM admin).' : 'Showing admin, nurses, caregivers, and patients.' }}</p>
                             @endif
+                            <p class="text-muted small mb-0 mt-1 um-list-meta">
+                                <strong>{{ number_format($users->total()) }}</strong> {{ $users->total() === 1 ? 'user' : 'users' }} total
+                                @if($users->count() > 0)
+                                    · showing <strong>{{ $users->firstItem() }}–{{ $users->lastItem() }}</strong> on this page
+                                @endif
+                                · <span id="umSelectedCount">0</span> selected
+                            </p>
                             @if(($searchQuery ?? '') !== '')
-                                <p class="text-muted small mb-0 mt-1">{{ $users->total() }} {{ $users->total() === 1 ? 'match' : 'matches' }} for &ldquo;{{ \Illuminate\Support\Str::limit($searchQuery, 48) }}&rdquo;</p>
+                                <p class="text-muted small mb-0">{{ $users->total() }} {{ $users->total() === 1 ? 'match' : 'matches' }} for &ldquo;{{ \Illuminate\Support\Str::limit($searchQuery, 48) }}&rdquo;</p>
                             @endif
                         </div>
-                        @if(($segment ?? 'all') !== 'academics')
-                            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill flex-shrink-0 align-self-start" data-bs-toggle="modal" data-bs-target="#deleteNonAdminModal">
+                        <div class="d-flex flex-wrap gap-2 flex-shrink-0 align-self-start">
+                            <button type="button" class="btn btn-danger btn-sm rounded-pill d-none" id="umBulkDeleteBtn" data-bs-toggle="modal" data-bs-target="#bulkDeleteUsersModal">
                                 <i class="fas fa-trash-alt me-1"></i>
-                                <span class="d-none d-sm-inline">Bulk delete users</span>
-                                <span class="d-sm-none">Bulk delete</span>
+                                <span>Delete selected (<span id="umBulkDeleteCount">0</span>)</span>
                             </button>
-                        @endif
+                        </div>
                         @if(($unverifiedPhoneCount ?? 0) > 0)
                             <form method="POST" action="{{ route('admin.users.bulk-phone-reminders') }}" class="d-inline flex-shrink-0 align-self-start"
                                   onsubmit="return confirm('Send verification OTP by SMS to up to 150 users with unverified mobiles? Each user receives a 6-digit code.');">
@@ -134,14 +140,17 @@
             </div>
             @php
                 $showInstitutionColumn = ($segment ?? 'all') === 'academics';
-                $tableColCount = $showInstitutionColumn ? 6 : 5;
+                $tableColCount = ($showInstitutionColumn ? 6 : 5) + 1;
             @endphp
             <div class="card-body p-0">
                 <div class="um-table-wrap">
                     <table class="table table-hover align-middle mb-0 um-table mmhc-no-mobile-cards">
                         <thead class="table-light">
                             <tr>
-                                <th class="ps-4">User</th>
+                                <th class="um-col-check ps-3" style="width:2.5rem;">
+                                    <input type="checkbox" class="form-check-input" id="umSelectAllPage" title="Select all on this page" aria-label="Select all users on this page">
+                                </th>
+                                <th class="ps-2">User</th>
                                 <th>Contact</th>
                                 @if($showInstitutionColumn)
                                     <th class="um-col-institution">Institution</th>
@@ -163,11 +172,17 @@
                     </table>
                 </div>
 
-                @if($users->hasPages())
-                    <div class="d-flex justify-content-center p-3 border-top bg-light">
-                        {{ $users->withQueryString()->links() }}
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 p-3 border-top bg-light">
+                    <div class="small text-muted">
+                        @if($users->total() > 0)
+                            Page {{ $users->currentPage() }} of {{ $users->lastPage() }}
+                            · {{ number_format($users->total()) }} users
+                        @endif
                     </div>
-                @endif
+                    @if($users->hasPages())
+                        <div>{{ $users->withQueryString()->links() }}</div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
@@ -366,41 +381,65 @@
     </div>
 </div>
 
-<!-- Delete Non-Admin Users Confirmation Modal -->
-<div class="modal fade" id="deleteNonAdminModal" tabindex="-1">
+<!-- Bulk delete selected users -->
+<div class="modal fade" id="bulkDeleteUsersModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Bulk delete users
-                </h5>
+                <h5 class="modal-title"><i class="fas fa-trash-alt me-2"></i>Delete selected accounts</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Warning:</strong> This cannot be undone.
+            <form method="POST" action="{{ route('admin.users.bulk-delete') }}" id="bulkDeleteUsersForm">
+                @csrf
+                @if(($segment ?? 'all') !== 'all')
+                    <input type="hidden" name="segment" value="{{ $segment }}">
+                @endif
+                @if(($searchQuery ?? '') !== '')
+                    <input type="hidden" name="q" value="{{ $searchQuery }}">
+                @endif
+                <div id="bulkDeleteUserIdInputs"></div>
+                <div class="modal-body">
+                    <div class="alert alert-danger small mb-3">
+                        <strong>Permanent.</strong> Profiles, visits, subscriptions, invoices, academics, and files for selected users are removed. Referral history for other staff stays visible as <span class="badge bg-secondary">Inactive</span>. Mobile numbers can be reused.
+                    </div>
+                    <p class="mb-2">You are deleting <strong id="bulkDeleteModalCount">0</strong> account(s) on this page.</p>
+                    <ul id="bulkDeleteNamePreview" class="small text-muted mb-3 ps-3"></ul>
+                    <label class="form-label small fw-semibold" for="bulk_confirm_phrase">Type <code>DELETE</code> to confirm</label>
+                    <input type="text" class="form-control" id="bulk_confirm_phrase" name="confirm_phrase" autocomplete="off" required pattern="DELETE" placeholder="DELETE">
                 </div>
-                <p>Deletes everyone <strong>except</strong>:</p>
-                <ul class="mb-3">
-                    <li><strong>CRM Admin</strong> (<code>admin</code>)</li>
-                    <li><strong>Academic admin</strong> (<code>super_admin</code>) — full access to all institutions</li>
-                </ul>
-                <p class="mb-0">All other roles are removed, including nurses, caregivers, patients, institution admins, faculty, and students.</p>
-                <p class="text-muted mt-3 mb-0 small">Use the Academics screen to manage college staff without this bulk tool.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Cancel
-                </button>
-                <form method="POST" action="{{ route('admin.users.delete-non-admin') }}" id="deleteNonAdminForm">
-                    @csrf
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash-alt me-2"></i>Yes, delete deletable users
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger" id="bulkDeleteSubmitBtn" disabled>
+                        <i class="fas fa-trash-alt me-1"></i>Delete permanently
                     </button>
-                </form>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Single user delete -->
+<div class="modal fade" id="deleteSingleUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-user-times me-2"></i>Delete account</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
+            <form method="POST" id="deleteSingleUserForm">
+                @csrf
+                @method('DELETE')
+                <div class="modal-body">
+                    <p class="mb-2">Remove <strong id="deleteSingleUserName">—</strong> (<span id="deleteSingleUserUid" class="text-muted">—</span>)?</p>
+                    <p class="small text-muted">Referral rows for other staff remain with an <span class="badge bg-secondary">Inactive</span> label. Phone/email can be registered again.</p>
+                    <label class="form-label small fw-semibold mt-3" for="single_confirm_phrase">Type <code>DELETE</code> to confirm</label>
+                    <input type="text" class="form-control" id="single_confirm_phrase" name="confirm_phrase" autocomplete="off" required pattern="DELETE" placeholder="DELETE">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger" id="deleteSingleSubmitBtn" disabled>Delete permanently</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -780,6 +819,98 @@ document.addEventListener('DOMContentLoaded', function () {
     umRebuildCreateBatchOptions(@json($mmhcOldBatchIds));
 });
 @endif
+
+(function () {
+    const checkboxes = () => Array.from(document.querySelectorAll('.um-user-checkbox'));
+    const selectAll = document.getElementById('umSelectAllPage');
+    const selectedCountEl = document.getElementById('umSelectedCount');
+    const bulkBtn = document.getElementById('umBulkDeleteBtn');
+    const bulkCountEl = document.getElementById('umBulkDeleteCount');
+    const bulkModalCount = document.getElementById('bulkDeleteModalCount');
+    const bulkPreview = document.getElementById('bulkDeleteNamePreview');
+    const bulkIdInputs = document.getElementById('bulkDeleteUserIdInputs');
+    const bulkPhrase = document.getElementById('bulk_confirm_phrase');
+    const bulkSubmit = document.getElementById('bulkDeleteSubmitBtn');
+
+    function selectedBoxes() {
+        return checkboxes().filter(function (cb) { return cb.checked; });
+    }
+
+    function syncSelectionUi() {
+        const selected = selectedBoxes();
+        const n = selected.length;
+        if (selectedCountEl) selectedCountEl.textContent = String(n);
+        if (bulkCountEl) bulkCountEl.textContent = String(n);
+        if (bulkModalCount) bulkModalCount.textContent = String(n);
+        if (bulkBtn) bulkBtn.classList.toggle('d-none', n === 0);
+        if (selectAll) {
+            const all = checkboxes();
+            selectAll.checked = all.length > 0 && n === all.length;
+            selectAll.indeterminate = n > 0 && n < all.length;
+        }
+        if (bulkPreview) {
+            bulkPreview.innerHTML = '';
+            selected.forEach(function (cb) {
+                const row = cb.closest('tr');
+                const nameEl = row ? row.querySelector('.um-name-link') : null;
+                const li = document.createElement('li');
+                li.textContent = nameEl ? nameEl.textContent.trim() : ('User #' + cb.value);
+                bulkPreview.appendChild(li);
+            });
+        }
+        if (bulkIdInputs) {
+            bulkIdInputs.innerHTML = '';
+            selected.forEach(function (cb) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'user_ids[]';
+                input.value = cb.value;
+                bulkIdInputs.appendChild(input);
+            });
+        }
+    }
+
+    checkboxes().forEach(function (cb) {
+        cb.addEventListener('change', syncSelectionUi);
+    });
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            checkboxes().forEach(function (cb) { cb.checked = selectAll.checked; });
+            syncSelectionUi();
+        });
+    }
+    if (bulkPhrase && bulkSubmit) {
+        bulkPhrase.addEventListener('input', function () {
+            bulkSubmit.disabled = bulkPhrase.value.trim() !== 'DELETE' || selectedBoxes().length === 0;
+        });
+    }
+    const bulkModal = document.getElementById('bulkDeleteUsersModal');
+    if (bulkModal) {
+        bulkModal.addEventListener('show.bs.modal', syncSelectionUi);
+    }
+    syncSelectionUi();
+})();
+
+function openDeleteUserModal(userId, name, uniqueId) {
+    const form = document.getElementById('deleteSingleUserForm');
+    const phrase = document.getElementById('single_confirm_phrase');
+    const submit = document.getElementById('deleteSingleSubmitBtn');
+    if (!form) return;
+    form.action = '/admin/users/' + userId;
+    document.getElementById('deleteSingleUserName').textContent = name;
+    document.getElementById('deleteSingleUserUid').textContent = uniqueId;
+    if (phrase) phrase.value = '';
+    if (submit) submit.disabled = true;
+    if (phrase) {
+        phrase.oninput = function () {
+            submit.disabled = phrase.value.trim() !== 'DELETE';
+        };
+    }
+    const modalEl = document.getElementById('deleteSingleUserModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        new bootstrap.Modal(modalEl).show();
+    }
+}
 
 </script>
 @endsection

@@ -127,7 +127,11 @@
                             <div class="subscription-entry-header-modern">
                                 <div class="subscription-entry-info">
                                     <div class="subscription-entry-name">
-                                        <i class="fas fa-user me-2 text-primary"></i>{{ $subscription->user->name }}
+                                        @include('services::partials.account-party-label', [
+                                            'name' => $subscription->displaySubscriberName(),
+                                            'inactive' => $subscription->isSubscriberInactive(),
+                                            'icon' => 'fa-user',
+                                        ])
                                     </div>
                                     <div class="subscription-entry-meta">
                                         <span class="badge bg-primary me-2">{{ $subscription->plan->name }}</span>

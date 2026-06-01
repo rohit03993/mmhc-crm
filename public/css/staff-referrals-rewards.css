@@ -1,3 +1,12 @@
+/* Deleted / inactive party labels (referrals, subscriptions) */
+.account-party-label--inactive {
+    opacity: 0.85;
+}
+.account-party-label--inactive .badge {
+    font-size: 0.65rem;
+    vertical-align: middle;
+}
+
 /* Staff: patient rewards, staff referrals, subscription referrals */
 .stats-card-modern {
     background: #fff;

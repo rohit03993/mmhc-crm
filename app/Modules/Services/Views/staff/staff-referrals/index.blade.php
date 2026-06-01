@@ -120,11 +120,11 @@
                             <div class="referral-entry-header-modern">
                                 <div class="referral-entry-info">
                                     <div class="referral-entry-name">
-                                        @if($referral->referred)
-                                            <i class="fas fa-user me-2 text-primary"></i>{{ $referral->referred->name }}
-                                        @else
-                                            <i class="fas fa-clock me-2 text-warning"></i>Pending Registration
-                                        @endif
+                                        @include('services::partials.account-party-label', [
+                                            'name' => $referral->displayReferredName(),
+                                            'inactive' => $referral->isReferredInactive(),
+                                            'icon' => $referral->isReferredInactive() || $referral->referred_name_snapshot ? 'fa-user' : ($referral->referred_id ? 'fa-user' : 'fa-clock'),
+                                        ])
                                     </div>
                                     <div class="referral-entry-meta">
                                         <span class="badge bg-secondary me-2">Code: {{ $referral->referral_code }}</span>

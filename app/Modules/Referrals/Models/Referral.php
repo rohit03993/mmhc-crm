@@ -11,7 +11,11 @@ class Referral extends Model
     protected $fillable = [
         'referral_code',
         'referrer_id',
+        'referrer_name_snapshot',
+        'referrer_unique_id_snapshot',
         'referred_id',
+        'referred_name_snapshot',
+        'referred_unique_id_snapshot',
         'status',
         'verification_status',
         'verification_otp_hash',
@@ -44,7 +48,7 @@ class Referral extends Model
      */
     public function referrer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'referrer_id');
+        return $this->belongsTo(User::class, 'referrer_id')->withTrashed();
     }
 
     /**
@@ -52,7 +56,49 @@ class Referral extends Model
      */
     public function referred(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'referred_id');
+        return $this->belongsTo(User::class, 'referred_id')->withTrashed();
+    }
+
+    public function displayReferrerName(): string
+    {
+        if ($this->referrer && ! $this->referrer->trashed()) {
+            return $this->referrer->name;
+        }
+
+        return $this->referrer_name_snapshot ?: 'Removed user';
+    }
+
+    public function displayReferredName(): string
+    {
+        if ($this->referred && ! $this->referred->trashed()) {
+            return $this->referred->name;
+        }
+
+        if ($this->referred_name_snapshot) {
+            return $this->referred_name_snapshot;
+        }
+
+        return 'Pending Registration';
+    }
+
+    public function isReferrerInactive(): bool
+    {
+        return $this->referrer_id === null
+            || $this->referrer === null
+            || $this->referrer->trashed();
+    }
+
+    public function isReferredInactive(): bool
+    {
+        if ($this->referred_id === null && ! $this->referred_name_snapshot) {
+            return false;
+        }
+
+        if ($this->referred_name_snapshot && (! $this->referred || $this->referred->trashed())) {
+            return true;
+        }
+
+        return $this->referred !== null && $this->referred->trashed();
     }
 
     /**

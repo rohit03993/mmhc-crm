@@ -13,6 +13,8 @@ class Subscription extends Model
      */
     protected $fillable = [
         'user_id',
+        'subscriber_name_snapshot',
+        'subscriber_unique_id_snapshot',
         'plan_id',
         'referrer_id',
         'payment_frequency',
@@ -87,7 +89,21 @@ class Subscription extends Model
      */
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
+    }
+
+    public function displaySubscriberName(): string
+    {
+        if ($this->user && ! $this->user->trashed()) {
+            return $this->user->name;
+        }
+
+        return $this->subscriber_name_snapshot ?: 'Removed subscriber';
+    }
+
+    public function isSubscriberInactive(): bool
+    {
+        return $this->user === null || $this->user->trashed();
     }
 
     /**

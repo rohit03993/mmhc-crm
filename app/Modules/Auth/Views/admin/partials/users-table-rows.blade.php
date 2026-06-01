@@ -1,5 +1,10 @@
+@php
+    $deletionPolicy = app(\App\Services\AccountDeletion\DeletionPolicy::class);
+    $actingAdmin = auth()->user();
+@endphp
 @forelse($users as $user)
     @php
+        $canDelete = $actingAdmin && $deletionPolicy->canSelectForBulkDelete($user, $actingAdmin);
         $roleBadge = match ($user->role) {
             'admin' => 'bg-danger',
             'super_admin' => 'bg-dark',
@@ -29,8 +34,15 @@
             ? $user->academicBatches->pluck('name')->join(', ')
             : null;
     @endphp
-    <tr class="um-table__row">
-        <td class="ps-4 um-col-user" data-label="User">
+    <tr class="um-table__row" data-user-id="{{ $user->id }}">
+        <td class="um-col-check ps-3" data-label="Select">
+            @if($canDelete)
+                <input type="checkbox" class="form-check-input um-user-checkbox" name="user_ids[]" value="{{ $user->id }}" aria-label="Select {{ $user->name }}">
+            @else
+                <span class="text-muted small" title="Protected account"><i class="fas fa-lock"></i></span>
+            @endif
+        </td>
+        <td class="ps-2 um-col-user" data-label="User">
             <div class="d-flex align-items-start gap-2 um-table__user-cell">
                 @if($user->profile?->avatar_path)
                     <img src="{{ Storage::url($user->profile->avatar_path) }}" alt="" class="um-avatar rounded-circle" width="40" height="40">
@@ -157,6 +169,14 @@
                                 </button>
                             </form>
                         </li>
+                    @endif
+                    @if($canDelete)
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <button type="button" class="dropdown-item text-danger" onclick="openDeleteUserModal({{ $user->id }}, @json($user->name), @json($user->unique_id))">
+                            <i class="fas fa-trash-alt me-2"></i>Delete account
+                        </button>
+                    </li>
                     @endif
                     <li><hr class="dropdown-divider"></li>
                     <li>
