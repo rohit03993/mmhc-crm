@@ -59,16 +59,6 @@
     color: #ffffff !important;
     padding: 1.5rem 2rem;
 }
-.main-content .invoice-brand-bar,
-.main-content .invoice-brand-bar h1,
-.main-content .invoice-brand-bar p,
-.main-content .invoice-brand-bar strong,
-.main-content .invoice-brand-bar .invoice-company-name,
-.main-content .invoice-brand-bar .invoice-company-tagline,
-.main-content .invoice-brand-bar .invoice-gstin,
-.main-content .invoice-brand-bar .meta-line {
-    color: #ffffff !important;
-}
 .invoice-brand-row {
     display: flex;
     flex-wrap: wrap;

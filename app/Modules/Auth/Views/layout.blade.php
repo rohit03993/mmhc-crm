@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260601b">
     @auth
     <link rel="stylesheet" href="{{ asset('css/mmhc-member-nav.css') }}?v=20260602">
+    <link rel="stylesheet" href="{{ asset('css/mmhc-theme-contrast.css') }}?v=20260603">
     @endauth
     <link rel="stylesheet" href="{{ asset('css/mmhc-public-mobile.css') }}">
     <link rel="stylesheet" href="{{ asset('css/capacitor-app.css') }}">
@@ -206,94 +207,7 @@
             margin-bottom: 0;
         }
 
-        /* Global readability baseline across CRM pages */
-        .main-content,
-        .main-content .card,
-        .main-content .card-body,
-        .main-content .card-header,
-        .main-content .table,
-        .main-content .table td,
-        .main-content .table th,
-        .main-content p,
-        .main-content span,
-        .main-content small,
-        .main-content div,
-        .main-content label,
-        .main-content h1,
-        .main-content h2,
-        .main-content h3,
-        .main-content h4,
-        .main-content h5,
-        .main-content h6 {
-            color: #1f2937;
-        }
-
-        .main-content .text-muted {
-            color: #6b7280 !important;
-        }
-
-        /* Preserve white text for intentional dark/gradient backgrounds */
-        .main-content .bg-dark,
-        .main-content .bg-primary,
-        .main-content .bg-secondary,
-        .main-content .bg-success,
-        .main-content .bg-danger,
-        .main-content .bg-info,
-        .main-content .bg-warning,
-        .main-content .bg-dark *,
-        .main-content .bg-primary *,
-        .main-content .bg-secondary *,
-        .main-content .bg-success *,
-        .main-content .bg-danger *,
-        .main-content .bg-info *,
-        .main-content .bg-warning *,
-        .main-content .referral-link-header,
-        .main-content .referral-link-header *,
-        .main-content .service-card-header,
-        .main-content .service-card-header *,
-        .main-content .total-earnings-banner,
-        .main-content .total-earnings-banner *,
-        .main-content [class*="bg-gradient"],
-        .main-content [class*="bg-gradient"] *,
-        .main-content .invoice-brand-bar,
-        .main-content .invoice-brand-bar h1,
-        .main-content .invoice-brand-bar p,
-        .main-content .invoice-brand-bar strong,
-        .main-content .invoice-brand-bar .invoice-company-name,
-        .main-content .invoice-brand-bar .invoice-company-tagline,
-        .main-content .invoice-brand-bar .invoice-gstin,
-        .main-content .invoice-brand-bar .invoice-type-badge,
-        .main-content .invoice-brand-bar .meta-line,
-        .main-content .invoice-brand-bar .text-white {
-            color: #ffffff !important;
-        }
-
-        /*
-         * Inverse surfaces (dark strips): keep light text vs global .main-content #1f2937 rules.
-         * Academics dashboard hero is a light card; only .mmhc-inverse-surface needs overrides here.
-         */
-        .main-content .mmhc-inverse-surface {
-            color: #f8fafc !important;
-        }
-        .main-content .mmhc-inverse-surface h1,
-        .main-content .mmhc-inverse-surface h2,
-        .main-content .mmhc-inverse-surface h3,
-        .main-content .mmhc-inverse-surface h4,
-        .main-content .mmhc-inverse-surface h5,
-        .main-content .mmhc-inverse-surface h6,
-        .main-content .mmhc-inverse-surface p,
-        .main-content .mmhc-inverse-surface span,
-        .main-content .mmhc-inverse-surface small,
-        .main-content .mmhc-inverse-surface label,
-        .main-content .mmhc-inverse-surface div {
-            color: inherit !important;
-        }
-        .main-content .mmhc-inverse-surface a:not(.btn) {
-            color: inherit !important;
-        }
-        .main-content .mmhc-inverse-surface .text-muted {
-            color: rgba(248, 250, 252, 0.85) !important;
-        }
+        /* Text contrast: see public/css/mmhc-theme-contrast.css (loaded when authenticated) */
     </style>
     
     <style>

@@ -1,0 +1,130 @@
+/**
+ * MMHC global contrast (all roles using auth::layout + .main-content)
+ * — Light pages: dark text (#1e293b) via inheritance
+ * — Dark / gradient surfaces: light text (#fff)
+ * Do not set color on every div/span (breaks colored headers & cards).
+ */
+
+/* ---------- Default: readable text on light UI ---------- */
+.main-content {
+    color: #1e293b;
+}
+
+.main-content .card,
+.main-content .card-body,
+.main-content .table {
+    color: inherit;
+}
+
+.main-content .text-muted {
+    color: #64748b !important;
+}
+
+/* Explicit light-surface utility (optional on custom blocks) */
+.main-content .mmhc-surface-light {
+    color: #1e293b !important;
+}
+
+/* ---------- Dark surfaces: light text ---------- */
+.main-content :is(
+    .mmhc-surface-dark,
+    .mmhc-inverse-surface,
+    .invoice-brand-bar,
+    .stat-card-tonal,
+    .fin-payout-stat,
+    .sub-stat,
+    .financial-mrr-card,
+    .total-summary,
+    .referral-link-header,
+    .service-card-header,
+    .total-earnings-banner,
+    .bg-dark,
+    .bg-primary,
+    .bg-secondary,
+    .bg-success,
+    .bg-danger,
+    .bg-info
+) {
+    color: #ffffff !important;
+}
+
+/* Bootstrap / custom headers with text-white */
+.main-content :is(.text-white, [class*="bg-gradient"].text-white, .modern-card-header.text-white) {
+    color: #ffffff !important;
+}
+
+/* Descendants on dark surfaces (override page-level .stat-value etc.) */
+.main-content :is(
+    .mmhc-surface-dark,
+    .mmhc-inverse-surface,
+    .invoice-brand-bar,
+    .stat-card-tonal,
+    [class*="stat-mini-tonal"],
+    .fin-payout-stat,
+    .sub-stat,
+    .financial-mrr-card,
+    .total-summary,
+    .referral-link-header,
+    .service-card-header,
+    .total-earnings-banner,
+    .bg-dark,
+    .bg-primary,
+    .bg-secondary,
+    .bg-success,
+    .bg-danger,
+    .bg-info,
+    [class*="bg-gradient"].text-white
+) :is(
+    h1, h2, h3, h4, h5, h6,
+    p, span, small, label, strong, div, a:not(.btn), code
+) {
+    color: inherit !important;
+}
+
+.main-content .stat-card-tonal .stat-value,
+.main-content .stat-card-tonal .stat-label,
+.main-content .stat-card-tonal .stat-sublabel,
+.main-content [class*="stat-mini-tonal"] .stat-mini-value,
+.main-content [class*="stat-mini-tonal"] .stat-mini-label,
+.main-content [class*="stat-mini-tonal"] .stat-mini-sublabel,
+.main-content .sub-stat .sv,
+.main-content .sub-stat .sl,
+.main-content .financial-mrr-card .mrr-label,
+.main-content .financial-mrr-card .mrr-value,
+.main-content .financial-mrr-card .mrr-detail,
+.main-content .invoice-brand-bar .invoice-company-name,
+.main-content .invoice-brand-bar .invoice-company-tagline,
+.main-content .invoice-brand-bar .invoice-gstin,
+.main-content .invoice-brand-bar .meta-line,
+.main-content .invoice-brand-bar h1 {
+    color: #ffffff !important;
+}
+
+.main-content :is(.mmhc-inverse-surface, .mmhc-surface-dark) .text-muted,
+.main-content .invoice-brand-bar .text-muted,
+.main-content :is(.bg-dark, .bg-primary, .bg-success, .bg-danger, .bg-info) .text-muted {
+    color: rgba(248, 250, 252, 0.82) !important;
+}
+
+/* bg-warning is a LIGHT yellow — keep dark text */
+.main-content .bg-warning:not(.text-white) {
+    color: #1e293b !important;
+}
+
+.main-content .bg-warning:not(.text-white) :is(h1, h2, h3, h4, h5, h6, p, span, small, label, div) {
+    color: inherit !important;
+}
+
+/* Print: preserve header colors on invoices */
+@media print {
+    .invoice-brand-bar,
+    .invoice-brand-bar :is(h1, p, strong, .invoice-gstin, .meta-line) {
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .invoice-brand-bar {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
