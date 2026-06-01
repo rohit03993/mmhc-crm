@@ -254,7 +254,17 @@
         .main-content .total-earnings-banner,
         .main-content .total-earnings-banner *,
         .main-content [class*="bg-gradient"],
-        .main-content [class*="bg-gradient"] * {
+        .main-content [class*="bg-gradient"] *,
+        .main-content .invoice-brand-bar,
+        .main-content .invoice-brand-bar h1,
+        .main-content .invoice-brand-bar p,
+        .main-content .invoice-brand-bar strong,
+        .main-content .invoice-brand-bar .invoice-company-name,
+        .main-content .invoice-brand-bar .invoice-company-tagline,
+        .main-content .invoice-brand-bar .invoice-gstin,
+        .main-content .invoice-brand-bar .invoice-type-badge,
+        .main-content .invoice-brand-bar .meta-line,
+        .main-content .invoice-brand-bar .text-white {
             color: #ffffff !important;
         }
 

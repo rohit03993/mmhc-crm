@@ -29,6 +29,19 @@
         border: none !important;
         max-width: 100% !important;
     }
+    .invoice-brand-bar,
+    .invoice-brand-bar h1,
+    .invoice-brand-bar p,
+    .invoice-brand-bar strong,
+    .invoice-brand-bar .invoice-gstin {
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .invoice-brand-bar {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
 }
 .invoice-outer {
     max-width: 880px;
@@ -43,8 +56,18 @@
 }
 .invoice-brand-bar {
     background: linear-gradient(135deg, #1e3a5f 0%, #0f766e 100%);
-    color: #fff;
+    color: #ffffff !important;
     padding: 1.5rem 2rem;
+}
+.main-content .invoice-brand-bar,
+.main-content .invoice-brand-bar h1,
+.main-content .invoice-brand-bar p,
+.main-content .invoice-brand-bar strong,
+.main-content .invoice-brand-bar .invoice-company-name,
+.main-content .invoice-brand-bar .invoice-company-tagline,
+.main-content .invoice-brand-bar .invoice-gstin,
+.main-content .invoice-brand-bar .meta-line {
+    color: #ffffff !important;
 }
 .invoice-brand-row {
     display: flex;
@@ -69,27 +92,32 @@
     display: block;
 }
 .invoice-company-name {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    margin: 0.75rem 0 0.15rem;
-    color: #fff;
+    margin: 0.75rem 0 0.2rem;
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 .invoice-company-tagline {
-    font-size: 0.85rem;
-    opacity: 0.9;
+    font-size: 0.88rem;
     margin: 0;
+    color: rgba(255, 255, 255, 0.92) !important;
 }
 .invoice-gstin {
     font-size: 0.8rem;
-    margin-top: 0.5rem;
-    padding: 0.25rem 0.65rem;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 6px;
+    font-weight: 600;
+    margin-top: 0.55rem;
+    padding: 0.35rem 0.75rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 8px;
     display: inline-block;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
+    color: #ffffff !important;
 }
 .invoice-type-badge {
     text-align: right;
+    color: #ffffff !important;
 }
 .invoice-type-badge h1 {
     font-size: 1.35rem;
@@ -97,11 +125,16 @@
     letter-spacing: 0.06em;
     margin: 0 0 0.35rem;
     text-transform: uppercase;
+    color: #ffffff !important;
 }
 .invoice-type-badge .meta-line {
     font-size: 0.88rem;
-    opacity: 0.92;
-    margin: 0.15rem 0;
+    margin: 0.2rem 0;
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+.invoice-type-badge .meta-line strong {
+    color: #ffffff !important;
+    font-weight: 700;
 }
 .invoice-body {
     padding: 1.75rem 2rem 2rem;
@@ -228,25 +261,25 @@
     </div>
 
     <div class="invoice-sheet">
-        <header class="invoice-brand-bar">
+        <header class="invoice-brand-bar text-white">
             <div class="invoice-brand-row">
                 <div>
                     <div class="invoice-logo-wrap">
                         <img src="{{ $logoUrl }}" alt="{{ $companyName }}" class="invoice-logo">
                     </div>
-                    <p class="invoice-company-name mb-0">{{ $companyName }}</p>
+                    <p class="invoice-company-name mb-0 text-white">{{ $companyName }}</p>
                     @if($tagline)
-                        <p class="invoice-company-tagline">{{ $tagline }}</p>
+                        <p class="invoice-company-tagline text-white">{{ $tagline }}</p>
                     @endif
                     @if($gstin)
-                        <div class="invoice-gstin">GSTIN: {{ $gstin }}</div>
+                        <div class="invoice-gstin text-white">GSTIN: {{ $gstin }}</div>
                     @endif
                 </div>
-                <div class="invoice-type-badge">
-                    <h1>Tax Invoice</h1>
-                    <p class="meta-line"><strong>{{ $payment->invoice_number }}</strong></p>
-                    <p class="meta-line">Receipt: {{ $payment->receipt_number }}</p>
-                    <p class="meta-line">Date: {{ ($payment->paid_at ?? now())->format('d M Y') }}</p>
+                <div class="invoice-type-badge text-white">
+                    <h1 class="text-white mb-0">Tax Invoice</h1>
+                    <p class="meta-line text-white mb-0"><strong>{{ $payment->invoice_number }}</strong></p>
+                    <p class="meta-line text-white mb-0">Receipt: {{ $payment->receipt_number }}</p>
+                    <p class="meta-line text-white mb-0">Date: {{ ($payment->paid_at ?? now())->format('d M Y') }}</p>
                 </div>
             </div>
         </header>
