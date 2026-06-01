@@ -198,6 +198,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/financial/earning/{type}', [\App\Modules\Auth\Controllers\DashboardController::class, 'earningDetail'])
             ->where('type', 'student-subscriptions|patient-subscriptions|services|services-due')
             ->name('financial.earning-detail');
+        Route::get('/financial/payout/{type}', [\App\Modules\Auth\Controllers\DashboardController::class, 'payoutDetail'])
+            ->where('type', 'service_request|patient_reward|staff_referral|subscription_referral')
+            ->name('financial.payout-detail');
         Route::get('/pending-payments', [\App\Modules\Auth\Controllers\DashboardController::class, 'pendingPayments'])->name('pending-payments');
         Route::get('/profiles', [ProfileController::class, 'adminIndex'])->name('profiles');
         Route::get('/profiles/{user}', [ProfileController::class, 'adminView'])->name('profiles.view');

@@ -252,4 +252,151 @@ class StaffPayoutService
             'total' => $serviceEarnings + $patientRewardEarnings + $staffReferralEarnings + $subscriptionReferralEarnings,
         ];
     }
+
+    /**
+     * Active nurses/caregivers whose mobile is verified (amounts count toward dashboard pending).
+     *
+     * @return list<int>
+     */
+    public function verifiedPayableStaffIds(): array
+    {
+        return User::query()
+            ->whereIn('role', ['nurse', 'caregiver'])
+            ->where('is_active', true)
+            ->whereNotNull('phone_verified_at')
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    public function globalPendingServiceRequestQuery(): Builder
+    {
+        $staffIds = $this->verifiedPayableStaffIds();
+        if ($staffIds === []) {
+            return ServiceRequest::query()->whereRaw('0 = 1');
+        }
+
+        return ServiceRequest::query()
+            ->whereIn('assigned_staff_id', $staffIds)
+            ->where('status', 'completed')
+            ->whereNotNull('completion_verified_at')
+            ->whereNotNull('admin_approved_at')
+            ->whereNotNull('total_staff_payout')
+            ->where('total_staff_payout', '>', 0)
+            ->where(function ($query) {
+                $query->where('staff_payment_processed', false)
+                    ->orWhereNull('staff_payment_processed');
+            });
+    }
+
+    public function globalPendingPatientRewardQuery(): Builder
+    {
+        $staffIds = $this->verifiedPayableStaffIds();
+        if ($staffIds === []) {
+            return CaregiverReward::query()->whereRaw('0 = 1');
+        }
+
+        return CaregiverReward::query()
+            ->whereIn('user_id', $staffIds)
+            ->verified()
+            ->where(function ($query) {
+                $query->where('payment_processed', false)
+                    ->orWhereNull('payment_processed');
+            });
+    }
+
+    public function globalPendingStaffReferralLedgerQuery(): Builder
+    {
+        $staffIds = $this->verifiedPayableStaffIds();
+        if ($staffIds === []) {
+            return IncentiveLedger::query()->whereRaw('0 = 1');
+        }
+
+        return IncentiveLedger::query()
+            ->whereIn('staff_id', $staffIds)
+            ->where('source_type', IncentiveLedger::SOURCE_REFERRAL)
+            ->where(function ($query) {
+                $query->where('payment_settled', false)
+                    ->orWhereNull('payment_settled');
+            });
+    }
+
+    public function globalPendingLegacyStaffReferralQuery(): Builder
+    {
+        $staffIds = $this->verifiedPayableStaffIds();
+        if ($staffIds === []) {
+            return Referral::query()->whereRaw('0 = 1');
+        }
+
+        $ledgerReferralIds = IncentiveLedger::query()
+            ->whereIn('staff_id', $staffIds)
+            ->where('source_type', IncentiveLedger::SOURCE_REFERRAL)
+            ->pluck('source_id');
+
+        return Referral::query()
+            ->whereIn('referrer_id', $staffIds)
+            ->where('status', 'completed')
+            ->referralMobileOtpVerified()
+            ->where(function ($q) {
+                $q->where('payment_processed', false)->orWhereNull('payment_processed');
+            })
+            ->when($ledgerReferralIds->isNotEmpty(), function ($query) use ($ledgerReferralIds) {
+                $query->whereNotIn('id', $ledgerReferralIds);
+            });
+    }
+
+    public function globalPendingSubscriptionReferralLedgerQuery(): Builder
+    {
+        $staffIds = $this->verifiedPayableStaffIds();
+        if ($staffIds === []) {
+            return IncentiveLedger::query()->whereRaw('0 = 1');
+        }
+
+        return IncentiveLedger::query()
+            ->whereIn('staff_id', $staffIds)
+            ->where('source_type', IncentiveLedger::SOURCE_SUBSCRIPTION_SALE)
+            ->where(function ($query) {
+                $query->where('payment_settled', false)
+                    ->orWhereNull('payment_settled');
+            });
+    }
+
+    public function globalPendingLegacySubscriptionReferralQuery(): Builder
+    {
+        $staffIds = $this->verifiedPayableStaffIds();
+        if ($staffIds === []) {
+            return Subscription::query()->whereRaw('0 = 1');
+        }
+
+        $ledgerSubIds = IncentiveLedger::query()
+            ->whereIn('staff_id', $staffIds)
+            ->where('source_type', IncentiveLedger::SOURCE_SUBSCRIPTION_SALE)
+            ->pluck('source_id');
+
+        return Subscription::query()
+            ->whereIn('referrer_id', $staffIds)
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->where('referral_payment_processed', false)->orWhereNull('referral_payment_processed');
+            })
+            ->when($ledgerSubIds->isNotEmpty(), function ($query) use ($ledgerSubIds) {
+                $query->whereNotIn('id', $ledgerSubIds);
+            });
+    }
+
+    /**
+     * Sum pending amount for a category (matches dashboard payout breakdown).
+     */
+    public function sumGlobalPendingAmount(string $paymentType): float
+    {
+        return match ($paymentType) {
+            'service_request' => (float) $this->globalPendingServiceRequestQuery()->sum('total_staff_payout'),
+            'patient_reward' => (float) $this->globalPendingPatientRewardQuery()->sum('reward_amount'),
+            'staff_referral' => (float) $this->globalPendingStaffReferralLedgerQuery()->sum('final_amount')
+                + (float) $this->globalPendingLegacyStaffReferralQuery()->sum('reward_amount'),
+            'subscription_referral' => (float) $this->globalPendingSubscriptionReferralLedgerQuery()->sum('final_amount')
+                + (float) $this->globalPendingLegacySubscriptionReferralQuery()->sum('referral_commission_amount'),
+            default => 0.0,
+        };
+    }
 }

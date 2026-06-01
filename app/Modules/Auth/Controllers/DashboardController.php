@@ -217,6 +217,132 @@ class DashboardController extends Controller
     }
 
     /**
+     * Drill-down: staff payouts paid vs pending, by category (matches dashboard payout table).
+     */
+    public function payoutDetail(Request $request, string $type)
+    {
+        $labels = $this->payoutCategoryLabels();
+        if (! isset($labels[$type])) {
+            abort(404);
+        }
+
+        $status = $request->get('status', 'all');
+        if (! in_array($status, ['all', 'paid', 'pending'], true)) {
+            $status = 'all';
+        }
+
+        $period = $request->get('period', 'all');
+        if (! in_array($period, ['all', 'month'], true)) {
+            $period = 'all';
+        }
+
+        $title = $labels[$type];
+        $subtitle = 'Money paid out to nurses and caregivers — totals match the dashboard payout row.';
+
+        $paidQuery = StaffPayment::query()
+            ->where('payment_type', $type)
+            ->with(['staff:id,name,email,role,unique_id', 'admin:id,name']);
+
+        if ($period === 'month') {
+            $paidQuery->where('paid_at', '>=', now()->startOfMonth());
+        }
+
+        $paidTotal = (float) (clone $paidQuery)->sum('amount');
+        $paidPaginator = ($status === 'all' || $status === 'paid')
+            ? (clone $paidQuery)->orderByDesc('paid_at')->orderByDesc('id')->paginate(25, ['*'], 'paid_page')->withQueryString()
+            : null;
+
+        $pendingTotal = $this->staffPayoutService->sumGlobalPendingAmount($type);
+        $pendingServicePaginator = null;
+        $pendingRewardPaginator = null;
+        $pendingLedgerPaginator = null;
+        $pendingLegacyReferralPaginator = null;
+        $pendingLegacySubscriptionPaginator = null;
+
+        if ($status === 'all' || $status === 'pending') {
+            if ($type === 'service_request') {
+                $pendingServicePaginator = $this->staffPayoutService
+                    ->globalPendingServiceRequestQuery()
+                    ->with(['assignedStaff:id,name,role,unique_id', 'patient:id,name,role,unique_id', 'serviceType'])
+                    ->orderByDesc('admin_approved_at')
+                    ->orderByDesc('id')
+                    ->paginate(25, ['*'], 'pending_page')
+                    ->withQueryString();
+            } elseif ($type === 'patient_reward') {
+                $pendingRewardPaginator = $this->staffPayoutService
+                    ->globalPendingPatientRewardQuery()
+                    ->with(['user:id,name,role,unique_id'])
+                    ->orderByDesc('verified_at')
+                    ->orderByDesc('id')
+                    ->paginate(25, ['*'], 'pending_page')
+                    ->withQueryString();
+            } elseif ($type === 'staff_referral') {
+                $pendingLedgerPaginator = $this->staffPayoutService
+                    ->globalPendingStaffReferralLedgerQuery()
+                    ->with(['staff:id,name,role,unique_id'])
+                    ->orderByDesc('created_at')
+                    ->paginate(15, ['*'], 'ledger_page')
+                    ->withQueryString();
+                $pendingLegacyReferralPaginator = $this->staffPayoutService
+                    ->globalPendingLegacyStaffReferralQuery()
+                    ->with(['referrer:id,name,role,unique_id', 'referred:id,name,role'])
+                    ->orderByDesc('completed_at')
+                    ->paginate(15, ['*'], 'legacy_page')
+                    ->withQueryString();
+            } elseif ($type === 'subscription_referral') {
+                $pendingLedgerPaginator = $this->staffPayoutService
+                    ->globalPendingSubscriptionReferralLedgerQuery()
+                    ->with(['staff:id,name,role,unique_id', 'sourceSubscription.plan', 'sourceSubscription.user:id,name'])
+                    ->orderByDesc('created_at')
+                    ->paginate(15, ['*'], 'ledger_page')
+                    ->withQueryString();
+                $pendingLegacySubscriptionPaginator = $this->staffPayoutService
+                    ->globalPendingLegacySubscriptionReferralQuery()
+                    ->with(['plan', 'user:id,name', 'referrer:id,name,role,unique_id'])
+                    ->orderByDesc('created_at')
+                    ->paginate(15, ['*'], 'legacy_page')
+                    ->withQueryString();
+            }
+        }
+
+        $displayTotal = match ($status) {
+            'paid' => $paidTotal,
+            'pending' => $pendingTotal,
+            default => $paidTotal + $pendingTotal,
+        };
+
+        return view('auth::admin.financial-payout-detail', compact(
+            'type',
+            'title',
+            'subtitle',
+            'status',
+            'period',
+            'displayTotal',
+            'paidTotal',
+            'pendingTotal',
+            'paidPaginator',
+            'pendingServicePaginator',
+            'pendingRewardPaginator',
+            'pendingLedgerPaginator',
+            'pendingLegacyReferralPaginator',
+            'pendingLegacySubscriptionPaginator',
+        ));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function payoutCategoryLabels(): array
+    {
+        return [
+            'service_request' => 'Service visits',
+            'patient_reward' => 'Patient rewards',
+            'staff_referral' => 'Staff referrals',
+            'subscription_referral' => 'Subscription referrals',
+        ];
+    }
+
+    /**
      * Data required by auth::dashboard for patients (staff carousel, requests, pricing).
      *
      * @return array{

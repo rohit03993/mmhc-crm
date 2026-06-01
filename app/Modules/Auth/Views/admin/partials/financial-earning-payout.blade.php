@@ -156,7 +156,7 @@
                 <a href="{{ route('admin.payments.index') }}" class="btn btn-sm btn-light">Staff payments</a>
             </div>
             <div class="p-3">
-                <p class="small text-muted mb-3">Paid to nurses &amp; caregivers — services, rewards, and referral commissions.</p>
+                <p class="small text-muted mb-3">Paid to nurses &amp; caregivers — click a row for line-by-line detail (paid and pending), same as earning.</p>
 
                 <div class="row g-2 mb-3">
                     <div class="col-4">
@@ -198,21 +198,29 @@
                                     $paidAmt = $pb['paid_lines'][$typeKey] ?? 0;
                                     $pendAmt = $pb['pending_lines'][$typeKey]['amount'] ?? 0;
                                     $pendCnt = $pb['pending_lines'][$typeKey]['count'] ?? 0;
+                                    $payoutDetailUrl = route('admin.financial.payout-detail', ['type' => $typeKey, 'status' => 'all']);
+                                    $payoutPaidUrl = route('admin.financial.payout-detail', ['type' => $typeKey, 'status' => 'paid']);
+                                    $payoutPendingUrl = route('admin.financial.payout-detail', ['type' => $typeKey, 'status' => 'pending']);
                                 @endphp
-                                <tr>
+                                <tr class="fin-click-row" onclick="window.location='{{ $payoutDetailUrl }}'">
                                     <td>
                                         {{ $typeLabel }}
+                                        <i class="fas fa-external-link-alt small text-muted ms-1"></i>
                                         @if($pendCnt > 0)
                                             <span class="badge bg-warning text-dark ms-1">{{ $pendCnt }}</span>
                                         @endif
                                     </td>
-                                    <td class="text-end">₹{{ number_format($paidAmt, 2) }}</td>
-                                    <td class="text-end">₹{{ number_format($pendAmt, 2) }}</td>
+                                    <td class="text-end">
+                                        <a href="{{ $payoutPaidUrl }}" class="text-decoration-none text-dark" onclick="event.stopPropagation()">₹{{ number_format($paidAmt, 2) }}</a>
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{{ $payoutPendingUrl }}" class="text-decoration-none text-dark" onclick="event.stopPropagation()">₹{{ number_format($pendAmt, 2) }}</a>
+                                    </td>
                                     <td class="text-end fw-semibold">₹{{ number_format($paidAmt + $pendAmt, 2) }}</td>
                                 </tr>
                             @endforeach
-                            <tr class="table-danger">
-                                <td class="fw-bold">All payouts</td>
+                            <tr class="table-danger fin-click-row" onclick="window.location='{{ route('admin.payments.index') }}'">
+                                <td class="fw-bold">All payouts <i class="fas fa-external-link-alt small ms-1"></i></td>
                                 <td class="text-end fw-bold">₹{{ number_format($pb['paid_total'] ?? 0, 2) }}</td>
                                 <td class="text-end fw-bold">₹{{ number_format($pb['pending_total'] ?? 0, 2) }}</td>
                                 <td class="text-end fw-bold">₹{{ number_format($pb['combined_total'] ?? 0, 2) }}</td>
