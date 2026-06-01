@@ -54,43 +54,19 @@
                     </div>
                     <div class="search-header-text">
                         <h3 class="search-title">Find Healthcare Staff Near You</h3>
-                        <p class="search-subtitle">Enter your location to discover nearby nurses and caregivers</p>
+                        <p class="search-subtitle">We use your phone’s <strong>current location</strong> on the Find staff screen (you’ll be asked to allow location).</p>
                     </div>
                 </div>
+
+                <div class="alert alert-info border-0 mb-3 py-2 px-3" style="font-size: 0.875rem; border-radius: 12px;">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Location is only used when you open Find staff to show nurses and caregivers nearest to you. It is not requested at login.
+                </div>
                 
-                <form method="GET" action="{{ route('staff.index') }}" class="modern-search-form">
-                    <div class="search-input-wrapper">
-                        <div class="search-input-container">
-                            <i class="fas fa-location-dot search-input-icon"></i>
-                            <input type="text" 
-                                   name="pincode" 
-                                   id="pincode-input"
-                                   value="{{ $user->pincode }}" 
-                                   placeholder="Enter 6-digit pincode" 
-                                   maxlength="6" 
-                                   pattern="[0-9]{6}"
-                                   class="modern-search-input"
-                                   required>
-                            <button type="submit" class="modern-search-btn">
-                                <i class="fas fa-search"></i>
-                                <span class="btn-text">Search</span>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    @if($user->pincode)
-                    <div class="saved-pincode-info">
-                        <div class="saved-pincode-content">
-                            <i class="fas fa-check-circle saved-icon"></i>
-                            <span class="saved-text">Using saved location: <strong>{{ $user->pincode }}</strong></span>
-                        </div>
-                        <a href="{{ route('profile.edit') }}" class="change-pincode-link">
-                            <i class="fas fa-edit"></i>
-                            <span>Change</span>
-                        </a>
-                    </div>
-                    @endif
-                </form>
+                <a href="{{ route('staff.index') }}" class="modern-search-btn w-100 d-flex align-items-center justify-content-center gap-2 text-decoration-none" style="min-height: 48px; border-radius: 12px;">
+                    <i class="fas fa-crosshairs"></i>
+                    <span class="btn-text">Find staff near me</span>
+                </a>
             </div>
         </div>
         @endif

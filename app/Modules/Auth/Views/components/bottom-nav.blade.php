@@ -68,7 +68,7 @@
             <i class="fas fa-list"></i>
             <span>Requests</span>
         </a>
-        <a href="{{ route('staff.index') }}" class="app-nav-item {{ request()->routeIs('staff.index') || request()->routeIs('book.*') || request()->routeIs('services.create') ? 'active' : '' }}">
+        <a href="{{ route('staff.index') }}" class="app-nav-item {{ request()->routeIs('staff.index') || request()->routeIs('book.*') || request()->routeIs('services.index') ? 'active' : '' }}">
             <i class="fas fa-user-nurse"></i>
             <span>Staff</span>
         </a>

@@ -1,0 +1,2563 @@
+/**
+ * MMHC CRM — patient booking flow (mobile-first). Package B.
+ */
+:root {
+  --mmhc-primary: #667eea;
+  --mmhc-primary-dark: #764ba2;
+  --mmhc-surface: #f5f7fa;
+  --mmhc-card: #ffffff;
+  --mmhc-text: #2c3e50;
+  --mmhc-muted: #6c757d;
+  --mmhc-radius: 16px;
+  --mmhc-nav-height: 64px;
+  --mmhc-header-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --mmhc-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --mmhc-safe-top: env(safe-area-inset-top, 0px);
+  --nurse-gradient: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  --caregiver-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+/* Find staff */
+/* Mobile App Container */
+.mobile-app-container {
+    position: relative;
+    min-height: 100vh;
+    background: #f5f7fa;
+    padding-bottom: 80px !important;
+    margin-top: 0;
+}
+
+/* Hide desktop navbar on mobile */
+@media (max-width: 767px) {
+    .top-navbar {
+        display: none !important;
+    }
+    
+    .container-fluid {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    
+    .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+
+/* App Header Styles (from dashboard) */
+.app-header-mobile {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 12px 16px;
+    padding-top: max(12px, env(safe-area-inset-top));
+}
+
+.app-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.app-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-back-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    font-size: 1.1rem;
+}
+
+.app-header-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.app-header-subtitle {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.app-header-right {
+    display: flex;
+    gap: 12px;
+}
+
+.app-header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    font-size: 1.2rem;
+}
+
+/* App Content */
+.app-content {
+    padding: 16px;
+    padding-bottom: 90px !important;
+    margin-top: 0;
+}
+
+@media (max-width: 767px) {
+    .app-content {
+        padding-top: 8px;
+    }
+}
+
+/* Search Section */
+.app-search-section {
+    margin-bottom: 20px;
+}
+
+.app-pincode-form {
+    margin-bottom: 12px;
+}
+
+.app-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.app-input-group i {
+    color: #667eea;
+    font-size: 1rem;
+}
+
+.app-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 0.95rem;
+    color: #2c3e50;
+}
+
+.app-input::placeholder {
+    color: #9ca3af;
+}
+
+.app-btn-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.app-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 12px;
+}
+
+.app-search-bar i {
+    color: #9ca3af;
+    font-size: 1rem;
+}
+
+.app-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 0.95rem;
+    color: #2c3e50;
+}
+
+.app-search-clear {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 0.75rem;
+}
+
+.app-filters {
+    background: white;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.app-filter-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.app-filter-select {
+    padding: 10px 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    background: white;
+    color: #2c3e50;
+    outline: none;
+}
+
+.app-filter-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.app-btn-primary {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.app-btn-secondary {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #e9ecef;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+/* App Section */
+.app-section {
+    margin-bottom: 24px;
+}
+
+.app-section-header {
+    margin-bottom: 16px;
+    padding: 0 4px;
+}
+
+.app-section-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-section-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.app-section-icon.nurse-icon {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.app-section-icon.caregiver-icon {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.app-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 4px 0;
+}
+
+.app-section-subtitle {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Staff Grid - App Style */
+.app-staff-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.app-staff-card-full {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.app-staff-card-full:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.app-staff-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.app-staff-card-header {
+    padding: 16px;
+    background: linear-gradient(to bottom, #f8f9fa 0%, white 100%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-staff-avatar-full {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.nurse-avatar-full {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.caregiver-avatar-full {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.app-staff-info-header {
+    flex: 1;
+    min-width: 0;
+}
+
+.app-staff-name-full {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 4px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.app-staff-id-full {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.app-staff-card-body-full {
+    padding: 16px;
+}
+
+.app-staff-details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.app-staff-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.app-staff-detail-item i {
+    width: 20px;
+    color: #667eea;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.app-staff-detail-item.distance {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.app-staff-detail-item.distance i {
+    color: #10b981;
+}
+
+.app-staff-pricing-mini {
+    padding-top: 12px;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+}
+
+.app-staff-pricing-mini small {
+    font-size: 0.75rem;
+    color: #6c757d;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.app-staff-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #28a745;
+}
+
+/* How It Works - App Style Grid */
+.app-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.app-step-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 16px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.app-step-card:active {
+    transform: scale(0.97);
+}
+
+.app-step-number {
+    position: absolute;
+    top: -12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.app-step-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.app-step-icon.step-search {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.app-step-icon.step-calendar {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.app-step-icon.step-assign {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.app-step-icon.step-care {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.app-step-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 6px 0;
+}
+
+.app-step-desc {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Bottom Navigation (from dashboard) */
+.app-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 0;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+.app-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    color: #6c757d;
+    padding: 8px 16px;
+    transition: color 0.2s ease;
+    flex: 1;
+}
+
+.app-nav-item i {
+    font-size: 1.2rem;
+}
+
+.app-nav-item span {
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.app-nav-item.active {
+    color: #667eea;
+}
+
+.app-nav-item.active i {
+    color: #667eea;
+}
+
+/* Desktop View */
+@media (min-width: 768px) {
+    .mobile-app-container {
+        padding-bottom: 0;
+    }
+    
+    .app-content {
+        padding: 24px;
+        padding-bottom: 24px;
+    }
+    
+    .app-staff-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    
+    .app-steps-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+    
+    .app-filter-row {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 576px) {
+    .app-staff-avatar-full {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+    }
+    
+    .app-staff-name-full {
+        font-size: 0.9rem;
+    }
+    
+    .app-step-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.3rem;
+    }
+    
+    .app-step-title {
+        font-size: 0.85rem;
+    }
+    
+    .app-step-desc {
+        font-size: 0.75rem;
+    }
+}
+
+/* Marketplace Tabs */
+.app-marketplace-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 8px;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.app-tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: #6c757d;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.app-tab-btn i {
+    font-size: 1.1rem;
+}
+
+.app-tab-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.app-tab-badge {
+    background: rgba(255,255,255,0.3);
+    color: inherit;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.app-tab-btn.active .app-tab-badge {
+    background: rgba(255,255,255,0.25);
+}
+
+/* Tab Content */
+.app-tab-content {
+    display: none;
+}
+
+.app-tab-content.active {
+    display: block;
+}
+
+.app-section-header-compact {
+    margin-bottom: 16px;
+}
+
+.app-section-header-compact .app-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 4px 0;
+}
+
+.app-section-header-compact .app-section-subtitle {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Marketplace Grid */
+.app-marketplace-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+/* Marketplace Card */
+.app-marketplace-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
+    border: 1px solid #f0f0f0;
+}
+
+.app-marketplace-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    border-color: #e0e0e0;
+}
+
+/* Distance Badge */
+.app-distance-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.app-distance-badge i {
+    font-size: 0.7rem;
+}
+
+.app-distance-badge.distance-nearby {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.app-distance-badge.distance-close {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.app-distance-badge.distance-medium {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.app-distance-badge.distance-far {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Availability Badge */
+.app-availability-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.app-availability-badge i {
+    font-size: 0.5rem;
+}
+
+.app-availability-badge.availability-available {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.app-availability-badge.availability-busy {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.app-availability-badge.availability-unavailable {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+/* Marketplace Card Header */
+.app-marketplace-card-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    padding-bottom: 16px;
+}
+
+.app-staff-avatar-marketplace {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.app-staff-avatar-marketplace.nurse-avatar {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.app-staff-avatar-marketplace.caregiver-avatar {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.app-staff-info-marketplace {
+    flex: 1;
+    min-width: 0;
+}
+
+.app-staff-name-marketplace {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 6px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.app-staff-id-marketplace {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Marketplace Card Body */
+.app-marketplace-card-body {
+    padding: 0 20px 16px;
+}
+
+.app-staff-specs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.app-spec-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.app-spec-item i {
+    color: #667eea;
+    font-size: 0.9rem;
+}
+
+.app-marketplace-pricing {
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.app-price-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-bottom: 4px;
+}
+
+.app-price-amount {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #10b981;
+}
+
+/* Marketplace Card Footer */
+.app-marketplace-card-footer {
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.app-book-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.app-book-btn:hover,
+.app-book-btn:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Desktop View */
+@media (min-width: 768px) {
+    .app-marketplace-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    
+    .app-marketplace-tabs {
+        max-width: 400px;
+        margin: 0 auto 24px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .app-marketplace-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* My requests */
+/* Mobile App Container */
+.mobile-app-container {
+    position: relative;
+    min-height: 100vh;
+    background: #f5f7fa;
+    padding-bottom: 80px !important;
+    margin-top: 0;
+}
+
+/* App Header Styles */
+.app-header-mobile {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 12px 16px;
+    padding-top: max(12px, env(safe-area-inset-top));
+}
+
+.app-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.app-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-back-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    font-size: 1.1rem;
+}
+
+.app-header-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.app-header-subtitle {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.app-header-right {
+    display: flex;
+    gap: 12px;
+}
+
+.app-header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    font-size: 1.2rem;
+}
+
+/* App Content */
+.app-content {
+    padding: 16px;
+    padding-bottom: 90px !important;
+    margin-top: 0;
+}
+
+/* Mobile-First Service Request Card */
+.service-request-card-mobile-full {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.service-request-card-mobile-full:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.card-header-mobile-full {
+    padding: 1rem;
+    color: white;
+    font-weight: 600;
+}
+
+.card-header-mobile-full.status-pending {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.card-header-mobile-full.status-assigned {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.card-header-mobile-full.status-in_progress {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card-header-mobile-full.status-completed {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.service-status-icon-full {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.badge-status-full {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 12px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.25);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.card-body-mobile-full {
+    padding: 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.request-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.detail-grid-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.detail-grid-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.detail-label i {
+    font-size: 0.7rem;
+    color: #667eea;
+}
+
+.detail-value {
+    font-size: 0.9rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.card-footer-mobile-full {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Requests List */
+.app-requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Empty State */
+.app-empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    background: white;
+    border-radius: 16px;
+}
+
+.app-empty-icon {
+    font-size: 3rem;
+    color: #dee2e6;
+    margin-bottom: 16px;
+}
+
+.app-empty-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.app-empty-text {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin: 0 0 20px 0;
+}
+
+.app-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 24px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.app-pagination {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Desktop View */
+@media (min-width: 768px) {
+    .mobile-app-container {
+        padding-bottom: 0;
+    }
+    
+    .app-content {
+        padding: 24px;
+        padding-bottom: 24px;
+    }
+    
+    .app-requests-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 576px) {
+    .card-header-mobile-full h6 {
+        font-size: 0.9rem;
+    }
+    
+    .detail-value {
+        font-size: 0.85rem;
+    }
+}
+/* Services */
+/* Mobile App Container */
+.mobile-app-container {
+    position: relative;
+    min-height: 100vh;
+    background: #f5f7fa;
+    padding-bottom: 80px !important;
+    margin-top: 0;
+}
+
+/* App Header Styles */
+.app-header-mobile {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 12px 16px;
+    padding-top: max(12px, env(safe-area-inset-top));
+}
+
+.app-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.app-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-back-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    font-size: 1.1rem;
+}
+
+.app-header-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.app-header-subtitle {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.app-header-right {
+    display: flex;
+    gap: 12px;
+}
+
+.app-header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    font-size: 1.2rem;
+}
+
+/* App Content */
+.app-content {
+    padding: 16px;
+    padding-bottom: 90px !important;
+    margin-top: 0;
+}
+
+/* Service Grid */
+.app-service-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.app-service-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.app-service-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.app-service-header {
+    padding: 20px;
+    text-align: center;
+    color: white;
+    position: relative;
+}
+
+.app-service-header.service-24 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.app-service-header.service-12 {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.app-service-header.service-8 {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.app-service-header.service-1 {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.app-service-icon {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+}
+
+.app-service-badge {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.app-service-body {
+    padding: 16px;
+}
+
+.app-service-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+}
+
+.app-service-desc {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+}
+
+.app-service-pricing {
+    text-align: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.app-service-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #28a745;
+    margin-bottom: 4px;
+}
+
+.app-service-period {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.app-service-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.app-service-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.app-service-detail-item i {
+    color: #667eea;
+    width: 20px;
+    text-align: center;
+}
+
+/* App Section */
+.app-section {
+    margin-bottom: 24px;
+}
+
+.app-section-header {
+    margin-bottom: 16px;
+    padding: 0 4px;
+}
+
+.app-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 4px 0;
+}
+
+.app-section-subtitle {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Steps Grid */
+.app-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.app-step-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 16px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.app-step-card:active {
+    transform: scale(0.97);
+}
+
+.app-step-number {
+    position: absolute;
+    top: -12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.app-step-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.app-step-icon.step-register {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.app-step-icon.step-request {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.app-step-icon.step-assign {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.app-step-icon.step-care {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.app-step-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 6px 0;
+}
+
+.app-step-desc {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Desktop View */
+@media (min-width: 768px) {
+    .mobile-app-container {
+        padding-bottom: 0;
+    }
+    
+    .app-content {
+        padding: 24px;
+        padding-bottom: 24px;
+    }
+    
+    .app-service-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    
+    .app-steps-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 576px) {
+    .app-service-icon {
+        font-size: 2rem;
+    }
+    
+    .app-service-title {
+        font-size: 0.9rem;
+    }
+    
+    .app-service-desc {
+        font-size: 0.8rem;
+    }
+    
+    .app-step-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.3rem;
+    }
+    
+    .app-step-title {
+        font-size: 0.85rem;
+    }
+    
+    .app-step-desc {
+        font-size: 0.75rem;
+    }
+}
+/* Book */
+/* Mobile App Container - Ensure proper padding for bottom nav */
+.mobile-app-container {
+    position: relative;
+    min-height: 100vh;
+    background: #f5f7fa;
+    padding-bottom: 140px !important;
+    margin-top: 0;
+}
+
+@media (max-width: 767px) {
+    .mobile-app-container {
+        padding-bottom: 160px !important;
+    }
+}
+
+/* App Content - Proper spacing */
+.app-content {
+    position: relative;
+    padding: 16px;
+    padding-bottom: 20px;
+}
+
+@media (max-width: 767px) {
+    .app-content {
+        padding-bottom: 40px;
+    }
+}
+
+/* Reuse existing styles from create.blade.php and add new ones */
+.app-selected-staff-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 2px solid #667eea;
+}
+
+.app-selected-staff-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.app-selected-staff-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.app-selected-staff-avatar.nurse {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.app-selected-staff-avatar.caregiver {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.app-selected-staff-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.app-selected-staff-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+}
+
+.app-selected-staff-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.app-staff-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: #f0f4ff;
+    color: #667eea;
+}
+
+.app-staff-badge.availability-available {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.app-staff-badge.availability-busy {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.app-selected-staff-change {
+    flex-shrink: 0;
+}
+
+.app-change-btn {
+    padding: 8px 16px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.app-change-btn:hover,
+.app-change-btn:active {
+    background: #e9ecef;
+    color: #2c3e50;
+}
+
+.app-selected-staff-details {
+    display: flex;
+    gap: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.app-staff-detail {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.app-staff-detail i {
+    color: #667eea;
+}
+
+/* Alternatives Card */
+.app-alternatives-card {
+    background: #fff7ed;
+    border: 2px solid #fb923c;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.app-alternatives-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.app-alternatives-header i {
+    font-size: 1.5rem;
+    color: #f59e0b;
+}
+
+.app-alternatives-header h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #92400e;
+    margin: 0;
+}
+
+.app-alternatives-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.app-alternative-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: white;
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    border: 1px solid #e9ecef;
+}
+
+.app-alternative-item:hover,
+.app-alternative-item:active {
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-color: #fb923c;
+}
+
+.app-alternative-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.app-alternative-avatar.nurse {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.app-alternative-avatar.caregiver {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.app-alternative-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.app-alternative-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.app-alternative-details {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.app-alternative-item i.fa-chevron-right {
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+
+/* Cost Summary */
+.app-cost-summary {
+    background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+    border: 2px solid #e9ecef;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.app-cost-header h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 16px 0;
+}
+
+.app-cost-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.app-cost-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.app-cost-row.total {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    padding-top: 12px;
+}
+
+.app-cost-row.total span:last-child {
+    color: #10b981;
+    font-size: 1.3rem;
+}
+
+.app-cost-divider {
+    height: 1px;
+    background: #e9ecef;
+    margin: 4px 0;
+}
+
+/* Service Type Grid - Reuse from create.blade.php but enhance */
+.app-service-type-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.app-service-type-card {
+    position: relative;
+}
+
+.app-service-type-radio {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.app-service-type-label {
+    display: block;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 16px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.app-service-type-radio:checked + .app-service-type-label {
+    border-color: #667eea;
+    background: #f0f4ff;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.app-service-type-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    color: white;
+}
+
+.app-service-type-header.service-24 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.app-service-type-header.service-12 {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.app-service-type-header.service-8 {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.app-service-type-header.service-1 {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.app-service-type-icon {
+    font-size: 1.5rem;
+}
+
+.app-service-type-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(255,255,255,0.25);
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.app-service-type-body {
+    text-align: center;
+}
+
+.app-service-type-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 6px 0;
+}
+
+.app-service-type-desc {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+}
+
+.app-service-type-info {
+    display: flex;
+    justify-content: space-around;
+    gap: 8px;
+    font-size: 0.8rem;
+}
+
+.app-info-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #6c757d;
+}
+
+.app-info-item.price {
+    color: #10b981;
+    font-weight: 700;
+}
+
+/* Form Elements - Reuse from edit.blade.php */
+.app-form-container {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    padding-bottom: 40px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    position: relative;
+    z-index: 1;
+}
+
+.app-form-section {
+    margin-bottom: 24px;
+}
+
+.app-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.app-section-icon-header {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.app-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.app-form-group {
+    margin-bottom: 20px;
+}
+
+.app-form-label {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.app-form-label i {
+    color: #667eea;
+    width: 20px;
+}
+
+.app-form-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    background: white;
+    color: #2c3e50;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.app-form-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: #fafbff;
+}
+
+.app-input-error {
+    border-color: #dc2626 !important;
+    background: #fef2f2 !important;
+}
+
+.app-form-help {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.app-form-error {
+    font-size: 0.8rem;
+    color: #dc2626;
+    margin-top: 6px;
+}
+
+.app-form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    position: relative;
+    z-index: 100;
+}
+
+.app-btn-secondary {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #e9ecef;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-btn-submit {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+    position: relative;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.app-btn-submit:hover {
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    transform: translateY(-2px);
+}
+
+.app-btn-submit:active {
+    transform: scale(0.98);
+}
+
+.app-alert {
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: start;
+    gap: 8px;
+}
+
+.app-alert-danger {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+@media (min-width: 768px) {
+    .app-service-type-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .app-service-type-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Quick Booking Enhancements */
+.app-quick-booking-section {
+    background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 100%);
+    border: 2px solid #e0e7ff;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.app-quick-booking-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.app-quick-booking-header i {
+    font-size: 1.3rem;
+    color: #667eea;
+}
+
+.app-quick-booking-header h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.app-quick-presets {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.app-quick-preset {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.app-quick-preset:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.app-quick-preset.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+}
+
+.app-quick-preset i {
+    font-size: 1.2rem;
+    color: #667eea;
+}
+
+.app-quick-preset.active i {
+    color: white;
+}
+
+.app-quick-preset span {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.app-quick-preset small {
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
+
+.app-date-input-wrapper {
+    position: relative;
+}
+
+.app-quick-date-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.app-quick-date-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #f8f9fa;
+    color: #6c757d;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.app-quick-date-btn:hover {
+    background: #e9ecef;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.app-duration-wrapper {
+    position: relative;
+}
+
+.app-duration-presets {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.app-duration-preset {
+    padding: 6px 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #f8f9fa;
+    color: #6c757d;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.app-duration-preset:hover {
+    background: #e9ecef;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.app-duration-preset.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+}
+
+.app-location-wrapper {
+    position: relative;
+}
+
+.app-quick-fill-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 6px 12px;
+    border: 1px solid #667eea;
+    border-radius: 8px;
+    background: white;
+    color: #667eea;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.app-quick-fill-btn:hover {
+    background: #667eea;
+    color: white;
+}
+
+.app-input-with-quick-fill {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.app-input-with-quick-fill .app-form-input {
+    padding-right: 45px;
+}
+
+.app-quick-fill-btn-small {
+    position: absolute;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #667eea;
+    border-radius: 8px;
+    background: white;
+    color: #667eea;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.app-quick-fill-btn-small:hover {
+    background: #667eea;
+    color: white;
+}
+
+.app-collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+.app-collapsible-header:hover {
+    background: #e9ecef;
+}
+
+.app-collapsible-content {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.app-booking-progress {
+    margin-top: 24px;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.app-progress-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.app-progress-steps::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: #e9ecef;
+    z-index: 0;
+}
+
+.app-progress-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+.step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.app-progress-step.active .step-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+    transform: scale(1.1);
+}
+
+.step-label {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-weight: 600;
+    text-align: center;
+}
+
+.app-progress-step.active .step-label {
+    color: #667eea;
+}
+
+.btn-loading {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .app-quick-presets {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .app-progress-steps {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    
+    .app-progress-steps::before {
+        display: none;
+    }
+    
+    .app-progress-step {
+        flex: 0 0 calc(50% - 6px);
+    }
+}
+
+/* Subscription Alert */
+.app-subscription-alert {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.subscription-alert-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: white;
+}
+
+.subscription-alert-content i {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.subscription-alert-content strong {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+
+.subscription-alert-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.95;
+}
+/* Booking step bar */
+.mmhc-booking-flow__list { display: flex; flex-wrap: wrap; gap: 0.35rem 0.5rem; list-style: none; margin: 0; padding: 0.65rem 0.75rem; background: var(--mmhc-card); border: 1px solid #e2e8f0; border-radius: 12px; }
+.mmhc-booking-flow__item { flex: 1 1 auto; min-width: 4.5rem; text-align: center; }
+.mmhc-booking-flow__link { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; text-decoration: none; color: #64748b; font-size: 0.7rem; font-weight: 600; min-height: 44px; justify-content: center; }
+.mmhc-booking-flow__link--static { cursor: default; }
+.mmhc-booking-flow__icon { width: 2rem; height: 2rem; border-radius: 999px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; }
+.mmhc-booking-flow__item.is-active .mmhc-booking-flow__icon { background: var(--mmhc-header-gradient); color: #fff; }
+.mmhc-booking-flow__item.is-active .mmhc-booking-flow__label { color: #334155; }
+.mmhc-booking-flow__item.is-done .mmhc-booking-flow__icon { background: #d1fae5; color: #047857; }
+.sr-payment-summary { font-size: 0.9rem; }
+.sr-payment-summary__row { display: flex; justify-content: space-between; align-items: baseline; padding: 0.35rem 0; border-bottom: 1px dashed #e2e8f0; }
+.sr-payment-summary__row--emphasis { border-bottom: none; padding-top: 0.5rem; }
+.sr-payment-summary__label { color: #64748b; }
+.sr-payment-summary__hint { font-size: 0.8rem; color: #64748b; line-height: 1.4; }
+.mmhc-filter-toggle { display: none; width: 100%; min-height: 44px; margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 12px; background: var(--mmhc-card); font-weight: 600; color: var(--mmhc-text); align-items: center; justify-content: center; gap: 8px; }
+@media (max-width: 767px) {
+  .mmhc-filter-toggle { display: inline-flex; }
+  .app-filters.mmhc-filter-panel:not(.is-open) { display: none; }
+  .app-filters.mmhc-filter-panel.is-open { display: block; padding: 12px; background: var(--mmhc-card); border-radius: 12px; margin-bottom: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+}
+@media (min-width: 768px) { .mmhc-filter-toggle { display: none !important; } .app-filters.mmhc-filter-panel { display: block !important; } }
+@media (max-width: 767px) {
+  .mmhc-page-book.mobile-app-container { padding-bottom: calc(180px + var(--mmhc-safe-bottom)) !important; }
+  .mmhc-page-book .app-cost-summary { position: sticky; bottom: calc(var(--mmhc-nav-height) + var(--mmhc-safe-bottom) + 8px); z-index: 40; box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.12); margin-bottom: 12px; }
+  .mmhc-page-book .app-form-actions { position: fixed; left: 0; right: 0; bottom: calc(var(--mmhc-nav-height) + var(--mmhc-safe-bottom)); z-index: 45; display: flex; gap: 10px; padding: 10px 16px; background: rgba(255,255,255,0.96); backdrop-filter: blur(8px); border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 16px rgba(0,0,0,0.06); }
+  .mmhc-page-book .app-form-actions .app-btn-submit, .mmhc-page-book .app-form-actions .app-btn-secondary { flex: 1; min-height: 48px; justify-content: center; }
+}
+.app-book-btn, .app-tab-btn, .app-btn-primary, .app-btn-secondary { min-height: 44px; }
+.capacitor-app .mobile-app-container { padding-bottom: calc(80px + var(--mmhc-safe-bottom)) !important; }

@@ -119,6 +119,45 @@ class ServiceRequest extends Model
     }
 
     /**
+     * Amount still owed by the patient (after prepaid / collections).
+     */
+    public function balanceDue(): float
+    {
+        $total = (float) $this->total_amount;
+        if ($total <= 0) {
+            return 0.0;
+        }
+
+        return max(0.0, round($total - (float) $this->prepaid_amount, 2));
+    }
+
+    public function isCoveredBySubscription(): bool
+    {
+        return (float) $this->total_amount <= 0
+            && $this->payment_status === 'paid';
+    }
+
+    public function paymentStatusLabel(): string
+    {
+        return match ($this->payment_status) {
+            'partially_paid' => 'Partially paid',
+            'paid' => 'Paid',
+            'refunded' => 'Refunded',
+            default => 'Payment pending',
+        };
+    }
+
+    public function paymentStatusBadgeClass(): string
+    {
+        return match ($this->payment_status) {
+            'paid' => 'success',
+            'partially_paid' => 'warning',
+            'refunded' => 'secondary',
+            default => 'danger',
+        };
+    }
+
+    /**
      * CRITICAL FIX #5: Valid status transitions state machine
      */
     private static $validTransitions = [
@@ -246,5 +285,14 @@ class ServiceRequest extends Model
     public function scopeCompleted($query)
     {
         return $query->where('status', 'completed');
+    }
+
+    /**
+     * Patient charge remains after recorded collections.
+     */
+    public function scopeWithBalanceDue($query)
+    {
+        return $query->where('total_amount', '>', 0)
+            ->whereRaw('prepaid_amount < total_amount');
     }
 }

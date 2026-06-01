@@ -294,3 +294,47 @@ sudo chmod -R 775 /var/www/mmhc-crm/bootstrap/cache
 php artisan db:seed --class=AcademicDemoSeeder --force
 ```
 (See `docs/academics-audit-and-server-checklist.md` for academics DB and migration notes.)
+
+---
+
+## Android app (Capacitor) — GPS / Find staff
+
+The **MeD Miracle** app loads the live site in a WebView (`capacitor.config.ts` → `server.url`). **Find staff** uses the browser **current location** API. The website must be deployed first; the APK does not bundle that PHP/JS.
+
+### When to rebuild the APK
+
+Rebuild and reinstall the Android app when you change **`android/`** (e.g. new permissions). You do **not** need a new APK for normal Laravel/Blade/CSS deploys on the server.
+
+### Location permissions (manifest)
+
+`android/app/src/main/AndroidManifest.xml` includes:
+
+- `ACCESS_FINE_LOCATION`
+- `ACCESS_COARSE_LOCATION`
+
+Users see the Android system dialog when they tap **Use current location** on Find staff.
+
+### Build steps (on a machine with Android Studio / SDK)
+
+```bash
+cd mmhc-crm
+npm install
+npx cap sync android
+cd android
+./gradlew assembleRelease
+```
+
+Release APK path (typical):
+
+`android/app/build/outputs/apk/release/app-release-unsigned.apk`
+
+Sign the APK for Play Store or sideloading per your usual process.
+
+### Test GPS in the app
+
+1. Deploy latest code to **HTTPS** (`themmhc.com`).
+2. Install the **new** APK (after manifest change).
+3. Log in as **patient** → **Find staff** → allow location.
+4. Confirm staff list shows distance (km) and sorts nearest first.
+
+If location still fails: **Settings → Apps → MeD Miracle → Permissions → Location → Allow**, then retry.

@@ -154,64 +154,144 @@ class LocationService
      */
     public static function getNearbyStaff(string $patientPincode, ?string $staffRole = null, ?int $maxDistanceKm = null)
     {
-        // Get patient coordinates
         $patientCoords = Pincode::getCoordinates($patientPincode);
-        
-        if (!$patientCoords) {
-            // If patient pincode not found, return unsorted staff
+
+        if (! $patientCoords) {
             $query = \App\Models\Core\User::whereIn('role', ['nurse', 'caregiver'])
                 ->where('is_active', true);
-            
+
             if ($staffRole) {
                 $query->where('role', $staffRole);
             }
-            
+
             return $query->orderBy('name')->get();
         }
 
-        // Create POINT for patient location using parameterized query (longitude, latitude order for MySQL)
-        $longitude = (float) $patientCoords['longitude'];
-        $latitude = (float) $patientCoords['latitude'];
+        return self::getNearbyStaffFromCoordinates(
+            (float) $patientCoords['latitude'],
+            (float) $patientCoords['longitude'],
+            $staffRole,
+            $maxDistanceKm
+        );
+    }
 
-        // Build query with spatial distance calculation
-        // Filter out sentinel POINT(0 0) values (users without coordinates)
+    /**
+     * Staff sorted by distance from the patient's GPS coordinates (no pincode required).
+     */
+    public static function getNearbyStaffFromCoordinates(
+        float $latitude,
+        float $longitude,
+        ?string $staffRole = null,
+        ?int $maxDistanceKm = null
+    ) {
+        $longitude = (float) $longitude;
+        $latitude = (float) $latitude;
+        $pointWkt = "POINT({$longitude} {$latitude})";
+
         $query = \App\Models\Core\User::whereIn('role', ['nurse', 'caregiver'])
             ->where('is_active', true)
-            ->whereNotNull('latitude') // Ensure coordinates exist
+            ->whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->whereRaw("location != ST_GeomFromText('POINT(0 0)', 4326)") // Exclude sentinel value
+            ->whereRaw("location != ST_GeomFromText('POINT(0 0)', 4326)")
             ->with('profile');
 
         if ($staffRole) {
             $query->where('role', $staffRole);
         }
 
-        // Calculate distance using ST_Distance_Sphere (returns meters, convert to km)
-        // ST_Distance_Sphere is more accurate than ST_Distance for geographic coordinates
-        // Using parameterized query to prevent SQL injection
-        $query->selectRaw("
+        $query->selectRaw('
             users.*,
             ST_Distance_Sphere(
                 location,
                 ST_GeomFromText(?, 4326)
             ) / 1000 as distance_km
-        ", ["POINT({$longitude} {$latitude})"]);
+        ', [$pointWkt]);
 
-        // Filter by max distance if specified (in meters for ST_Distance_Sphere)
         if ($maxDistanceKm !== null) {
             $maxDistanceMeters = $maxDistanceKm * 1000;
-            $query->whereRaw("
+            $query->whereRaw('
                 ST_Distance_Sphere(
                     location,
                     ST_GeomFromText(?, 4326)
                 ) <= ?
-            ", ["POINT({$longitude} {$latitude})", $maxDistanceMeters]);
+            ', [$pointWkt, $maxDistanceMeters]);
         }
 
-        // Order by distance (nearest first)
         $query->orderByRaw('distance_km ASC');
 
         return $query->get();
+    }
+
+    /**
+     * Store the patient's live GPS position on their profile.
+     */
+    public static function applyGpsCoordinatesToUser(\App\Models\Core\User $user, float $latitude, float $longitude): void
+    {
+        $user->update([
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'location' => self::createSpatialPoint($latitude, $longitude),
+        ]);
+    }
+
+    public static function hasUsableCoordinates(?float $latitude, ?float $longitude): bool
+    {
+        if ($latitude === null || $longitude === null) {
+            return false;
+        }
+
+        if (abs($latitude) < 0.0001 && abs($longitude) < 0.0001) {
+            return false;
+        }
+
+        return $latitude >= -90 && $latitude <= 90 && $longitude >= -180 && $longitude <= 180;
+    }
+
+    /**
+     * Resolve GPS coordinates to the nearest pincode in our database.
+     *
+     * @return array{pincode: string, city: string|null, state: string|null, distance_km: float}|null
+     */
+    public static function resolveNearestPincode(float $latitude, float $longitude): ?array
+    {
+        return Pincode::nearestToCoordinates($latitude, $longitude);
+    }
+
+    /**
+     * Save pincode + spatial point on a user (patient) from the pincode master table.
+     */
+    public static function applyPincodeToUser(\App\Models\Core\User $user, string $pincode): bool
+    {
+        $pincode = trim($pincode);
+        if (! preg_match('/^[1-9][0-9]{5}$/', $pincode)) {
+            return false;
+        }
+
+        $pincodeData = Pincode::findByPincode($pincode);
+        if (! $pincodeData) {
+            $user->update(['pincode' => $pincode]);
+
+            return true;
+        }
+
+        $latitude = $pincodeData->latitude ? (float) $pincodeData->latitude : null;
+        $longitude = $pincodeData->longitude ? (float) $pincodeData->longitude : null;
+
+        $updateData = [
+            'pincode' => $pincode,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+        ];
+
+        if ($latitude && $longitude) {
+            $updateData['location'] = self::createSpatialPoint($latitude, $longitude);
+        } else {
+            $updateData['location'] = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
+        }
+
+        $user->update($updateData);
+
+        return true;
     }
 }
 

@@ -113,6 +113,23 @@
         </div>
     </div>
 
+    <!-- Patient payment filters -->
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <a href="{{ route('admin.service-requests', array_filter(['status' => $statusFilter !== 'all' ? $statusFilter : null, 'filter' => $filterId])) }}"
+           class="btn btn-sm {{ ($paymentFilter ?? 'all') === 'all' ? 'btn-primary' : 'btn-outline-secondary' }}">
+            All payments
+        </a>
+        <a href="{{ route('admin.service-requests', ['payment' => 'balance_due']) }}"
+           class="btn btn-sm {{ ($paymentFilter ?? '') === 'balance_due' ? 'btn-warning' : 'btn-outline-warning' }}">
+            <i class="fas fa-exclamation-circle me-1"></i>Balance due
+            <span class="badge bg-dark ms-1">{{ $stats['balance_due_requests'] ?? 0 }}</span>
+        </a>
+        <a href="{{ route('admin.service-requests', ['payment' => 'collected']) }}"
+           class="btn btn-sm {{ ($paymentFilter ?? '') === 'collected' ? 'btn-success' : 'btn-outline-success' }}">
+            Collected (prepaid &gt; 0)
+        </a>
+    </div>
+
     <!-- Filter Tabs - Modern Design -->
     <div class="modern-tabs-container mb-4">
         <ul class="modern-nav-tabs" role="tablist">
@@ -178,6 +195,8 @@
                                 <th>Service Type</th>
                                 <th>Duration</th>
                                 <th>Patient Charge</th>
+                                <th>Collected</th>
+                                <th>Due</th>
                                 <th>Staff Payout</th>
                                 <th>Status</th>
                                 <th>Assigned Staff</th>
@@ -218,6 +237,23 @@
                                     </div>
                                 </td>
                                 <td>
+                                    <div class="amount-cell text-success">
+                                        ₹{{ number_format($request->prepaid_amount, 0) }}
+                                    </div>
+                                    <span class="badge bg-{{ $request->paymentStatusBadgeClass() }} mt-1" style="font-size:0.65rem;">
+                                        {{ $request->paymentStatusLabel() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @if((float) $request->total_amount > 0)
+                                        <div class="amount-cell {{ $request->balanceDue() > 0 ? 'text-danger' : 'text-success' }}">
+                                            ₹{{ number_format($request->balanceDue(), 0) }}
+                                        </div>
+                                    @else
+                                        <span class="text-muted small">—</span>
+                                    @endif
+                                </td>
+                                <td>
                                     @if($request->total_staff_payout)
                                         <div class="amount-cell amount-payout">
                                             <i class="fas fa-rupee-sign me-1"></i>
@@ -239,7 +275,7 @@
                                         @if($request->status === 'completed')
                                             @if($request->isApprovedByAdmin())
                                                 <div class="approval-badge approved">
-                                                    <i class="fas fa-check-circle me-1"></i>Payment Approved
+                                                    <i class="fas fa-check-circle me-1"></i>Staff payout approved
                                                 </div>
                                                 @if($request->approvedBy)
                                                     <div class="approver-name">{{ $request->approvedBy->name }}</div>
@@ -305,9 +341,9 @@
                                             <form action="{{ route('admin.service-requests.approve-payment', $request) }}" 
                                                   method="POST" 
                                                   style="display: inline;"
-                                                  onsubmit="return confirm('Approve payment of ₹{{ number_format($request->total_staff_payout ?? 0) }} to {{ $request->assignedStaff->name ?? 'staff' }}?');">
+                                                  onsubmit="return confirm('Approve staff payout of ₹{{ number_format($request->total_staff_payout ?? 0) }} for {{ $request->assignedStaff->name ?? 'staff' }}?');">
                                                 @csrf
-                                                <button type="submit" class="btn-action btn-approve" title="Approve Payment">
+                                                <button type="submit" class="btn-action btn-approve" title="Approve staff payout">
                                                     <i class="fas fa-check-circle"></i>
                                                 </button>
                                             </form>
@@ -327,7 +363,7 @@
                 
                 <!-- Pagination -->
                 <div class="pagination-container-modern">
-                    {{ $serviceRequests->links() }}
+                    {{ $serviceRequests->withQueryString()->links() }}
                 </div>
             @else
                 <div class="empty-state-modern">

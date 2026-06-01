@@ -50,9 +50,11 @@
                             </div>
                             
                             <div class="mb-3">
-                                <label class="form-label text-muted">Total Amount</label>
-                                <div class="fw-bold text-success fs-5">₹{{ number_format($serviceRequest->total_amount) }}</div>
+                                <label class="form-label text-muted">Patient charge &amp; payment</label>
+                                @include('services::partials.payment-summary', ['serviceRequest' => $serviceRequest])
                             </div>
+
+                            @include('services::partials.admin-record-collection', ['serviceRequest' => $serviceRequest])
                             
                             <div class="mb-3">
                                 <label class="form-label text-muted">Location</label>

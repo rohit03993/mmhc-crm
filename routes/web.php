@@ -82,6 +82,9 @@ Route::middleware(['auth'])->group(function () {
     // Staff Listing - Only for Patients
     Route::prefix('staff')->name('staff.')->group(function () {
         Route::get('/', [\App\Modules\Services\Controllers\StaffController::class, 'index'])->middleware('role:patient')->name('index');
+        Route::post('/resolve-location', [\App\Modules\Services\Controllers\StaffController::class, 'resolveLocation'])
+            ->middleware(['role:patient', 'throttle:30,1'])
+            ->name('resolve-location');
 
         // Staff Dashboard Routes - Only for Nurses and Caregivers
         Route::middleware('role:nurse,caregiver')->group(function () {
@@ -224,6 +227,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/service-requests', [\App\Modules\Services\Controllers\ServiceController::class, 'adminIndex'])->name('service-requests');
         Route::get('/service-requests/{serviceRequest}/assign', [\App\Modules\Services\Controllers\ServiceController::class, 'assignForm'])->name('service-requests.assign');
         Route::post('/service-requests/{serviceRequest}/assign', [\App\Modules\Services\Controllers\ServiceController::class, 'assign'])->name('service-requests.assign.post');
+        Route::post('/service-requests/{serviceRequest}/record-collection', [\App\Modules\Services\Controllers\ServiceController::class, 'recordPatientCollection'])->name('service-requests.record-collection');
         Route::post('/service-requests/{serviceRequest}/approve-payment', [\App\Modules\Services\Controllers\ServiceController::class, 'approvePayment'])->name('service-requests.approve-payment');
 
         // Achievement & Media Coverage (landing carousel)

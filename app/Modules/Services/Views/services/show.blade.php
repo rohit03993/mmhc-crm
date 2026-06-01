@@ -6,6 +6,9 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
+    @if(auth()->user()->isPatient())
+        @include('services::partials.mobile-assets')
+    @endif
 @endsection
 
 @php
@@ -67,10 +70,21 @@
                             </div>
                         </div>
                         <div class="sr-hero__amount">
-                            <span class="sr-hero__amount-label">Total amount</span>
-                            <span class="sr-hero__amount-value">₹{{ number_format((float) $serviceRequest->total_amount, 0) }}</span>
+                            <span class="sr-hero__amount-label">Visit charge</span>
+                            <span class="sr-hero__amount-value">
+                                @if($serviceRequest->isCoveredBySubscription())
+                                    <span class="text-success">FREE</span>
+                                @else
+                                    ₹{{ number_format((float) $serviceRequest->total_amount, 0) }}
+                                @endif
+                            </span>
                         </div>
                     </div>
+                </div>
+
+                <div class="sr-card mb-4">
+                    <h3 class="sr-card__title"><i class="fas fa-wallet me-2 text-success"></i>Payment</h3>
+                    @include('services::partials.payment-summary', ['serviceRequest' => $serviceRequest])
                 </div>
 
                 <div class="sr-card mb-4">
@@ -200,6 +214,10 @@
             {{-- Sidebar --}}
             <div class="col-lg-4">
                 <div class="sr-sidebar">
+                    @if(auth()->user()->isAdmin())
+                        @include('services::partials.admin-record-collection', ['serviceRequest' => $serviceRequest])
+                    @endif
+
                     @if($serviceRequest->assignedStaff)
                     <div class="sr-card mb-4">
                         <h3 class="sr-card__title"><i class="fas fa-user-md me-2 text-success"></i>Assigned staff</h3>

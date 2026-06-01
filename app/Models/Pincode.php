@@ -135,5 +135,72 @@ class Pincode extends Model
         
         return $results;
     }
+
+    /**
+     * Find the nearest pincode record to GPS coordinates (for "Use my location").
+     *
+     * @return array{pincode: string, city: string|null, state: string|null, distance_km: float}|null
+     */
+    public static function nearestToCoordinates(float $latitude, float $longitude): ?array
+    {
+        foreach ([30.0, 80.0, 200.0] as $radiusKm) {
+            $match = static::nearestInRadius($latitude, $longitude, $radiusKm);
+            if ($match !== null) {
+                return $match;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{pincode: string, city: string|null, state: string|null, distance_km: float}|null
+     */
+    private static function nearestInRadius(float $latitude, float $longitude, float $radiusKm): ?array
+    {
+        $latDelta = $radiusKm / 111;
+        $cosLat = cos(deg2rad(max(min($latitude, 89.9), -89.9), 1.0));
+        $lonDelta = $radiusKm / (111 * max($cosLat, 0.01));
+
+        $candidates = static::query()
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->whereBetween('latitude', [$latitude - $latDelta, $latitude + $latDelta])
+            ->whereBetween('longitude', [$longitude - $lonDelta, $longitude + $lonDelta])
+            ->limit(800)
+            ->get(['pincode', 'latitude', 'longitude', 'city', 'state']);
+
+        if ($candidates->isEmpty()) {
+            return null;
+        }
+
+        $best = null;
+        $bestDistance = PHP_FLOAT_MAX;
+
+        foreach ($candidates as $pin) {
+            $distance = static::haversineDistance(
+                $latitude,
+                $longitude,
+                (float) $pin->latitude,
+                (float) $pin->longitude
+            );
+
+            if ($distance < $bestDistance) {
+                $bestDistance = $distance;
+                $best = $pin;
+            }
+        }
+
+        if ($best === null) {
+            return null;
+        }
+
+        return [
+            'pincode' => $best->pincode,
+            'city' => $best->city,
+            'state' => $best->state,
+            'distance_km' => round($bestDistance, 2),
+        ];
+    }
 }
 

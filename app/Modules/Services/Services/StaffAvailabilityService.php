@@ -126,12 +126,23 @@ class StaffAvailabilityService
             return $check['available'];
         });
 
-        // If pincode provided, sort by distance
-        if ($patientPincode) {
+        $patient = auth()->user();
+        if ($patient && \App\Modules\Auth\Services\LocationService::hasUsableCoordinates(
+            $patient->latitude !== null ? (float) $patient->latitude : null,
+            $patient->longitude !== null ? (float) $patient->longitude : null
+        )) {
+            $availableStaff = \App\Modules\Auth\Services\LocationService::getNearbyStaffFromCoordinates(
+                (float) $patient->latitude,
+                (float) $patient->longitude,
+                $staffRole
+            )->filter(function ($staff) use ($availableStaff) {
+                return $availableStaff->contains('id', $staff->id);
+            });
+        } elseif ($patientPincode) {
             $availableStaff = \App\Modules\Auth\Services\LocationService::getNearbyStaff(
                 $patientPincode,
                 $staffRole
-            )->filter(function($staff) use ($availableStaff) {
+            )->filter(function ($staff) use ($availableStaff) {
                 return $availableStaff->contains('id', $staff->id);
             });
         }

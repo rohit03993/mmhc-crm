@@ -315,7 +315,7 @@ class ServiceController extends Controller
 
             $successMessage = $hasActiveSubscription
                 ? 'Booking created successfully! This service is FREE as you have an active subscription. The staff member will be notified.'
-                : 'Booking created successfully! The staff member will be notified and can accept your booking request.';
+                : 'Booking created successfully! Our team will contact you about payment. The staff member will be notified to accept your request.';
 
             return redirect()->route('services.my-requests')
                 ->with('success', $successMessage);
@@ -376,9 +376,16 @@ class ServiceController extends Controller
     {
         // Get filter parameters
         $statusFilter = $request->get('status', 'all');
+        $paymentFilter = $request->get('payment', 'all');
         $filterId = $request->get('filter'); // Specific ID filter from pending payments page
 
         $query = ServiceRequest::with(['patient', 'serviceType', 'assignedStaff', 'preferredStaff', 'approvedBy']);
+
+        if ($paymentFilter === 'balance_due') {
+            $query->withBalanceDue();
+        } elseif ($paymentFilter === 'collected') {
+            $query->where('prepaid_amount', '>', 0);
+        }
 
         // Filter by status
         if ($statusFilter !== 'all') {
@@ -407,9 +414,10 @@ class ServiceController extends Controller
             'pending_approvals' => ServiceRequest::where('status', 'completed')
                 ->whereNull('admin_approved_at')
                 ->count(),
+            'balance_due_requests' => ServiceRequest::withBalanceDue()->count(),
         ];
 
-        return view('services::admin.requests.index', compact('serviceRequests', 'stats', 'statusFilter', 'filterId'));
+        return view('services::admin.requests.index', compact('serviceRequests', 'stats', 'statusFilter', 'paymentFilter', 'filterId'));
     }
 
     /**
@@ -542,6 +550,61 @@ class ServiceController extends Controller
             return redirect()->back()
                 ->with('error', 'Failed to assign staff. Please try again. If the problem persists, contact support.');
         }
+    }
+
+    /**
+     * Admin: Record money collected from the patient (updates prepaid_amount for dashboard earning).
+     */
+    public function recordPatientCollection(Request $request, ServiceRequest $serviceRequest)
+    {
+        $validator = Validator::make($request->all(), [
+            'amount' => 'required|numeric|min:0.01',
+            'collection_note' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator);
+        }
+
+        $total = (float) $serviceRequest->total_amount;
+        if ($total <= 0) {
+            return redirect()->back()
+                ->with('error', 'This request has no patient charge (subscription or free visit).');
+        }
+
+        $remaining = $serviceRequest->balanceDue();
+        if ($remaining <= 0) {
+            return redirect()->back()
+                ->with('info', 'Patient charge is already fully collected for this request.');
+        }
+
+        $increment = min($remaining, (float) $request->amount);
+        $newPrepaid = round((float) $serviceRequest->prepaid_amount + $increment, 2);
+
+        $paymentStatus = $newPrepaid >= $total ? 'paid' : 'partially_paid';
+
+        $adminName = Auth::user()->name;
+        $noteLine = sprintf(
+            "\n[Patient payment ₹%s recorded by %s on %s%s]",
+            number_format($increment, 2),
+            $adminName,
+            now()->format('Y-m-d H:i'),
+            $request->filled('collection_note') ? ': '.$request->collection_note : ''
+        );
+
+        $serviceRequest->update([
+            'prepaid_amount' => $newPrepaid,
+            'payment_status' => $paymentStatus,
+            'notes' => trim(($serviceRequest->notes ?? '').$noteLine),
+        ]);
+
+        return redirect()->back()
+            ->with('success', sprintf(
+                'Recorded ₹%s from patient. Collected ₹%s of ₹%s total.',
+                number_format($increment, 2),
+                number_format($newPrepaid, 2),
+                number_format($total, 2)
+            ));
     }
 
     /**
