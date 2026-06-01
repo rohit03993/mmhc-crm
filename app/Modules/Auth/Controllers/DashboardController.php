@@ -5,7 +5,10 @@ namespace App\Modules\Auth\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
 use App\Modules\Auth\Services\LocationService;
+use App\Modules\Payments\Models\StaffPayment;
 use App\Modules\Payments\Services\StaffPayoutService;
+use App\Modules\Plans\Models\Subscription;
+use App\Modules\Plans\Services\StudentSubscriptionService;
 use App\Modules\Services\Models\ServiceRequest;
 use App\Modules\Services\Models\ServiceType;
 use Illuminate\Http\Request;
@@ -97,34 +100,9 @@ class DashboardController extends Controller
 
         $studentSubscriptionService = app(\App\Modules\Plans\Services\StudentSubscriptionService::class);
 
-        // Get pending subscription payments
-        $pendingSubscriptions = \App\Modules\Plans\Models\Subscription::with(['user', 'plan'])
-            ->where(function ($query) {
-                $query->where('status', 'pending')
-                    ->where(function ($q) {
-                        // Has payment proof but not verified
-                        $q->where(function ($q2) {
-                            $q2->whereNotNull('payment_screenshot')
-                                ->orWhereNotNull('transaction_id');
-                        })
-                            ->where(function ($q3) {
-                                $q3->where('payment_status', '!=', 'paid')
-                                    ->orWhereNull('payment_status')
-                                    ->orWhere('payment_status', 'partially_paid');
-                            });
-                    })
-                      // Or no payment proof yet
-                    ->orWhere(function ($q) {
-                        $q->where('status', 'pending')
-                            ->whereNull('payment_screenshot')
-                            ->whereNull('transaction_id')
-                            ->where(function ($q2) {
-                                $q2->where('payment_status', '!=', 'paid')
-                                    ->orWhereNull('payment_status');
-                            });
-                    });
-            })
-            ->orderBy('created_at', 'desc')
+        $pendingSubscriptions = $this->pendingCustomerSubscriptionQuery()
+            ->with(['user', 'plan'])
+            ->orderByDesc('created_at')
             ->get()
             ->reject(fn ($subscription) => $studentSubscriptionService->isExcludedFromAdminPendingQueue($subscription))
             ->values();
@@ -285,18 +263,42 @@ class DashboardController extends Controller
     protected function getAdminStats()
     {
         return Cache::remember('admin_dashboard_stats', now()->addMinutes(2), function () {
+            $usersByRole = User::query()
+                ->selectRaw('role, COUNT(*) as aggregate')
+                ->groupBy('role')
+                ->pluck('aggregate', 'role');
+
+            $totalNurses = (int) ($usersByRole['nurse'] ?? 0);
+            $totalCaregivers = (int) ($usersByRole['caregiver'] ?? 0);
+            $totalPatients = (int) ($usersByRole['patient'] ?? 0);
+            $totalStudents = (int) ($usersByRole['student'] ?? 0);
+            $totalFaculty = (int) ($usersByRole['faculty'] ?? 0);
+            $totalInstitutionAdmins = (int) ($usersByRole['institution_admin'] ?? 0);
+            $totalPlatformAdmins = (int) (($usersByRole['admin'] ?? 0) + ($usersByRole['super_admin'] ?? 0));
+            $totalStaff = $totalNurses + $totalCaregivers;
+            $healthcareUsers = $totalStaff + $totalPatients;
+            $academicUsers = $totalStudents + $totalFaculty + $totalInstitutionAdmins;
+            $totalUsers = (int) User::count();
+
             $stats = [
-                'total_users' => \App\Models\Core\User::count(),
-                'total_nurses' => \App\Models\Core\User::where('role', 'nurse')->count(),
-                'total_caregivers' => \App\Models\Core\User::where('role', 'caregiver')->count(),
-                'total_patients' => \App\Models\Core\User::where('role', 'patient')->count(),
-                'total_staff' => \App\Models\Core\User::whereIn('role', ['nurse', 'caregiver'])->count(),
-                'pending_approvals' => \App\Modules\Services\Models\ServiceRequest::where('status', 'completed')
+                'total_users' => $totalUsers,
+                'total_nurses' => $totalNurses,
+                'total_caregivers' => $totalCaregivers,
+                'total_patients' => $totalPatients,
+                'total_students' => $totalStudents,
+                'total_faculty' => $totalFaculty,
+                'total_institution_admins' => $totalInstitutionAdmins,
+                'total_platform_admins' => $totalPlatformAdmins,
+                'total_staff' => $totalStaff,
+                'healthcare_users' => $healthcareUsers,
+                'academic_users' => $academicUsers,
+                'users_accounted_for' => $healthcareUsers + $academicUsers + $totalPlatformAdmins,
+                'pending_approvals' => ServiceRequest::where('status', 'completed')
                     ->whereNull('admin_approved_at')
                     ->count(),
-                'total_service_requests' => \App\Modules\Services\Models\ServiceRequest::count(),
-                'pending_service_requests' => \App\Modules\Services\Models\ServiceRequest::where('status', 'pending')->count(),
-                'in_progress_services' => \App\Modules\Services\Models\ServiceRequest::where('status', 'in_progress')->count(),
+                'total_service_requests' => ServiceRequest::count(),
+                'pending_service_requests' => ServiceRequest::where('status', 'pending')->count(),
+                'in_progress_services' => ServiceRequest::where('status', 'in_progress')->count(),
             ];
 
             $stats['financial'] = $this->getFinancialStats();
@@ -336,35 +338,8 @@ class DashboardController extends Controller
         $netProfit = ($totalSubscriptionRevenue + $serviceRevenue) - $totalStaffPayouts;
 
         // 5. Pending Payments (Money OWED TO COMPANY by customers/patients)
-        // IMPORTANT: This is money patients owe, NOT money owed to staff
-
-        // Pending subscription payments: Subscriptions where payment proof submitted but not verified
-        $pendingSubscriptionPayments = \App\Modules\Plans\Models\Subscription::where(function ($query) {
-            // Status is pending AND has payment proof (screenshot or transaction ID) but not verified
-            $query->where('status', 'pending')
-                ->where(function ($q) {
-                    $q->whereNotNull('payment_screenshot')
-                        ->orWhereNotNull('transaction_id');
-                })
-                ->where(function ($q) {
-                    $q->where('payment_status', '!=', 'paid')
-                        ->orWhereNull('payment_status')
-                        ->orWhere('payment_status', 'partially_paid');
-                });
-        })
-            ->sum('total_amount');
-
-        // Also include subscriptions with status pending and no payment proof yet
-        $pendingSubscriptionsNoProof = \App\Modules\Plans\Models\Subscription::where('status', 'pending')
-            ->whereNull('payment_screenshot')
-            ->whereNull('transaction_id')
-            ->where(function ($q) {
-                $q->where('payment_status', '!=', 'paid')
-                    ->orWhereNull('payment_status');
-            })
-            ->sum('total_amount');
-
-        $pendingSubscriptionPayments += $pendingSubscriptionsNoProof;
+        // Excludes abandoned student membership carts (pending, no payment started).
+        $pendingSubscriptionPayments = (float) $this->pendingCustomerSubscriptionQuery()->sum('total_amount');
 
         // Pending service payments: Services where patient hasn't paid fully (unpaid balance)
         $pendingServicePayments = optional(\App\Modules\Services\Models\ServiceRequest::where('status', '!=', 'cancelled')
@@ -378,33 +353,21 @@ class DashboardController extends Controller
 
         $totalPendingPayments = $pendingSubscriptionPayments + $pendingServicePayments;
 
-        // Count of pending payment items for display
-        $pendingSubscriptionsCount = \App\Modules\Plans\Models\Subscription::where(function ($query) {
-            $query->where('status', 'pending')
-                ->where(function ($q) {
-                    $q->where(function ($q2) {
-                        $q2->whereNotNull('payment_screenshot')
-                            ->orWhereNotNull('transaction_id');
-                    })
-                        ->where(function ($q3) {
-                            $q3->where('payment_status', '!=', 'paid')
-                                ->orWhereNull('payment_status')
-                                ->orWhere('payment_status', 'partially_paid');
-                        });
-                })
-                ->orWhere(function ($q) {
-                    $q->where('status', 'pending')
-                        ->whereNull('payment_screenshot')
-                        ->whereNull('transaction_id')
-                        ->where(function ($q2) {
-                            $q2->where('payment_status', '!=', 'paid')
-                                ->orWhereNull('payment_status');
-                        });
-                });
-        })
-            ->count();
+        $pendingSubscriptionsCount = $this->pendingCustomerSubscriptionQuery()->count();
 
-        $pendingServiceRequestsCount = \App\Modules\Services\Models\ServiceRequest::where('status', '!=', 'cancelled')
+        $studentPlanId = app(StudentSubscriptionService::class)->getStudentPlan()?->id;
+        $pendingSubBase = $this->pendingCustomerSubscriptionQuery();
+        $pendingStudentSubscriptions = $studentPlanId
+            ? (float) (clone $pendingSubBase)->where('plan_id', $studentPlanId)->sum('total_amount')
+            : 0.0;
+        $pendingPatientSubscriptions = $studentPlanId
+            ? (float) (clone $pendingSubBase)->where('plan_id', '!=', $studentPlanId)->sum('total_amount')
+            : (float) $pendingSubscriptionPayments;
+
+        $payoutBreakdown = $this->getStaffPayoutBreakdown();
+        $totalEarning = $totalSubscriptionRevenue + $serviceRevenue;
+
+        $pendingServiceRequestsCount = ServiceRequest::where('status', '!=', 'cancelled')
             ->whereIn('status', ['assigned', 'in_progress', 'completed', 'pending'])
             ->whereRaw('COALESCE(total_amount, 0) > COALESCE(prepaid_amount, 0)')
             ->count();
@@ -471,21 +434,102 @@ class DashboardController extends Controller
             'recent_subscription_payments' => $subscriptionMetrics['recent_subscription_payments'],
             'active_subscriptions_count' => $activeSubscriptionsCount,
             'total_service_revenue' => round($serviceRevenue, 2),
-            'total_revenue' => round($totalSubscriptionRevenue + $serviceRevenue, 2),
+            'total_earning' => round($totalEarning, 2),
+            'total_revenue' => round($totalEarning, 2),
             'total_staff_payouts' => round($totalStaffPayouts, 2),
             'net_profit' => round($netProfit, 2),
             'pending_subscription_payments' => round($pendingSubscriptionPayments, 2),
+            'pending_student_subscriptions' => round($pendingStudentSubscriptions, 2),
+            'pending_patient_subscriptions' => round($pendingPatientSubscriptions, 2),
             'pending_service_payments' => round($pendingServicePayments, 2),
             'total_pending_payments' => round($totalPendingPayments, 2),
+            'total_pending_to_collect' => round($totalPendingPayments, 2),
             'pending_subscriptions_count' => $pendingSubscriptionsCount,
             'pending_service_requests_count' => $pendingServiceRequestsCount,
             'pending_staff_payments' => round($pendingStaffPayments, 2),
             'staff_with_pending_payments' => $staffWithPendingPayments,
+            'payout_breakdown' => $payoutBreakdown,
             'this_month_revenue' => round($thisMonthRevenue, 2),
             'this_month_subscription_revenue' => round($thisMonthSubscriptionRevenue, 2),
             'this_month_service_revenue' => round($thisMonthServiceRevenue, 2),
             'monthly_recurring_revenue' => round($mrr, 2),
         ];
+    }
+
+    /**
+     * Staff payouts: paid (recorded) vs pending (owed), by category.
+     *
+     * @return array<string, mixed>
+     */
+    protected function getStaffPayoutBreakdown(): array
+    {
+        $types = [
+            'service_request' => 'Service visits',
+            'patient_reward' => 'Patient rewards',
+            'staff_referral' => 'Staff referrals',
+            'subscription_referral' => 'Subscription referrals',
+        ];
+
+        $paidLines = [];
+        $paidTotal = 0.0;
+        foreach (array_keys($types) as $type) {
+            $amount = (float) StaffPayment::where('payment_type', $type)->sum('amount');
+            $paidLines[$type] = $amount;
+            $paidTotal += $amount;
+        }
+
+        $pendingLines = [];
+        foreach (array_keys($types) as $type) {
+            $pendingLines[$type] = ['amount' => 0.0, 'count' => 0];
+        }
+
+        foreach (User::query()->whereIn('role', ['nurse', 'caregiver'])->where('is_active', true)->cursor() as $staff) {
+            $pending = $this->staffPayoutService->calculatePendingPayments($staff);
+            foreach (array_keys($types) as $type) {
+                $pendingLines[$type]['amount'] += (float) ($pending[$type]['amount'] ?? 0);
+                $pendingLines[$type]['count'] += (int) ($pending[$type]['count'] ?? 0);
+            }
+        }
+
+        $pendingTotal = 0.0;
+        foreach ($pendingLines as $row) {
+            $pendingTotal += $row['amount'];
+        }
+
+        return [
+            'labels' => $types,
+            'paid_lines' => $paidLines,
+            'paid_total' => round($paidTotal, 2),
+            'pending_lines' => $pendingLines,
+            'pending_total' => round($pendingTotal, 2),
+            'combined_total' => round($paidTotal + $pendingTotal, 2),
+        ];
+    }
+
+    /**
+     * Unpaid subscription checkouts that represent real money owed (not abandoned student carts).
+     */
+    protected function pendingCustomerSubscriptionQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $studentPlanId = app(StudentSubscriptionService::class)->getStudentPlan()?->id;
+
+        return Subscription::query()
+            ->where('status', 'pending')
+            ->where(function ($q) {
+                $q->where('payment_status', '!=', 'paid')
+                    ->orWhereNull('payment_status')
+                    ->orWhere('payment_status', 'partially_paid');
+            })
+            ->where(function ($q) use ($studentPlanId) {
+                if (! $studentPlanId) {
+                    return;
+                }
+
+                $q->where('plan_id', '!=', $studentPlanId)
+                    ->orWhereNotNull('payment_screenshot')
+                    ->orWhereNotNull('transaction_id')
+                    ->orWhereNotNull('razorpay_order_id');
+            });
     }
 
     /**

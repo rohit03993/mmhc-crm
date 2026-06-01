@@ -56,8 +56,8 @@
         </div>
     </div>
 
-    <!-- Statistics Cards - Mobile Optimized -->
-    <div class="row g-3 mb-4">
+    <!-- Platform users -->
+    <div class="row g-3 mb-3">
         <div class="col-6 col-md-3">
             <div class="stat-card-modern stat-primary">
                 <div class="stat-icon">
@@ -65,7 +65,13 @@
                 </div>
                 <div class="stat-content">
                     <div class="stat-value">{{ $stats['total_users'] }}</div>
-                    <div class="stat-label">Total Users</div>
+                    <div class="stat-label">Total platform users</div>
+                    <div class="stat-sublabel">
+                        {{ $stats['healthcare_users'] ?? 0 }} healthcare · {{ $stats['academic_users'] ?? 0 }} academics
+                        @if(($stats['total_platform_admins'] ?? 0) > 0)
+                            · {{ $stats['total_platform_admins'] }} admin
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -76,8 +82,8 @@
                 </div>
                 <div class="stat-content">
                     <div class="stat-value">{{ $stats['total_staff'] }}</div>
-                    <div class="stat-label">Staff Members</div>
-                    <div class="stat-sublabel">{{ $stats['total_nurses'] }} Nurses, {{ $stats['total_caregivers'] }} Caregivers</div>
+                    <div class="stat-label">Staff (nurses &amp; caregivers)</div>
+                    <div class="stat-sublabel">{{ $stats['total_nurses'] }} nurses · {{ $stats['total_caregivers'] }} caregivers</div>
                 </div>
             </div>
         </div>
@@ -99,233 +105,67 @@
                 </div>
                 <div class="stat-content">
                     <div class="stat-value">{{ $stats['pending_approvals'] }}</div>
-                    <div class="stat-label">Pending Approvals</div>
+                    <div class="stat-label">Pending service approvals</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Financial Overview -->
+    <!-- Academics users -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4">
+            <div class="stat-card-modern" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #fff;">
+                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ $stats['total_students'] ?? 0 }}</div>
+                    <div class="stat-label">Students</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="stat-card-modern" style="background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: #fff;">
+                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ $stats['total_faculty'] ?? 0 }}</div>
+                    <div class="stat-label">Faculty</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="stat-card-modern" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: #fff;">
+                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
+                    <i class="fas fa-school"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ $stats['academic_users'] ?? 0 }}</div>
+                    <div class="stat-label">Academics total</div>
+                    <div class="stat-sublabel" style="opacity: 0.9;">
+                        {{ $stats['total_students'] ?? 0 }} students · {{ $stats['total_faculty'] ?? 0 }} faculty
+                        @if(($stats['total_institution_admins'] ?? 0) > 0)
+                            · {{ $stats['total_institution_admins'] }} inst. admins
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Overview: Earning vs Payout -->
     @if(isset($stats['financial']))
     <div class="row g-3 mb-4">
         <div class="col-12">
             <div class="modern-card">
-                <div class="modern-card-header bg-success text-white">
+                <div class="modern-card-header bg-dark text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-line me-2"></i>Financial Overview
+                        <i class="fas fa-chart-line me-2"></i>Financial overview
                     </h5>
                 </div>
                 <div class="modern-card-body">
-                    <div class="row g-3">
-                        <!-- Total Revenue -->
-                        <div class="col-6 col-md-3">
-                            <div class="stat-mini-card stat-success-mini clickable-card" 
-                                 data-bs-toggle="tooltip" 
-                                 data-bs-placement="top" 
-                                 title="Total money received from all subscriptions and service requests (all time)">
-                                <div class="stat-mini-value">₹{{ number_format($stats['financial']['total_revenue'], 0) }}</div>
-                                <div class="stat-mini-label">Total Revenue</div>
-                                <div class="stat-mini-sublabel">All subscriptions + services</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Net Profit -->
-                        <div class="col-6 col-md-3">
-                            <div class="stat-mini-card {{ $stats['financial']['net_profit'] >= 0 ? 'stat-success-mini' : 'stat-danger-mini' }} clickable-card"
-                                 data-bs-toggle="tooltip" 
-                                 data-bs-placement="top" 
-                                 title="Total Revenue minus Total Staff Payouts (Company profit)">
-                                <div class="stat-mini-value">₹{{ number_format($stats['financial']['net_profit'], 0) }}</div>
-                                <div class="stat-mini-label">Net Profit</div>
-                                <div class="stat-mini-sublabel">Revenue - Staff Payouts</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Pending Staff Payments -->
-                        <div class="col-6 col-md-3">
-                            <a href="{{ route('admin.payments.index') }}" class="text-decoration-none">
-                                <div class="stat-mini-card stat-danger-mini clickable-card-hover"
-                                     data-bs-toggle="tooltip" 
-                                     data-bs-placement="top" 
-                                     title="Click to view: Money owed TO STAFF (nurses/caregivers) for services, rewards, and referrals">
-                                    <div class="stat-mini-value">₹{{ number_format($stats['financial']['pending_staff_payments'] ?? 0, 0) }}</div>
-                                    <div class="stat-mini-label">Pending Staff Payments</div>
-                                    <div class="stat-mini-sublabel">
-                                        @if(($stats['financial']['staff_with_pending_payments'] ?? 0) > 0)
-                                            {{ $stats['financial']['staff_with_pending_payments'] }} staff members
-                                        @else
-                                            To nurses/caregivers
-                                        @endif
-                                        <i class="fas fa-arrow-right ms-1"></i>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        
-                        <!-- Pending Payments -->
-                        <div class="col-6 col-md-3">
-                            <a href="{{ route('admin.pending-payments') }}" class="text-decoration-none">
-                                <div class="stat-mini-card stat-warning-mini clickable-card-hover"
-                                     data-bs-toggle="tooltip" 
-                                     data-bs-placement="top" 
-                                     title="Click to view: Money owed TO COMPANY by patients (subscriptions & services not fully paid)">
-                                    <div class="stat-mini-value">₹{{ number_format($stats['financial']['total_pending_payments'], 0) }}</div>
-                                    <div class="stat-mini-label">Pending Payments</div>
-                                    <div class="stat-mini-sublabel">
-                                        @if(($stats['financial']['pending_subscriptions_count'] ?? 0) > 0 || ($stats['financial']['pending_service_requests_count'] ?? 0) > 0)
-                                            {{ ($stats['financial']['pending_subscriptions_count'] ?? 0) + ($stats['financial']['pending_service_requests_count'] ?? 0) }} items
-                                        @else
-                                            From patients
-                                        @endif
-                                        <i class="fas fa-arrow-right ms-1"></i>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <!-- Detailed Breakdown -->
-                    <hr class="my-3">
-                    <!-- Financial Definitions -->
-                    <div class="alert alert-info mb-3">
-                        <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i><strong>Financial Metrics Explained:</strong></h6>
-                        <div class="row g-2 small">
-                            <div class="col-12 col-md-6">
-                                <i class="fas fa-rupee-sign me-1"></i><strong>Total Revenue:</strong> All money received from subscriptions (paid) + services (paid/completed). This is money the COMPANY has received.
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <i class="fas fa-chart-line me-1"></i><strong>Net Profit:</strong> Total Revenue minus Total Staff Payouts. This is the COMPANY's profit after paying staff.
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <i class="fas fa-users me-1"></i><strong>Pending Staff Payments:</strong> Money OWED TO STAFF (nurses/caregivers) by the company. This includes:
-                                <ul class="mb-0 mt-1 ps-3">
-                                    <li>Service request payments (completed & approved)</li>
-                                    <li>Patient reward earnings</li>
-                                    <li>Staff referral bonuses</li>
-                                    <li>Subscription referral commissions</li>
-                                </ul>
-                                <small class="text-info"><i class="fas fa-info-circle me-1"></i>Click the card to view and process payments</small>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <i class="fas fa-clock me-1"></i><strong>Pending Payments (From Patients):</strong> Money OWED TO COMPANY by patients/customers. This includes:
-                                <ul class="mb-0 mt-1 ps-3">
-                                    <li>Subscription payments not yet verified</li>
-                                    <li>Service payments not fully paid</li>
-                                </ul>
-                                <small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>This is money patients owe, not staff payouts</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <h6 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Revenue Breakdown</h6>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="financial-breakdown-item">
-                                <div class="breakdown-label">
-                                    <i class="fas fa-crown me-1"></i>Subscription Revenue
-                                </div>
-                                <div class="breakdown-value">₹{{ number_format($stats['financial']['total_subscription_revenue'], 2) }}</div>
-                                <div class="breakdown-detail">
-                                    From {{ $stats['financial']['active_subscriptions_count'] }} active subscriptions
-                                </div>
-                                <div class="breakdown-hint">
-                                    <small class="text-muted d-block">Patient plans: ₹{{ number_format($stats['financial']['patient_subscription_revenue'] ?? 0, 2) }}</small>
-                                    <small class="text-muted d-block">Student membership: ₹{{ number_format($stats['financial']['student_subscription_revenue'] ?? 0, 2) }}</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="financial-breakdown-item">
-                                <div class="breakdown-label">
-                                    <i class="fas fa-clipboard-list me-1"></i>Service Revenue
-                                </div>
-                                <div class="breakdown-value">₹{{ number_format($stats['financial']['total_service_revenue'], 2) }}</div>
-                                <div class="breakdown-detail">
-                                    From completed service requests
-                                </div>
-                                <div class="breakdown-hint">
-                                    <small class="text-muted">Money received from patients for healthcare services</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="financial-breakdown-item" style="border-left-color: #dc3545;">
-                                <div class="breakdown-label">
-                                    <i class="fas fa-money-bill-wave me-1"></i>Staff Payouts
-                                </div>
-                                <div class="breakdown-value text-danger">₹{{ number_format($stats['financial']['total_staff_payouts'], 2) }}</div>
-                                <div class="breakdown-detail">
-                                    Total paid to nurses/caregivers
-                                </div>
-                                <div class="breakdown-hint">
-                                    <small class="text-muted">Money paid TO staff (reduces profit)</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    @if(!empty($stats['financial']['recent_subscription_payments']) && $stats['financial']['recent_subscription_payments']->isNotEmpty())
-                    <hr class="my-3">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="mb-0"><i class="fas fa-receipt me-2"></i>Recent subscription payments</h6>
-                        <a href="{{ route('admin.plan-payments') }}" class="small text-decoration-none">View all customer payments →</a>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Date</th>
-                                    <th>User</th>
-                                    <th>Plan</th>
-                                    <th class="text-end">Amount</th>
-                                    <th>Invoice</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($stats['financial']['recent_subscription_payments'] as $recentPayment)
-                                    <tr>
-                                        <td>{{ optional($recentPayment->paid_at)->format('d M Y') ?? '—' }}</td>
-                                        <td>
-                                            @if($recentPayment->user)
-                                                <a href="{{ route('admin.profiles.view', $recentPayment->user) }}" class="text-decoration-none">{{ $recentPayment->user->name }}</a>
-                                            @else
-                                                —
-                                            @endif
-                                        </td>
-                                        <td>{{ $recentPayment->subscription->plan->name ?? '—' }}</td>
-                                        <td class="text-end fw-semibold">₹{{ number_format((float) $recentPayment->amount, 2) }}</td>
-                                        <td>
-                                            @if($recentPayment->subscription)
-                                                <a href="{{ route('subscriptions.invoice', $recentPayment->subscription) }}" class="btn btn-sm btn-outline-primary rounded-pill" target="_blank" rel="noopener">View</a>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                    @endif
-                    
-                    <!-- Monthly Recurring Revenue -->
-                    @if($stats['financial']['monthly_recurring_revenue'] > 0)
-                    <hr class="my-3">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <div class="financial-mrr-card">
-                                <div class="mrr-icon">
-                                    <i class="fas fa-sync-alt"></i>
-                                </div>
-                                <div class="mrr-content">
-                                    <div class="mrr-label">Monthly Recurring Revenue (MRR)</div>
-                                    <div class="mrr-value">₹{{ number_format($stats['financial']['monthly_recurring_revenue'], 2) }}/month</div>
-                                    <div class="mrr-detail">Recurring revenue from active subscriptions</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    @endif
+                    @include('auth::admin.partials.financial-earning-payout')
                 </div>
             </div>
         </div>
