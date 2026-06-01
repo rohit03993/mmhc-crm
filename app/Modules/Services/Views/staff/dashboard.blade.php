@@ -7,6 +7,8 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
+    <link rel="stylesheet" href="{{ asset('css/dashboard-patient.css') }}?v=2">
+    @include('services::partials.staff-referrals-assets')
     
     <style>
         :root {
@@ -18,69 +20,6 @@
         }
     </style>
 @endsection
-
-@push('scripts')
-<script>
-    function copyReferralLink() {
-        const referralLinkInput = document.getElementById('referralLink');
-        referralLinkInput.select();
-        referralLinkInput.setSelectionRange(0, 99999); // For mobile devices
-        
-        try {
-            document.execCommand('copy');
-            
-            // Show success message
-            const button = event.target.closest('button');
-            const originalHTML = button.innerHTML;
-            button.innerHTML = '<i class="fas fa-check"></i>';
-            button.classList.remove('btn-outline-primary');
-            button.classList.add('btn-success');
-            
-            setTimeout(() => {
-                button.innerHTML = originalHTML;
-                button.classList.remove('btn-success');
-                button.classList.add('btn-outline-primary');
-            }, 2000);
-        } catch (err) {
-            console.error('Failed to copy: ', err);
-            alert('Failed to copy referral link. Please copy manually.');
-        }
-    }
-    
-    function copySubscriptionReferralLink() {
-        const referralLinkInput = document.getElementById('subscriptionReferralLink');
-        referralLinkInput.select();
-        referralLinkInput.setSelectionRange(0, 99999);
-        
-        try {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(referralLinkInput.value).then(() => {
-                    showCopySuccess(event.target.closest('button'), 'btn-outline-success');
-                });
-            } else {
-                document.execCommand('copy');
-                showCopySuccess(event.target.closest('button'), 'btn-outline-success');
-            }
-        } catch (err) {
-            console.error('Failed to copy: ', err);
-            alert('Failed to copy subscription referral link. Please copy manually.');
-        }
-    }
-    
-    function showCopySuccess(button, originalClass) {
-        const originalHTML = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-check"></i>';
-        button.classList.remove(originalClass);
-        button.classList.add('btn-success');
-        
-        setTimeout(() => {
-            button.innerHTML = originalHTML;
-            button.classList.remove('btn-success');
-            button.classList.add(originalClass);
-        }, 2000);
-    }
-</script>
-@endpush
 
 @section('content')
 <!-- Mobile App View for Staff Dashboard -->
@@ -107,6 +46,8 @@
 
     <!-- Main Content -->
     <div class="app-content">
+        @include('services::partials.staff-dashboard-quick-actions', ['pending_booking_count' => $stats['pending_booking_count'] ?? 0])
+
         <!-- Desktop Header -->
         <div class="d-none d-md-block mb-4">
             <div class="staff-header-card mb-3">
@@ -155,11 +96,11 @@
         <div class="col-6 col-md-3">
             <div class="stat-card stat-warning">
                 <div class="stat-icon">
-                    <i class="fas fa-clock"></i>
+                    <i class="fas fa-bell"></i>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ $stats['pending_assignments'] }}</div>
-                    <div class="stat-label">Pending</div>
+                    <div class="stat-value">{{ $stats['pending_booking_count'] ?? 0 }}</div>
+                    <div class="stat-label">New bookings</div>
                 </div>
             </div>
         </div>
@@ -228,6 +169,25 @@
     </div>
     @endif
 
+    <div class="mmhc-staff-earnings-strip">
+        <div class="mmhc-staff-earnings-strip__item mmhc-staff-earnings-strip__item--success">
+            <div class="mmhc-staff-earnings-strip__value">₹{{ number_format($serviceRequestEarnings['total_approved'], 0) }}</div>
+            <div class="mmhc-staff-earnings-strip__label">Paid (visits)</div>
+        </div>
+        <div class="mmhc-staff-earnings-strip__item mmhc-staff-earnings-strip__item--warning">
+            <div class="mmhc-staff-earnings-strip__value">₹{{ number_format($serviceRequestEarnings['pending_approval'], 0) }}</div>
+            <div class="mmhc-staff-earnings-strip__label">Awaiting admin</div>
+        </div>
+        <div class="mmhc-staff-earnings-strip__item mmhc-staff-earnings-strip__item--info">
+            <div class="mmhc-staff-earnings-strip__value">₹{{ number_format($serviceRequestEarnings['approved_unpaid'] ?? 0, 0) }}</div>
+            <div class="mmhc-staff-earnings-strip__label">Approved · not paid</div>
+        </div>
+        <div class="mmhc-staff-earnings-strip__item">
+            <div class="mmhc-staff-earnings-strip__value">₹{{ number_format($serviceRequestEarnings['upcoming'], 0) }}</div>
+            <div class="mmhc-staff-earnings-strip__label">Upcoming visits</div>
+        </div>
+    </div>
+
     <!-- Four Earnings Sources - Card Layout -->
     <div class="row g-3 mb-4">
         <!-- 1. Service Request Earnings -->
@@ -246,8 +206,12 @@
                     </div>
                     <div class="earnings-source-details">
                         <div class="detail-item">
-                            <span class="detail-label">Pending:</span>
+                            <span class="detail-label">Awaiting admin:</span>
                             <span class="detail-value">₹{{ number_format($serviceRequestEarnings['pending_approval'], 2) }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Approved, unpaid:</span>
+                            <span class="detail-value">₹{{ number_format($serviceRequestEarnings['approved_unpaid'] ?? 0, 2) }}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Upcoming:</span>
@@ -421,6 +385,11 @@
             </div>
         </div>
     </div>
+
+    @include('services::partials.staff-dashboard-share-links', [
+        'referralLink' => $referralLink,
+        'subscriptionReferralLink' => $subscriptionReferralLink,
+    ])
 
     <!-- Quick Links to Detailed Sections -->
     <div class="row g-3 mb-4">

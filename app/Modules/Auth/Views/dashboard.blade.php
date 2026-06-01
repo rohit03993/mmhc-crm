@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
+    <link rel="stylesheet" href="{{ asset('css/dashboard-patient.css') }}?v=1">
     
     <style>
         :root {
@@ -84,6 +85,14 @@
             </div>
         </div>
     </div>
+
+        @if($user->isPatient())
+        @include('services::partials.patient-dashboard-quick-actions')
+        @include('services::partials.patient-dashboard-referral-teaser', [
+            'planReferralLink' => $planReferralLink ?? null,
+            'referralStats' => $referralStats ?? [],
+        ])
+        @endif
 
         <!-- Subscription Status Banner (For Patients) -->
         @if($user->isPatient())
@@ -191,6 +200,29 @@
             </div>
         </div>
     </div>
+
+        @if($user->isPatient())
+        <div class="mmhc-insights-grid">
+            <div class="mmhc-insight-card">
+                <div class="mmhc-insight-card__value">₹{{ number_format($stats['total_spent'] ?? 0, 0) }}</div>
+                <div class="mmhc-insight-card__label">Paid so far</div>
+            </div>
+            <div class="mmhc-insight-card {{ ($stats['balance_due_total'] ?? 0) > 0 ? 'mmhc-insight-card--warning' : '' }}">
+                <div class="mmhc-insight-card__value">₹{{ number_format($stats['balance_due_total'] ?? 0, 0) }}</div>
+                <div class="mmhc-insight-card__label">Balance due</div>
+            </div>
+            <div class="mmhc-insight-card">
+                <div class="mmhc-insight-card__value">{{ $stats['upcoming_services'] ?? 0 }}</div>
+                <div class="mmhc-insight-card__label">Upcoming</div>
+            </div>
+            <div class="mmhc-insight-card">
+                <div class="mmhc-insight-card__value" title="{{ $stats['favorite_staff'] ?? '' }}">
+                    {{ $stats['favorite_staff'] ? Str::limit($stats['favorite_staff'], 12) : '—' }}
+                </div>
+                <div class="mmhc-insight-card__label">Top staff</div>
+            </div>
+        </div>
+        @endif
 
     <!-- Available Staff Section -->
     <div class="row mb-4">
@@ -342,8 +374,11 @@
                         <div class="empty-state-icon">
                             <i class="fas fa-users"></i>
                         </div>
-                        <h6 class="empty-state-title">No Staff Available</h6>
-                        <p class="empty-state-text">Check back later for available healthcare staff.</p>
+                        <h6 class="empty-state-title">No Staff Nearby</h6>
+                        <p class="empty-state-text">Use current location on Find staff to see nurses and caregivers near you.</p>
+                        <a href="{{ route('staff.index') }}" class="btn btn-primary btn-sm mt-2">
+                            <i class="fas fa-crosshairs me-1"></i>Find staff
+                        </a>
                     </div>
                     @endif
                 </div>
@@ -378,8 +413,17 @@
                         <div class="app-request-body">
                             <div class="app-request-detail">
                                 <i class="fas fa-rupee-sign"></i>
-                                            <span>₹{{ number_format($request->total_amount) }}</span>
-                                        </div>
+                                <span>
+                                    @if($request->isCoveredBySubscription())
+                                        FREE
+                                    @else
+                                        ₹{{ number_format($request->total_amount, 0) }}
+                                        @if($request->balanceDue() > 0)
+                                            <small class="text-danger"> · due ₹{{ number_format($request->balanceDue(), 0) }}</small>
+                                        @endif
+                                    @endif
+                                </span>
+                            </div>
                                         @if($request->assignedStaff)
                             <div class="app-request-detail">
                                 <i class="fas fa-user-{{ $request->assignedStaff->isNurse() ? 'nurse' : 'md' }}"></i>

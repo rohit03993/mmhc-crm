@@ -72,9 +72,10 @@ class StaffDashboardController extends Controller
 
         $stats = [
             'total_assignments' => $allServices->count(),
-            'active_assignments' => $allServices->whereIn('status', ['assigned', 'in_progress'])->count(),
+            'active_assignments' => $allServices->whereIn('status', ['assigned', 'in_progress', 'pending_approval'])->count(),
             'completed_assignments' => $allServices->where('status', 'completed')->count(),
             'pending_assignments' => $allServices->where('status', 'assigned')->count(),
+            'pending_booking_count' => $allServices->where('status', 'pending_approval')->count(),
         ];
 
         // ============================================

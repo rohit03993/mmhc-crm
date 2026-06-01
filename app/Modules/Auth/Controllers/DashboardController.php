@@ -354,6 +354,23 @@ class DashboardController extends Controller
      */
     protected function getPatientDashboardViewData(User $user): array
     {
+        if (LocationService::hasUsableCoordinates(
+            $user->latitude !== null ? (float) $user->latitude : null,
+            $user->longitude !== null ? (float) $user->longitude : null
+        )) {
+            $availableNurses = LocationService::getNearbyStaffFromCoordinates(
+                (float) $user->latitude,
+                (float) $user->longitude,
+                'nurse',
+                50
+            )->take(3);
+            $availableCaregivers = LocationService::getNearbyStaffFromCoordinates(
+                (float) $user->latitude,
+                (float) $user->longitude,
+                'caregiver',
+                50
+            )->take(3);
+        } else {
         $pincode = trim((string) ($user->pincode ?? ''));
 
         if ($pincode !== '') {
@@ -373,6 +390,9 @@ class DashboardController extends Controller
                 ->limit(3)
                 ->get();
         }
+        }
+
+        $patientReferralService = app(\App\Modules\Referrals\Services\PatientSubscriptionReferralService::class);
 
         return [
             'available_nurses' => $availableNurses,
@@ -383,6 +403,8 @@ class DashboardController extends Controller
                 ->with(['serviceType', 'assignedStaff'])
                 ->orderByDesc('created_at')
                 ->paginate(5),
+            'planReferralLink' => $patientReferralService->getPlanReferralLink($user),
+            'referralStats' => $patientReferralService->getStats($user),
         ];
     }
 
@@ -423,16 +445,21 @@ class DashboardController extends Controller
             // Get upcoming services
             $upcomingServices = $serviceRequests
                 ->where('start_date', '>=', now()->startOfDay())
-                ->whereIn('status', ['pending', 'assigned'])
+                ->whereIn('status', ['pending', 'assigned', 'pending_approval', 'in_progress'])
                 ->count();
+
+            $balanceDueTotal = $allRequests->sum(function ($request) {
+                return $request->balanceDue();
+            });
 
             $stats = [
                 'profile_completion' => $this->calculateProfileCompletion($user),
                 'total_requests' => $serviceRequests->count(),
-                'active_requests' => $serviceRequests->whereIn('status', ['assigned', 'in_progress'])->count(),
+                'active_requests' => $serviceRequests->whereIn('status', ['assigned', 'in_progress', 'pending_approval'])->count(),
                 'completed_requests' => $serviceRequests->where('status', 'completed')->count(),
                 'pending_requests' => $serviceRequests->where('status', 'pending')->count(),
                 'total_spent' => $totalSpent,
+                'balance_due_total' => $balanceDueTotal,
                 'average_duration' => round($avgDuration ?? 0, 1),
                 'favorite_staff' => $favoriteStaffName,
                 'upcoming_services' => $upcomingServices,
@@ -448,6 +475,7 @@ class DashboardController extends Controller
                 'average_duration' => 0,
                 'favorite_staff' => null,
                 'upcoming_services' => 0,
+                'balance_due_total' => 0,
             ];
         }
 
@@ -496,6 +524,11 @@ class DashboardController extends Controller
                 'total_service_requests' => ServiceRequest::count(),
                 'pending_service_requests' => ServiceRequest::where('status', 'pending')->count(),
                 'in_progress_services' => ServiceRequest::where('status', 'in_progress')->count(),
+                'service_balance_due_count' => ServiceRequest::query()
+                    ->where('status', '!=', 'cancelled')
+                    ->where('total_amount', '>', 0)
+                    ->whereRaw('prepaid_amount < total_amount')
+                    ->count(),
             ];
 
             $stats['financial'] = $this->getFinancialStats();

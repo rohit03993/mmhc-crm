@@ -15,7 +15,11 @@
     </div>
 </div>
 
+@include('services::partials.staff-referrals-assets')
+
 <div class="container-fluid px-3 py-4">
+    @include('services::partials.staff-earnings-nav', ['activeTab' => 'rewards'])
+
     <div class="row mb-3">
         <div class="col-12 text-end">
             <a href="{{ route('staff.incentives.index') }}" class="btn btn-outline-primary btn-sm">
@@ -218,7 +222,7 @@
                 </div>
             @else
                 <div class="empty-state-modern">
-                    <div class="empty-state-icon">
+                    <div class="empty-state-icon empty-state-icon--rewards">
                         <i class="fas fa-gift"></i>
                     </div>
                     <h5>No Rewards Yet</h5>
@@ -272,191 +276,6 @@
 @endsection
 
 @section('scripts')
-<style>
-.stats-card-modern {
-    background: white;
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    border-top: 4px solid;
-}
-
-.stats-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.75rem;
-    color: white;
-}
-
-.bg-warning .stats-icon { background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); }
-.bg-success .stats-icon { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
-.bg-warning .stats-icon { background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); }
-.bg-info .stats-icon { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); }
-
-.stats-content {
-    flex: 1;
-}
-
-.stats-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #212529;
-    line-height: 1.2;
-}
-
-.stats-label {
-    font-size: 0.85rem;
-    color: #6c757d;
-    margin-top: 0.25rem;
-}
-
-.action-card-modern {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    overflow: hidden;
-}
-
-.action-card-header {
-    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
-    color: white;
-    padding: 1.25rem;
-    display: flex;
-    align-items: center;
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-
-.action-card-body {
-    padding: 1.5rem;
-}
-
-.reward-entry-card-modern {
-    background: white;
-    border-radius: 16px;
-    padding: 1.25rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    margin-bottom: 1rem;
-    transition: all 0.3s ease;
-    border-left: 4px solid #ffc107;
-}
-
-.reward-entry-card-modern:hover {
-    transform: translateX(5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-}
-
-.reward-entry-header-modern {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.reward-entry-name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #212529;
-    margin-bottom: 0.25rem;
-}
-
-.reward-entry-meta {
-    font-size: 0.85rem;
-    color: #6c757d;
-}
-
-.reward-entry-badge-modern {
-    text-align: right;
-}
-
-.badge-points--muted {
-    display: block;
-    background: #e9ecef !important;
-    color: #6c757d !important;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    margin-bottom: 0.25rem;
-}
-
-.badge-points {
-    display: block;
-    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    margin-bottom: 0.25rem;
-}
-
-.badge-amount {
-    display: block;
-    color: #28a745;
-    font-weight: 700;
-    font-size: 1rem;
-}
-
-.reward-entry-details-modern {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.detail-row {
-    display: flex;
-    align-items: center;
-    font-size: 0.85rem;
-    color: #6c757d;
-}
-
-.empty-state-modern {
-    text-align: center;
-    padding: 3rem 1rem;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.empty-state-icon {
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    color: white;
-    margin: 0 auto 1.5rem;
-}
-
-@media (max-width: 768px) {
-    .stats-card-modern {
-        padding: 1.25rem;
-    }
-    
-    .stats-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 1.5rem;
-    }
-    
-    .stats-value {
-        font-size: 1.5rem;
-    }
-}
-</style>
 <script>
 function rewardOtpFeedback(rewardId, message, isError) {
     const el = document.getElementById('reward-otp-feedback-' + rewardId);

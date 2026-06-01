@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
+    <link rel="stylesheet" href="{{ asset('css/dashboard-patient.css') }}?v=1">
     
     <style>
         :root {
@@ -54,6 +55,17 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="admin-quick-links">
+        <a href="{{ route('admin.service-requests') }}"><i class="fas fa-clipboard-list"></i> Service requests</a>
+        <a href="{{ route('admin.service-requests', ['payment' => 'balance_due']) }}" class="admin-quick-links--alert">
+            <i class="fas fa-exclamation-circle"></i> Balances due ({{ $stats['service_balance_due_count'] ?? 0 }})
+        </a>
+        <a href="{{ route('admin.pending-payments') }}"><i class="fas fa-hand-holding-usd"></i> Pending payments</a>
+        <a href="{{ route('admin.service-requests', ['status' => 'completed', 'filter' => 'completed']) }}">
+            <i class="fas fa-check-circle"></i> Approve staff payout
+        </a>
     </div>
 
     <!-- Platform users -->

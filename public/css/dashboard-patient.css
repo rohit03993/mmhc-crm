@@ -1,0 +1,203 @@
+/**
+ * Patient dashboard polish (Step 7)
+ */
+.mmhc-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 1.25rem;
+}
+.mmhc-quick-actions:has(.mmhc-quick-actions__item:nth-child(5)) {
+    grid-template-columns: repeat(5, 1fr);
+}
+@media (max-width: 768px) {
+    .mmhc-quick-actions:has(.mmhc-quick-actions__item:nth-child(5)) {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+@media (max-width: 576px) {
+    .mmhc-quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .mmhc-quick-actions:has(.mmhc-quick-actions__item:nth-child(5)) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+.mmhc-quick-actions__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 72px;
+    padding: 10px 8px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    text-decoration: none;
+    color: #334155;
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.mmhc-quick-actions__item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    color: #1e293b;
+}
+.mmhc-quick-actions__item--primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: transparent;
+    color: #fff;
+}
+.mmhc-quick-actions__item--primary:hover {
+    color: #fff;
+}
+.mmhc-quick-actions__icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+.mmhc-quick-actions__item--primary .mmhc-quick-actions__icon {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.mmhc-insights-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 1.25rem;
+}
+@media (min-width: 768px) {
+    .mmhc-insights-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+.mmhc-insight-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+}
+.mmhc-insight-card__value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+.mmhc-insight-card__label {
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.mmhc-insight-card--warning .mmhc-insight-card__value {
+    color: #b45309;
+}
+
+.admin-quick-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 1rem;
+}
+.admin-quick-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+}
+.admin-quick-links a:hover {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+.admin-quick-links a.admin-quick-links--alert {
+    background: #fef3c7;
+    border-color: #fcd34d;
+    color: #92400e;
+}
+
+/* Staff dashboard */
+.mmhc-quick-actions--staff {
+    grid-template-columns: repeat(5, 1fr);
+}
+@media (max-width: 576px) {
+    .mmhc-quick-actions--staff {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+.mmhc-quick-actions__item {
+    position: relative;
+}
+.mmhc-quick-actions__badge {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1.1rem;
+}
+.mmhc-quick-actions--staff .mmhc-quick-actions__item--primary {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.mmhc-staff-earnings-strip {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 1.25rem;
+}
+@media (min-width: 768px) {
+    .mmhc-staff-earnings-strip {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+.mmhc-staff-earnings-strip__item {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+}
+.mmhc-staff-earnings-strip__value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+.mmhc-staff-earnings-strip__label {
+    font-size: 0.68rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 4px;
+}
+.mmhc-staff-earnings-strip__item--success .mmhc-staff-earnings-strip__value {
+    color: #047857;
+}
+.mmhc-staff-earnings-strip__item--warning .mmhc-staff-earnings-strip__value {
+    color: #b45309;
+}
+.mmhc-staff-earnings-strip__item--info .mmhc-staff-earnings-strip__value {
+    color: #1d4ed8;
+}

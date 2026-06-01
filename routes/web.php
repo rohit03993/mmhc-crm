@@ -125,6 +125,10 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard Route - redirects staff/admin to appropriate dashboards
     Route::get('/dashboard', [\App\Modules\Auth\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
+    Route::middleware('role:patient')->prefix('my-referrals')->name('patient.referrals.')->group(function () {
+        Route::get('/', [\App\Modules\Referrals\Controllers\PatientReferralController::class, 'index'])->name('index');
+    });
+
     // Profile Routes
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
