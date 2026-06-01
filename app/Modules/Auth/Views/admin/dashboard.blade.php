@@ -590,6 +590,13 @@
     font-weight: 500;
 }
 
+.fin-click-row {
+    cursor: pointer;
+}
+.fin-click-row:hover {
+    background-color: rgba(25, 135, 84, 0.08);
+}
+
 /* Financial Breakdown */
 .financial-breakdown-item {
     padding: 1rem;

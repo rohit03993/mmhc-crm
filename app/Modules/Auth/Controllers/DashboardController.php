@@ -7,6 +7,7 @@ use App\Models\Core\User;
 use App\Modules\Auth\Services\LocationService;
 use App\Modules\Payments\Models\StaffPayment;
 use App\Modules\Payments\Services\StaffPayoutService;
+use App\Modules\Plans\Models\Payment;
 use App\Modules\Plans\Models\Subscription;
 use App\Modules\Plans\Services\StudentSubscriptionService;
 use App\Modules\Services\Models\ServiceRequest;
@@ -143,6 +144,91 @@ class DashboardController extends Controller
             'totalSubscriptionsCount' => $totalSubscriptionsCount,
             'totalServicesCount' => $totalServicesCount,
         ]);
+    }
+
+    /**
+     * Drill-down: who paid how much (subscriptions or services), with profile links.
+     */
+    public function earningDetail(Request $request, string $type)
+    {
+        $studentPlanId = app(StudentSubscriptionService::class)->getStudentPlan()?->id;
+        $period = $request->get('period', 'all');
+        $thisMonthStart = now()->startOfMonth();
+
+        $title = 'Earning detail';
+        $subtitle = '';
+        $totalAmount = 0.0;
+        $items = collect();
+        $paginator = null;
+
+        if ($type === 'student-subscriptions') {
+            $title = 'Student membership payments';
+            $subtitle = 'Actual subscription payments collected (paid_amount).';
+            $query = Payment::query()
+                ->where('status', 'completed')
+                ->whereHas('subscription', function ($q) use ($studentPlanId) {
+                    if ($studentPlanId) {
+                        $q->where('plan_id', $studentPlanId);
+                    }
+                })
+                ->with(['user', 'subscription.plan']);
+            if ($period === 'month') {
+                $query->where('paid_at', '>=', $thisMonthStart);
+            }
+            $totalAmount = (float) (clone $query)->sum('amount');
+            $paginator = $query->orderByDesc('paid_at')->orderByDesc('id')->paginate(25)->withQueryString();
+        } elseif ($type === 'patient-subscriptions') {
+            $title = 'Patient healthcare plan payments';
+            $subtitle = 'Actual subscription payments collected (paid_amount).';
+            $query = Payment::query()
+                ->where('status', 'completed')
+                ->whereHas('subscription', function ($q) use ($studentPlanId) {
+                    if ($studentPlanId) {
+                        $q->where('plan_id', '!=', $studentPlanId);
+                    }
+                })
+                ->with(['user', 'subscription.plan']);
+            if ($period === 'month') {
+                $query->where('paid_at', '>=', $thisMonthStart);
+            }
+            $totalAmount = (float) (clone $query)->sum('amount');
+            $paginator = $query->orderByDesc('paid_at')->orderByDesc('id')->paginate(25)->withQueryString();
+        } elseif ($type === 'services') {
+            $title = 'Service request payments collected';
+            $subtitle = 'Prepaid amounts actually received from patients (prepaid_amount > 0). Staff shown for context.';
+            $query = $this->collectedServicePaymentsQuery();
+            if ($period === 'month') {
+                $query->where('created_at', '>=', $thisMonthStart);
+            }
+            $totalAmount = (float) (clone $query)->sum('prepaid_amount');
+            $paginator = $query->with(['patient', 'assignedStaff', 'serviceType'])
+                ->orderByDesc('created_at')
+                ->paginate(25)
+                ->withQueryString();
+        } elseif ($type === 'services-due') {
+            $title = 'Service balances still due';
+            $subtitle = 'Remaining amount patients still owe on open or completed visits.';
+            $query = ServiceRequest::query()
+                ->where('status', '!=', 'cancelled')
+                ->whereIn('status', ['pending', 'assigned', 'in_progress', 'completed'])
+                ->whereRaw('COALESCE(total_amount, 0) > COALESCE(prepaid_amount, 0)')
+                ->with(['patient', 'assignedStaff', 'serviceType']);
+            $totalAmount = (float) (clone $query)
+                ->selectRaw('SUM(GREATEST(0, COALESCE(total_amount, 0) - COALESCE(prepaid_amount, 0))) as due')
+                ->value('due');
+            $paginator = $query->orderByDesc('created_at')->paginate(25)->withQueryString();
+        } else {
+            abort(404);
+        }
+
+        return view('auth::admin.financial-earning-detail', compact(
+            'type',
+            'title',
+            'subtitle',
+            'totalAmount',
+            'paginator',
+            'period'
+        ));
     }
 
     /**
@@ -318,18 +404,9 @@ class DashboardController extends Controller
         $totalSubscriptionRevenue = $subscriptionMetrics['total_subscription_revenue'];
         $activeSubscriptionsCount = $subscriptionMetrics['active_subscriptions_count'];
 
-        // 2. Service Revenue
-        // Total revenue from service requests (prepaid_amount from completed/in_progress services)
-        $serviceRevenue = \App\Modules\Services\Models\ServiceRequest::whereIn('status', ['assigned', 'in_progress', 'completed'])
-            ->where('status', '!=', 'cancelled')
-            ->sum('prepaid_amount');
-
-        // Alternative: Use total_amount if prepaid_amount is not reliable
-        if ($serviceRevenue == 0) {
-            $serviceRevenue = \App\Modules\Services\Models\ServiceRequest::whereIn('status', ['assigned', 'in_progress', 'completed'])
-                ->where('status', '!=', 'cancelled')
-                ->sum('total_amount');
-        }
+        // 2. Service revenue = actual prepaid collected only (never catalogue total_amount fallback)
+        $serviceRevenue = (float) $this->collectedServicePaymentsQuery()->sum('prepaid_amount');
+        $servicePaymentsCount = $this->collectedServicePaymentsQuery()->count();
 
         // 3. Total Staff Payouts
         $totalStaffPayouts = \App\Modules\Payments\Models\StaffPayment::sum('amount');
@@ -377,18 +454,8 @@ class DashboardController extends Controller
 
         $thisMonthSubscriptionRevenue = $subscriptionMetrics['this_month_subscription_revenue'];
 
-        // Services paid this month (use created_at as proxy for payment date, or admin_approved_at for completed services)
-        $thisMonthServiceRevenue = \App\Modules\Services\Models\ServiceRequest::where(function ($query) use ($thisMonthStart) {
-            $query->where(function ($q) use ($thisMonthStart) {
-                $q->where('created_at', '>=', $thisMonthStart)
-                    ->whereIn('status', ['assigned', 'in_progress', 'completed'])
-                    ->where('status', '!=', 'cancelled');
-            })
-                ->orWhere(function ($q) use ($thisMonthStart) {
-                    $q->where('admin_approved_at', '>=', $thisMonthStart)
-                        ->where('status', 'completed');
-                });
-        })
+        $thisMonthServiceRevenue = (float) $this->collectedServicePaymentsQuery()
+            ->where('created_at', '>=', $thisMonthStart)
             ->sum('prepaid_amount');
 
         $thisMonthRevenue = $thisMonthSubscriptionRevenue + $thisMonthServiceRevenue;
@@ -434,6 +501,7 @@ class DashboardController extends Controller
             'recent_subscription_payments' => $subscriptionMetrics['recent_subscription_payments'],
             'active_subscriptions_count' => $activeSubscriptionsCount,
             'total_service_revenue' => round($serviceRevenue, 2),
+            'service_payments_count' => $servicePaymentsCount,
             'total_earning' => round($totalEarning, 2),
             'total_revenue' => round($totalEarning, 2),
             'total_staff_payouts' => round($totalStaffPayouts, 2),
@@ -504,6 +572,16 @@ class DashboardController extends Controller
             'pending_total' => round($pendingTotal, 2),
             'combined_total' => round($paidTotal + $pendingTotal, 2),
         ];
+    }
+
+    /**
+     * Service visits where the patient actually prepaid money to MMHC.
+     */
+    protected function collectedServicePaymentsQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return ServiceRequest::query()
+            ->where('status', '!=', 'cancelled')
+            ->where('prepaid_amount', '>', 0);
     }
 
     /**

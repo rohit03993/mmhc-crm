@@ -57,20 +57,42 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td><i class="fas fa-graduation-cap text-primary me-1"></i> Student membership</td>
+                            <tr class="fin-click-row" onclick="window.location='{{ route('admin.financial.earning-detail', ['type' => 'student-subscriptions', 'period' => 'all']) }}'">
+                                <td>
+                                    <i class="fas fa-graduation-cap text-primary me-1"></i> Student membership
+                                    <i class="fas fa-external-link-alt small text-muted ms-1"></i>
+                                </td>
                                 <td class="text-end fw-semibold">₹{{ number_format($f['student_subscription_revenue'] ?? 0, 2) }}</td>
-                                <td class="text-end text-muted">₹{{ number_format($f['this_month_student_subscription_revenue'] ?? 0, 2) }}</td>
+                                <td class="text-end">
+                                    <a href="{{ route('admin.financial.earning-detail', ['type' => 'student-subscriptions', 'period' => 'month']) }}" class="text-muted text-decoration-none" onclick="event.stopPropagation()">
+                                        ₹{{ number_format($f['this_month_student_subscription_revenue'] ?? 0, 2) }}
+                                    </a>
+                                </td>
                             </tr>
-                            <tr>
-                                <td><i class="fas fa-heartbeat text-success me-1"></i> Patient healthcare plans</td>
+                            <tr class="fin-click-row" onclick="window.location='{{ route('admin.financial.earning-detail', ['type' => 'patient-subscriptions', 'period' => 'all']) }}'">
+                                <td>
+                                    <i class="fas fa-heartbeat text-success me-1"></i> Patient healthcare plans
+                                    <i class="fas fa-external-link-alt small text-muted ms-1"></i>
+                                </td>
                                 <td class="text-end fw-semibold">₹{{ number_format($f['patient_subscription_revenue'] ?? 0, 2) }}</td>
-                                <td class="text-end text-muted">₹{{ number_format($f['this_month_patient_subscription_revenue'] ?? 0, 2) }}</td>
+                                <td class="text-end">
+                                    <a href="{{ route('admin.financial.earning-detail', ['type' => 'patient-subscriptions', 'period' => 'month']) }}" class="text-muted text-decoration-none" onclick="event.stopPropagation()">
+                                        ₹{{ number_format($f['this_month_patient_subscription_revenue'] ?? 0, 2) }}
+                                    </a>
+                                </td>
                             </tr>
-                            <tr>
-                                <td><i class="fas fa-clipboard-list text-info me-1"></i> Service requests (prepaid)</td>
+                            <tr class="fin-click-row" onclick="window.location='{{ route('admin.financial.earning-detail', ['type' => 'services', 'period' => 'all']) }}'">
+                                <td>
+                                    <i class="fas fa-clipboard-list text-info me-1"></i> Service requests (prepaid)
+                                    <i class="fas fa-external-link-alt small text-muted ms-1"></i>
+                                    <div class="small text-muted fw-normal">{{ $f['service_payments_count'] ?? 0 }} visit(s) with payment received</div>
+                                </td>
                                 <td class="text-end fw-semibold">₹{{ number_format($f['total_service_revenue'] ?? 0, 2) }}</td>
-                                <td class="text-end text-muted">₹{{ number_format($f['this_month_service_revenue'] ?? 0, 2) }}</td>
+                                <td class="text-end">
+                                    <a href="{{ route('admin.financial.earning-detail', ['type' => 'services', 'period' => 'month']) }}" class="text-muted text-decoration-none" onclick="event.stopPropagation()">
+                                        ₹{{ number_format($f['this_month_service_revenue'] ?? 0, 2) }}
+                                    </a>
+                                </td>
                             </tr>
                             <tr class="table-success">
                                 <td class="fw-bold">Total earned</td>
@@ -93,8 +115,8 @@
                                 <td>Patient plan checkouts</td>
                                 <td class="text-end">₹{{ number_format($f['pending_patient_subscriptions'] ?? 0, 2) }}</td>
                             </tr>
-                            <tr>
-                                <td>Service balances due</td>
+                            <tr class="fin-click-row" onclick="window.location='{{ route('admin.financial.earning-detail', ['type' => 'services-due']) }}'">
+                                <td>Service balances due <i class="fas fa-external-link-alt small text-muted ms-1"></i></td>
                                 <td class="text-end">₹{{ number_format($f['pending_service_payments'] ?? 0, 2) }}</td>
                             </tr>
                             <tr class="table-warning">
