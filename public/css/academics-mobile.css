@@ -1,0 +1,93 @@
+/**
+ * Academics — mobile / app WebView (institution admin + faculty)
+ */
+@media (max-width: 767.98px) {
+    .mmhc-academics-mobile .academics-app-content {
+        padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .mmhc-academics-mobile .academics-dash-hero {
+        margin-bottom: 1rem;
+        border-radius: 12px;
+    }
+
+    .mmhc-academics-mobile .academics-dash-hero__inner {
+        padding: 1rem 1rem 1rem 0.85rem;
+    }
+
+    .mmhc-academics-mobile .academics-dash-hero__title {
+        font-size: 1.25rem;
+    }
+
+    .mmhc-academics-mobile .academics-quick-links {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-top: 1rem;
+    }
+
+    .mmhc-academics-mobile .academics-quick-links .btn {
+        width: 100%;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: normal;
+        text-align: center;
+        line-height: 1.2;
+        padding: 8px 10px;
+    }
+
+    .mmhc-academics-mobile .academics-stat-card .card-body {
+        padding: 1rem;
+    }
+
+    .mmhc-academics-mobile .academics-overview-card {
+        overflow: hidden;
+    }
+
+    .mmhc-academics-mobile .academics-overview-card .table-responsive {
+        margin: 0 -0.25rem;
+    }
+
+    .mmhc-academics-mobile .academics-overview-card table {
+        font-size: 0.8rem;
+    }
+
+    /* List pages: toolbar stacks */
+    .mmhc-academics-mobile .academics-page-toolbar {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 12px;
+    }
+
+    .mmhc-academics-mobile .academics-page-toolbar .btn,
+    .mmhc-academics-mobile .academics-page-toolbar .form-select {
+        min-height: 44px;
+        width: 100%;
+    }
+
+    .mmhc-academics-mobile .academics-page-toolbar .form-select.w-auto {
+        width: 100% !important;
+    }
+
+    .mmhc-academics-mobile .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .mmhc-academics-mobile .card .btn-sm {
+        min-height: 40px;
+        padding: 8px 12px;
+    }
+
+    .mmhc-academics-mobile .row.g-3 > [class*='col-'] {
+        margin-bottom: 0;
+    }
+
+    .mmhc-academics-mobile .academics-filter-row .col-md-5,
+    .mmhc-academics-mobile .academics-filter-row .col-md-4,
+    .mmhc-academics-mobile .academics-filter-row .col-md-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}

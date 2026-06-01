@@ -113,20 +113,19 @@
         </div>
     </div>
 
-    <!-- Patient payment filters -->
+    <!-- Visit payment filters (subscription free vs per-visit fee) -->
     <div class="d-flex flex-wrap gap-2 mb-3">
         <a href="{{ route('admin.service-requests', array_filter(['status' => $statusFilter !== 'all' ? $statusFilter : null, 'filter' => $filterId])) }}"
            class="btn btn-sm {{ ($paymentFilter ?? 'all') === 'all' ? 'btn-primary' : 'btn-outline-secondary' }}">
-            All payments
+            All visits
         </a>
-        <a href="{{ route('admin.service-requests', ['payment' => 'balance_due']) }}"
-           class="btn btn-sm {{ ($paymentFilter ?? '') === 'balance_due' ? 'btn-warning' : 'btn-outline-warning' }}">
-            <i class="fas fa-exclamation-circle me-1"></i>Balance due
-            <span class="badge bg-dark ms-1">{{ $stats['balance_due_requests'] ?? 0 }}</span>
+        <a href="{{ route('admin.service-requests', ['payment' => 'subscription']) }}"
+           class="btn btn-sm {{ ($paymentFilter ?? '') === 'subscription' ? 'btn-success' : 'btn-outline-success' }}">
+            <i class="fas fa-heartbeat me-1"></i>Plan (free)
         </a>
-        <a href="{{ route('admin.service-requests', ['payment' => 'collected']) }}"
-           class="btn btn-sm {{ ($paymentFilter ?? '') === 'collected' ? 'btn-success' : 'btn-outline-success' }}">
-            Collected (prepaid &gt; 0)
+        <a href="{{ route('admin.service-requests', ['payment' => 'per_visit']) }}"
+           class="btn btn-sm {{ ($paymentFilter ?? '') === 'per_visit' ? 'btn-info' : 'btn-outline-info' }}">
+            <i class="fas fa-rupee-sign me-1"></i>Per-visit fee
         </a>
     </div>
 
@@ -194,9 +193,8 @@
                                 <th>Patient</th>
                                 <th>Service Type</th>
                                 <th>Duration</th>
-                                <th>Patient Charge</th>
-                                <th>Collected</th>
-                                <th>Due</th>
+                                <th>Patient charge</th>
+                                <th>Payment</th>
                                 <th>Staff Payout</th>
                                 <th>Status</th>
                                 <th>Assigned Staff</th>
@@ -232,25 +230,18 @@
                                 </td>
                                 <td>
                                     <div class="amount-cell amount-charge">
-                                        <i class="fas fa-rupee-sign me-1"></i>
-                                        {{ number_format($request->total_amount) }}
+                                        @if($request->isCoveredBySubscription())
+                                            <span class="text-success fw-semibold">FREE</span>
+                                        @else
+                                            <i class="fas fa-rupee-sign me-1"></i>{{ number_format($request->total_amount) }}
+                                        @endif
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="amount-cell text-success">
-                                        ₹{{ number_format($request->prepaid_amount, 0) }}
-                                    </div>
-                                    <span class="badge bg-{{ $request->paymentStatusBadgeClass() }} mt-1" style="font-size:0.65rem;">
-                                        {{ $request->paymentStatusLabel() }}
-                                    </span>
-                                </td>
-                                <td>
-                                    @if((float) $request->total_amount > 0)
-                                        <div class="amount-cell {{ $request->balanceDue() > 0 ? 'text-danger' : 'text-success' }}">
-                                            ₹{{ number_format($request->balanceDue(), 0) }}
-                                        </div>
+                                    @if($request->isCoveredBySubscription())
+                                        <span class="badge bg-success">Plan</span>
                                     @else
-                                        <span class="text-muted small">—</span>
+                                        <span class="badge bg-{{ $request->paymentStatusBadgeClass() }}">Per-visit</span>
                                     @endif
                                 </td>
                                 <td>

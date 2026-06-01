@@ -15,13 +15,21 @@
             <span>Mentors</span>
         </a>
         @elseif(auth()->user()->role === 'faculty')
+        <a href="{{ route('academics.topics.index') }}" class="app-nav-item {{ request()->routeIs('academics.topics.*') ? 'active' : '' }}">
+            <i class="fas fa-list-ul"></i>
+            <span>Topics</span>
+        </a>
         <a href="{{ route('academics.assignments.index') }}" class="app-nav-item {{ request()->routeIs('academics.assignments.*') ? 'active' : '' }}">
             <i class="fas fa-tasks"></i>
             <span>Tasks</span>
         </a>
-        <a href="{{ route('academics.mentorship.index') }}" class="app-nav-item {{ request()->routeIs('academics.mentorship.*') ? 'active' : '' }}">
-            <i class="fas fa-hands-helping"></i>
-            <span>Mentors</span>
+        <a href="{{ route('academics.attendance.index') }}" class="app-nav-item {{ request()->routeIs('academics.attendance.*') ? 'active' : '' }}">
+            <i class="fas fa-calendar-check"></i>
+            <span>Attend</span>
+        </a>
+        <a href="{{ route('academics.reports.index') }}" class="app-nav-item {{ request()->routeIs('academics.reports.*') ? 'active' : '' }}">
+            <i class="fas fa-chart-bar"></i>
+            <span>Reports</span>
         </a>
         @elseif(auth()->user()->role === 'institution_admin')
         <a href="{{ route('academics.students.index') }}" class="app-nav-item {{ request()->routeIs('academics.students.*') ? 'active' : '' }}">
@@ -30,7 +38,15 @@
         </a>
         <a href="{{ route('academics.enrollments.index') }}" class="app-nav-item {{ request()->routeIs('academics.enrollments.*') ? 'active' : '' }}">
             <i class="fas fa-user-clock"></i>
-            <span>Pending</span>
+            <span>Enroll</span>
+        </a>
+        <a href="{{ route('academics.batches.index') }}" class="app-nav-item {{ request()->routeIs('academics.batches.*') ? 'active' : '' }}">
+            <i class="fas fa-layer-group"></i>
+            <span>Batches</span>
+        </a>
+        <a href="{{ route('academics.reports.index') }}" class="app-nav-item {{ request()->routeIs('academics.reports.*') ? 'active' : '' }}">
+            <i class="fas fa-chart-bar"></i>
+            <span>Reports</span>
         </a>
         @else
         <a href="{{ route('academics.institutions.index') }}" class="app-nav-item {{ request()->routeIs('academics.institutions.*') ? 'active' : '' }}">

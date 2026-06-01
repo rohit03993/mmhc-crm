@@ -9,7 +9,7 @@
         $query = request()->only(['type', 'institution_id', 'batch_id', 'subject_id', 'teaching_method_key', 'assignment_type', 'assessment_type_key', 'summative_only']);
         $downloadUrl = route('academics.reports.download', $query);
     @endphp
-    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap gap-2 mb-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap gap-2 mb-4 academics-page-toolbar">
         <h2 class="h5 mb-0">{{ $title ?? 'Report' }}</h2>
         <div class="d-flex flex-wrap gap-2">
             <a href="{{ $downloadUrl }}" class="btn btn-outline-success"><i class="fas fa-download me-1"></i>Download CSV</a>

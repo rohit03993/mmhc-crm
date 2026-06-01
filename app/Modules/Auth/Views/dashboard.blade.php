@@ -207,9 +207,9 @@
                 <div class="mmhc-insight-card__value">₹{{ number_format($stats['total_spent'] ?? 0, 0) }}</div>
                 <div class="mmhc-insight-card__label">Paid so far</div>
             </div>
-            <div class="mmhc-insight-card {{ ($stats['balance_due_total'] ?? 0) > 0 ? 'mmhc-insight-card--warning' : '' }}">
-                <div class="mmhc-insight-card__value">₹{{ number_format($stats['balance_due_total'] ?? 0, 0) }}</div>
-                <div class="mmhc-insight-card__label">Balance due</div>
+            <div class="mmhc-insight-card">
+                <div class="mmhc-insight-card__value">{{ $stats['plan_visits_count'] ?? 0 }}</div>
+                <div class="mmhc-insight-card__label">Plan visits (free)</div>
             </div>
             <div class="mmhc-insight-card">
                 <div class="mmhc-insight-card__value">{{ $stats['upcoming_services'] ?? 0 }}</div>
@@ -417,10 +417,7 @@
                                     @if($request->isCoveredBySubscription())
                                         FREE
                                     @else
-                                        ₹{{ number_format($request->total_amount, 0) }}
-                                        @if($request->balanceDue() > 0)
-                                            <small class="text-danger"> · due ₹{{ number_format($request->balanceDue(), 0) }}</small>
-                                        @endif
+                                        ₹{{ number_format($request->total_amount, 0) }} <small class="text-muted">visit fee</small>
                                     @endif
                                 </span>
                             </div>

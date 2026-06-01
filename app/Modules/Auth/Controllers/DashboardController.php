@@ -448,9 +448,7 @@ class DashboardController extends Controller
                 ->whereIn('status', ['pending', 'assigned', 'pending_approval', 'in_progress'])
                 ->count();
 
-            $balanceDueTotal = $allRequests->sum(function ($request) {
-                return $request->balanceDue();
-            });
+            $planVisitsCount = $allRequests->filter(fn ($request) => $request->isCoveredBySubscription())->count();
 
             $stats = [
                 'profile_completion' => $this->calculateProfileCompletion($user),
@@ -459,7 +457,7 @@ class DashboardController extends Controller
                 'completed_requests' => $serviceRequests->where('status', 'completed')->count(),
                 'pending_requests' => $serviceRequests->where('status', 'pending')->count(),
                 'total_spent' => $totalSpent,
-                'balance_due_total' => $balanceDueTotal,
+                'plan_visits_count' => $planVisitsCount,
                 'average_duration' => round($avgDuration ?? 0, 1),
                 'favorite_staff' => $favoriteStaffName,
                 'upcoming_services' => $upcomingServices,
@@ -475,7 +473,7 @@ class DashboardController extends Controller
                 'average_duration' => 0,
                 'favorite_staff' => null,
                 'upcoming_services' => 0,
-                'balance_due_total' => 0,
+                'plan_visits_count' => 0,
             ];
         }
 
@@ -524,11 +522,7 @@ class DashboardController extends Controller
                 'total_service_requests' => ServiceRequest::count(),
                 'pending_service_requests' => ServiceRequest::where('status', 'pending')->count(),
                 'in_progress_services' => ServiceRequest::where('status', 'in_progress')->count(),
-                'service_balance_due_count' => ServiceRequest::query()
-                    ->where('status', '!=', 'cancelled')
-                    ->where('total_amount', '>', 0)
-                    ->whereRaw('prepaid_amount < total_amount')
-                    ->count(),
+                'service_balance_due_count' => 0,
             ];
 
             $stats['financial'] = $this->getFinancialStats();
@@ -562,17 +556,10 @@ class DashboardController extends Controller
         // Excludes abandoned student membership carts (pending, no payment started).
         $pendingSubscriptionPayments = (float) $this->pendingCustomerSubscriptionQuery()->sum('total_amount');
 
-        // Pending service payments: Services where patient hasn't paid fully (unpaid balance)
-        $pendingServicePayments = optional(\App\Modules\Services\Models\ServiceRequest::where('status', '!=', 'cancelled')
-            ->where(function ($query) {
-                // Service is assigned, in progress, or completed but payment not fully received
-                $query->whereIn('status', ['assigned', 'in_progress', 'completed', 'pending'])
-                    ->whereRaw('COALESCE(total_amount, 0) > COALESCE(prepaid_amount, 0)');
-            })
-            ->selectRaw('SUM(GREATEST(0, COALESCE(total_amount, 0) - COALESCE(prepaid_amount, 0))) as pending')
-            ->first())->pending ?? 0;
+        // Visit fees are subscription-free or full per-visit fee at booking — no balance-due model.
+        $pendingServicePayments = 0.0;
 
-        $totalPendingPayments = $pendingSubscriptionPayments + $pendingServicePayments;
+        $totalPendingPayments = $pendingSubscriptionPayments;
 
         $pendingSubscriptionsCount = $this->pendingCustomerSubscriptionQuery()->count();
 
@@ -588,10 +575,7 @@ class DashboardController extends Controller
         $payoutBreakdown = $this->getStaffPayoutBreakdown();
         $totalEarning = $totalSubscriptionRevenue + $serviceRevenue;
 
-        $pendingServiceRequestsCount = ServiceRequest::where('status', '!=', 'cancelled')
-            ->whereIn('status', ['assigned', 'in_progress', 'completed', 'pending'])
-            ->whereRaw('COALESCE(total_amount, 0) > COALESCE(prepaid_amount, 0)')
-            ->count();
+        $pendingServiceRequestsCount = 0;
 
         // 6. This Month Revenue
         $thisMonthStart = now()->startOfMonth();

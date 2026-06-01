@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
         <div>
             <h2 class="h5 mb-1">{{ $assignment->title }}</h2>
             <p class="text-muted small mb-0">

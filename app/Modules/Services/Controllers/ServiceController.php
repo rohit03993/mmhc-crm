@@ -173,8 +173,8 @@ class ServiceController extends Controller
             'duration_days' => $request->duration_days,
             'total_amount' => $totalAmount,
             'total_staff_payout' => null, // Will be calculated when staff is assigned
-            'prepaid_amount' => $hasActiveSubscription ? 0.00 : 0.00, // Free for subscribers
-            'payment_status' => $hasActiveSubscription ? 'paid' : 'pending', // Mark as paid if subscribed
+            'prepaid_amount' => $hasActiveSubscription ? 0.00 : $totalAmount,
+            'payment_status' => 'paid',
             'status' => 'pending',
             'notes' => $request->notes,
             'special_requirements' => $request->special_requirements,
@@ -184,8 +184,8 @@ class ServiceController extends Controller
         ]);
 
         $successMessage = $hasActiveSubscription
-            ? 'Service request submitted successfully! This service is FREE as you have an active subscription. Our team will contact you soon.'
-            : 'Service request submitted successfully! Our team will contact you soon.';
+            ? 'Service request submitted successfully! This service is FREE with your active subscription. Our team will contact you soon.'
+            : 'Service request submitted successfully! Visit fee ₹'.number_format($totalAmount, 0).' is recorded for this booking. Our team will contact you soon.';
 
         return redirect()->route('services.my-requests')
             ->with('success', $successMessage);
@@ -294,8 +294,8 @@ class ServiceController extends Controller
                 'duration_days' => $request->duration_days,
                 'total_amount' => $totalAmount,
                 'total_staff_payout' => $totalStaffPayout,
-                'prepaid_amount' => $hasActiveSubscription ? 0.00 : 0.00, // Free for subscribers
-                'payment_status' => $hasActiveSubscription ? 'paid' : 'pending', // Mark as paid if subscribed
+                'prepaid_amount' => $hasActiveSubscription ? 0.00 : $totalAmount,
+                'payment_status' => 'paid',
                 'status' => 'pending_approval', // Staff needs to accept
                 'assigned_at' => now(),
                 'notes' => ($request->notes ?? '').($hasActiveSubscription ? ' [FREE - Covered by Subscription]' : ''),
@@ -314,8 +314,8 @@ class ServiceController extends Controller
             DB::commit();
 
             $successMessage = $hasActiveSubscription
-                ? 'Booking created successfully! This service is FREE as you have an active subscription. The staff member will be notified.'
-                : 'Booking created successfully! Our team will contact you about payment. The staff member will be notified to accept your request.';
+                ? 'Booking created successfully! This service is FREE with your active subscription. The staff member will be notified.'
+                : 'Booking created successfully! Visit fee ₹'.number_format($totalAmount, 0).' is recorded. The staff member will be notified to accept your request.';
 
             return redirect()->route('services.my-requests')
                 ->with('success', $successMessage);
@@ -381,10 +381,10 @@ class ServiceController extends Controller
 
         $query = ServiceRequest::with(['patient', 'serviceType', 'assignedStaff', 'preferredStaff', 'approvedBy']);
 
-        if ($paymentFilter === 'balance_due') {
-            $query->withBalanceDue();
-        } elseif ($paymentFilter === 'collected') {
-            $query->where('prepaid_amount', '>', 0);
+        if ($paymentFilter === 'subscription') {
+            $query->where('total_amount', '<=', 0)->where('payment_status', 'paid');
+        } elseif ($paymentFilter === 'per_visit') {
+            $query->where('total_amount', '>', 0);
         }
 
         // Filter by status
@@ -414,7 +414,11 @@ class ServiceController extends Controller
             'pending_approvals' => ServiceRequest::where('status', 'completed')
                 ->whereNull('admin_approved_at')
                 ->count(),
-            'balance_due_requests' => ServiceRequest::withBalanceDue()->count(),
+            'subscription_visits' => ServiceRequest::query()
+                ->where('total_amount', '<=', 0)
+                ->where('payment_status', 'paid')
+                ->count(),
+            'per_visit_requests' => ServiceRequest::query()->where('total_amount', '>', 0)->count(),
         ];
 
         return view('services::admin.requests.index', compact('serviceRequests', 'stats', 'statusFilter', 'paymentFilter', 'filterId'));

@@ -119,7 +119,7 @@ class ServiceRequest extends Model
     }
 
     /**
-     * Amount still owed by the patient (after prepaid / collections).
+     * Legacy: amount not recorded as prepaid. Product model is plan-free or full per-visit fee at booking — not used in patient UI.
      */
     public function balanceDue(): float
     {

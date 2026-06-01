@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
         <h2 class="h5 mb-0">Batches</h2>
         <a href="{{ route('academics.batches.create') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Add Batch</a>
     </div>

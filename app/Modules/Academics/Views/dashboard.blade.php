@@ -115,6 +115,21 @@
 @endsection
 
 @section('content')
+@php $academicsMobileShell = in_array(auth()->user()->role, ['institution_admin', 'faculty'], true); @endphp
+@if($academicsMobileShell)
+<div class="mobile-app-container academics-app-content">
+    <div class="app-header-mobile d-md-none">
+        <div class="app-header-content">
+            <div class="app-header-left">
+                <div class="app-user-avatar"><i class="fas fa-graduation-cap"></i></div>
+                <div class="app-user-info">
+                    <div class="app-user-name">{{ Str::limit(auth()->user()->name, 18) }}</div>
+                    <div class="app-user-id">{{ ucfirst(str_replace('_', ' ', auth()->user()->role)) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
 <div class="container-fluid py-3 py-md-4">
     @if(auth()->user()->role === 'student' && auth()->user()->academic_enrollment_status === 'pending')
         <div class="alert alert-warning">
@@ -178,6 +193,7 @@
                 <a href="{{ route('academics.faculty.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-chalkboard-teacher me-1"></i>Faculty</a>
                 <a href="{{ route('academics.attendance.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-calendar-check me-1"></i>Attendance</a>
                 <a href="{{ route('academics.reports.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-chart-bar me-1"></i>Reports</a>
+                <a href="{{ route('academics.reports.show', ['type' => 'student_submission', 'institution_id' => auth()->user()->academic_institution_id]) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-graduate me-1"></i>Student report</a>
             </div>
         @elseif(auth()->user()->role === 'faculty')
             <p class="academics-dash-hero__lede">Run topics and assignments, review submissions, and track your students.</p>
@@ -307,7 +323,10 @@
                     </h5>
                     <p class="card-text display-6 mb-2">{{ $myStudentsCount }}</p>
                     <p class="small text-muted mb-2">{{ $fpiBreakdown['active_mentees'] ?? 0 }} cross-institute mentees</p>
-                    <a href="{{ route('academics.reports.show', ['type' => 'student_submission']) }}" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Student report</a>
+                    <div class="d-flex flex-wrap gap-2 mt-auto">
+                        <a href="{{ route('academics.students.index') }}" class="btn btn-outline-secondary btn-sm">Student list</a>
+                        <a href="{{ route('academics.reports.show', ['type' => 'student_submission']) }}" class="btn btn-outline-primary btn-sm">Student report</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -510,4 +529,7 @@
     </div>
     @endif
 </div>
+@if($academicsMobileShell)
+</div>
+@endif
 @endsection

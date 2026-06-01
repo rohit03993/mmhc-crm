@@ -1,5 +1,9 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="@guest mmhc-auth-guest @endguest">
+@php
+    use App\Modules\Academics\Support\AcademicsMobileUi;
+    $academicsMobileHtmlClass = auth()->check() ? AcademicsMobileUi::htmlClass(auth()->user()) : '';
+@endphp
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="@guest mmhc-auth-guest @else {{ trim($academicsMobileHtmlClass) }} @endguest">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -18,6 +22,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     @yield('head')
+
+    @if(auth()->check() && request()->routeIs('academics.*') && AcademicsMobileUi::enabledFor(auth()->user()))
+    <link rel="stylesheet" href="{{ asset('css/academics-mobile.css') }}?v=1">
+    @endif
 
     <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260601b">
     @auth
@@ -452,6 +460,12 @@
                             }
                         }
                     </style>
+
+                    @if(auth()->check() && AcademicsMobileUi::showMobileHeader(auth()->user()))
+                        @include('academics::partials.mobile-header', [
+                            'academicsMobileBackUrl' => AcademicsMobileUi::backUrl(),
+                        ])
+                    @endif
 
                     @yield('content')
                 </main>

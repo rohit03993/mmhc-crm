@@ -14,7 +14,7 @@
     <div class="card">
         <div class="card-body">
             <p class="text-muted mb-3">Select a batch and date to mark attendance.</p>
-            <form action="{{ route('academics.attendance.mark') }}" method="GET" class="row g-3 align-items-end">
+            <form action="{{ route('academics.attendance.mark') }}" method="GET" class="row g-3 align-items-end academics-filter-row">
                 <div class="col-md-5">
                     <label for="batch_id" class="form-label">Batch <span class="text-danger">*</span></label>
                     <select name="batch_id" id="batch_id" class="form-select" required>

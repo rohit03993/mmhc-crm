@@ -8,7 +8,7 @@
     use App\Modules\Academics\Support\AcademicsTaxonomy;
 @endphp
 <div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
         <h2 class="h5 mb-0">Assignments</h2>
         <div class="d-flex flex-wrap gap-2">
             <form action="{{ route('academics.assignments.index') }}" method="GET" class="d-inline">

@@ -91,24 +91,14 @@
                                     @endif
                                 </div>
                             </div>
-                            @if((float) $request->total_amount > 0)
-                            <div class="detail-grid-item">
-                                <div class="detail-label">
-                                    <i class="fas fa-wallet"></i> Collected
-                                </div>
-                                <div class="detail-value text-success">â‚¹{{ number_format($request->prepaid_amount, 0) }}</div>
-                            </div>
-                            <div class="detail-grid-item">
-                                <div class="detail-label">
-                                    <i class="fas fa-exclamation-circle"></i> Due
-                                </div>
-                                <div class="detail-value {{ $request->balanceDue() > 0 ? 'text-danger fw-bold' : 'text-success' }}">
-                                    â‚¹{{ number_format($request->balanceDue(), 0) }}
-                                </div>
-                            </div>
+                            @if((float) $request->total_amount > 0 || $request->isCoveredBySubscription())
                             <div class="detail-grid-item full-width">
                                 <span class="badge bg-{{ $request->paymentStatusBadgeClass() }}">
-                                    {{ $request->paymentStatusLabel() }}
+                                    @if($request->isCoveredBySubscription())
+                                        Covered by subscription
+                                    @else
+                                        Visit fee recorded
+                                    @endif
                                 </span>
                             </div>
                             @endif

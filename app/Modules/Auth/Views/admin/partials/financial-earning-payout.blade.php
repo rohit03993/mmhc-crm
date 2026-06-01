@@ -132,10 +132,6 @@
                                 <td>Patient plan checkouts</td>
                                 <td class="text-end">₹{{ number_format($f['pending_patient_subscriptions'] ?? 0, 2) }}</td>
                             </tr>
-                            <tr class="fin-click-row" onclick="window.location='{{ route('admin.financial.earning-detail', ['type' => 'services-due']) }}'">
-                                <td>Service balances due <i class="fas fa-external-link-alt small text-muted ms-1"></i></td>
-                                <td class="text-end">₹{{ number_format($f['pending_service_payments'] ?? 0, 2) }}</td>
-                            </tr>
                             <tr class="table-warning">
                                 <td class="fw-semibold">Total to collect</td>
                                 <td class="text-end fw-semibold">₹{{ number_format($f['total_pending_to_collect'] ?? 0, 2) }}</td>
