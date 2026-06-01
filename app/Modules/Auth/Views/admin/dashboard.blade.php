@@ -114,8 +114,8 @@
     <!-- Academics users -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-4">
-            <div class="stat-card-modern" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #fff;">
-                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
+            <div class="stat-card-modern stat-card-tonal stat-card-students">
+                <div class="stat-icon stat-icon-on-tonal">
                     <i class="fas fa-user-graduate"></i>
                 </div>
                 <div class="stat-content">
@@ -125,8 +125,8 @@
             </div>
         </div>
         <div class="col-6 col-md-4">
-            <div class="stat-card-modern" style="background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: #fff;">
-                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
+            <div class="stat-card-modern stat-card-tonal stat-card-faculty">
+                <div class="stat-icon stat-icon-on-tonal">
                     <i class="fas fa-chalkboard-teacher"></i>
                 </div>
                 <div class="stat-content">
@@ -136,14 +136,14 @@
             </div>
         </div>
         <div class="col-12 col-md-4">
-            <div class="stat-card-modern" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: #fff;">
-                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
+            <div class="stat-card-modern stat-card-tonal stat-card-academics">
+                <div class="stat-icon stat-icon-on-tonal">
                     <i class="fas fa-school"></i>
                 </div>
                 <div class="stat-content">
                     <div class="stat-value">{{ $stats['academic_users'] ?? 0 }}</div>
                     <div class="stat-label">Academics total</div>
-                    <div class="stat-sublabel" style="opacity: 0.9;">
+                    <div class="stat-sublabel">
                         {{ $stats['total_students'] ?? 0 }} students · {{ $stats['total_faculty'] ?? 0 }} faculty
                         @if(($stats['total_institution_admins'] ?? 0) > 0)
                             · {{ $stats['total_institution_admins'] }} inst. admins
@@ -523,6 +523,36 @@
     margin-top: 0.2rem;
 }
 
+/* Colored stat cards: force light text on dark gradients */
+.stat-card-tonal {
+    border: none;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+}
+.stat-card-tonal .stat-value,
+.stat-card-tonal .stat-label,
+.stat-card-tonal .stat-sublabel {
+    color: #ffffff !important;
+}
+.stat-card-tonal .stat-label {
+    opacity: 0.95;
+}
+.stat-card-tonal .stat-sublabel {
+    opacity: 0.88;
+}
+.stat-card-students {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+.stat-card-faculty {
+    background: linear-gradient(135deg, #0369a1 0%, #2563eb 100%);
+}
+.stat-card-academics {
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+}
+.stat-icon-on-tonal {
+    background: rgba(255, 255, 255, 0.22) !important;
+    color: #fff !important;
+}
+
 /* Modern Card */
 .modern-card {
     background: white;
@@ -570,22 +600,66 @@
     background: #d4edda;
 }
 
+.stat-danger-mini {
+    background: #f8d7da;
+}
+
+.stat-info-mini-tonal {
+    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+}
+
+/* Financial summary tiles: dark background → light text */
+.stat-mini-card.stat-mini-tonal {
+    border: none;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.1);
+}
+.stat-mini-tonal .stat-mini-value,
+.stat-mini-tonal .stat-mini-label,
+.stat-mini-tonal .stat-mini-sublabel {
+    color: #ffffff !important;
+}
+.stat-mini-tonal .stat-mini-label {
+    opacity: 0.92;
+    font-weight: 600;
+}
+.stat-mini-tonal .stat-mini-sublabel {
+    opacity: 0.85;
+}
+.stat-mini-tonal-earn {
+    background: linear-gradient(135deg, #047857 0%, #059669 100%);
+}
+.stat-mini-tonal-paid {
+    background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+}
+.stat-mini-tonal-net-positive {
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+}
+.stat-mini-tonal-net-negative {
+    background: linear-gradient(135deg, #9f1239 0%, #e11d48 100%);
+}
+.stat-mini-tonal-collect {
+    background: linear-gradient(135deg, #b45309 0%, #ea580c 100%);
+}
+.stat-mini-tonal-collect a {
+    color: inherit;
+}
+
 .stat-mini-value {
     font-size: 1.75rem;
     font-weight: 700;
-    color: #2c3e50;
+    color: #1e293b;
     margin-bottom: 0.3rem;
 }
 
 .stat-mini-label {
     font-size: 0.85rem;
-    color: #6c757d;
+    color: #475569;
     font-weight: 600;
 }
 
 .stat-mini-sublabel {
     font-size: 0.7rem;
-    color: #95a5a6;
+    color: #64748b;
     margin-top: 0.2rem;
     font-weight: 500;
 }
@@ -595,6 +669,56 @@
 }
 .fin-click-row:hover {
     background-color: rgba(25, 135, 84, 0.08);
+}
+.fin-click-row-payout:hover {
+    background-color: rgba(220, 38, 38, 0.07);
+}
+.fin-section-kicker {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #334155 !important;
+    margin-bottom: 0.5rem;
+}
+.fin-payout-stat {
+    text-align: center;
+    padding: 0.75rem 0.5rem;
+    border-radius: 10px;
+    color: #fff;
+}
+.fin-payout-stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 0.92;
+    margin-bottom: 0.25rem;
+}
+.fin-payout-stat-value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.fin-payout-stat-meta {
+    font-size: 0.7rem;
+    opacity: 0.88;
+    margin-top: 0.2rem;
+}
+.fin-payout-stat-paid {
+    background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+}
+.fin-payout-stat-pending {
+    background: linear-gradient(135deg, #92400e 0%, #d97706 100%);
+}
+.fin-payout-stat-liability {
+    background: linear-gradient(135deg, #334155 0%, #475569 100%);
+}
+.fin-alert-data {
+    background-color: #fffbeb;
+    border-color: #f59e0b;
+    color: #78350f;
+}
+.fin-alert-data strong {
+    color: #92400e;
 }
 
 /* Financial Breakdown */

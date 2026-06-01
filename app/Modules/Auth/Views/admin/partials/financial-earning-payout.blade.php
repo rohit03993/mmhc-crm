@@ -6,28 +6,28 @@
 
 <div class="row g-3 mb-3">
     <div class="col-6 col-md-3">
-        <div class="stat-mini-card stat-success-mini">
+        <div class="stat-mini-card stat-mini-tonal stat-mini-tonal-earn">
             <div class="stat-mini-value">₹{{ number_format($f['total_earning'] ?? 0, 0) }}</div>
             <div class="stat-mini-label">Total earned (in)</div>
             <div class="stat-mini-sublabel">Subscriptions + services</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="stat-mini-card stat-danger-mini">
+        <div class="stat-mini-card stat-mini-tonal stat-mini-tonal-paid">
             <div class="stat-mini-value">₹{{ number_format($f['total_staff_payouts'] ?? 0, 0) }}</div>
             <div class="stat-mini-label">Paid out (staff)</div>
             <div class="stat-mini-sublabel">Recorded payouts</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="stat-mini-card {{ ($f['net_profit'] ?? 0) >= 0 ? 'stat-success-mini' : 'stat-danger-mini' }}">
+        <div class="stat-mini-card stat-mini-tonal {{ ($f['net_profit'] ?? 0) >= 0 ? 'stat-mini-tonal-net-positive' : 'stat-mini-tonal-net-negative' }}">
             <div class="stat-mini-value">₹{{ number_format($f['net_profit'] ?? 0, 0) }}</div>
             <div class="stat-mini-label">Net (earned − paid)</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <a href="{{ route('admin.pending-payments') }}" class="text-decoration-none">
-            <div class="stat-mini-card stat-warning-mini clickable-card-hover">
+        <a href="{{ route('admin.pending-payments') }}" class="text-decoration-none d-block h-100">
+            <div class="stat-mini-card stat-mini-tonal stat-mini-tonal-collect clickable-card-hover h-100">
                 <div class="stat-mini-value">₹{{ number_format($f['total_pending_to_collect'] ?? 0, 0) }}</div>
                 <div class="stat-mini-label">Still to collect</div>
                 <div class="stat-mini-sublabel">From customers <i class="fas fa-arrow-right ms-1"></i></div>
@@ -52,7 +52,7 @@
                     $patientGap = ($f['patient_ledger_integrity']['gap'] ?? 0);
                 @endphp
                 @if($studentGap > 0 || $patientGap > 0)
-                    <div class="alert alert-warning py-2 small mb-3">
+                    <div class="alert fin-alert-data py-2 small mb-3">
                         <strong>Data note:</strong> Some subscriptions are marked paid in the database but have no completed invoice row — they are <em>not</em> counted in earning totals.
                         @if($studentGap > 0)
                             Student: ₹{{ number_format($studentGap, 2) }} across {{ $f['student_ledger_integrity']['missing_ledger_count'] ?? 0 }} subscription(s).
@@ -120,7 +120,7 @@
                     </table>
                 </div>
 
-                <h6 class="small text-uppercase text-muted fw-semibold mt-4 mb-2">Expected (not yet collected)</h6>
+                <h6 class="fin-section-kicker mt-4 mb-2">Expected (not yet collected)</h6>
                 <div class="table-responsive">
                     <table class="table table-sm mb-0 fin-split-table">
                         <tbody>
@@ -160,24 +160,24 @@
 
                 <div class="row g-2 mb-3">
                     <div class="col-4">
-                        <div class="text-center p-2 rounded bg-light">
-                            <div class="small text-muted">Already paid</div>
-                            <div class="fw-bold text-danger">₹{{ number_format($pb['paid_total'] ?? 0, 2) }}</div>
+                        <div class="fin-payout-stat fin-payout-stat-paid">
+                            <div class="fin-payout-stat-label">Already paid</div>
+                            <div class="fin-payout-stat-value">₹{{ number_format($pb['paid_total'] ?? 0, 2) }}</div>
                         </div>
                     </div>
                     <div class="col-4">
-                        <div class="text-center p-2 rounded bg-light">
-                            <div class="small text-muted">Pending</div>
-                            <div class="fw-bold text-warning">₹{{ number_format($pb['pending_total'] ?? 0, 2) }}</div>
+                        <div class="fin-payout-stat fin-payout-stat-pending">
+                            <div class="fin-payout-stat-label">Pending</div>
+                            <div class="fin-payout-stat-value">₹{{ number_format($pb['pending_total'] ?? 0, 2) }}</div>
                             @if(($f['staff_with_pending_payments'] ?? 0) > 0)
-                                <div class="small text-muted">{{ $f['staff_with_pending_payments'] }} staff</div>
+                                <div class="fin-payout-stat-meta">{{ $f['staff_with_pending_payments'] }} staff</div>
                             @endif
                         </div>
                     </div>
                     <div class="col-4">
-                        <div class="text-center p-2 rounded border border-danger border-opacity-25">
-                            <div class="small text-muted">Total liability</div>
-                            <div class="fw-bold">₹{{ number_format($pb['combined_total'] ?? 0, 2) }}</div>
+                        <div class="fin-payout-stat fin-payout-stat-liability">
+                            <div class="fin-payout-stat-label">Total liability</div>
+                            <div class="fin-payout-stat-value">₹{{ number_format($pb['combined_total'] ?? 0, 2) }}</div>
                         </div>
                     </div>
                 </div>
@@ -202,7 +202,7 @@
                                     $payoutPaidUrl = route('admin.financial.payout-detail', ['type' => $typeKey, 'status' => 'paid']);
                                     $payoutPendingUrl = route('admin.financial.payout-detail', ['type' => $typeKey, 'status' => 'pending']);
                                 @endphp
-                                <tr class="fin-click-row" onclick="window.location='{{ $payoutDetailUrl }}'">
+                                <tr class="fin-click-row fin-click-row-payout" onclick="window.location='{{ $payoutDetailUrl }}'">
                                     <td>
                                         {{ $typeLabel }}
                                         <i class="fas fa-external-link-alt small text-muted ms-1"></i>
@@ -219,7 +219,7 @@
                                     <td class="text-end fw-semibold">₹{{ number_format($paidAmt + $pendAmt, 2) }}</td>
                                 </tr>
                             @endforeach
-                            <tr class="table-danger fin-click-row" onclick="window.location='{{ route('admin.payments.index') }}'">
+                            <tr class="table-danger fin-click-row fin-click-row-payout" onclick="window.location='{{ route('admin.payments.index') }}'">
                                 <td class="fw-bold">All payouts <i class="fas fa-external-link-alt small ms-1"></i></td>
                                 <td class="text-end fw-bold">₹{{ number_format($pb['paid_total'] ?? 0, 2) }}</td>
                                 <td class="text-end fw-bold">₹{{ number_format($pb['pending_total'] ?? 0, 2) }}</td>
