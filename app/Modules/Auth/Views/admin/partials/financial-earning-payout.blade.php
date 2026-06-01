@@ -45,7 +45,24 @@
                 <a href="{{ route('admin.plan-payments') }}" class="btn btn-sm btn-light">Customer payments</a>
             </div>
             <div class="p-3">
-                <p class="small text-muted mb-3">Actual money received by MMHC — subscription checkout and service prepayments.</p>
+                <p class="small text-muted mb-3">Actual money received by MMHC — subscription totals use the <strong>invoice ledger</strong> (completed payment records) so dashboard and drill-down always match.</p>
+
+                @php
+                    $studentGap = ($f['student_ledger_integrity']['gap'] ?? 0);
+                    $patientGap = ($f['patient_ledger_integrity']['gap'] ?? 0);
+                @endphp
+                @if($studentGap > 0 || $patientGap > 0)
+                    <div class="alert alert-warning py-2 small mb-3">
+                        <strong>Data note:</strong> Some subscriptions are marked paid in the database but have no completed invoice row — they are <em>not</em> counted in earning totals.
+                        @if($studentGap > 0)
+                            Student: ₹{{ number_format($studentGap, 2) }} across {{ $f['student_ledger_integrity']['missing_ledger_count'] ?? 0 }} subscription(s).
+                        @endif
+                        @if($patientGap > 0)
+                            @if($studentGap > 0) · @endif
+                            Patient plans: ₹{{ number_format($patientGap, 2) }} across {{ $f['patient_ledger_integrity']['missing_ledger_count'] ?? 0 }} subscription(s).
+                        @endif
+                    </div>
+                @endif
 
                 <div class="table-responsive">
                     <table class="table table-sm mb-0 fin-split-table">

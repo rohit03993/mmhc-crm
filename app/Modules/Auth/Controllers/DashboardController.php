@@ -151,46 +151,30 @@ class DashboardController extends Controller
      */
     public function earningDetail(Request $request, string $type)
     {
-        $studentPlanId = app(StudentSubscriptionService::class)->getStudentPlan()?->id;
+        $history = app(\App\Modules\Plans\Services\SubscriptionPaymentHistoryService::class);
         $period = $request->get('period', 'all');
-        $thisMonthStart = now()->startOfMonth();
+        if (! in_array($period, ['all', 'month'], true)) {
+            $period = 'all';
+        }
 
         $title = 'Earning detail';
         $subtitle = '';
         $totalAmount = 0.0;
-        $items = collect();
+        $ledgerIntegrity = null;
         $paginator = null;
 
         if ($type === 'student-subscriptions') {
             $title = 'Student membership payments';
-            $subtitle = 'Actual subscription payments collected (paid_amount).';
-            $query = Payment::query()
-                ->where('status', 'completed')
-                ->whereHas('subscription', function ($q) use ($studentPlanId) {
-                    if ($studentPlanId) {
-                        $q->where('plan_id', $studentPlanId);
-                    }
-                })
-                ->with(['user', 'subscription.plan']);
-            if ($period === 'month') {
-                $query->where('paid_at', '>=', $thisMonthStart);
-            }
+            $subtitle = 'Invoice ledger only — each row is a completed payment record (matches dashboard total exactly).';
+            $query = $history->subscriptionPaymentsQuery(true, $period);
+            $ledgerIntegrity = $history->subscriptionLedgerIntegrity(true);
             $totalAmount = (float) (clone $query)->sum('amount');
             $paginator = $query->orderByDesc('paid_at')->orderByDesc('id')->paginate(25)->withQueryString();
         } elseif ($type === 'patient-subscriptions') {
             $title = 'Patient healthcare plan payments';
-            $subtitle = 'Actual subscription payments collected (paid_amount).';
-            $query = Payment::query()
-                ->where('status', 'completed')
-                ->whereHas('subscription', function ($q) use ($studentPlanId) {
-                    if ($studentPlanId) {
-                        $q->where('plan_id', '!=', $studentPlanId);
-                    }
-                })
-                ->with(['user', 'subscription.plan']);
-            if ($period === 'month') {
-                $query->where('paid_at', '>=', $thisMonthStart);
-            }
+            $subtitle = 'Invoice ledger only — each row is a completed payment record (matches dashboard total exactly).';
+            $query = $history->subscriptionPaymentsQuery(false, $period);
+            $ledgerIntegrity = $history->subscriptionLedgerIntegrity(false);
             $totalAmount = (float) (clone $query)->sum('amount');
             $paginator = $query->orderByDesc('paid_at')->orderByDesc('id')->paginate(25)->withQueryString();
         } elseif ($type === 'services') {
@@ -198,7 +182,7 @@ class DashboardController extends Controller
             $subtitle = 'Prepaid amounts actually received from patients (prepaid_amount > 0). Staff shown for context.';
             $query = $this->collectedServicePaymentsQuery();
             if ($period === 'month') {
-                $query->where('created_at', '>=', $thisMonthStart);
+                $query->where('created_at', '>=', now()->startOfMonth());
             }
             $totalAmount = (float) (clone $query)->sum('prepaid_amount');
             $paginator = $query->with(['patient', 'assignedStaff', 'serviceType'])
@@ -227,7 +211,8 @@ class DashboardController extends Controller
             'subtitle',
             'totalAmount',
             'paginator',
-            'period'
+            'period',
+            'ledgerIntegrity'
         ));
     }
 
@@ -521,6 +506,8 @@ class DashboardController extends Controller
             'this_month_subscription_revenue' => round($thisMonthSubscriptionRevenue, 2),
             'this_month_service_revenue' => round($thisMonthServiceRevenue, 2),
             'monthly_recurring_revenue' => round($mrr, 2),
+            'student_ledger_integrity' => $subscriptionMetrics['student_ledger_integrity'],
+            'patient_ledger_integrity' => $subscriptionMetrics['patient_ledger_integrity'],
         ];
     }
 

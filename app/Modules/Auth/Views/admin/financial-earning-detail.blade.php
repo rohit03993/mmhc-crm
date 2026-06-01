@@ -21,6 +21,14 @@
         </div>
     </div>
 
+    @if(!empty($ledgerIntegrity) && ($ledgerIntegrity['gap'] ?? 0) > 0)
+        <div class="alert alert-warning small mb-3">
+            <strong>Not included in total above:</strong> ₹{{ number_format($ledgerIntegrity['gap'], 2) }} from
+            {{ $ledgerIntegrity['missing_ledger_count'] }} subscription(s) marked paid without a completed invoice in Customer Payments.
+            Only ledger rows below count toward earning.
+        </div>
+    @endif
+
     <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -144,7 +152,7 @@
         @elseif($type === 'services-due')
             These balances are listed under <strong>Expected → Service balances due</strong> on the dashboard.
         @else
-            Subscription payments match <strong>Customer Payments</strong> and paid <code>subscriptions</code> rows.
+            Totals are the sum of completed rows in <strong>Customer Payments</strong> (invoice ledger). Subscriptions marked paid without an invoice are excluded — see warning above if any exist.
         @endif
     </p>
 </div>
