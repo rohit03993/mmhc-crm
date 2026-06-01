@@ -6,40 +6,210 @@
 @section('head')
 <style>
 @media print {
-    .no-print { display: none !important; }
-    .main-content { padding: 0 !important; }
+    .no-print,
+    .sidebar,
+    .top-navbar,
+    .mobile-nav-toggle {
+        display: none !important;
+    }
+    body {
+        background: #fff !important;
+    }
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .invoice-outer {
+        padding: 0 !important;
+    }
+    .invoice-sheet {
+        box-shadow: none !important;
+        border: none !important;
+        max-width: 100% !important;
+    }
+}
+.invoice-outer {
+    max-width: 880px;
+    margin: 0 auto;
 }
 .invoice-sheet {
-    max-width: 820px;
-    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+}
+.invoice-brand-bar {
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f766e 100%);
+    color: #fff;
+    padding: 1.5rem 2rem;
+}
+.invoice-brand-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+}
+.invoice-logo-wrap {
     background: #fff;
     border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    padding: 2rem;
+    padding: 0.5rem 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
-.invoice-meta { font-size: 0.9rem; color: #64748b; }
-.invoice-table th, .invoice-table td { padding: 0.65rem 0.75rem; vertical-align: top; }
-.invoice-total-row { font-size: 1.15rem; font-weight: 700; }
+.invoice-logo {
+    max-height: 56px;
+    max-width: 220px;
+    width: auto;
+    height: auto;
+    display: block;
+}
+.invoice-company-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0.75rem 0 0.15rem;
+    color: #fff;
+}
+.invoice-company-tagline {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    margin: 0;
+}
+.invoice-gstin {
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.65rem;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    display: inline-block;
+    letter-spacing: 0.04em;
+}
+.invoice-type-badge {
+    text-align: right;
+}
+.invoice-type-badge h1 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    margin: 0 0 0.35rem;
+    text-transform: uppercase;
+}
+.invoice-type-badge .meta-line {
+    font-size: 0.88rem;
+    opacity: 0.92;
+    margin: 0.15rem 0;
+}
+.invoice-body {
+    padding: 1.75rem 2rem 2rem;
+}
+.invoice-parties {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+@media (max-width: 576px) {
+    .invoice-parties {
+        grid-template-columns: 1fr;
+    }
+}
+.invoice-party-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem 1.15rem;
+}
+.invoice-party-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+}
+.invoice-party-box strong {
+    color: #0f172a;
+    font-size: 1rem;
+}
+.invoice-party-box .sub {
+    font-size: 0.88rem;
+    color: #475569;
+    line-height: 1.45;
+}
+.invoice-table {
+    margin-bottom: 0;
+    border-color: #e2e8f0 !important;
+}
+.invoice-table thead th {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-color: #e2e8f0 !important;
+}
+.invoice-table td {
+    color: #1e293b;
+    border-color: #e2e8f0 !important;
+    vertical-align: middle;
+}
+.invoice-line-desc strong {
+    color: #0f172a;
+}
+.invoice-line-desc .sub {
+    font-size: 0.82rem;
+    color: #64748b;
+}
+.invoice-total-row td {
+    background: #f0fdf4 !important;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a !important;
+    border-top: 2px solid #86efac !important;
+}
+.invoice-total-row .amount {
+    color: #047857 !important;
+    font-size: 1.25rem;
+}
+.invoice-footnote {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px dashed #cbd5e1;
+    line-height: 1.5;
+}
 </style>
 @endsection
 
 @section('content')
 @php
-    $merchantName = \App\Modules\Plans\Support\SubscriptionSettings::upiMerchantName();
+    $companyName = $siteCompanyName ?? \App\Modules\Plans\Support\SubscriptionSettings::upiMerchantName();
+    $logoUrl = $siteLogoUrl ?? mmhc_app_logo_url();
+    $tagline = $siteTagline ?? 'Miracle Health Care';
+    $gstin = \App\Modules\Plans\Support\SubscriptionSettings::gstNumber();
     $priceIncludesGst = (bool) data_get(
         $subscription->plan->payment_options ?? [],
         $subscription->payment_frequency.'.price_includes_gst',
         false
     );
+    $listAmount = (float) ($subscription->amount_before_discount ?? $subscription->total_amount);
+    $discountAmount = (float) ($subscription->discount_amount ?? 0);
+    $gstAmount = (float) ($subscription->gst_amount ?? 0);
 @endphp
 
-<div class="container-fluid py-4">
+<div class="container-fluid py-4 invoice-outer">
     <div class="no-print d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <div>
             @if(session('success'))
                 <div class="alert alert-success mb-2">{{ session('success') }}</div>
             @endif
-            <h4 class="mb-0"><i class="fas fa-file-invoice text-primary me-2"></i>Payment invoice</h4>
+            <h4 class="mb-0 text-dark"><i class="fas fa-file-invoice text-primary me-2"></i>Payment invoice</h4>
         </div>
         <div class="d-flex flex-wrap gap-2">
             <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
@@ -58,84 +228,112 @@
     </div>
 
     <div class="invoice-sheet">
-        <div class="d-flex flex-wrap justify-content-between gap-3 mb-4 pb-3 border-bottom">
-            <div>
-                <h5 class="fw-bold mb-1">{{ $merchantName }}</h5>
-                <p class="invoice-meta mb-0">Tax invoice / payment receipt</p>
-            </div>
-            <div class="text-md-end">
-                <div class="fw-bold fs-5 text-primary">{{ $payment->invoice_number }}</div>
-                <div class="invoice-meta">Receipt: {{ $payment->receipt_number }}</div>
-                <div class="invoice-meta">Date: {{ ($payment->paid_at ?? now())->format('d M Y') }}</div>
-            </div>
-        </div>
-
-        <div class="row g-3 mb-4">
-            <div class="col-md-6">
-                <div class="small text-muted text-uppercase fw-semibold mb-1">Billed to</div>
-                <strong>{{ $subscription->user->name }}</strong><br>
-                <span class="invoice-meta">{{ $subscription->user->email }}</span><br>
-                @if($subscription->user->phone)
-                    <span class="invoice-meta">{{ $subscription->user->phone }}</span>
-                @endif
-            </div>
-            <div class="col-md-6">
-                <div class="small text-muted text-uppercase fw-semibold mb-1">Payment</div>
-                <strong>{{ ucfirst($payment->payment_method) }}</strong><br>
-                @if($payment->transaction_id)
-                    <span class="invoice-meta">Txn: {{ $payment->transaction_id }}</span>
-                @endif
-            </div>
-        </div>
-
-        <div class="table-responsive mb-3">
-            <table class="table invoice-table border">
-                <thead class="table-light">
-                    <tr>
-                        <th>Description</th>
-                        <th class="text-end" style="width:28%">Amount (INR)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <strong>{{ $subscription->plan->name }}</strong><br>
-                            <span class="invoice-meta">
-                                {{ ucfirst(str_replace('_', ' ', $subscription->payment_frequency)) }}
-                                · Valid {{ $subscription->start_date->format('d M Y') }} – {{ $subscription->end_date->format('d M Y') }}
-                            </span>
-                        </td>
-                        <td class="text-end">₹{{ number_format((float) ($subscription->amount_before_discount ?? $subscription->total_amount), 2) }}</td>
-                    </tr>
-                    @if(!$priceIncludesGst && ($subscription->gst_amount ?? 0) > 0)
-                    <tr>
-                        <td class="invoice-meta">Includes GST ({{ number_format($subscription->gst_rate ?? 18, 2) }}%)</td>
-                        <td class="text-end">₹{{ number_format((float) $subscription->gst_amount, 2) }}</td>
-                    </tr>
+        <header class="invoice-brand-bar">
+            <div class="invoice-brand-row">
+                <div>
+                    <div class="invoice-logo-wrap">
+                        <img src="{{ $logoUrl }}" alt="{{ $companyName }}" class="invoice-logo">
+                    </div>
+                    <p class="invoice-company-name mb-0">{{ $companyName }}</p>
+                    @if($tagline)
+                        <p class="invoice-company-tagline">{{ $tagline }}</p>
                     @endif
-                    @if(($subscription->discount_amount ?? 0) > 0)
-                    <tr>
-                        <td class="invoice-meta">Coupon ({{ $subscription->coupon_code }})</td>
-                        <td class="text-end text-success">− ₹{{ number_format((float) $subscription->discount_amount, 2) }}</td>
-                    </tr>
+                    @if($gstin)
+                        <div class="invoice-gstin">GSTIN: {{ $gstin }}</div>
                     @endif
-                </tbody>
-                <tfoot>
-                    <tr class="invoice-total-row">
-                        <td class="text-end">Total paid</td>
-                        <td class="text-end text-success">₹{{ number_format((float) $payment->amount, 2) }}</td>
-                    </tr>
-                </tfoot>
-            </table>
+                </div>
+                <div class="invoice-type-badge">
+                    <h1>Tax Invoice</h1>
+                    <p class="meta-line"><strong>{{ $payment->invoice_number }}</strong></p>
+                    <p class="meta-line">Receipt: {{ $payment->receipt_number }}</p>
+                    <p class="meta-line">Date: {{ ($payment->paid_at ?? now())->format('d M Y') }}</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="invoice-body">
+            <div class="invoice-parties">
+                <div class="invoice-party-box">
+                    <div class="invoice-party-label">Billed to</div>
+                    <strong>{{ $subscription->user->name }}</strong>
+                    <div class="sub mt-1">
+                        {{ $subscription->user->email }}<br>
+                        @if($subscription->user->phone)
+                            {{ $subscription->user->phone }}<br>
+                        @endif
+                        @if($subscription->user->unique_id)
+                            <span class="text-muted">ID: {{ $subscription->user->unique_id }}</span>
+                        @endif
+                    </div>
+                </div>
+                <div class="invoice-party-box">
+                    <div class="invoice-party-label">Payment details</div>
+                    <strong>{{ ucfirst(str_replace('_', ' ', $payment->payment_method ?? 'payment')) }}</strong>
+                    <div class="sub mt-1">
+                        Status: <span class="text-success fw-semibold">Paid</span><br>
+                        @if($payment->transaction_id)
+                            Transaction: <code class="small">{{ $payment->transaction_id }}</code>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table invoice-table border">
+                    <thead>
+                        <tr>
+                            <th style="width:62%">Description</th>
+                            <th class="text-end">Amount (INR)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="invoice-line-desc">
+                                <strong>{{ $subscription->plan->name }}</strong>
+                                <div class="sub">
+                                    {{ ucfirst(str_replace('_', ' ', $subscription->payment_frequency)) }}
+                                    · {{ $subscription->start_date->format('d M Y') }} – {{ $subscription->end_date->format('d M Y') }}
+                                </div>
+                            </td>
+                            <td class="text-end">₹{{ number_format($listAmount, 2) }}</td>
+                        </tr>
+                        @if(!$priceIncludesGst && $gstAmount > 0)
+                            <tr>
+                                <td class="invoice-line-desc">
+                                    <span class="sub">GST @ {{ rtrim(rtrim(number_format((float) ($subscription->gst_rate ?? 18), 2), '0'), '.') }}%</span>
+                                </td>
+                                <td class="text-end">₹{{ number_format($gstAmount, 2) }}</td>
+                            </tr>
+                        @endif
+                        @if($discountAmount > 0)
+                            <tr>
+                                <td class="invoice-line-desc">
+                                    <span class="sub">Discount — coupon <strong>{{ $subscription->coupon_code }}</strong></span>
+                                </td>
+                                <td class="text-end text-success">− ₹{{ number_format($discountAmount, 2) }}</td>
+                            </tr>
+                        @endif
+                    </tbody>
+                    <tfoot>
+                        <tr class="invoice-total-row">
+                            <td class="text-end">Total paid</td>
+                            <td class="text-end amount">₹{{ number_format((float) $payment->amount, 2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            @if($priceIncludesGst)
+                <p class="invoice-footnote mb-2">Amount is GST-inclusive as per plan pricing.</p>
+            @elseif($gstin && $gstAmount > 0)
+                <p class="invoice-footnote mb-2">GST computed at {{ rtrim(rtrim(number_format((float) ($subscription->gst_rate ?? 18), 2), '0'), '.') }}% on the taxable value before discount.</p>
+            @endif
+
+            <p class="invoice-footnote mb-0">
+                This is a computer-generated tax invoice for your subscription payment to <strong>{{ $companyName }}</strong>.
+                For billing support, quote invoice <strong>{{ $payment->invoice_number }}</strong>.
+            </p>
         </div>
-
-        @if($priceIncludesGst)
-            <p class="small text-muted mb-0">Amount is GST-inclusive as per plan pricing.</p>
-        @endif
-
-        <p class="small text-muted mt-4 mb-0">
-            This is a computer-generated invoice for your MMHC subscription payment. For support, contact MMHC with invoice number <strong>{{ $payment->invoice_number }}</strong>.
-        </p>
     </div>
 </div>
 @endsection

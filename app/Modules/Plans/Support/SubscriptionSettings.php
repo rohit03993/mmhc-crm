@@ -17,6 +17,8 @@ final class SubscriptionSettings
 
     public const KEY_UPI_MERCHANT = 'subscription_upi_merchant_name';
 
+    public const KEY_GST_NUMBER = 'subscription_gst_number';
+
     public static function gstRate(): float
     {
         return (float) self::get(self::KEY_GST_RATE, config('subscription.gst_rate', 18));
@@ -33,7 +35,17 @@ final class SubscriptionSettings
     }
 
     /**
-     * @param  array{gst_rate: float|string, upi_id: string, upi_merchant_name: string}  $data
+     * GSTIN shown on tax invoices. Empty string in admin = hidden on invoice.
+     */
+    public static function gstNumber(): ?string
+    {
+        $value = trim((string) self::get(self::KEY_GST_NUMBER, ''));
+
+        return $value !== '' ? $value : null;
+    }
+
+    /**
+     * @param  array{gst_rate: float|string, upi_id: string, upi_merchant_name: string, gst_number?: string|null}  $data
      */
     public static function persist(array $data): void
     {
@@ -44,6 +56,7 @@ final class SubscriptionSettings
         SiteSetting::set(self::KEY_GST_RATE, (string) $data['gst_rate']);
         SiteSetting::set(self::KEY_UPI_ID, trim((string) $data['upi_id']));
         SiteSetting::set(self::KEY_UPI_MERCHANT, trim((string) $data['upi_merchant_name']));
+        SiteSetting::set(self::KEY_GST_NUMBER, trim((string) ($data['gst_number'] ?? '')));
     }
 
     private static function get(string $key, mixed $default): mixed

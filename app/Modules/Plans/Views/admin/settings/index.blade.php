@@ -40,6 +40,24 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
+                        <div class="mb-4">
+                            <label for="gst_number" class="form-label">
+                                <i class="fas fa-id-card me-2 text-success"></i>GST Number (GSTIN)
+                            </label>
+                            <input type="text"
+                                   class="form-control @error('gst_number') is-invalid @enderror"
+                                   id="gst_number"
+                                   name="gst_number"
+                                   value="{{ old('gst_number', $gstNumber) }}"
+                                   placeholder="e.g. 27AAAAA0000A1Z5"
+                                   maxlength="20"
+                                   autocomplete="off">
+                            <small class="text-muted">Shown on subscription tax invoices. Leave blank if you do not have a GSTIN — nothing will appear on invoices.</small>
+                            @error('gst_number')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
                         
                         <!-- UPI ID -->
                         <div class="mb-4">

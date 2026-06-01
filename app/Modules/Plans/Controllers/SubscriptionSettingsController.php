@@ -17,6 +17,7 @@ class SubscriptionSettingsController extends Controller
     {
         return view('plans::admin.settings.index', [
             'gstRate' => SubscriptionSettings::gstRate(),
+            'gstNumber' => SubscriptionSettings::gstNumber() ?? '',
             'upiId' => SubscriptionSettings::upiId(),
             'merchantName' => SubscriptionSettings::upiMerchantName(),
         ]);
@@ -29,6 +30,7 @@ class SubscriptionSettingsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'gst_rate' => 'required|numeric|min:0|max:100',
+            'gst_number' => 'nullable|string|max:20',
             'upi_id' => 'required|string|max:255',
             'upi_merchant_name' => 'required|string|max:255',
         ]);
@@ -44,12 +46,13 @@ class SubscriptionSettingsController extends Controller
 
             SubscriptionSettings::persist([
                 'gst_rate' => $validated['gst_rate'],
+                'gst_number' => $validated['gst_number'] ?? '',
                 'upi_id' => $validated['upi_id'],
                 'upi_merchant_name' => $validated['upi_merchant_name'],
             ]);
 
             return redirect()->back()
-                ->with('success', 'Subscription settings saved. UPI ID and GST will apply immediately on payment pages.');
+                ->with('success', 'Subscription settings saved. UPI, GST rate, and invoice GSTIN will apply immediately.');
 
         } catch (\Throwable $e) {
             Log::error('Subscription settings update failed', [
