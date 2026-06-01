@@ -140,7 +140,7 @@
     @elseif(auth()->user()->role === 'student' && auth()->user()->academic_enrollment_status === 'rejected')
         <div class="alert alert-danger">Your enrollment request was not approved. Contact your institute admin.</div>
     @endif
-    @if(($enrollmentPendingCount ?? 0) > 0 && in_array(auth()->user()->role, ['institution_admin', 'super_admin', 'admin']))
+    @if(($enrollmentPendingCount ?? 0) > 0 && auth()->user()->role === 'institution_admin')
         <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
             <span><strong>{{ $enrollmentPendingCount }}</strong> student enrollment request(s) awaiting review.</span>
             <a href="{{ route('academics.enrollments.index') }}" class="btn btn-sm btn-primary">Review now</a>
@@ -150,33 +150,12 @@
         <div class="academics-dash-hero__inner">
             <p class="academics-dash-hero__kicker mb-0">Academic workspace</p>
             <h1 class="academics-dash-hero__title">Dashboard</h1>
-        @if(auth()->user()->role === 'super_admin')
-            <p class="academics-dash-hero__lede">Create colleges, set up batches and curriculum, and monitor progress (ICR) across institutions.</p>
-            <div class="academics-quick-links">
-                <a href="{{ route('academics.institutions.index') }}" class="btn btn-primary btn-sm"><i class="fas fa-university me-1"></i>Institutions</a>
-                <a href="{{ route('academics.batches.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-layer-group me-1"></i>Batches</a>
-                <a href="{{ route('academics.subjects.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-book me-1"></i>Subjects</a>
-                <a href="{{ route('academics.faculty.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-chalkboard-teacher me-1"></i>Faculty</a>
-                <a href="{{ route('academics.students.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-graduate me-1"></i>Students</a>
-                <a href="{{ route('academics.enrollments.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-clock me-1"></i>Enrollments</a>
-                <a href="{{ route('academics.topics.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-list-ul me-1"></i>Topics</a>
-                <a href="{{ route('academics.assignments.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-tasks me-1"></i>Assignments</a>
-                <a href="{{ route('academics.exams.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-question-circle me-1"></i>Quizzes &amp; exams</a>
-                <a href="{{ route('academics.reports.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-alt me-1"></i>All reports</a>
-                <a href="{{ route('academics.reports.show', ['type' => 'student_submission']) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-graduate me-1"></i>Student report</a>
-                <a href="{{ route('community.index') }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-comments me-1"></i>Community</a>
-            </div>
-        @elseif(auth()->user()->role === 'admin')
-            <p class="academics-dash-hero__lede">Create colleges, set their short codes (IDs), run batches and curriculum, and manage academic accounts.</p>
+        @if(auth()->user()->role === 'admin')
+            <p class="academics-dash-hero__lede">Provision colleges and institute admins. Open any college below for a read-only overview (no batch or curriculum edits).</p>
             <div class="academics-quick-links">
                 <a href="{{ route('academics.institutions.index') }}" class="btn btn-primary btn-sm"><i class="fas fa-university me-1"></i>Institutes &amp; codes</a>
-                <a href="{{ route('academics.batches.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-layer-group me-1"></i>Batches</a>
-                <a href="{{ route('academics.subjects.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-book me-1"></i>Subjects</a>
-                <a href="{{ route('academics.faculty.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-chalkboard-teacher me-1"></i>Faculty</a>
-                <a href="{{ route('academics.assignments.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-tasks me-1"></i>Assignments</a>
-                <a href="{{ route('academics.exams.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-question-circle me-1"></i>Exams</a>
-                <a href="{{ route('admin.users', ['segment' => 'academics']) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-users me-1"></i>Academic users</a>
-                <a href="{{ route('academics.reports.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-alt me-1"></i>Reports</a>
+                <a href="{{ route('admin.users', ['segment' => 'academics']) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-shield me-1"></i>Institute admins</a>
+                <a href="{{ route('academics.reports.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-alt me-1"></i>Reports (read-only)</a>
                 <a href="{{ route('community.index') }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-comments me-1"></i>Community</a>
             </div>
         @elseif(auth()->user()->role === 'institution_admin')
@@ -425,8 +404,8 @@
     </div>
     @endif
 
-    {{-- SUPER ADMIN + CRM ADMIN (overview) --}}
-    @if(in_array(auth()->user()->role, ['super_admin', 'admin'], true))
+    {{-- CRM ADMIN (read-only platform overview) --}}
+    @if(auth()->user()->role === 'admin')
     {{-- ICR by Institution table with Students column (Change 1) --}}
     @if($institutionsWithIcrPaginator && $institutionsWithIcrPaginator->total() > 0)
     <div class="card academics-overview-card mb-4">

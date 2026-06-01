@@ -43,23 +43,7 @@ class AcademicDemoSeeder extends Seeder
 
         $defaultLocation = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
 
-        // 2. Super Admin (academics)
-        $superAdmin = User::firstOrCreate(
-            ['email' => 'academic.super@themmhc.com'],
-            [
-                'name' => 'Vikram Joshi',
-                'phone' => '9825511001',
-                'password' => Hash::make($password),
-                'role' => 'super_admin',
-                'unique_id' => 'ACAD-SA-001',
-                'is_active' => true,
-                'email_verified_at' => now(),
-                'location' => $defaultLocation,
-            ]
-        );
-        DB::table('users')->where('id', $superAdmin->id)->update(['password' => Hash::make($password)]);
-
-        // 3. Institution Admin
+        // 2. Institution Admin
         $instAdmin = User::firstOrCreate(
             ['email' => 'college.admin@medmiracle.com'],
             [

@@ -164,7 +164,7 @@ class MentorshipController extends Controller
     {
         $viewer = auth()->user();
 
-        if (in_array($viewer->role, ['super_admin', 'admin', 'institution_admin'], true)) {
+        if (in_array($viewer->role, ['admin', 'institution_admin'], true)) {
             return redirect()->route('academics.people.show', $user);
         }
 

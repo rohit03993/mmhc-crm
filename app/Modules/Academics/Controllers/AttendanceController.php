@@ -10,13 +10,10 @@ use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
 {
-    /** Batches the current user can mark attendance for (super_admin: all; institution_admin: their inst; faculty: assigned batches). */
+    /** Batches the current user can mark attendance for (institution_admin: their inst; faculty: assigned batches). */
     protected function scopeBatches()
     {
         $user = auth()->user();
-        if ($user->role === 'super_admin') {
-            return Batch::with('institution')->active()->orderBy('name');
-        }
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             return Batch::with('institution')->forInstitution((int) $user->academic_institution_id)->active()->orderBy('name');
         }
@@ -34,9 +31,6 @@ class AttendanceController extends Controller
     protected function authorizeBatch(Batch $batch): void
     {
         $user = auth()->user();
-        if ($user->role === 'super_admin') {
-            return;
-        }
         if ($user->role === 'institution_admin' && (int) $user->academic_institution_id === (int) $batch->institution_id) {
             return;
         }

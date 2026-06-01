@@ -770,7 +770,7 @@ class AuthController extends Controller
             ]))
             ->when($segment === 'healthcare', fn ($q) => $q->whereNotIn('role', User::academicRoleSlugs()))
             ->when($searchQuery !== '', fn ($query) => $this->applyAdminUserSearch($query, $searchQuery))
-            ->when($segment === 'academics', fn ($q) => $q->orderByRaw("CASE role WHEN 'super_admin' THEN 0 WHEN 'institution_admin' THEN 1 WHEN 'faculty' THEN 2 WHEN 'student' THEN 3 ELSE 4 END"))
+            ->when($segment === 'academics', fn ($q) => $q->orderByRaw("CASE role WHEN 'institution_admin' THEN 0 WHEN 'faculty' THEN 1 WHEN 'student' THEN 2 ELSE 3 END"))
             ->orderBy('name')
             ->paginate($perPage)
             ->withQueryString();
@@ -868,7 +868,7 @@ class AuthController extends Controller
             ],
             'pincode' => 'required|string|regex:/^[1-9][0-9]{5}$/',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:admin,nurse,caregiver,patient,super_admin,institution_admin,faculty,student',
+            'role' => 'required|in:admin,nurse,caregiver,patient,institution_admin,faculty,student',
             'academic_institution_id' => [
                 'nullable',
                 'integer',
@@ -1088,7 +1088,7 @@ class AuthController extends Controller
                 },
             ],
             'pincode' => 'required|string|regex:/^[1-9][0-9]{5}$/',
-            'role' => 'required|in:admin,nurse,caregiver,patient,super_admin,institution_admin,faculty,student',
+            'role' => 'required|in:admin,nurse,caregiver,patient,institution_admin,faculty,student',
             'academic_institution_id' => [
                 'nullable',
                 'integer',

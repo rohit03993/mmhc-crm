@@ -306,7 +306,7 @@ class AccountDeletionService
 
         if (! $replacementId) {
             $replacementId = User::query()
-                ->where('role', 'super_admin')
+                ->where('role', 'admin')
                 ->whereNull('deleted_at')
                 ->value('id');
         }

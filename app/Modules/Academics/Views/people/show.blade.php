@@ -8,7 +8,7 @@
     <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb mb-0 small">
             <li class="breadcrumb-item"><a href="{{ route('academics.dashboard') }}">Academics</a></li>
-            @if($person->academic_institution_id && in_array(auth()->user()->role, ['super_admin', 'admin', 'institution_admin', 'faculty'], true))
+            @if($person->academic_institution_id && in_array(auth()->user()->role, ['admin', 'institution_admin', 'faculty'], true))
                 <li class="breadcrumb-item"><a href="{{ route('academics.institutions.show', $person->academic_institution_id) }}">College</a></li>
             @endif
             <li class="breadcrumb-item active" aria-current="page">{{ $person->name }}</li>
@@ -90,7 +90,7 @@
 
     <div class="d-flex flex-wrap gap-2">
         <a href="{{ route('academics.dashboard') }}" class="btn btn-outline-secondary btn-sm rounded-pill">Dashboard</a>
-        @if(in_array(auth()->user()->role, ['super_admin', 'admin'], true))
+        @if(auth()->user()->role === 'admin')
             <a href="{{ route('admin.profiles.view', $person) }}" class="btn btn-outline-primary btn-sm rounded-pill">Full CRM profile</a>
         @endif
     </div>

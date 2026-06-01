@@ -17,7 +17,7 @@ class EnrollmentController extends Controller
     protected function assertCanReview(): User
     {
         $user = auth()->user();
-        if (! in_array($user->role, ['institution_admin', 'super_admin', 'admin'], true)) {
+        if ($user->role !== 'institution_admin') {
             abort(403, 'You cannot review enrollments.');
         }
 
@@ -38,14 +38,10 @@ class EnrollmentController extends Controller
                 abort(403, 'Your account is not linked to an institution.');
             }
             $query->where('institution_id', $user->academic_institution_id);
-        } elseif (in_array($user->role, ['super_admin', 'admin'], true) && $request->filled('institution_id')) {
-            $query->where('institution_id', (int) $request->get('institution_id'));
         }
 
         $applications = $query->paginate(15)->withQueryString();
-        $institutions = in_array($user->role, ['super_admin', 'admin'], true)
-            ? Institution::query()->active()->orderBy('name')->get()
-            : collect();
+        $institutions = collect();
 
         return view('academics::enrollments.index', compact('applications', 'institutions'));
     }

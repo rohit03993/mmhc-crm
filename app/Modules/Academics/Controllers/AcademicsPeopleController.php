@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Core\User;
 use App\Modules\Academics\Services\AcademicScoreService;
 use App\Modules\Academics\Services\MentorshipService;
+use App\Modules\Academics\Support\AcademicsAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -52,7 +53,7 @@ class AcademicsPeopleController extends Controller
             abort(404);
         }
 
-        if (in_array($viewer->role, ['super_admin', 'admin'], true)) {
+        if (AcademicsAccess::isPlatformProvisioner($viewer)) {
             return;
         }
 

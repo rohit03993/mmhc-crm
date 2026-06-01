@@ -46,7 +46,7 @@
                             <span class="badge bg-light text-dark border ms-1" style="font-size:0.65rem;">Faculty</span>
                         @elseif($exam->creator->role === 'institution_admin')
                             <span class="badge bg-light text-dark border ms-1" style="font-size:0.65rem;">Institution admin</span>
-                        @elseif(in_array($exam->creator->role, ['super_admin', 'admin'], true))
+                        @elseif($exam->creator->role === 'admin')
                             <span class="badge bg-light text-dark border ms-1" style="font-size:0.65rem;">Platform</span>
                         @endif
                     </div>

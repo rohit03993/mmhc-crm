@@ -21,19 +21,23 @@ use Illuminate\Support\Facades\Route;
 /*
 |--------------------------------------------------------------------------
 | Academics Module Routes - All under /academics
+| Platform admin: institutes + read-only college overview only.
+| Institute admin: all college operations for their institution.
 |--------------------------------------------------------------------------
 */
 
 Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->group(function () {
-    Route::get('/', [AcademicsDashboardController::class, 'index'])->name('dashboard');
+    Route::middleware(['role:admin,institution_admin,faculty,student'])->group(function () {
+        Route::get('/', [AcademicsDashboardController::class, 'index'])->name('dashboard');
+    });
 
-    Route::middleware(['role:super_admin,admin,institution_admin,faculty,student'])->group(function () {
+    Route::middleware(['role:institution_admin,faculty,student'])->group(function () {
         Route::get('/exams', [ExamController::class, 'index'])->name('exams.index');
         Route::get('/exams/{exam}', [ExamController::class, 'show'])->name('exams.show')->whereNumber('exam');
         Route::get('/exams/{exam}/attempts/{attempt}/result', [ExamController::class, 'result'])->name('exams.result')->whereNumber(['exam', 'attempt']);
     });
 
-    Route::middleware(['role:super_admin,admin,institution_admin,faculty'])->group(function () {
+    Route::middleware(['role:institution_admin,faculty'])->group(function () {
         Route::get('/exams/create', [ExamController::class, 'create'])->name('exams.create');
         Route::get('/exams/{exam}/attempts', [ExamController::class, 'attempts'])->name('exams.attempts')->whereNumber('exam');
         Route::get('/exams/{exam}/attempts/export', [ExamController::class, 'exportAttempts'])->name('exams.attempts.export')->whereNumber('exam');
@@ -46,7 +50,6 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::delete('/exams/{exam}/questions/{question}', [ExamController::class, 'destroyQuestion'])->name('exams.questions.destroy')->whereNumber(['exam', 'question']);
     });
 
-    // Student: My Assignments & Submit
     Route::middleware(['role:student', 'student.enrollment.approved'])->group(function () {
         Route::get('/my-learning-resources', [TopicResourceController::class, 'studentTopicsIndex'])->name('learning-resources');
         Route::get('/my-attendance', [AttendanceController::class, 'myAttendance'])->name('attendance.my');
@@ -62,15 +65,14 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::post('/exams/{exam}/take/{attempt}', [ExamController::class, 'submitAttempt'])->name('exams.submit')->whereNumber(['exam', 'attempt']);
     });
 
-    Route::middleware(['role:super_admin,admin,institution_admin,faculty'])->group(function () {
+    Route::middleware(['role:admin,institution_admin,faculty'])->group(function () {
         Route::get('/institutions/{institution}', [InstitutionController::class, 'show'])
             ->name('institutions.show')
             ->whereNumber('institution');
         Route::get('/people/{user}', [AcademicsPeopleController::class, 'show'])->name('people.show')->whereNumber('user');
     });
 
-    // CRM admin + academic super admin: institutions (colleges, codes, IDs)
-    Route::middleware(['role:super_admin,admin'])->prefix('institutions')->name('institutions.')->group(function () {
+    Route::middleware(['role:admin'])->prefix('institutions')->name('institutions.')->group(function () {
         Route::get('/', [InstitutionController::class, 'index'])->name('index');
         Route::get('/create', [InstitutionController::class, 'create'])->name('create');
         Route::post('/', [InstitutionController::class, 'store'])->name('store');
@@ -79,8 +81,7 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::delete('/{institution}', [InstitutionController::class, 'destroy'])->name('destroy');
     });
 
-    // Batch management (college ops + platform support)
-    Route::middleware(['role:super_admin,admin,institution_admin'])->prefix('batches')->name('batches.')->group(function () {
+    Route::middleware(['role:institution_admin'])->prefix('batches')->name('batches.')->group(function () {
         Route::get('/', [BatchController::class, 'index'])->name('index');
         Route::get('/create', [BatchController::class, 'create'])->name('create');
         Route::post('/', [BatchController::class, 'store'])->name('store');
@@ -90,28 +91,25 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::delete('/{batch}', [BatchController::class, 'destroy'])->name('destroy');
     });
 
-    // Faculty management
-    Route::middleware(['role:super_admin,admin,institution_admin'])->prefix('faculty')->name('faculty.')->group(function () {
+    Route::middleware(['role:institution_admin'])->prefix('faculty')->name('faculty.')->group(function () {
         Route::get('/', [FacultyController::class, 'index'])->name('index');
         Route::get('/create', [FacultyController::class, 'create'])->name('create');
         Route::post('/', [FacultyController::class, 'store'])->name('store');
     });
 
-    // Student management + enrollment approvals
-    Route::middleware(['role:super_admin,admin,institution_admin'])->prefix('students')->name('students.')->group(function () {
+    Route::middleware(['role:institution_admin'])->prefix('students')->name('students.')->group(function () {
         Route::get('/', [StudentController::class, 'index'])->name('index');
         Route::get('/create', [StudentController::class, 'create'])->name('create');
         Route::post('/', [StudentController::class, 'store'])->name('store');
     });
 
-    Route::middleware(['role:super_admin,admin,institution_admin'])->prefix('enrollments')->name('enrollments.')->group(function () {
+    Route::middleware(['role:institution_admin'])->prefix('enrollments')->name('enrollments.')->group(function () {
         Route::get('/', [EnrollmentController::class, 'index'])->name('index');
         Route::get('/{application}', [EnrollmentController::class, 'show'])->name('show')->whereNumber('application');
         Route::post('/{application}/approve', [EnrollmentController::class, 'approve'])->name('approve')->whereNumber('application');
         Route::post('/{application}/reject', [EnrollmentController::class, 'reject'])->name('reject')->whereNumber('application');
     });
 
-    // Cross-institute mentorship
     Route::middleware(['role:student,nurse,caregiver,faculty'])->prefix('mentorship')->name('mentorship.')->group(function () {
         Route::get('/', [MentorshipController::class, 'index'])->name('index');
         Route::get('/profile/{user}', [MentorshipController::class, 'profile'])->name('profile')->whereNumber('user');
@@ -122,8 +120,7 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::post('/reviews/{share}', [MentorshipController::class, 'reviewStore'])->name('reviews.store')->whereNumber('share');
     });
 
-    // Subject management
-    Route::middleware(['role:super_admin,admin,institution_admin'])->prefix('subjects')->name('subjects.')->group(function () {
+    Route::middleware(['role:institution_admin'])->prefix('subjects')->name('subjects.')->group(function () {
         Route::get('/', [SubjectController::class, 'index'])->name('index');
         Route::get('/create', [SubjectController::class, 'create'])->name('create');
         Route::post('/', [SubjectController::class, 'store'])->name('store');
@@ -133,8 +130,7 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::delete('/{subject}', [SubjectController::class, 'destroy'])->name('destroy');
     });
 
-    // Topic management (platform admin + college roles)
-    Route::middleware(['role:super_admin,admin,institution_admin,faculty'])->prefix('topics')->name('topics.')->group(function () {
+    Route::middleware(['role:institution_admin,faculty'])->prefix('topics')->name('topics.')->group(function () {
         Route::get('/', [TopicController::class, 'index'])->name('index');
         Route::get('/create', [TopicController::class, 'create'])->name('create');
         Route::post('/', [TopicController::class, 'store'])->name('store');
@@ -153,8 +149,7 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         ->name('topics.resources.download')
         ->whereNumber(['topic', 'resource']);
 
-    // Assignment management (platform CRM admin + college roles — aligned with exams)
-    Route::middleware(['role:super_admin,admin,institution_admin,faculty'])->prefix('assignments')->name('assignments.')->group(function () {
+    Route::middleware(['role:institution_admin,faculty'])->prefix('assignments')->name('assignments.')->group(function () {
         Route::get('/', [AssignmentController::class, 'index'])->name('index');
         Route::get('/create', [AssignmentController::class, 'create'])->name('create');
         Route::post('/', [AssignmentController::class, 'store'])->name('store');
@@ -167,21 +162,18 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::delete('/{assignment}', [AssignmentController::class, 'destroy'])->name('destroy');
     });
 
-    // Reports (Super Admin, Institution Admin, Faculty, CRM admin read-only overview)
-    Route::middleware(['role:super_admin,institution_admin,faculty,admin'])->prefix('reports')->name('reports.')->group(function () {
+    Route::middleware(['role:admin,institution_admin,faculty'])->prefix('reports')->name('reports.')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
         Route::get('/show', [ReportController::class, 'show'])->name('show');
         Route::get('/download', [ReportController::class, 'download'])->name('download');
         Route::get('/student/{user}', [ReportController::class, 'studentReport'])->name('student')->whereNumber('user');
     });
 
-    // Attendance: Mark (Institution Admin, Faculty – Super Admin does not mark attendance)
     Route::middleware(['role:institution_admin,faculty'])->prefix('attendance')->name('attendance.')->group(function () {
         Route::get('/', [AttendanceController::class, 'index'])->name('index');
         Route::get('/mark', [AttendanceController::class, 'mark'])->name('mark');
         Route::post('/', [AttendanceController::class, 'store'])->name('store');
     });
 
-    // Submission download (student own / faculty or admin for any)
     Route::get('/submissions/{submission}/download', [SubmissionController::class, 'download'])->name('submissions.download');
 });

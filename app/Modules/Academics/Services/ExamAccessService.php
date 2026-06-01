@@ -50,10 +50,6 @@ class ExamAccessService
             return false;
         }
 
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            return true;
-        }
-
         if ($user->role === 'institution_admin' && (int) $user->academic_institution_id === (int) $exam->institution_id) {
             return true;
         }

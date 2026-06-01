@@ -7,7 +7,6 @@
         $canDelete = $actingAdmin && $deletionPolicy->canSelectForBulkDelete($user, $actingAdmin);
         $roleBadge = match ($user->role) {
             'admin' => 'bg-danger',
-            'super_admin' => 'bg-dark',
             'institution_admin' => 'text-bg-primary',
             'faculty' => 'bg-info text-dark',
             'student' => 'text-bg-secondary',
@@ -18,13 +17,10 @@
         };
         $roleLabel = match ($user->role) {
             'institution_admin' => 'Inst. admin',
-            'super_admin' => 'Academic admin',
             default => ucfirst(str_replace('_', ' ', $user->role)),
         };
         $institutionLabel = '—';
-        if ($user->role === 'super_admin') {
-            $institutionLabel = 'All institutions (platform scope)';
-        } elseif ($user->academicInstitution) {
+        if ($user->academicInstitution) {
             $institutionLabel = $user->academicInstitution->name;
             if ($user->academicInstitution->code) {
                 $institutionLabel .= ' ('.$user->academicInstitution->code.')';
@@ -59,7 +55,7 @@
                         <a href="{{ route('admin.profiles.view', $user) }}" class="um-table__link text-decoration-none">
                             <span class="badge rounded-pill bg-secondary um-table__id">{{ $user->unique_id }}</span>
                         </a>
-                        <span class="badge rounded-pill {{ $roleBadge }}" @if($user->role === 'super_admin') title="Platform admin for all colleges — protected from bulk delete" @endif>{{ $roleLabel }}</span>
+                        <span class="badge rounded-pill {{ $roleBadge }}">{{ $roleLabel }}</span>
                     </div>
                 </div>
             </div>

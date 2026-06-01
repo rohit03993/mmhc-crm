@@ -172,8 +172,8 @@ class SubmissionController extends Controller
     public function download(Submission $submission)
     {
         $user = auth()->user();
-        if ($user->id === $submission->user_id || in_array($user->role, ['super_admin', 'admin', 'institution_admin', 'faculty'])) {
-            if ($submission->assignment && in_array($user->role, ['super_admin', 'admin', 'institution_admin', 'faculty'])) {
+        if ($user->id === $submission->user_id || in_array($user->role, ['institution_admin', 'faculty'], true)) {
+            if ($submission->assignment && in_array($user->role, ['institution_admin', 'faculty'], true)) {
                 // Platform / college roles: same visibility as assignment management
             } elseif ($user->id !== $submission->user_id) {
                 $this->authorizeFacultyOrAdminForAssignment($submission->assignment_id);
@@ -207,9 +207,6 @@ class SubmissionController extends Controller
     {
         $assignment = Assignment::with('topic.subject')->findOrFail($assignmentId);
         $user = auth()->user();
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            return;
-        }
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             if ((int) $assignment->topic->subject->batch->institution_id !== (int) $user->academic_institution_id) {
                 abort(403);

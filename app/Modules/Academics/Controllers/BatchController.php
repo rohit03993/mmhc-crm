@@ -15,9 +15,6 @@ class BatchController extends Controller
     {
         $user = auth()->user();
         $q = Batch::with('institution')->orderBy('name');
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            return $q;
-        }
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             return $q->forInstitution((int) $user->academic_institution_id);
         }
@@ -61,12 +58,6 @@ class BatchController extends Controller
         $user = auth()->user();
         if ($user->role === 'institution_admin') {
             $validated['institution_id'] = $user->academic_institution_id;
-        }
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            $allowed = Institution::active()->pluck('id')->map(fn ($id) => (int) $id)->all();
-            if (! in_array((int) $validated['institution_id'], $allowed, true)) {
-                abort(403, 'Invalid institution.');
-            }
         }
         $validated['is_active'] = $request->boolean('is_active', true);
         Batch::create($validated);
@@ -166,9 +157,6 @@ class BatchController extends Controller
     protected function authorizeBatch(Batch $batch): void
     {
         $user = auth()->user();
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            return;
-        }
         if ($user->role === 'institution_admin' && (int) $user->academic_institution_id !== (int) $batch->institution_id) {
             abort(403, 'You can only manage batches of your institution.');
         }
@@ -192,9 +180,6 @@ class BatchController extends Controller
                 if ($currentStudentIds->isNotEmpty()) {
                     $query->orWhereIn('id', $currentStudentIds);
                 }
-                if (in_array(auth()->user()->role, ['super_admin', 'admin'], true)) {
-                    $query->orWhereNull('academic_institution_id');
-                }
             })
             ->orderBy('name')
             ->get();
@@ -214,9 +199,6 @@ class BatchController extends Controller
                 $query->where('academic_institution_id', $institutionId);
                 if ($currentFacultyIds->isNotEmpty()) {
                     $query->orWhereIn('id', $currentFacultyIds);
-                }
-                if (in_array(auth()->user()->role, ['super_admin', 'admin'], true)) {
-                    $query->orWhereNull('academic_institution_id');
                 }
             })
             ->orderBy('name')

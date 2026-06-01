@@ -7,6 +7,7 @@ use App\Models\Core\User;
 use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Institution;
 use App\Modules\Academics\Services\AcademicScoreService;
+use App\Modules\Academics\Support\AcademicsAccess;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -27,8 +28,8 @@ class InstitutionController extends Controller
     public function show(Institution $institution): View
     {
         $user = auth()->user();
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            // full access
+        if (AcademicsAccess::isPlatformProvisioner($user)) {
+            // read-only platform overview
         } elseif ($user->role === 'institution_admin' && (int) $user->academic_institution_id === (int) $institution->id) {
             // own college
         } elseif ($user->role === 'faculty' && (int) $user->academic_institution_id === (int) $institution->id) {

@@ -39,7 +39,7 @@ class DeleteAllNonAdminUsers extends Command
             return 0;
         }
 
-        $this->warn('⚠️  WARNING: This deletes all users except CRM admin + academic super_admin!');
+        $this->warn('⚠️  WARNING: This deletes all users except CRM admin!');
         $this->line('');
         $this->info("Users to be deleted: {$nonAdminCount}");
         $this->info("Protected accounts: {$protectedCount}");

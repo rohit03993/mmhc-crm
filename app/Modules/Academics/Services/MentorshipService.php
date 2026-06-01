@@ -125,7 +125,7 @@ class MentorshipService
             return false;
         }
 
-        if (in_array($viewer->role, ['super_admin', 'admin', 'institution_admin'], true)) {
+        if (in_array($viewer->role, ['admin', 'institution_admin'], true)) {
             return false;
         }
 

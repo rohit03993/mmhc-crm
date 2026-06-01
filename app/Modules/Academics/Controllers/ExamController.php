@@ -32,9 +32,7 @@ class ExamController extends Controller
         $user = Auth::user();
         $query = AcademicExam::query()->with(['subject.batch.institution', 'batch.institution', 'institution', 'creator']);
 
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            // all institutions
-        } elseif ($user->role === 'institution_admin' && $user->academic_institution_id) {
+        if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             $query->where('institution_id', $user->academic_institution_id);
         } elseif ($user->role === 'faculty') {
             $instIds = $this->institutionIdsForAcademicUser($user);
@@ -67,7 +65,7 @@ class ExamController extends Controller
         $this->applyExamIndexFilters($request, $query, $user);
 
         $perPage = min(100, max(5, (int) $request->get('per_page', 20)));
-        $useDbPagination = in_array($user->role, ['super_admin', 'admin', 'institution_admin', 'faculty'], true);
+        $useDbPagination = in_array($user->role, ['institution_admin', 'faculty'], true);
 
         if ($useDbPagination) {
             $exams = $query->orderByDesc('id')->paginate($perPage)->withQueryString();
@@ -87,11 +85,9 @@ class ExamController extends Controller
             ]);
         }
 
-        $viewerCanCreate = in_array($user->role, ['super_admin', 'admin', 'institution_admin', 'faculty'], true);
+        $viewerCanCreate = in_array($user->role, ['institution_admin', 'faculty'], true);
 
-        $filterInstitutions = in_array($user->role, ['super_admin', 'admin'], true)
-            ? Institution::query()->orderBy('name')->get(['id', 'name'])
-            : collect();
+        $filterInstitutions = collect();
 
         return view('academics::exams.index', [
             'exams' => $exams,
@@ -592,17 +588,13 @@ class ExamController extends Controller
 
     protected function authorizeCreate(User $user): void
     {
-        if (! in_array($user->role, ['super_admin', 'admin', 'institution_admin', 'faculty'], true)) {
+        if (! in_array($user->role, ['institution_admin', 'faculty'], true)) {
             abort(403);
         }
     }
 
     protected function institutionsForUser(User $user)
     {
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            return Institution::orderBy('name')->get();
-        }
-
         if ($user->academic_institution_id) {
             return Institution::where('id', $user->academic_institution_id)->get();
         }
@@ -613,9 +605,6 @@ class ExamController extends Controller
     protected function subjectsForUser(User $user)
     {
         $q = Subject::query()->with('batch.institution')->orderBy('name');
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            return $q->get();
-        }
         if ($user->academic_institution_id) {
             $q->whereHas('batch', fn ($b) => $b->where('institution_id', $user->academic_institution_id));
         }
@@ -626,9 +615,6 @@ class ExamController extends Controller
     protected function batchesForUser(User $user)
     {
         $q = Batch::query()->with('institution')->orderBy('name');
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            return $q->get();
-        }
         if ($user->academic_institution_id) {
             $q->where('institution_id', $user->academic_institution_id);
         }
@@ -642,9 +628,7 @@ class ExamController extends Controller
     protected function validatedExamPayload(Request $request, User $user, ?AcademicExam $existing = null): array
     {
         $institutionRule = ['required', 'exists:academic_institutions,id'];
-        if (! in_array($user->role, ['super_admin', 'admin'], true)) {
-            $institutionRule[] = Rule::in([(int) $user->academic_institution_id]);
-        }
+        $institutionRule[] = Rule::in([(int) $user->academic_institution_id]);
 
         $data = $request->validate([
             'institution_id' => $institutionRule,
@@ -771,10 +755,6 @@ class ExamController extends Controller
      */
     protected function assignmentsForExamWizard(User $user, $institutions)
     {
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            return $this->assignmentsForInstitution((int) ($institutions->first()?->id ?? 0));
-        }
-
         return $this->assignmentsForInstitution((int) ($user->academic_institution_id ?? 0));
     }
 
@@ -860,16 +840,6 @@ class ExamController extends Controller
         if ($search !== '') {
             $like = '%'.addcslashes($search, '%_\\').'%';
             $query->where('title', 'like', $like);
-        }
-
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            $rawInst = $request->get('institution_id');
-            if ($rawInst !== null && $rawInst !== '') {
-                $id = (int) $rawInst;
-                if ($id > 0 && Institution::query()->whereKey($id)->exists()) {
-                    $query->where('institution_id', $id);
-                }
-            }
         }
 
         $publish = $user->role === 'student'

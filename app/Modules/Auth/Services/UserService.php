@@ -23,7 +23,6 @@ class UserService
             'caregiver' => 'C-UID',
             'patient' => 'P-UID',
             'admin' => 'M-UID',
-            'super_admin' => 'ACAD-SA',
             'institution_admin' => 'ACAD-IA',
             'faculty' => 'ACAD-F',
             'student' => 'ACAD-ST',

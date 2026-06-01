@@ -294,7 +294,7 @@ class User extends Authenticatable
      */
     public function isExemptFromPhoneVerification(): bool
     {
-        return in_array($this->role, ['admin', 'super_admin'], true);
+        return $this->role === 'admin';
     }
 
     /**
@@ -407,17 +407,27 @@ class User extends Authenticatable
      */
     public static function academicRoleSlugs(): array
     {
-        return ['super_admin', 'institution_admin', 'faculty', 'student'];
+        return ['institution_admin', 'faculty', 'student'];
     }
 
     /**
-     * Roles never removed by admin "delete all non-admin" bulk action (CRM + academic platform admins).
+     * Roles never removed by admin "delete all non-admin" bulk action.
      *
      * @return list<string>
      */
     public static function protectedFromBulkUserDeletionRoleSlugs(): array
     {
-        return ['admin', 'super_admin'];
+        return ['admin'];
+    }
+
+    public function isPlatformAcademicsProvisioner(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isInstitutionAdmin(): bool
+    {
+        return $this->role === 'institution_admin';
     }
 
     /**

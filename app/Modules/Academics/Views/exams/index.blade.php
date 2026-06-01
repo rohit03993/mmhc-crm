@@ -11,10 +11,8 @@
             <p class="small text-muted mb-0">
                 @if($viewerRole === 'student')
                     Published assessments for your cohort (upcoming, open, and ended). You can start an attempt only while the time window is open.
-                @elseif(in_array($viewerRole, ['super_admin', 'admin'], true))
-                    All institutions — create, publish, and view results.
                 @else
-                    Exams for your college scope. CRM admins see every exam.
+                    Exams for your college scope — create, publish, and view results.
                 @endif
             </p>
         </div>
@@ -136,7 +134,7 @@
                                             ? $c->name
                                             : (\Illuminate\Support\Str::of((string) ($c->email ?? ''))->trim()->isNotEmpty() ? $c->email : 'User #'.$c->id);
                                     @endphp
-                                    @if(in_array($viewerRole, ['super_admin', 'admin', 'institution_admin', 'faculty'], true))
+                                    @if(in_array($viewerRole, ['institution_admin', 'faculty'], true))
                                         <a href="{{ route('academics.people.show', $exam->creator) }}" class="text-dark text-decoration-none">{{ $creatorLabel }}</a>
                                     @else
                                         {{-- Students cannot open academics people profiles; show name only. --}}
@@ -146,7 +144,7 @@
                                         <span class="badge bg-light text-dark border ms-1" style="font-size:0.65rem;">Faculty</span>
                                     @elseif($exam->creator->role === 'institution_admin')
                                         <span class="badge bg-light text-dark border ms-1" style="font-size:0.65rem;">Admin</span>
-                                    @elseif(in_array($exam->creator->role, ['super_admin', 'admin'], true))
+                                    @elseif($exam->creator->role === 'admin')
                                         <span class="badge bg-light text-dark border ms-1" style="font-size:0.65rem;">Platform</span>
                                     @endif
                                     @if($viewerRole !== 'student' && \Illuminate\Support\Str::of((string) ($exam->creator->name ?? ''))->trim()->isNotEmpty() && \Illuminate\Support\Str::of((string) ($exam->creator->email ?? ''))->trim()->isNotEmpty())
@@ -167,10 +165,7 @@
                             </td>
                             <td class="pe-3 text-nowrap">
                                 <a href="{{ route('academics.exams.show', $exam) }}" class="btn btn-sm btn-outline-primary rounded-pill">Open</a>
-                                @if(in_array($viewerRole, ['super_admin', 'admin'], true))
-                                    <a href="{{ route('academics.exams.edit', $exam) }}" class="btn btn-sm btn-outline-secondary rounded-pill">Edit</a>
-                                    <a href="{{ route('academics.exams.attempts', $exam) }}" class="btn btn-sm btn-outline-success rounded-pill">Results</a>
-                                @elseif(in_array($viewerRole, ['institution_admin', 'faculty'], true))
+                                @if(in_array($viewerRole, ['institution_admin', 'faculty'], true))
                                     @if(app(\App\Modules\Academics\Services\ExamAccessService::class)->canManage(auth()->user(), $exam))
                                         <a href="{{ route('academics.exams.edit', $exam) }}" class="btn btn-sm btn-outline-secondary rounded-pill">Edit</a>
                                         <a href="{{ route('academics.exams.attempts', $exam) }}" class="btn btn-sm btn-outline-success rounded-pill">Results</a>

@@ -330,7 +330,6 @@
                                     <option value="patient" @selected(old('role') === 'patient')>Patient</option>
                                 </optgroup>
                                 <optgroup label="Academics">
-                                    <option value="super_admin" @selected(old('role') === 'super_admin')>Academic admin (all institutions)</option>
                                     <option value="institution_admin" @selected(old('role') === 'institution_admin')>Institution admin</option>
                                     <option value="faculty" @selected(old('role') === 'faculty')>Faculty</option>
                                     <option value="student" @selected(old('role') === 'student')>Student</option>
@@ -670,7 +669,6 @@ function editUser(userId) {
                                     <option value="patient" ${user.role === 'patient' ? 'selected' : ''}>Patient</option>
                                 </optgroup>
                                 <optgroup label="Academics">
-                                    <option value="super_admin" ${user.role === 'super_admin' ? 'selected' : ''}>Academic admin</option>
                                     <option value="institution_admin" ${user.role === 'institution_admin' ? 'selected' : ''}>Institution admin</option>
                                     <option value="faculty" ${user.role === 'faculty' ? 'selected' : ''}>Faculty</option>
                                     <option value="student" ${user.role === 'student' ? 'selected' : ''}>Student</option>

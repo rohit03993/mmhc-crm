@@ -1,6 +1,6 @@
 @php
     $roleBadge = match ($user->role) {
-        'admin', 'super_admin' => 'danger',
+        'admin' => 'danger',
         'nurse' => 'info',
         'caregiver', 'faculty' => 'primary',
         'patient' => 'success',

@@ -12,6 +12,7 @@ use App\Modules\Academics\Models\Submission;
 use App\Modules\Academics\Services\AcademicScoreService;
 use App\Modules\Academics\Services\EnrollmentService;
 use App\Modules\Academics\Services\MentorshipService;
+use App\Modules\Academics\Support\AcademicsAccess;
 use App\Modules\Profiles\Models\Document;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -86,7 +87,7 @@ class AcademicsDashboardController extends Controller
                 $icr = AcademicScoreService::getIcr($institution);
                 $institutionStudentsCount = $this->institutionStudentsCount($institution->id);
             }
-        } elseif (in_array($user->role, ['super_admin', 'admin'], true)) {
+        } elseif (AcademicsAccess::isPlatformProvisioner($user)) {
             $totalStudentsCount = $this->totalStudentsCount();
             $institutionRows = $this->institutionRowsWithStatsForDashboard();
             $instPage = max(1, (int) request()->get('inst_page', 1));
@@ -108,7 +109,7 @@ class AcademicsDashboardController extends Controller
 
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             $enrollmentPendingCount = app(EnrollmentService::class)->pendingCountForInstitution((int) $user->academic_institution_id);
-        } elseif (in_array($user->role, ['super_admin', 'admin'], true)) {
+        } elseif (AcademicsAccess::isPlatformProvisioner($user)) {
             $enrollmentPendingCount = \App\Modules\Academics\Models\EnrollmentApplication::query()
                 ->where('status', 'pending')
                 ->count();
@@ -155,7 +156,7 @@ class AcademicsDashboardController extends Controller
      */
     protected function dashboardInsights(User $user): array
     {
-        $showDocumentsPanel = ! in_array($user->role, ['super_admin', 'admin'], true);
+        $showDocumentsPanel = ! AcademicsAccess::isPlatformProvisioner($user);
 
         $out = [
             'show_documents_panel' => $showDocumentsPanel,

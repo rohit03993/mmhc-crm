@@ -16,9 +16,6 @@ class SubjectController extends Controller
     {
         $user = auth()->user();
         $q = Batch::with('institution')->active()->orderBy('name');
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            return $q;
-        }
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             return $q->forInstitution((int) $user->academic_institution_id);
         }
@@ -34,7 +31,6 @@ class SubjectController extends Controller
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             $query->whereHas('batch', fn ($q) => $q->where('institution_id', $user->academic_institution_id));
         }
-        // super_admin / admin: no institution filter — full catalogue
         if ($batchId) {
             $query->where('batch_id', $batchId);
         }
@@ -136,9 +132,6 @@ class SubjectController extends Controller
     {
         $batch = Batch::findOrFail($batchId);
         $user = auth()->user();
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
-            return;
-        }
         if ($user->role === 'institution_admin' && (int) $user->academic_institution_id !== (int) $batch->institution_id) {
             abort(403, 'You can only manage subjects of your institution.');
         }

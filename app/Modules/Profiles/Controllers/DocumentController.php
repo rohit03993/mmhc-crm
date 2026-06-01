@@ -131,7 +131,7 @@ class DocumentController extends Controller
     {
         // Check if user owns this document
         if ((int) $document->user_id !== (int) Auth::id()
-            && ! in_array(Auth::user()->role, ['admin', 'super_admin'], true)) {
+            && Auth::user()->role !== 'admin') {
             abort(403, 'Unauthorized access to document');
         }
 
@@ -200,7 +200,7 @@ class DocumentController extends Controller
         if ((int) $document->user_id === (int) $auth->id) {
             return;
         }
-        if (in_array($auth->role, ['admin', 'super_admin'], true)) {
+        if ($auth->role === 'admin') {
             return;
         }
 

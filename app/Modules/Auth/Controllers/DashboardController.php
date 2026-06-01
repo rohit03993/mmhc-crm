@@ -497,7 +497,7 @@ class DashboardController extends Controller
             $totalStudents = (int) ($usersByRole['student'] ?? 0);
             $totalFaculty = (int) ($usersByRole['faculty'] ?? 0);
             $totalInstitutionAdmins = (int) ($usersByRole['institution_admin'] ?? 0);
-            $totalPlatformAdmins = (int) (($usersByRole['admin'] ?? 0) + ($usersByRole['super_admin'] ?? 0));
+            $totalPlatformAdmins = (int) ($usersByRole['admin'] ?? 0);
             $totalStaff = $totalNurses + $totalCaregivers;
             $healthcareUsers = $totalStaff + $totalPatients;
             $academicUsers = $totalStudents + $totalFaculty + $totalInstitutionAdmins;

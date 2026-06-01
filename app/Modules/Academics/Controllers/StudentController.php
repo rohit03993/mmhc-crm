@@ -18,7 +18,7 @@ class StudentController extends Controller
     protected function assertCanManageStudents(): User
     {
         $user = auth()->user();
-        if (! in_array($user->role, ['institution_admin', 'super_admin', 'admin'], true)) {
+        if ($user->role !== 'institution_admin') {
             abort(403, 'You cannot manage students.');
         }
 
@@ -35,14 +35,10 @@ class StudentController extends Controller
 
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
             $query->where('academic_institution_id', $user->academic_institution_id);
-        } elseif (in_array($user->role, ['super_admin', 'admin'], true) && $request->filled('institution_id')) {
-            $query->where('academic_institution_id', (int) $request->get('institution_id'));
         }
 
         $students = $query->orderBy('name')->paginate(15)->withQueryString();
-        $institutions = in_array($user->role, ['super_admin', 'admin'], true)
-            ? Institution::query()->active()->orderBy('name')->get()
-            : collect();
+        $institutions = collect();
 
         return view('academics::students.index', compact('students', 'institutions'));
     }
@@ -50,9 +46,7 @@ class StudentController extends Controller
     public function create(Request $request)
     {
         $user = $this->assertCanManageStudents();
-        $institutions = in_array($user->role, ['super_admin', 'admin'], true)
-            ? Institution::query()->active()->orderBy('name')->get()
-            : collect();
+        $institutions = collect();
 
         $institutionId = $user->role === 'institution_admin'
             ? (int) $user->academic_institution_id

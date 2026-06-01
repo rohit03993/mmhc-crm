@@ -1,5 +1,5 @@
 @php
-    $canManageAcademics = in_array(auth()->user()->role, ['super_admin', 'admin', 'institution_admin', 'faculty'], true);
+    $canManageAcademics = in_array(auth()->user()->role, ['institution_admin', 'faculty'], true);
     $canOpenAssignmentAdmin = in_array(auth()->user()->role, ['institution_admin', 'faculty'], true);
 @endphp
 

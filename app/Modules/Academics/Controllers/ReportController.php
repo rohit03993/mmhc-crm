@@ -13,6 +13,7 @@ use App\Modules\Academics\Models\Submission;
 use App\Modules\Academics\Models\Topic;
 use App\Modules\Academics\Services\AcademicScoreService;
 use App\Modules\Academics\Services\StudentAcademicReportDataService;
+use App\Modules\Academics\Support\AcademicsAccess;
 use App\Modules\Academics\Support\AcademicsTaxonomy;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -52,6 +53,8 @@ class ReportController extends Controller
             if (! $allowed) {
                 abort(403, 'You can only view students in your batches.');
             }
+        } elseif (! AcademicsAccess::isPlatformProvisioner($currentUser)) {
+            abort(403);
         }
 
         return view(
@@ -66,7 +69,7 @@ class ReportController extends Controller
         $institutions = collect();
         $batches = collect();
         $subjects = collect();
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
+        if (AcademicsAccess::isPlatformProvisioner($user)) {
             $institutions = Institution::orderBy('name')->get();
             $batches = Batch::with('institution')->orderBy('name')->get();
             $subjects = Subject::with('batch.institution')->orderBy('name')->get();
@@ -184,7 +187,7 @@ class ReportController extends Controller
     /** Institutions to show in Student Submission report filter (scoped by role). */
     protected function reportFilterInstitutions($user): \Illuminate\Support\Collection
     {
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
+        if (AcademicsAccess::isPlatformProvisioner($user)) {
             return Institution::orderBy('name')->get();
         }
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {
@@ -205,7 +208,7 @@ class ReportController extends Controller
     /** Batches to show in Student Submission report filter (scoped by role). */
     protected function reportFilterBatches($user): \Illuminate\Support\Collection
     {
-        if (in_array($user->role, ['super_admin', 'admin'], true)) {
+        if (AcademicsAccess::isPlatformProvisioner($user)) {
             return Batch::with('institution')->orderBy('name')->get();
         }
         if ($user->role === 'institution_admin' && $user->academic_institution_id) {

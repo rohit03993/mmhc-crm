@@ -8,18 +8,7 @@
         @method('PUT')
     @endif
 
-    @if(in_array($user->role, ['super_admin', 'admin'], true))
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Institution <span class="text-danger">*</span></label>
-            <select name="institution_id" class="form-select" required>
-                @foreach($institutions as $inst)
-                    <option value="{{ $inst->id }}" @selected((int) old('institution_id', $exam?->institution_id) === (int) $inst->id)>{{ $inst->name }}</option>
-                @endforeach
-            </select>
-        </div>
-    @else
-        <input type="hidden" name="institution_id" value="{{ $user->academic_institution_id }}">
-    @endif
+    <input type="hidden" name="institution_id" value="{{ old('institution_id', $exam?->institution_id ?? $user->academic_institution_id) }}">
 
     <div class="mb-3">
         <label class="form-label fw-semibold">Audience <span class="text-danger">*</span></label>

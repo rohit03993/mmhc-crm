@@ -8,7 +8,7 @@
     <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb mb-0 small">
             <li class="breadcrumb-item"><a href="{{ route('academics.dashboard') }}">Academics</a></li>
-            @if(in_array(auth()->user()->role, ['super_admin', 'admin'], true))
+            @if(auth()->user()->role === 'admin')
                 <li class="breadcrumb-item"><a href="{{ route('academics.institutions.index') }}">Institutions</a></li>
             @endif
             <li class="breadcrumb-item active" aria-current="page">{{ $institution->name }}</li>
@@ -26,8 +26,8 @@
             <a href="{{ route('academics.reports.show', ['type' => 'student_submission', 'institution_id' => $institution->id]) }}" class="btn btn-primary btn-sm rounded-pill">
                 <i class="fas fa-user-graduate me-1"></i>Student report
             </a>
-            @if(in_array(auth()->user()->role, ['super_admin', 'admin'], true))
-                <a href="{{ route('academics.institutions.edit', $institution) }}" class="btn btn-outline-secondary btn-sm rounded-pill">Edit</a>
+            @if(auth()->user()->role === 'admin')
+                <span class="badge bg-light text-muted border align-self-center">Read-only overview</span>
             @endif
             @if(auth()->user()->role === 'institution_admin')
                 <a href="{{ route('academics.batches.index') }}" class="btn btn-outline-primary btn-sm rounded-pill">Batches</a>
@@ -125,8 +125,8 @@
                     <h2 class="h6 mb-0 fw-bold">People</h2>
                     <p class="small text-muted mb-0">Students &amp; faculty — open for academic record.</p>
                 </div>
-                @if(in_array(auth()->user()->role, ['super_admin', 'admin'], true))
-                    <a href="{{ route('admin.users', ['segment' => 'academics']) }}" class="btn btn-sm btn-outline-secondary rounded-pill">User management</a>
+                @if(auth()->user()->role === 'admin')
+                    <a href="{{ route('admin.users', ['segment' => 'academics']) }}" class="btn btn-sm btn-outline-secondary rounded-pill">Institute admins</a>
                 @endif
             </div>
             @if($peoplePaginator->total() === 0)

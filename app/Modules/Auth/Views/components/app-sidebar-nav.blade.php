@@ -10,56 +10,6 @@
             Academics overview
         </a>
     </li>
-    @if(auth()->user()->role === 'super_admin')
-    <li class="nav-item">
-        <a class="nav-link text-white {{ request()->routeIs('academics.institutions.*') ? 'active' : '' }}" href="{{ route('academics.institutions.index') }}">
-            <i class="fas fa-university me-2"></i>
-            Institutions
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-white {{ request()->routeIs('academics.batches.*') ? 'active' : '' }}" href="{{ route('academics.batches.index') }}">
-            <i class="fas fa-layer-group me-2"></i>
-            Batches
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-white {{ request()->routeIs('academics.subjects.*') ? 'active' : '' }}" href="{{ route('academics.subjects.index') }}">
-            <i class="fas fa-book me-2"></i>
-            Subjects
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-white {{ request()->routeIs('academics.faculty.*') ? 'active' : '' }}" href="{{ route('academics.faculty.index') }}">
-            <i class="fas fa-chalkboard-teacher me-2"></i>
-            Faculty
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-white {{ request()->routeIs('academics.assignments.*') ? 'active' : '' }}" href="{{ route('academics.assignments.index') }}">
-            <i class="fas fa-tasks me-2"></i>
-            Assignments
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-white {{ request()->routeIs('academics.reports.*') ? 'active' : '' }}" href="{{ route('academics.reports.index') }}">
-            <i class="fas fa-chart-bar me-2"></i>
-            Reports
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-white {{ request()->routeIs('academics.exams.*') ? 'active' : '' }}" href="{{ route('academics.exams.index') }}">
-            <i class="fas fa-question-circle me-2"></i>
-            Quizzes &amp; exams
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-white {{ request()->routeIs('academics.topics.*') ? 'active' : '' }}" href="{{ route('academics.topics.index') }}">
-            <i class="fas fa-list-ul me-2"></i>
-            Topics
-        </a>
-    </li>
-    @endif
     @if(auth()->user()->role === 'institution_admin')
     <li class="nav-item">
         <a class="nav-link text-white {{ request()->routeIs('academics.enrollments.*') ? 'active' : '' }}" href="{{ route('academics.enrollments.index') }}">
@@ -353,45 +303,9 @@
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-white {{ request()->routeIs('academics.batches.*') ? 'active' : '' }}" href="{{ route('academics.batches.index') }}">
-                <i class="fas fa-layer-group me-2"></i>
-                Batches
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-white {{ request()->routeIs('academics.subjects.*') ? 'active' : '' }}" href="{{ route('academics.subjects.index') }}">
-                <i class="fas fa-book me-2"></i>
-                Subjects
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-white {{ request()->routeIs('academics.faculty.*') ? 'active' : '' }}" href="{{ route('academics.faculty.index') }}">
-                <i class="fas fa-chalkboard-teacher me-2"></i>
-                Faculty
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-white {{ request()->routeIs('academics.assignments.*') ? 'active' : '' }}" href="{{ route('academics.assignments.index') }}">
-                <i class="fas fa-tasks me-2"></i>
-                Assignments
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-white {{ request()->routeIs('academics.reports.*') ? 'active' : '' }}" href="{{ route('academics.reports.index') }}">
-                <i class="fas fa-chart-bar me-2"></i>
-                Academic reports
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-white {{ request()->routeIs('academics.exams.*') ? 'active' : '' }}" href="{{ route('academics.exams.index') }}">
-                <i class="fas fa-question-circle me-2"></i>
-                Quizzes &amp; exams
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-white {{ request()->routeIs('academics.topics.*') ? 'active' : '' }}" href="{{ route('academics.topics.index') }}">
-                <i class="fas fa-list-ul me-2"></i>
-                Topics
+            <a class="nav-link text-white {{ request()->routeIs('admin.users') && request('segment') === 'academics' ? 'active' : '' }}" href="{{ route('admin.users', ['segment' => 'academics']) }}">
+                <i class="fas fa-user-shield me-2"></i>
+                Institute admins
             </a>
         </li>
         <li class="nav-item mt-2">
