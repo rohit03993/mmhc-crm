@@ -154,7 +154,7 @@
             <p class="academics-dash-hero__lede">Provision colleges and institute admins. Open any college below for a read-only overview (no batch or curriculum edits).</p>
             <div class="academics-quick-links">
                 <a href="{{ route('academics.institutions.index') }}" class="btn btn-primary btn-sm"><i class="fas fa-university me-1"></i>Institutes &amp; codes</a>
-                <a href="{{ route('admin.users', ['segment' => 'academics']) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-shield me-1"></i>Institute admins</a>
+                <a href="{{ route('admin.users', ['segment' => 'institute_admins']) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-shield me-1"></i>Institute admins</a>
                 <a href="{{ route('academics.reports.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-alt me-1"></i>Reports (read-only)</a>
                 <a href="{{ route('community.index') }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-comments me-1"></i>Community</a>
             </div>

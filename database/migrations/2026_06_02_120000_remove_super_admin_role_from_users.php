@@ -17,11 +17,14 @@ return new class extends Migration
             return;
         }
 
-        if (DB::table('users')->where('role', 'super_admin')->exists()) {
+        if (DB::table('users')->where('role', 'super_admin')->whereNull('deleted_at')->exists()) {
             throw new \RuntimeException(
-                'Users with role super_admin still exist. Run: php artisan academics:purge-super-admin-users'
+                'Active users with role super_admin still exist. Run: php artisan academics:purge-super-admin-users'
             );
         }
+
+        // Soft-deleted rows still hold the enum value and block ALTER TABLE.
+        DB::table('users')->where('role', 'super_admin')->delete();
 
         Schema::table('users', function (Blueprint $table) {
             $table->enum('role', [

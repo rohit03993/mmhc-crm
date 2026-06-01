@@ -303,7 +303,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-white {{ request()->routeIs('admin.users') && request('segment') === 'academics' ? 'active' : '' }}" href="{{ route('admin.users', ['segment' => 'academics']) }}">
+            <a class="nav-link text-white {{ request()->routeIs('admin.users') && request('segment') === 'institute_admins' ? 'active' : '' }}" href="{{ route('admin.users', ['segment' => 'institute_admins']) }}">
                 <i class="fas fa-user-shield me-2"></i>
                 Institute admins
             </a>

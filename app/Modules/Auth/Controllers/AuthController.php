@@ -755,7 +755,7 @@ class AuthController extends Controller
     {
         $searchQuery = trim((string) $request->input('q', ''));
         $segment = (string) $request->query('segment', 'all');
-        if (! in_array($segment, ['all', 'academics', 'healthcare'], true)) {
+        if (! in_array($segment, ['all', 'academics', 'institute_admins', 'healthcare'], true)) {
             $segment = 'all';
         }
 
@@ -764,10 +764,12 @@ class AuthController extends Controller
         $users = User::query()
             ->with('profile')
             ->withCount('documents')
-            ->when($segment === 'academics', fn ($q) => $q->whereIn('role', User::academicRoleSlugs())->with([
+            ->when(in_array($segment, ['academics', 'institute_admins'], true), fn ($q) => $q->with([
                 'academicInstitution:id,name,code',
                 'academicBatches:id,name,institution_id',
             ]))
+            ->when($segment === 'academics', fn ($q) => $q->whereIn('role', User::academicRoleSlugs()))
+            ->when($segment === 'institute_admins', fn ($q) => $q->where('role', 'institution_admin'))
             ->when($segment === 'healthcare', fn ($q) => $q->whereNotIn('role', User::academicRoleSlugs()))
             ->when($searchQuery !== '', fn ($query) => $this->applyAdminUserSearch($query, $searchQuery))
             ->when($segment === 'academics', fn ($q) => $q->orderByRaw("CASE role WHEN 'institution_admin' THEN 0 WHEN 'faculty' THEN 1 WHEN 'student' THEN 2 ELSE 3 END"))
@@ -788,6 +790,7 @@ class AuthController extends Controller
             ->whereNotNull('phone')
             ->where('phone', '!=', '')
             ->when($segment === 'academics', fn ($q) => $q->whereIn('role', User::academicRoleSlugs()))
+            ->when($segment === 'institute_admins', fn ($q) => $q->where('role', 'institution_admin'))
             ->when($segment === 'healthcare', fn ($q) => $q->whereNotIn('role', User::academicRoleSlugs()));
 
         $unverifiedPhoneCount = (clone $unverifiedPhoneQuery)->count();

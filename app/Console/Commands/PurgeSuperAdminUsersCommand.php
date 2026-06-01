@@ -61,6 +61,10 @@ class PurgeSuperAdminUsersCommand extends Command
 
             try {
                 $deletionService->delete($target, $actor);
+                $target->refresh();
+                if ($target->trashed()) {
+                    $target->forceDelete();
+                }
                 $ok++;
                 $this->line("Deleted #{$target->id} ({$target->unique_id})");
             } catch (\Throwable $e) {

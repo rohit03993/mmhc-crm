@@ -54,6 +54,7 @@
                     $segmentLabels = [
                         'all' => 'All users',
                         'academics' => 'Academic users',
+                        'institute_admins' => 'Institute admins',
                         'healthcare' => 'Healthcare & operations',
                     ];
                     $listTitle = $segmentLabels[$segment] ?? 'All users';
@@ -66,7 +67,15 @@
                                 {{ $listTitle }}
                             </h5>
                             @if($segment !== 'all')
-                                <p class="text-muted small mb-0">{{ $segment === 'academics' ? 'College roles only. Academic admin is listed first and is protected from bulk delete (same as CRM admin).' : 'Showing admin, nurses, caregivers, and patients.' }}</p>
+                                <p class="text-muted small mb-0">
+                                    @if($segment === 'institute_admins')
+                                        One login per college — assign each admin to their institution.
+                                    @elseif($segment === 'academics')
+                                        All college roles: institute admins, faculty, and students.
+                                    @else
+                                        Showing admin, nurses, caregivers, and patients.
+                                    @endif
+                                </p>
                             @endif
                             <p class="text-muted small mb-0 mt-1 um-list-meta">
                                 <strong>{{ number_format($users->total()) }}</strong> {{ $users->total() === 1 ? 'user' : 'users' }} total
@@ -125,7 +134,8 @@
                                 <label class="visually-hidden" for="umUserSegment">User segment</label>
                                 <select name="segment" id="umUserSegment" class="form-select form-select-sm um-segment-select" aria-label="Filter by user segment" onchange="this.form.submit()">
                                     <option value="all" @selected($segment === 'all')>Everyone</option>
-                                    <option value="academics" @selected($segment === 'academics')>Academics only</option>
+                                    <option value="academics" @selected($segment === 'academics')>All academics</option>
+                                    <option value="institute_admins" @selected($segment === 'institute_admins')>Institute admins only</option>
                                     <option value="healthcare" @selected($segment === 'healthcare')>Healthcare &amp; ops</option>
                                 </select>
                                 <label class="visually-hidden" for="umPerPage">Users per page</label>
@@ -145,7 +155,7 @@
                 </div>
             </div>
             @php
-                $showInstitutionColumn = ($segment ?? 'all') === 'academics';
+                $showInstitutionColumn = in_array($segment ?? 'all', ['academics', 'institute_admins'], true);
                 $tableColCount = ($showInstitutionColumn ? 6 : 5) + 1;
             @endphp
             <div class="card-body p-0">
@@ -330,7 +340,7 @@
                                     <option value="patient" @selected(old('role') === 'patient')>Patient</option>
                                 </optgroup>
                                 <optgroup label="Academics">
-                                    <option value="institution_admin" @selected(old('role') === 'institution_admin')>Institution admin</option>
+                                    <option value="institution_admin" @selected(old('role', ($segment ?? 'all') === 'institute_admins' ? 'institution_admin' : '') === 'institution_admin')>Institution admin</option>
                                     <option value="faculty" @selected(old('role') === 'faculty')>Faculty</option>
                                     <option value="student" @selected(old('role') === 'student')>Student</option>
                                 </optgroup>

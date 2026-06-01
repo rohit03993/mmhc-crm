@@ -126,7 +126,7 @@
                     <p class="small text-muted mb-0">Students &amp; faculty — open for academic record.</p>
                 </div>
                 @if(auth()->user()->role === 'admin')
-                    <a href="{{ route('admin.users', ['segment' => 'academics']) }}" class="btn btn-sm btn-outline-secondary rounded-pill">Institute admins</a>
+                    <a href="{{ route('admin.users', ['segment' => 'institute_admins']) }}" class="btn btn-sm btn-outline-secondary rounded-pill">Institute admins</a>
                 @endif
             </div>
             @if($peoplePaginator->total() === 0)
