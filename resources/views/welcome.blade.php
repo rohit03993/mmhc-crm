@@ -1177,7 +1177,7 @@
                     © {{ date('Y') }} Med Miracle Health Care (MMHC). All rights reserved. | Founded by Mantu Kumar
                 </div>
                 <div class="flex space-x-6 text-sm">
-                    <a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a>
+                    <a href="{{ route('legal.privacy') }}" class="text-gray-400 hover:text-white transition">Privacy Policy</a>
                     <a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a>
                     <a href="#" class="text-gray-400 hover:text-white transition">Cookie Policy</a>
                 </div>

@@ -55,6 +55,10 @@ Route::get('/landing', function () use ($buildLandingData) {
     return view('welcome', $buildLandingData());
 })->name('landing');
 
+Route::get('/privacy-policy', function () {
+    return view('legal.privacy-policy');
+})->name('legal.privacy');
+
 Route::post('/webhooks/razorpay', [\App\Modules\Plans\Controllers\SubscriptionController::class, 'razorpayWebhook'])
     ->name('webhooks.razorpay');
 
