@@ -5,7 +5,7 @@ namespace App\Modules\Auth\Services;
 use App\Models\Core\User;
 
 /**
- * Send SMS OTP to confirm the mobile number on a user account.
+ * Send OTP to confirm the mobile number on a user account (WhatsApp or SMS per config).
  */
 class PhoneVerificationService
 {
@@ -45,7 +45,7 @@ class PhoneVerificationService
         ) {
             return [
                 'success' => true,
-                'message' => 'OTP already sent. Check your SMS or wait for it to expire to resend.',
+                'message' => 'OTP already sent. Check '.$this->smsOtpService->deliveryChannelLabel().' or wait for it to expire to resend.',
                 'sent_to' => (string) ($user->contact_update_otp_sent_to ?? ''),
             ];
         }
@@ -74,7 +74,7 @@ class PhoneVerificationService
         ])->save();
 
         $otp = (string) random_int(100000, 999999);
-        $send = $this->smsOtpService->sendCustomOtp($normalizedPhone, $otp);
+        $send = $this->smsOtpService->sendCustomOtp($normalizedPhone, $otp, $user->name);
         if (! ($send['success'] ?? false)) {
             return ['success' => false, 'message' => $send['message'] ?? 'Could not send OTP to mobile.'];
         }
@@ -91,7 +91,7 @@ class PhoneVerificationService
             'contact_update_otp_sent_at' => now(),
         ])->save();
 
-        return ['success' => true, 'message' => 'OTP sent by SMS.', 'sent_to' => $sentTo];
+        return ['success' => true, 'message' => 'OTP sent via '.$this->smsOtpService->deliveryChannelLabel().'.', 'sent_to' => $sentTo];
     }
 
     /**

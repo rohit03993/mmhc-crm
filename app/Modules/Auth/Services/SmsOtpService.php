@@ -3,11 +3,9 @@
 namespace App\Modules\Auth\Services;
 
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
 /**
- * Phone OTP: send via Sent.dm SMS templates; verify using cache + HMAC (login),
- * or send-only for flows that store OTP hashes on domain rows (referrals, rewards, etc.).
+ * Phone OTP: deliver via WhatsApp (Pal Digital) or SMS (Sent.dm); verify in-app with HMAC.
  */
 class SmsOtpService
 {
@@ -17,33 +15,47 @@ class SmsOtpService
 
     public const CACHE_PREFIX = 'phone_otp:v1:';
 
-    public const RATE_PREFIX = 'sms_otp_rate:v1:';
+    public const RATE_PREFIX = 'otp_delivery_rate:v1:';
 
     public function __construct(
-        private SentDmSmsService $sentDm
+        private PhoneNormalizer $phone,
+        private PalDigitalWhatsAppService $palDigital,
+        private SentDmSmsService $sentDm,
     ) {}
 
     public function isConfigured(): bool
     {
-        return $this->sentDm->isConfigured();
+        return $this->usesWhatsApp()
+            ? $this->palDigital->isConfigured()
+            : $this->sentDm->isConfigured();
+    }
+
+    public function usesWhatsApp(): bool
+    {
+        return config('services.otp_delivery.channel', 'whatsapp') === 'whatsapp';
+    }
+
+    public function deliveryChannelLabel(): string
+    {
+        return $this->usesWhatsApp() ? 'WhatsApp' : 'SMS';
     }
 
     /**
-     * Generate OTP, store HMAC in cache, send SMS via Sent.dm template.
-     *
      * @return array{success: bool, message: string|null}
      */
-    public function sendOtp(string $phoneForCache): array
+    public function sendOtp(string $phoneForCache, ?string $contactName = null): array
     {
-        $e164 = $this->sentDm->normalizeToE164($phoneForCache);
+        $e164 = $this->phone->toE164($phoneForCache);
         if ($e164 === null) {
-            return ['success' => false, 'message' => 'Invalid phone number for SMS.'];
+            return ['success' => false, 'message' => 'Invalid phone number.'];
         }
 
         if (! $this->isConfigured()) {
             return [
                 'success' => false,
-                'message' => 'Phone sign-in is not configured. Set SENT_DM_API_KEY and SENT_DM_TEMPLATE_ID (and SENT_DM_OTP_PARAMETER_NAME to match your template).',
+                'message' => $this->usesWhatsApp()
+                    ? 'Phone sign-in is not configured. Set PAL_DIGITAL_INTEGRATION_KEY and PAL_DIGITAL_CAMPAIGN_ID in .env.'
+                    : 'Phone sign-in is not configured. Set SENT_DM_API_KEY and SENT_DM_TEMPLATE_ID.',
             ];
         }
 
@@ -60,24 +72,24 @@ class SmsOtpService
         Cache::put(self::CACHE_PREFIX.$e164, $digest, now()->addSeconds($ttl));
         Cache::put($rateKey, true, now()->addMinutes(self::RATE_LIMIT_MINUTES));
 
-        $paramName = (string) config('services.sent_dm.otp_parameter_name', 'code');
-        $send = $this->sentDm->sendTemplateSms($e164, [$paramName => $otp]);
+        $send = $this->deliverOtp($e164, $otp, $contactName);
         if (! ($send['success'] ?? false)) {
             Cache::forget(self::CACHE_PREFIX.$e164);
-            $message = $send['message'] ?? 'Could not send SMS. Please try again or use email login.';
+            $channel = strtolower($this->deliveryChannelLabel());
+            $message = $send['message'] ?? "Could not send the code via {$channel}. Please try again.";
 
             return ['success' => false, 'message' => $message];
         }
 
-        return ['success' => true, 'message' => 'A login code was sent to your mobile via SMS.'];
+        return [
+            'success' => true,
+            'message' => 'A login code was sent to your mobile via '.$this->deliveryChannelLabel().'.',
+        ];
     }
 
-    /**
-     * Verify login OTP for the given phone (same normalization as send).
-     */
     public function verifyOtp(string $phoneForCache, string $otp): bool
     {
-        $e164 = $this->sentDm->normalizeToE164($phoneForCache);
+        $e164 = $this->phone->toE164($phoneForCache);
         if ($e164 === null) {
             return false;
         }
@@ -102,11 +114,9 @@ class SmsOtpService
     }
 
     /**
-     * Send a caller-provided OTP via SMS (OTP stored elsewhere, e.g. DB hash).
-     *
      * @return array{success: bool, message: string|null}
      */
-    public function sendCustomOtp(string $destinationPhone, string $otp): array
+    public function sendCustomOtp(string $destinationPhone, string $otp, ?string $contactName = null): array
     {
         if (! preg_match('/^\d{6}$/', (string) $otp)) {
             return ['success' => false, 'message' => 'Invalid OTP format.'];
@@ -115,13 +125,27 @@ class SmsOtpService
         if (! $this->isConfigured()) {
             return [
                 'success' => false,
-                'message' => 'SMS is not configured. Set SENT_DM_API_KEY and SENT_DM_TEMPLATE_ID.',
+                'message' => $this->usesWhatsApp()
+                    ? 'WhatsApp is not configured. Set PAL_DIGITAL_INTEGRATION_KEY and PAL_DIGITAL_CAMPAIGN_ID.'
+                    : 'SMS is not configured. Set SENT_DM_API_KEY and SENT_DM_TEMPLATE_ID.',
             ];
         }
 
-        $e164 = $this->sentDm->normalizeToE164($destinationPhone);
+        $e164 = $this->phone->toE164($destinationPhone);
         if ($e164 === null) {
-            return ['success' => false, 'message' => 'Invalid destination phone for SMS.'];
+            return ['success' => false, 'message' => 'Invalid destination phone number.'];
+        }
+
+        return $this->deliverOtp($e164, $otp, $contactName);
+    }
+
+    /**
+     * @return array{success: bool, message: ?string}
+     */
+    private function deliverOtp(string $e164, string $otp, ?string $contactName): array
+    {
+        if ($this->usesWhatsApp()) {
+            return $this->palDigital->sendVerificationOtp($e164, $otp, $contactName);
         }
 
         $paramName = (string) config('services.sent_dm.otp_parameter_name', 'code');

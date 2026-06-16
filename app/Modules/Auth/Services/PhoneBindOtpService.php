@@ -15,12 +15,12 @@ class PhoneBindOtpService
     public const CACHE_PREFIX = 'phone_bind_otp:v1:';
 
     public function __construct(
-        private SentDmSmsService $sentDm
+        private PhoneNormalizer $phoneNormalizer,
     ) {}
 
     public function bindCacheKey(int $userId, string $destinationPhone): ?string
     {
-        $e164 = $this->sentDm->normalizeToE164($destinationPhone);
+        $e164 = $this->phoneNormalizer->toE164($destinationPhone);
         if ($e164 === null) {
             return null;
         }
@@ -40,7 +40,7 @@ class PhoneBindOtpService
 
         $ttl = max(60, (int) config('services.phone_otp.bind_ttl_seconds', 300));
         $pepper = (string) config('services.phone_otp.pepper', config('app.key'));
-        $e164 = $this->sentDm->normalizeToE164($destinationPhone);
+        $e164 = $this->phoneNormalizer->toE164($destinationPhone);
         if ($e164 === null) {
             return;
         }
@@ -63,7 +63,7 @@ class PhoneBindOtpService
             return false;
         }
 
-        $e164 = $this->sentDm->normalizeToE164($destinationPhone);
+        $e164 = $this->phoneNormalizer->toE164($destinationPhone);
         if ($e164 === null) {
             return false;
         }
@@ -95,7 +95,7 @@ class PhoneBindOtpService
             return null;
         }
 
-        $e164 = $this->sentDm->normalizeToE164($destinationPhone);
+        $e164 = $this->phoneNormalizer->toE164($destinationPhone);
         if ($e164 === null) {
             return null;
         }

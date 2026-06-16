@@ -492,7 +492,8 @@ class ProfileController extends Controller
     private function sendMobileContactUpdateOtp(string $normalizedPhone): array
     {
         $otp = (string) random_int(100000, 999999);
-        $send = app(\App\Modules\Auth\Services\SmsOtpService::class)->sendCustomOtp($normalizedPhone, $otp);
+        $userName = auth()->user()?->name;
+        $send = app(\App\Modules\Auth\Services\SmsOtpService::class)->sendCustomOtp($normalizedPhone, $otp, $userName);
         if (! ($send['success'] ?? false)) {
             return ['success' => false, 'message' => $send['message'] ?? 'Could not send OTP to mobile.'];
         }

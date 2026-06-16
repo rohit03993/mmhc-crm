@@ -84,7 +84,7 @@ class RewardService
         }
 
         $sms = app(SmsOtpService::class);
-        $send = $sms->sendCustomOtp($normalizedPhone, $otp);
+        $send = $sms->sendCustomOtp($normalizedPhone, $otp, $reward->patient_name);
         $localDevBypass = app()->environment('local') && ! ($send['success'] ?? false);
 
         if (! ($send['success'] ?? false) && ! $localDevBypass) {

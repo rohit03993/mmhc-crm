@@ -54,10 +54,31 @@ return [
     /*
     | Login OTP storage (HMAC in cache). Use Redis cache store in production.
     */
-    'phone_otp' => [
+        'phone_otp' => [
         'ttl_seconds' => (int) env('PHONE_LOGIN_OTP_TTL_SECONDS', 600),
         'bind_ttl_seconds' => (int) env('PHONE_BIND_OTP_TTL_SECONDS', 300),
         'pepper' => env('OTP_PEPPER', env('APP_KEY')),
+    ],
+
+    /*
+    | OTP delivery: whatsapp (Pal Digital) or sent_dm_sms (legacy SMS).
+    */
+    'otp_delivery' => [
+        'channel' => env('OTP_DELIVERY_CHANNEL', 'whatsapp'),
+    ],
+
+    /*
+    | Pal Digital — WhatsApp API (mmhc_verification_code2 authentication template).
+    | Campaign trigger: POST /api/v1/integrations/campaigns/{id}/trigger
+    */
+    'pal_digital' => [
+        'integration_key' => env('PAL_DIGITAL_INTEGRATION_KEY'),
+        'campaign_id' => env('PAL_DIGITAL_CAMPAIGN_ID'),
+        'base_url' => env('PAL_DIGITAL_BASE_URL', 'https://wa.paldigital.in'),
+        'default_contact_name' => env('PAL_DIGITAL_DEFAULT_CONTACT_NAME', 'MMHC User'),
+        'include_button_parameters' => filter_var(env('PAL_DIGITAL_INCLUDE_BUTTON_PARAMETERS', true), FILTER_VALIDATE_BOOLEAN),
+        'ca_bundle' => env('PAL_DIGITAL_CA_BUNDLE'),
+        'http_verify' => filter_var(env('PAL_DIGITAL_HTTP_VERIFY', true), FILTER_VALIDATE_BOOLEAN),
     ],
 
 ];

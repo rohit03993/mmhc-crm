@@ -226,7 +226,7 @@ class ReferralService
         if (! $normalizedPhone) {
             return false;
         }
-        $send = app(SmsOtpService::class)->sendCustomOtp($normalizedPhone, $otp);
+        $send = app(SmsOtpService::class)->sendCustomOtp($normalizedPhone, $otp, $referredStaff->name);
         if (! ($send['success'] ?? false)) {
             return false;
         }

@@ -16,7 +16,7 @@
 
                     <div class="alert alert-info py-2 small mb-3">
                         <i class="fas fa-mobile-alt me-1"></i>
-                        Registered with mobile only? Use <a href="{{ route('auth.login') }}#pane-phone" class="alert-link">Phone (SMS OTP)</a> on the sign-in page — no email needed.
+                        Registered with mobile only? Use <a href="{{ route('auth.login') }}#pane-phone" class="alert-link"><i class="fab fa-whatsapp me-1"></i>WhatsApp sign-in</a> on the login page — no email needed.
                     </div>
 
                     @if(session('status'))
@@ -39,7 +39,7 @@
                             @if($supportEmail)
                                 at <a href="mailto:{{ $supportEmail }}">{{ $supportEmail }}</a>
                             @endif
-                            or sign in with SMS OTP on your mobile.
+                            or sign in with WhatsApp OTP on your mobile.
                         </div>
                     @endif
 

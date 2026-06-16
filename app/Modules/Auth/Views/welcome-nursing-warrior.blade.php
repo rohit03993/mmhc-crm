@@ -59,7 +59,7 @@
                         </form>
                         <form method="POST" action="{{ route('staff.referrals.resend-otp') }}" class="mt-2">
                             @csrf
-                            <button type="submit" class="btn btn-sm btn-outline-secondary">Resend SMS OTP</button>
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Resend WhatsApp OTP</button>
                         </form>
                     </div>
                 @endif

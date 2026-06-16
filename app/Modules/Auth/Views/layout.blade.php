@@ -304,7 +304,7 @@
                                 <div>
                                     <div class="fw-semibold mb-1"><i class="fas fa-lock me-2"></i>Action required: verify your updated mobile</div>
                                     <div class="small">
-                                        You recently requested a mobile number change. Please complete SMS OTP verification first.
+                                        You recently requested a mobile number change. Please complete WhatsApp OTP verification first.
                                         Until this is done, other OTP tasks (referral/reward/service) are temporarily paused to avoid mismatch.
                                     </div>
                                 </div>
@@ -322,7 +322,7 @@
                                     <div class="fw-semibold mb-1"><i class="fas fa-mobile-alt me-2"></i>Verify your account mobile to unlock earnings</div>
                                     <div class="small mb-2">
                                         You have already earned the items below (patient reward OTP or referral OTP completed), but
-                                        <strong>payouts stay on hold</strong> until your account mobile is verified by SMS OTP in Profile.
+                                        <strong>payouts stay on hold</strong> until your account mobile is verified by WhatsApp OTP in Profile.
                                         Once verified, these amounts unlock for admin payout automatically.
                                     </div>
                                     <ul class="small mb-0 ps-3">
@@ -351,7 +351,7 @@
                             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap w-100">
                                 <div>
                                     <div class="fw-semibold mb-1"><i class="fas fa-mobile-alt me-2"></i>Mobile verification required</div>
-                                    <div class="small mb-0">Verify your account mobile with SMS OTP to use all MMHC app features (dashboard, academics, bookings, community, and more).</div>
+                                    <div class="small mb-0">Verify your account mobile with WhatsApp OTP to use all MMHC app features (dashboard, academics, bookings, community, and more).</div>
                                 </div>
                                 <a href="{{ route('profile.verify-phone') }}" class="btn btn-sm btn-outline-dark">Verify now</a>
                             </div>
@@ -383,7 +383,7 @@
                                     </form>
                                     <form method="POST" action="{{ route('staff.referrals.resend-otp') }}" class="d-inline">
                                         @csrf
-                                        <button type="submit" class="btn btn-sm btn-outline-dark">Resend SMS OTP</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-dark">Resend WhatsApp OTP</button>
                                     </form>
                                 </div>
                             </div>
@@ -411,7 +411,7 @@
                                     </form>
                                     <form method="POST" action="{{ route('rewards.send-otp-banner', $pendingRewardOtpBanner) }}" class="d-inline">
                                         @csrf
-                                        <button type="submit" class="btn btn-sm btn-outline-info">Resend SMS OTP</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-info">Resend WhatsApp OTP</button>
                                     </form>
                                 </div>
                             </div>
@@ -440,7 +440,7 @@
                                     </form>
                                     <form method="POST" action="{{ route('staff.service.completion-otp-banner', $pendingServiceCompletionBanner) }}" class="d-inline">
                                         @csrf
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">Send SMS OTP</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Send WhatsApp OTP</button>
                                     </form>
                                 </div>
                             </div>

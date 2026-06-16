@@ -1160,6 +1160,7 @@
         }
     }
 </style>
+@include('auth::partials.whatsapp-otp-styles')
 @endsection
 
 @section('content')
@@ -1216,7 +1217,7 @@
         <div class="academics-login-right-inner">
             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="academics-logo">
             <h1 class="academics-portal-title">Sign in</h1>
-            <p class="academics-portal-desc">Sign in with SMS OTP on your mobile (default). Existing members may use email and password on the second tab.</p>
+            <p class="academics-portal-desc">Sign in with your valid WhatsApp number and a one-time code (default). Email sign-in is available on the second tab for older accounts.</p>
             <div class="academics-form-wrap">
                 @include('auth::partials.login-form')
             </div>
@@ -1316,4 +1317,5 @@ if (document.getElementById('otp')) {
     document.getElementById('otp').focus();
 }
 </script>
+@include('auth::partials.whatsapp-otp-scripts')
 @endsection

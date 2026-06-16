@@ -1,0 +1,566 @@
+/**
+ * MMHC register — mobile app shell + optional stepped flow.
+ * Toggle via .register-shell--app on <html> (see auth-register-app.js).
+ */
+
+:root {
+    --reg-app-gradient: linear-gradient(165deg, #4f46e5 0%, #7c3aed 48%, #a855f7 100%);
+    --reg-app-sheet-radius: 22px;
+    --reg-app-dock-height: 4.75rem;
+}
+
+/* ── View toggle (top-right) ── */
+.register-view-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.35rem 0.55rem;
+    border-radius: 999px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.register-view-toggle i { font-size: 0.8rem; }
+.register-view-toggle:hover,
+.register-view-toggle:focus-visible {
+    border-color: #a5b4fc;
+    color: #4f46e5;
+    outline: none;
+}
+.register-shell--app .register-view-toggle {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #fff;
+}
+
+/* ── App top bar ── */
+.register-app-bar {
+    display: none;
+}
+html.register-shell--app .register-app-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: calc(0.55rem + env(safe-area-inset-top, 0px)) 0.85rem 0.65rem;
+    background: var(--reg-app-gradient);
+    color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+.register-app-bar__back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+.register-app-bar__title {
+    flex: 1;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+.register-app-bar__actions {
+    flex-shrink: 0;
+    min-width: 40px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* ── App shell layout ── */
+html.register-shell--app body.mmhc-auth-guest {
+    background: #eef2ff !important;
+    padding: 0 !important;
+}
+html.register-shell--app .register-page.container {
+    max-width: 100%;
+    padding: 0;
+}
+html.register-shell--app .register-page > .row {
+    margin: 0;
+    min-height: auto;
+    align-items: stretch !important;
+    padding: 0 !important;
+}
+html.register-shell--app .register-page .card.shadow-lg {
+    border-radius: 0;
+    box-shadow: none !important;
+    background: transparent;
+    min-height: calc(100dvh - env(safe-area-inset-bottom, 0px));
+}
+html.register-shell--app .register-page .card-body {
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+}
+html.register-shell--app .register-page-header {
+    display: none;
+}
+html.register-shell--app .register-app-hero {
+    display: block;
+    padding: 1rem 1rem 0.75rem;
+    text-align: center;
+    color: #fff;
+    background: var(--reg-app-gradient);
+}
+html.register-shell--app .register-app-hero .brand-logo {
+    max-height: 44px !important;
+    margin-bottom: 0.35rem;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
+}
+html.register-shell--app .register-app-hero__title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    margin: 0 0 0.2rem;
+    letter-spacing: -0.03em;
+}
+html.register-shell--app .register-app-hero__lead {
+    font-size: 0.78rem;
+    opacity: 0.92;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.register-app-hero { display: none; }
+
+html.register-shell--app .register-page-sheet {
+    flex: 1;
+    background: #fff;
+    border-radius: var(--reg-app-sheet-radius) var(--reg-app-sheet-radius) 0 0;
+    margin-top: -0.5rem;
+    padding: 1rem 0.85rem calc(var(--reg-app-dock-height) + env(safe-area-inset-bottom, 0px) + 1rem);
+    box-shadow: 0 -8px 32px rgba(15, 23, 42, 0.08);
+    position: relative;
+    z-index: 2;
+}
+
+/* ── Role tabs: 2×2 chip grid in app mode ── */
+html.register-shell--app #registrationTabs,
+html.register-shell--app .ac-reg-tabs.nav-pills {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+    overflow: visible !important;
+    flex-wrap: wrap !important;
+    padding: 0.35rem !important;
+    margin-bottom: 0.85rem !important;
+    background: #f1f5f9;
+    border-radius: 16px;
+}
+html.register-shell--app #registrationTabs .nav-item,
+html.register-shell--app .ac-reg-tabs .nav-item {
+    width: 100% !important;
+    flex: none !important;
+}
+html.register-shell--app #registrationTabs .nav-link,
+html.register-shell--app .ac-reg-tabs .nav-link {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0.65rem 0.4rem !important;
+    font-size: 0.72rem !important;
+    line-height: 1.2;
+    text-align: center;
+    border-radius: 12px !important;
+    transform: none !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+}
+html.register-shell--app #registrationTabs .nav-link i,
+html.register-shell--app .ac-reg-tabs .nav-link i {
+    font-size: 1rem !important;
+    margin: 0 !important;
+    display: block !important;
+}
+html.register-shell--app #registrationTabs .nav-link span.d-none,
+html.register-shell--app #registrationTabs .nav-link span.d-sm-block,
+html.register-shell--app #registrationTabs .nav-link span.d-block {
+    display: block !important;
+}
+html.register-shell--app #registrationTabs .nav-link span.d-sm-none {
+    display: none !important;
+}
+html.register-shell--app #registrationTabs .nav-link.register-tab-academics {
+    background: linear-gradient(165deg, rgba(14, 165, 233, 0.12) 0%, #fff 100%);
+}
+
+/* ── Form: single column, touch-friendly ── */
+html.register-shell--app .form-panel {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+html.register-shell--app .form-panel .row > [class*="col-lg-"] {
+    width: 100%;
+    max-width: 100%;
+    flex: 0 0 100%;
+}
+html.register-shell--app .form-label {
+    font-size: 0.75rem;
+    margin-bottom: 0.3rem;
+}
+html.register-shell--app .form-control,
+html.register-shell--app .form-select {
+    min-height: 48px;
+    font-size: 1rem;
+    border-radius: 12px !important;
+}
+html.register-shell--app .input-group-text {
+    min-width: 2.5rem;
+    padding: 0.5rem;
+    border-radius: 12px 0 0 12px !important;
+}
+html.register-shell--app .input-group .form-control,
+html.register-shell--app .input-group .form-select {
+    border-radius: 0 12px 12px 0 !important;
+}
+html.register-shell--app textarea.form-control {
+    min-height: 88px;
+    border-radius: 12px !important;
+    border-left: 2px solid #e2e8f0 !important;
+}
+html.register-shell--app .input-group textarea.form-control {
+    border-left: none !important;
+}
+
+/* ── Stepped flow (app mode only) ── */
+.register-form-steps__bar {
+    display: none;
+}
+html.register-shell--app .register-form-steps__bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+}
+.register-form-steps__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #cbd5e1;
+    transition: width 0.2s, background 0.2s;
+}
+.register-form-steps__dot.is-active {
+    width: 22px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+.register-form-steps__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-left: 0.35rem;
+}
+
+html.register-shell--app .register-form-steps .register-step {
+    display: none;
+}
+html.register-shell--app .register-form-steps .register-step.is-active {
+    display: block;
+    animation: regStepIn 0.25s ease;
+}
+@keyframes regStepIn {
+    from { opacity: 0; transform: translateX(8px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+html.register-shell--app .register-inline-submit {
+    display: none !important;
+}
+
+/* ── Fixed bottom dock ── */
+.register-app-dock {
+    display: none;
+}
+html.register-shell--app .register-app-dock {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    padding: 0.65rem 0.85rem;
+    padding-bottom: calc(0.65rem + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -8px 24px rgba(15, 23, 23, 0.08);
+}
+.register-app-dock__back {
+    flex: 0 0 auto;
+    min-height: 48px;
+    padding: 0 1rem;
+    border-radius: 14px;
+    border: 2px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+.register-app-dock__back:disabled {
+    opacity: 0.35;
+    pointer-events: none;
+}
+.register-app-dock__primary {
+    flex: 1;
+    min-height: 48px;
+    border: none;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+.register-app-dock__primary.btn-info {
+    background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+}
+.register-app-dock__primary.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+}
+
+html.register-shell--app .register-academics-card {
+    display: flex !important;
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+}
+html.register-shell--app .register-academics-card__cta {
+    width: auto;
+    padding-left: 0;
+    font-size: 0.72rem;
+}
+html.register-shell--app .register-signin-footer {
+    text-align: center;
+    font-size: 0.82rem;
+    margin-top: 0.5rem;
+    padding-bottom: 0.25rem;
+}
+
+html:not(.register-shell--app) .register-form-steps__bar,
+html:not(.register-shell--app) .register-app-bar,
+html:not(.register-shell--app) .register-app-hero {
+    display: none !important;
+}
+html:not(.register-shell--app) .register-page-sheet {
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+}
+html:not(.register-shell--app) .register-view-toggle--classic {
+    display: inline-flex !important;
+}
+html.register-shell--app .ac-reg-healthcare-card {
+    display: flex !important;
+    margin-top: 0.75rem;
+}
+html.register-shell--app .auth-reg-academics-shell .register-page.container,
+html.register-shell--app .auth-reg-academics-shell > .container {
+    max-width: 100%;
+    padding: 0;
+}
+html.register-shell--app .auth-reg-academics-shell .ac-reg-card {
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+}
+html.register-shell--app .auth-reg-academics-shell {
+    padding: 0;
+}
+.register-page #registrationTabs:not(.ac-reg-tabs) {
+    justify-content: center;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.45rem;
+}
+
+/* ── Web view: equal-size role tabs (incl. Academics) ── */
+html:not(.register-shell--app) .register-page #registrationTabs {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+    gap: 0.45rem;
+    padding: 0.4rem !important;
+    overflow: visible !important;
+    flex-wrap: unset !important;
+}
+html:not(.register-shell--app) .register-page #registrationTabs .nav-link::before {
+    display: none !important;
+}
+html:not(.register-shell--app) .register-page #registrationTabs .nav-link.active {
+    transform: none !important;
+}
+html:not(.register-shell--app) .register-page #registrationTabs .nav-item {
+    flex: none !important;
+    width: auto !important;
+    min-width: 0;
+    display: flex;
+}
+html:not(.register-shell--app) .register-page #registrationTabs .nav-link {
+    flex: 1;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 2.85rem;
+    padding: 0.55rem 0.5rem !important;
+    font-size: 0.78rem !important;
+    line-height: 1.25;
+    white-space: normal;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    border: 2px solid #e9ecef !important;
+    background: #fff !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+html:not(.register-shell--app) .register-page #registrationTabs .nav-link i {
+    font-size: 0.85rem !important;
+    margin: 0 !important;
+    flex-shrink: 0;
+}
+html:not(.register-shell--app) .register-page #registrationTabs .nav-link.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 14px rgba(102, 126, 234, 0.28) !important;
+}
+html:not(.register-shell--app) .register-page #registrationTabs .nav-link:not(.active):hover {
+    border-color: #667eea !important;
+    color: #667eea !important;
+    background: #fff !important;
+    transform: none !important;
+}
+html:not(.register-shell--app) .register-page #registrationTabs .nav-link.register-tab-academics {
+    color: #0369a1 !important;
+    border-color: #e9ecef !important;
+    background: #fff !important;
+}
+html:not(.register-shell--app) .register-page #registrationTabs .nav-link.register-tab-academics:hover,
+html:not(.register-shell--app) .register-page #registrationTabs .nav-link.register-tab-academics:focus-visible {
+    color: #0c4a6e !important;
+    border-color: #0ea5e9 !important;
+    background: #f0f9ff !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+html:not(.register-shell--app) .register-page #registrationTabs .nav-link.register-tab-academics i {
+    color: #0284c7;
+}
+
+html:not(.register-shell--app) .auth-reg-academics-shell .ac-reg-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+}
+html:not(.register-shell--app) .auth-reg-academics-shell .ac-reg-tabs .nav-link {
+    min-height: 2.85rem;
+    padding: 0.55rem 0.5rem !important;
+    font-size: 0.78rem !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transform: none !important;
+}
+html:not(.register-shell--app) .auth-reg-academics-shell .ac-reg-tabs .nav-link.register-tab-healthcare {
+    background: #fff !important;
+    border: 2px solid #e9ecef !important;
+    color: #5b21b6 !important;
+}
+
+@media (max-width: 991.98px) {
+    html:not(.register-shell--app) .register-page #registrationTabs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767.98px) {
+    .register-view-toggle,
+    .register-view-toggle--classic,
+    html.register-shell--app .register-app-bar__actions .register-view-toggle {
+        display: none !important;
+    }
+    html.register-shell--app .register-app-bar__actions {
+        min-width: 40px;
+    }
+}
+
+/* Web view polish */
+html:not(.register-shell--app) .register-page .form-panel {
+    padding: 1.25rem 1.35rem;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    border: 1px solid #eef2f7;
+}
+html:not(.register-shell--app) .register-page-header__lead {
+    font-size: 0.84rem;
+}
+html:not(.register-shell--app) .register-page .card-body {
+    padding: 1.75rem 2rem !important;
+}
+html:not(.register-shell--app) .register-academics-card {
+    margin-top: 1rem;
+    max-width: 100%;
+}
+
+@media (min-width: 768px) {
+    html.register-shell--app .register-page .card.shadow-lg {
+        max-width: 480px;
+        margin: 0 auto;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15) !important;
+        min-height: auto;
+    }
+    html.register-shell--app .register-app-bar {
+        border-radius: 24px 24px 0 0;
+    }
+    html.register-shell--app .register-page-sheet {
+        border-radius: 0 0 24px 24px;
+        margin-top: 0;
+        padding-bottom: 1.5rem;
+    }
+    html.register-shell--app .register-app-dock {
+        position: sticky;
+        border-radius: 0 0 20px 20px;
+        box-shadow: none;
+        border-top: 1px solid #e2e8f0;
+    }
+    html.register-shell--app body.mmhc-auth-guest {
+        padding: 1.5rem 0 !important;
+    }
+    html.register-shell--app .register-page.container {
+        padding: 0 1rem;
+    }
+}
+
+@media (min-width: 992px) {
+    html:not(.register-shell--app) .register-page .col-xl-10 {
+        max-width: 820px;
+    }
+}

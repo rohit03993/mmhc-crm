@@ -7,59 +7,213 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
+    <script>
+        (function () {
+            try {
+                var mobile = window.matchMedia('(max-width: 767.98px)').matches;
+                var appPref = localStorage.getItem('mmhc_register_view') === 'app';
+                if (mobile || appPref) {
+                    document.documentElement.classList.add('register-shell--app');
+                }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+    <link rel="stylesheet" href="{{ asset('css/auth-register-app.css') }}?v=20260532">
     <style>
-        .register-portal-academics {
-            border-color: rgba(14, 165, 233, 0.45) !important;
-            background: linear-gradient(165deg, rgba(14, 165, 233, 0.1) 0%, #ffffff 55%);
+        .register-page #registrationTabs .nav-link.register-tab-academics {
+            text-decoration: none;
+        }
+        .register-role-details {
+            margin-top: 0.85rem;
+            font-size: 0.82rem;
+            color: #64748b;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+        .register-role-details summary {
+            cursor: pointer;
+            padding: 0.55rem 0.75rem;
+            font-weight: 600;
+            color: #475569;
+            list-style: none;
+        }
+        .register-role-details summary::-webkit-details-marker { display: none; }
+        .register-role-details summary::after {
+            content: ' \25BC';
+            font-size: 0.65rem;
+            opacity: 0.6;
+        }
+        .register-role-details[open] summary::after { content: ' \25B2'; }
+        .register-role-details__body {
+            padding: 0 0.75rem 0.65rem;
+            line-height: 1.45;
+            margin: 0;
+        }
+        .register-academics-card {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            margin-top: 1.25rem;
+            padding: 0.9rem 1rem;
+            border-radius: 14px;
+            border: 1px solid rgba(14, 165, 233, 0.35);
+            background: linear-gradient(165deg, rgba(14, 165, 233, 0.09) 0%, #ffffff 60%);
+            text-decoration: none;
             color: inherit;
-            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
         }
-        .register-portal-academics:hover {
+        .register-academics-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(14, 165, 233, 0.25);
-            border-color: rgba(14, 165, 233, 0.75) !important;
+            border-color: rgba(14, 165, 233, 0.55);
+            box-shadow: 0 8px 22px rgba(14, 165, 233, 0.15);
+            color: inherit;
         }
-        .register-portal-academics:focus-visible {
-            outline: 3px solid rgba(14, 165, 233, 0.45);
-            outline-offset: 2px;
+        .register-academics-card__icon {
+            flex-shrink: 0;
+            width: 42px;
+            height: 42px;
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(99, 102, 241, 0.12) 100%);
+            color: #0369a1;
+            font-size: 1.05rem;
+        }
+        .register-academics-card__body { flex: 1; min-width: 0; }
+        .register-academics-card__eyebrow {
+            display: block;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+        .register-academics-card__title {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.25;
+        }
+        .register-academics-card__desc {
+            display: block;
+            font-size: 0.78rem;
+            color: #64748b;
+            line-height: 1.35;
+        }
+        .register-academics-card__cta {
+            flex-shrink: 0;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #0369a1;
+            white-space: nowrap;
+        }
+        .register-page-header__lead {
+            font-size: 0.88rem;
+            color: #64748b;
+            margin-bottom: 0;
+            max-width: 28rem;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        @media (max-width: 767.98px) {
+            .register-page .card-body {
+                padding: 1rem 0.85rem !important;
+            }
+            .register-page .register-portal-switch .col-12 {
+                padding-left: 0.35rem;
+                padding-right: 0.35rem;
+            }
+            .register-page #registrationTabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                flex-direction: row !important;
+                gap: 0.4rem;
+                padding: 0.4rem;
+            }
+            .register-page #registrationTabs::-webkit-scrollbar {
+                display: none;
+            }
+            .register-page #registrationTabs .nav-item {
+                flex: 0 0 auto;
+                width: auto;
+            }
+            .register-page #registrationTabs .nav-link {
+                width: auto;
+                min-width: 6.5rem;
+                white-space: nowrap;
+                padding: 0.65rem 0.85rem !important;
+                font-size: 0.8rem !important;
+                margin: 0;
+            }
+            .register-page #registrationTabs .nav-link i {
+                display: inline-block !important;
+                font-size: 0.75rem;
+            }
+            .register-page .form-panel {
+                padding: 0.85rem 0.5rem;
+                border-radius: 14px;
+                box-shadow: none;
+                background: transparent;
+            }
+            .register-page h2 {
+                font-size: 1.25rem !important;
+            }
+            .register-page .input-group-text {
+                min-width: 2.75rem;
+                padding: 0.5rem 0.45rem;
+            }
+            .register-academics-card {
+                flex-wrap: wrap;
+                padding: 0.85rem;
+            }
+            .register-academics-card__cta {
+                width: 100%;
+                padding-left: calc(42px + 0.85rem);
+            }
         }
     </style>
 @endsection
 
 @section('content')
-<div class="container">
+<div class="register-shell" id="registerShell">
+    <div class="register-app-bar" aria-hidden="false">
+        <a href="{{ route('auth.login') }}" class="register-app-bar__back" aria-label="Back to sign in"><i class="fas fa-arrow-left" aria-hidden="true"></i></a>
+        <p class="register-app-bar__title">Create account</p>
+        <div class="register-app-bar__actions">
+            <button type="button" id="registerViewToggle" class="register-view-toggle" aria-pressed="false" title="Switch layout">
+                <i class="fas fa-mobile-screen-button" aria-hidden="true"></i><span class="d-none d-sm-inline">App</span>
+            </button>
+        </div>
+    </div>
+<div class="container register-page">
     <div class="row justify-content-center">
         <div class="col-12 col-xl-10">
             <div class="card shadow-lg border-0">
-                <div class="card-body p-5">
-                    <div class="text-center mb-3">
+                <div class="card-body p-3 p-md-4 p-lg-5">
+                    <div class="register-app-hero">
+                        <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--auth">
+                        <h2 class="register-app-hero__title">{{ isset($warrior) && $warrior ? 'Nursing Warrior' : 'Create your account' }}</h2>
+                        <p class="register-app-hero__lead">WhatsApp number · sign in with OTP later</p>
+                    </div>
+                    <div class="register-page-sheet">
+                    <div class="text-center register-page-header mb-3 position-relative">
+                        <button type="button" class="register-view-toggle position-absolute end-0 top-0 d-none d-md-inline-flex register-view-toggle--classic" data-register-view-toggle aria-pressed="false" title="Switch to app layout">
+                            <i class="fas fa-mobile-screen-button" aria-hidden="true"></i> App view
+                        </button>
                         <div class="d-inline-block rounded-3 px-3 py-2 mb-2" style="background: rgba(102, 126, 234, 0.08);">
                             <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--auth" style="max-height: 50px; display: block;">
                         </div>
                         <h2 class="mt-2 mb-1" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; font-size: 1.5rem;">{{ isset($warrior) && $warrior ? 'Join as Nursing Warrior' : 'Create your account' }}</h2>
-                        <p class="text-muted mb-3" style="font-size: 0.9rem;">{{ isset($warrior) && $warrior ? 'Register as Nurse Warrior or Caregiver Warrior' : 'Mobile number required — no email needed. Sign in later with SMS OTP on the Phone tab.' }}</p>
-                        @if(empty($warrior) && empty($patientOnly))
-                        <div class="register-portal-switch row g-2 g-md-3 mb-0 justify-content-center">
-                            <div class="col-12 col-md-5 col-lg-5">
-                                <div class="h-100 rounded-3 px-3 py-3 border text-center text-md-start" style="background: linear-gradient(165deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.06) 100%); border-color: rgba(102, 126, 234, 0.35) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);">
-                                    <span class="badge rounded-pill mb-2" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">You are here</span>
-                                    <div class="fw-bold text-dark mb-1"><i class="fas fa-heart-pulse me-1 text-primary"></i>Healthcare registration</div>
-                                    <p class="small text-muted mb-0">Use the <strong>Patient</strong>, <strong>Nurse</strong>, or <strong>Caregiver</strong> tabs below for home care &amp; community.</p>
-                                </div>
-                            </div>
-                            <div class="col-12 col-md-5 col-lg-5">
-                                <a href="{{ route('auth.register', ['academics' => 1]) }}" class="register-portal-academics d-flex flex-column h-100 rounded-3 px-3 py-3 border border-2 text-center text-md-start text-decoration-none">
-                                    <span class="badge bg-info text-dark mb-2 align-self-center align-self-md-start rounded-pill"><i class="fas fa-graduation-cap me-1"></i>Academics</span>
-                                    <div class="fw-bold mb-1" style="color: #0369a1;">Sign up as student or faculty <i class="fas fa-arrow-right ms-1 small opacity-75"></i></div>
-                                    <p class="small text-muted mb-0 flex-grow-1">Opens the <strong>Academics</strong> form: pick your college, batch, and role.</p>
-                                </a>
-                            </div>
-                        </div>
-                        @endif
+                        <p class="register-page-header__lead">{{ isset($warrior) && $warrior ? 'Nurse or Caregiver Warrior registration' : 'Register with your valid WhatsApp number — sign in later with WhatsApp OTP' }}</p>
                     </div>
 
                     @if(isset($warrior) && $warrior)
-                    <div class="text-center mb-4 p-4 rounded-3" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%); border: 1px solid rgba(102, 126, 234, 0.25);">
+                    <div class="text-center mb-3 p-3 rounded-3 d-none d-md-block" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%); border: 1px solid rgba(102, 126, 234, 0.25);">
                         <div class="d-inline-block rounded-4 overflow-hidden p-2" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);">
                             <img src="{{ asset('images/nursing-warrior-badge.png') }}" alt="Nursing Warrior Badge" class="img-fluid mb-0" style="max-height: 140px; width: auto; display: block; vertical-align: middle;">
                         </div>
@@ -90,7 +244,7 @@
                     @endif
 
                     <!-- Tab Navigation -->
-                    <ul class="nav nav-pills nav-fill mb-4" id="registrationTabs" role="tablist">
+                    <ul class="nav nav-pills mb-3" id="registrationTabs" role="tablist">
                         @if(((!isset($referralCode) || !$referralCode) && empty($warrior)) || !empty($patientOnly))
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="patient-tab" data-bs-toggle="pill" data-bs-target="#patient-form" type="button" role="tab">
@@ -115,6 +269,15 @@
                                 <span class="d-none d-sm-block">{{ !empty($warrior) ? 'Caregiver Warrior' : 'Caregiver Registration' }}</span>
                             </button>
                         </li>
+                        @if(empty($warrior))
+                        <li class="nav-item" role="presentation">
+                            <a href="{{ route('auth.register', ['academics' => 1]) }}" class="nav-link register-tab-academics">
+                                <i class="fas fa-graduation-cap me-2 d-none d-sm-inline"></i>
+                                <span class="d-block d-sm-none">College</span>
+                                <span class="d-none d-sm-block">Academics</span>
+                            </a>
+                        </li>
+                        @endif
                         @endif
                     </ul>
 
@@ -123,22 +286,19 @@
                         @if(empty($warrior))
                         <!-- Patient Registration Form (not rendered in warrior flow) -->
                         <div class="tab-pane fade {{ (!isset($referralCode) || !$referralCode) || !empty($patientOnly) ? 'show active' : '' }}" id="patient-form" role="tabpanel">
-                            <div class="rounded-3 p-3 mb-3 border" style="background: rgba(102, 126, 234, 0.06); border-color: rgba(102, 126, 234, 0.22) !important;">
-                                <p class="small fw-semibold mb-2 text-secondary text-uppercase" style="letter-spacing: 0.03em;">What you’re signing up for</p>
-                                <ul class="small text-muted mb-0 ps-3">
-                                    <li><strong>Patient:</strong> Receive home care and community support, book visits, and follow your care plan with your medical team on MMHC.</li>
-                                    <li>Use this tab if you are receiving care—not if you are college staff; for students or faculty, use <a href="{{ route('auth.register', ['academics' => 1]) }}" class="fw-semibold">Academics registration</a>.</li>
-                                </ul>
-                            </div>
-                            <!-- Registration Form -->
                             <div class="form-panel">
                                 <form method="POST" action="{{ route('auth.register.post') }}" id="patientForm">
                                     @csrf
                                     <input type="hidden" name="role" value="patient">
                                     
-                                    <div class="row g-3">
-                                        <!-- Left Column: 4 fields -->
-                                        <div class="col-12 col-lg-6">
+                                    <div class="row g-3 register-form-steps" data-form-steps>
+                                        <div class="col-12 register-form-steps__bar" aria-hidden="true">
+                                            <span class="register-form-steps__dot is-active"></span>
+                                            <span class="register-form-steps__dot"></span>
+                                            <span class="register-form-steps__dot"></span>
+                                            <span class="register-form-steps__label">Your details</span>
+                                        </div>
+                                        <div class="register-step is-active col-12 col-lg-6" data-step="1">
                                             <div class="mb-3">
                                                 <label for="patient_name" class="form-label">Full Name</label>
                                                 <div class="input-group">
@@ -153,8 +313,8 @@
                                                            required>
                                                 </div>
                                             </div>
-<div class="mb-3">
-                                                <label for="patient_phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                            <div class="mb-3">
+                                                <label for="patient_phone" class="form-label">WhatsApp Number <span class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <span class="input-group-text">+91</span>
                                                     <input type="tel" 
@@ -167,7 +327,7 @@
                                                            placeholder="9876543210"
                                                            required>
                                                 </div>
-                                                <div class="form-text">10-digit Indian mobile — used for SMS sign-in after registration</div>
+                                                <div class="form-text small">Must be active on WhatsApp (10-digit Indian mobile)</div>
                                                 @error('phone')
                                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror
@@ -188,8 +348,7 @@
                                             </div>
                                         </div>
 
-                                        <!-- Right Column: 4 fields -->
-                                        <div class="col-12 col-lg-6">
+                                        <div class="register-step col-12 col-lg-6" data-step="2">
                                             <div class="mb-3">
                                                 <label for="patient_address" class="form-label">Address</label>
                                                 <div class="input-group">
@@ -220,12 +379,13 @@
                                                            placeholder="Enter 6-digit pincode"
                                                            required>
                                                 </div>
-                                                <div class="form-text">Enter your 6-digit Indian pincode (e.g., 462001)</div>
                                                 @error('pincode')
                                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror
                                             </div>
+                                        </div>
 
+                                        <div class="register-step col-12" data-step="3">
                                             <div class="mb-3">
                                                 <label for="patient_password" class="form-label">Password</label>
                                                 <div class="input-group">
@@ -253,25 +413,28 @@
                                                            required>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    <!-- Full Width: Terms and Submit -->
-                                    <div class="row">
-                                        <div class="col-12">
                                             <div class="mb-3 form-check">
                                                 <input type="checkbox" class="form-check-input" id="patient_terms" required>
                                                 <label class="form-check-label" for="patient_terms">
                                                     I agree to the <a href="#" class="text-primary">Terms and Conditions</a>
                                                 </label>
                                             </div>
+                                        </div>
+                                    </div>
 
+                                    <div class="row register-inline-submit">
+                                        <div class="col-12">
                                             <div class="d-grid">
                                                 <button type="submit" class="btn btn-primary btn-lg">
                                                     <i class="fas fa-user-plus me-2"></i>
                                                     Register as Patient
                                                 </button>
                                             </div>
+                                            <details class="register-role-details">
+                                                <summary>What patient accounts include</summary>
+                                                <p class="register-role-details__body">Home care, visits, community, and your care plan on MMHC.</p>
+                                            </details>
                                         </div>
                                     </div>
                                 </form>
@@ -282,14 +445,6 @@
                         @if(empty($patientOnly))
                         <!-- Nurse Registration Form -->
                         <div class="tab-pane fade {{ (isset($referralCode) && $referralCode) || !empty($warrior) ? 'show active' : '' }}" id="nurse-form" role="tabpanel">
-                            <div class="rounded-3 p-3 mb-3 border" style="background: rgba(16, 185, 129, 0.07); border-color: rgba(16, 185, 129, 0.28) !important;">
-                                <p class="small fw-semibold mb-2 text-secondary text-uppercase" style="letter-spacing: 0.03em;">What you’re signing up for</p>
-                                <ul class="small text-muted mb-0 ps-3">
-                                    <li><strong>{{ !empty($warrior) ? 'Nurse Warrior' : 'Nurse' }}:</strong> Join the MMHC field team to manage visits, documentation, and patient care workflows in the healthcare CRM.</li>
-                                    <li>Complete your professional details and any uploads required for onboarding and verification.</li>
-                                </ul>
-                            </div>
-                            <!-- Registration Form -->
                             <div class="form-panel">
                                 <form method="POST" action="{{ route('auth.register.post') }}{{ isset($referralCode) && $referralCode ? '?ref=' . $referralCode : '' }}" id="nurseForm" enctype="multipart/form-data">
                                     @csrf
@@ -316,7 +471,7 @@
                                                 </div>
                                             </div>
 <div class="mb-3">
-                                                <label for="nurse_phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                                <label for="nurse_phone" class="form-label">WhatsApp Number <span class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <span class="input-group-text">+91</span>
                                                     <input type="tel" 
@@ -329,7 +484,7 @@
                                                            placeholder="9876543210"
                                                            required>
                                                 </div>
-                                                <div class="form-text">10-digit Indian mobile — used for SMS sign-in after registration</div>
+                                                <div class="form-text small">Must be active on WhatsApp (10-digit Indian mobile)</div>
                                                 @error('phone')
                                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror
@@ -402,7 +557,6 @@
                                                            placeholder="Enter 6-digit pincode"
                                                            required>
                                                 </div>
-                                                <div class="form-text">Enter your 6-digit Indian pincode (e.g., 462001)</div>
                                                 @error('pincode')
                                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror
@@ -465,12 +619,16 @@
                                                 </label>
                                             </div>
 
-                                            <div class="d-grid">
+                                            <div class="d-grid register-inline-submit">
                                                 <button type="submit" class="btn btn-info btn-lg">
                                                     <i class="fas fa-user-nurse me-2"></i>
                                                     Register as Nurse
                                                 </button>
                                             </div>
+                                            <details class="register-role-details">
+                                                <summary>What nurse accounts include</summary>
+                                                <p class="register-role-details__body">Visits, documentation, and patient care workflows in the MMHC CRM.</p>
+                                            </details>
                                         </div>
                                     </div>
                                 </form>
@@ -479,14 +637,6 @@
 
                         <!-- Caregiver Registration Form -->
                         <div class="tab-pane fade" id="caregiver-form" role="tabpanel">
-                            <div class="rounded-3 p-3 mb-3 border" style="background: rgba(59, 130, 246, 0.07); border-color: rgba(59, 130, 246, 0.28) !important;">
-                                <p class="small fw-semibold mb-2 text-secondary text-uppercase" style="letter-spacing: 0.03em;">What you’re signing up for</p>
-                                <ul class="small text-muted mb-0 ps-3">
-                                    <li><strong>{{ !empty($warrior) ? 'Caregiver Warrior' : 'Caregiver' }}:</strong> Support patients alongside nursing, coordinate daily care tasks, and use MMHC tools assigned to your role.</li>
-                                    <li>Fill in your profile and any required documents so your team can verify and assign you to cases.</li>
-                                </ul>
-                            </div>
-                            <!-- Registration Form -->
                             <div class="form-panel">
                                 <form method="POST" action="{{ route('auth.register.post') }}{{ isset($referralCode) && $referralCode ? '?ref=' . $referralCode : '' }}" id="caregiverForm" enctype="multipart/form-data">
                                     @csrf
@@ -513,7 +663,7 @@
                                                 </div>
                                             </div>
 <div class="mb-3">
-                                                <label for="caregiver_phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                                <label for="caregiver_phone" class="form-label">WhatsApp Number <span class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <span class="input-group-text">+91</span>
                                                     <input type="tel" 
@@ -526,7 +676,7 @@
                                                            placeholder="9876543210"
                                                            required>
                                                 </div>
-                                                <div class="form-text">10-digit Indian mobile — used for SMS sign-in after registration</div>
+                                                <div class="form-text small">Must be active on WhatsApp (10-digit Indian mobile)</div>
                                                 @error('phone')
                                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror
@@ -596,7 +746,6 @@
                                                            placeholder="Enter 6-digit pincode"
                                                            required>
                                                 </div>
-                                                <div class="form-text">Enter your 6-digit Indian pincode (e.g., 462001)</div>
                                                 @error('pincode')
                                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror
@@ -659,12 +808,16 @@
                                                 </label>
                                             </div>
 
-                                            <div class="d-grid">
+                                            <div class="d-grid register-inline-submit">
                                                 <button type="submit" class="btn btn-success btn-lg">
                                                     <i class="fas fa-user-plus me-2"></i>
                                                     Register as Caregiver
                                                 </button>
                                             </div>
+                                            <details class="register-role-details">
+                                                <summary>What caregiver accounts include</summary>
+                                                <p class="register-role-details__body">Daily patient care tasks and assigned workflows on MMHC.</p>
+                                            </details>
                                         </div>
                                     </div>
                                 </form>
@@ -673,19 +826,40 @@
                         @endif
                     </div>
 
-                    <div class="text-center mt-4">
-                        <p class="text-muted">
+                    @if(empty($warrior) && empty($patientOnly))
+                    <a href="{{ route('auth.register', ['academics' => 1]) }}" class="register-academics-card d-none d-md-flex">
+                        <span class="register-academics-card__icon" aria-hidden="true"><i class="fas fa-graduation-cap"></i></span>
+                        <span class="register-academics-card__body">
+                            <span class="register-academics-card__eyebrow">Colleges &amp; programmes</span>
+                            <span class="register-academics-card__title">Student or faculty?</span>
+                            <span class="register-academics-card__desc">Join your institute, batch, assignments &amp; coursework on MMHC.</span>
+                        </span>
+                        <span class="register-academics-card__cta">Academics registration <i class="fas fa-arrow-right ms-1"></i></span>
+                    </a>
+                    @endif
+
+                    <div class="text-center mt-3 register-signin-footer">
+                        <p class="text-muted mb-0">
                             Already have an account? 
                             <a href="{{ route('auth.login') }}" class="text-primary text-decoration-none">
                                 Sign in here
                             </a>
                         </p>
                     </div>
+                    </div>{{-- /.register-page-sheet --}}
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<div class="register-app-dock" id="registerAppDock">
+    <button type="button" class="register-app-dock__back" id="registerDockBack" disabled>Back</button>
+    <button type="button" class="register-app-dock__primary btn-primary" id="registerDockPrimary">Continue</button>
+</div>
+</div>{{-- /#registerShell --}}
+
+<script src="{{ asset('js/auth-register-app.js') }}?v=20260532"></script>
 
 <style>
 /* Modern Registration Design */
@@ -1059,9 +1233,9 @@ body {
 .nav-pills .nav-link {
     border-radius: 12px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 0.95rem;
+    font-size: 0.84rem;
     font-weight: 600;
-    padding: 1rem 1.5rem;
+    padding: 0.65rem 1rem;
     border: 2px solid transparent;
     color: #6c757d;
     position: relative;
@@ -1444,40 +1618,50 @@ textarea.form-control {
 
 @media (max-width: 768px) {
     body {
-        padding: 1rem 0;
+        padding: 0.5rem 0;
     }
     
     .container {
-        padding: 0 1rem;
+        padding: 0 0.65rem;
     }
     
-    .card-body {
-        padding: 1.5rem !important;
+    .register-page .card-body {
+        padding: 1rem 0.85rem !important;
     }
     
-    .nav-pills {
-        flex-direction: column;
-        gap: 0.5rem;
-        padding: 0.75rem;
+    .register-page #registrationTabs {
+        flex-direction: row !important;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 0.4rem;
+        padding: 0.4rem;
     }
     
-    .nav-pills .nav-link {
-        width: 100%;
-        font-size: 0.875rem;
-        padding: 0.875rem 1.25rem;
+    .register-page #registrationTabs .nav-item {
+        flex: 0 0 auto;
+        width: auto;
+    }
+    
+    .register-page #registrationTabs .nav-link {
+        width: auto;
+        min-width: 6.5rem;
+        white-space: nowrap;
+        font-size: 0.8rem;
+        padding: 0.65rem 0.85rem;
         margin: 0;
     }
     
-    .nav-pills .nav-link i {
-        display: none;
+    .register-page #registrationTabs .nav-link i {
+        display: inline-block !important;
     }
     
     .info-panel {
-        padding: 2rem 1.5rem;
+        padding: 1.25rem 1rem;
     }
     
     .form-panel {
-        padding: 2rem 1.5rem;
+        padding: 1rem 0.75rem;
     }
     
     .icon-wrapper {
@@ -1543,13 +1727,14 @@ textarea.form-control {
 }
 
 @media (max-width: 576px) {
-    .card-body {
-        padding: 1.5rem 1rem !important;
+    .register-page .card-body {
+        padding: 0.85rem 0.65rem !important;
     }
     
-    .nav-pills .nav-link {
-        padding: 0.75rem 1rem;
-        font-size: 0.8rem;
+    .register-page #registrationTabs .nav-link {
+        padding: 0.55rem 0.7rem;
+        font-size: 0.75rem;
+        min-width: 5.75rem;
     }
     
     .input-group-text {

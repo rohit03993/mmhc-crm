@@ -4,6 +4,18 @@
 
 @section('head')
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <script>
+        (function () {
+            try {
+                var mobile = window.matchMedia('(max-width: 767.98px)').matches;
+                var appPref = localStorage.getItem('mmhc_register_view') === 'app';
+                if (mobile || appPref) {
+                    document.documentElement.classList.add('register-shell--app');
+                }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+    <link rel="stylesheet" href="{{ asset('css/auth-register-app.css') }}?v=20260532">
     <style>
         /* Match healthcare register-tabbed: purple shell + white card (scoped — no global body) */
         .auth-reg-academics-shell {
@@ -30,49 +42,124 @@
                 padding: 2.5rem;
             }
         }
-        .auth-reg-academics-shell .ac-reg-portal-here {
-            background: linear-gradient(165deg, rgba(102, 126, 234, 0.14) 0%, rgba(118, 75, 162, 0.08) 100%);
-            border-color: rgba(102, 126, 234, 0.38) !important;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
-        }
-        .auth-reg-academics-shell .ac-reg-portal-health {
-            border-color: rgba(102, 126, 234, 0.45) !important;
-            background: linear-gradient(165deg, #ffffff 0%, rgba(247, 250, 252, 0.98) 100%);
+        .auth-reg-academics-shell .ac-reg-healthcare-card {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            margin-top: 1.25rem;
+            padding: 0.9rem 1rem;
+            border-radius: 14px;
+            border: 1px solid rgba(102, 126, 234, 0.35);
+            background: linear-gradient(165deg, rgba(102, 126, 234, 0.08) 0%, #ffffff 60%);
+            text-decoration: none;
             color: inherit;
-            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
         }
-        .auth-reg-academics-shell .ac-reg-portal-health:hover {
+        .auth-reg-academics-shell .ac-reg-healthcare-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
-            border-color: rgba(102, 126, 234, 0.85) !important;
+            border-color: rgba(102, 126, 234, 0.55);
+            box-shadow: 0 8px 22px rgba(102, 126, 234, 0.12);
+            color: inherit;
         }
-        .auth-reg-academics-shell .ac-reg-portal-health:focus-visible {
-            outline: 3px solid rgba(102, 126, 234, 0.45);
-            outline-offset: 2px;
+        .auth-reg-academics-shell .ac-reg-healthcare-card__icon {
+            flex-shrink: 0;
+            width: 42px;
+            height: 42px;
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.18) 0%, rgba(118, 75, 162, 0.12) 100%);
+            color: #5b21b6;
+            font-size: 1.05rem;
         }
-        .auth-reg-academics-shell .ac-reg-details {
-            border: 1px solid rgba(102, 126, 234, 0.22);
-            border-radius: 12px;
-            background: rgba(102, 126, 234, 0.05);
-            padding: 0.4rem 0.75rem;
+        .auth-reg-academics-shell .ac-reg-healthcare-card__body { flex: 1; min-width: 0; }
+        .auth-reg-academics-shell .ac-reg-healthcare-card__eyebrow {
+            display: block;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #64748b;
         }
-        .auth-reg-academics-shell .ac-reg-details summary {
-            cursor: pointer;
-            list-style: none;
+        .auth-reg-academics-shell .ac-reg-healthcare-card__title {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .auth-reg-academics-shell .ac-reg-healthcare-card__desc {
+            display: block;
+            font-size: 0.78rem;
+            color: #64748b;
+            line-height: 1.35;
+        }
+        .auth-reg-academics-shell .ac-reg-healthcare-card__cta {
+            flex-shrink: 0;
             font-size: 0.8rem;
             font-weight: 700;
             color: #5b21b6;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            user-select: none;
+            white-space: nowrap;
         }
-        .auth-reg-academics-shell .ac-reg-details summary::-webkit-details-marker { display: none; }
-        .auth-reg-academics-shell .ac-reg-details summary::after {
-            content: ' \025BC';
-            font-size: 0.55rem;
-            opacity: 0.65;
+        .auth-reg-academics-shell .ac-reg-tabs .nav-link.register-tab-healthcare {
+            background: linear-gradient(165deg, rgba(102, 126, 234, 0.1) 0%, #ffffff 70%);
+            border: 2px solid rgba(102, 126, 234, 0.35);
+            color: #5b21b6;
+            text-decoration: none;
         }
-        .auth-reg-academics-shell .ac-reg-details[open] summary::after { content: ' \025B2'; }
+        .auth-reg-academics-shell .ac-reg-role-details {
+            margin-top: 0.85rem;
+            font-size: 0.82rem;
+            color: #64748b;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+        .auth-reg-academics-shell .ac-reg-role-details summary {
+            cursor: pointer;
+            padding: 0.55rem 0.75rem;
+            font-weight: 600;
+            color: #475569;
+            list-style: none;
+        }
+        .auth-reg-academics-shell .ac-reg-role-details summary::-webkit-details-marker { display: none; }
+        .auth-reg-academics-shell .ac-reg-role-details__body {
+            padding: 0 0.75rem 0.65rem;
+            line-height: 1.45;
+            margin: 0;
+        }
+        @media (max-width: 767.98px) {
+            .auth-reg-academics-shell .ac-reg-healthcare-card {
+                flex-wrap: wrap;
+            }
+            .auth-reg-academics-shell .ac-reg-healthcare-card__cta {
+                width: 100%;
+                padding-left: calc(42px + 0.85rem);
+            }
+        }
+        .auth-reg-academics-shell .ac-reg-tabs .nav-link.register-tab-healthcare:hover,
+        .auth-reg-academics-shell .ac-reg-tabs .nav-link.register-tab-healthcare:focus-visible {
+            border-color: #667eea;
+            color: #5b21b6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(102, 126, 234, 0.15);
+        }
+        @media (max-width: 767.98px) {
+            .auth-reg-academics-shell .ac-reg-tabs.nav-pills {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .auth-reg-academics-shell .ac-reg-tabs.nav-pills::-webkit-scrollbar { display: none; }
+            .auth-reg-academics-shell .ac-reg-tabs .nav-item { flex: 0 0 auto; }
+            .auth-reg-academics-shell .ac-reg-tabs .nav-link {
+                white-space: nowrap;
+                min-width: 5.5rem;
+                padding: 0.65rem 0.85rem !important;
+                font-size: 0.8rem !important;
+            }
+        }
         .auth-reg-academics-shell .ac-reg-tabs.nav-pills {
             background: #f8f9fa;
             padding: 0.5rem;
@@ -186,34 +273,36 @@
 
 @section('content')
 <div class="auth-reg-academics-shell">
-    <div class="container">
+<div class="register-shell" id="registerShell">
+    <div class="register-app-bar">
+        <a href="{{ route('auth.login') }}" class="register-app-bar__back" aria-label="Back to sign in"><i class="fas fa-arrow-left" aria-hidden="true"></i></a>
+        <p class="register-app-bar__title">Academics sign up</p>
+        <div class="register-app-bar__actions">
+            <button type="button" id="registerViewToggle" class="register-view-toggle" aria-pressed="false" title="Switch layout">
+                <i class="fas fa-mobile-screen-button" aria-hidden="true"></i><span class="d-none d-sm-inline">App</span>
+            </button>
+        </div>
+    </div>
+<div class="container">
         <div class="row justify-content-center">
             <div class="col-12 col-xl-10">
                 <div class="card shadow-lg border-0 ac-reg-card">
                     <div class="card-body">
-                        <div class="text-center mb-3">
+                        <div class="register-app-hero">
+                            <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--auth" style="max-height: 44px;">
+                            <h2 class="register-app-hero__title">Academics sign up</h2>
+                            <p class="register-app-hero__lead">Student or faculty · institute &amp; batch</p>
+                        </div>
+                        <div class="register-page-sheet">
+                        <div class="text-center mb-3 register-page-header position-relative">
+                            <button type="button" class="register-view-toggle position-absolute end-0 top-0 d-none d-md-inline-flex register-view-toggle--classic" data-register-view-toggle aria-pressed="false" title="Switch to app layout">
+                                <i class="fas fa-mobile-screen-button" aria-hidden="true"></i> App view
+                            </button>
                             <div class="d-inline-block rounded-3 px-3 py-2 mb-2" style="background: rgba(102, 126, 234, 0.08);">
                                 <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo brand-logo--auth" style="max-height: 50px; display: block;">
                             </div>
                             <h2 class="mt-2 mb-1" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; font-size: 1.5rem;">Sign up for your institute (Academics)</h2>
-                            <p class="text-muted mb-3" style="font-size: 0.9rem;">Mobile number required — no email needed. Sign in later with SMS OTP on the Phone tab.</p>
-
-                            <div class="register-portal-switch row g-2 g-md-3 mb-0 justify-content-center">
-                                <div class="col-12 col-md-5 col-lg-5">
-                                    <div class="h-100 rounded-3 px-3 py-3 border text-center text-md-start ac-reg-portal-here">
-                                        <span class="badge rounded-pill mb-2" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">You are here</span>
-                                        <div class="fw-bold text-dark mb-1"><i class="fas fa-graduation-cap me-1 text-primary"></i>Academics registration</div>
-                                        <p class="small text-muted mb-0">Use <strong>Student</strong> or <strong>Faculty</strong> below, then your institute and batch(es).</p>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-5 col-lg-5">
-                                    <a href="{{ route('auth.register') }}" class="ac-reg-portal-health d-flex flex-column h-100 rounded-3 px-3 py-3 border border-2 text-center text-md-start text-decoration-none">
-                                        <span class="badge bg-light text-dark border mb-2 align-self-center align-self-md-start rounded-pill"><i class="fas fa-heart-pulse me-1 text-danger"></i>Healthcare</span>
-                                        <div class="fw-bold mb-1" style="color: #553c9a;">Sign up for medical team <i class="fas fa-arrow-right ms-1 small opacity-75"></i></div>
-                                        <p class="small text-muted mb-0 flex-grow-1">Patient, nurse, or caregiver — home care &amp; community registration.</p>
-                                    </a>
-                                </div>
-                            </div>
+                            <p class="text-muted mb-0" style="font-size: 0.88rem; max-width: 28rem; margin-left: auto; margin-right: auto;">Register with your valid WhatsApp number — sign in later with WhatsApp OTP.</p>
                         </div>
 
                         @if(session('error'))
@@ -230,21 +319,12 @@
                             </div>
                         @endif
 
-                        <details class="ac-reg-details mb-3">
-                            <summary>About this registration</summary>
-                            <ul class="text-muted small ps-3 mt-2 mb-0">
-                                <li><strong>Students:</strong> batches, subjects, assignments, quizzes, reports.</li>
-                                <li><strong>Faculty:</strong> teaching, coursework, student progress for your batch(es).</li>
-                                <li>Choose an <strong>existing</strong> institute and at least one <strong>batch</strong> your college set up on MMHC.</li>
-                            </ul>
-                        </details>
-
                         <form method="POST" action="{{ route('auth.register.post') }}" id="academicsRegisterForm">
                             @csrf
                             <input type="hidden" name="registration_portal" value="academics">
                             <input type="hidden" name="role" id="academic_role_input" value="{{ old('role', 'student') }}">
 
-                            <ul class="nav nav-pills nav-fill ac-reg-tabs mb-3" role="tablist">
+                            <ul class="nav nav-pills ac-reg-tabs mb-3" role="tablist">
                                 <li class="nav-item" role="presentation">
                                     <button type="button" class="nav-link {{ old('role', 'student') === 'student' ? 'active' : '' }}" id="tab-student" data-academic-role="student" data-bs-toggle="tab" data-bs-target="#pane-student-intro" role="tab" aria-controls="pane-student-intro" aria-selected="{{ old('role', 'student') === 'student' ? 'true' : 'false' }}">
                                         <i class="fas fa-user-graduate me-2 d-none d-sm-inline"></i>Student
@@ -255,16 +335,18 @@
                                         <i class="fas fa-chalkboard-teacher me-2 d-none d-sm-inline"></i>Faculty
                                     </button>
                                 </li>
+                                <li class="nav-item" role="presentation">
+                                    <a href="{{ route('auth.register') }}" class="nav-link register-tab-healthcare">
+                                        <i class="fas fa-heart-pulse me-2 d-none d-sm-inline"></i>
+                                        <span class="d-block d-sm-none">Care</span>
+                                        <span class="d-none d-sm-block">Healthcare</span>
+                                    </a>
+                                </li>
                             </ul>
 
                             <div class="tab-content visually-hidden" style="height:0;overflow:hidden;margin:0;padding:0;border:0;" aria-hidden="true">
                                 <div class="tab-pane fade {{ old('role', 'student') === 'student' ? 'show active' : '' }}" id="pane-student-intro" role="tabpanel"></div>
                                 <div class="tab-pane fade {{ old('role') === 'faculty' ? 'show active' : '' }}" id="pane-faculty-intro" role="tabpanel"></div>
-                            </div>
-
-                            <div id="academicsRoleHintWrap" class="ac-reg-context mb-3" role="status">
-                                <span id="hintStudent" class="{{ old('role') === 'faculty' ? 'd-none' : '' }}"><strong>Student:</strong> pick your institute and batch(es), then sign in on the main page to open the Academics dashboard.</span>
-                                <span id="hintFaculty" class="{{ old('role') === 'faculty' ? '' : 'd-none' }}"><strong>Faculty:</strong> add your qualification; your college may verify it. Choose institute and batch(es) you teach on MMHC.</span>
                             </div>
 
                             <div class="ac-reg-form-panel">
@@ -281,12 +363,12 @@
                                     </div>
 <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label class="form-label" for="ac_reg_phone">Phone <span class="text-danger">*</span></label>
+                                            <label class="form-label" for="ac_reg_phone">WhatsApp Number <span class="text-danger">*</span></label>
                                             <div class="input-group">
                                                 <span class="input-group-text">+91</span>
                                                 <input type="tel" id="ac_reg_phone" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone') }}" required pattern="[0-9]{10}" maxlength="10" inputmode="numeric" placeholder="9876543210" autocomplete="tel-national">
                                             </div>
-                                            <div class="form-text small">10-digit Indian mobile — SMS sign-in after registration</div>
+                                            <div class="form-text small"><i class="fab fa-whatsapp text-success me-1"></i>Valid WhatsApp number (10-digit) — WhatsApp OTP sign-in after registration</div>
                                             @error('phone')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                         </div>
                                     </div>
@@ -397,27 +479,57 @@
                                     </div>
                                 </div>
 
-                                <div class="d-grid mt-2">
+                                <div class="d-grid mt-2 register-inline-submit">
                                     <button type="submit" class="btn btn-primary btn-lg">
                                         <i class="fas fa-user-plus me-2"></i>Create academic account
                                     </button>
                                 </div>
+
+                                <details class="ac-reg-role-details">
+                                    <summary>About academic accounts</summary>
+                                    <div class="ac-reg-role-details__body">
+                                        <p id="hintStudent" class="{{ old('role') === 'faculty' ? 'd-none' : '' }} mb-2"><strong>Student:</strong> pick your institute and batch(es), then sign in to open the Academics dashboard.</p>
+                                        <p id="hintFaculty" class="{{ old('role') === 'faculty' ? '' : 'd-none' }} mb-2"><strong>Faculty:</strong> add your qualification; your college may verify it. Choose institute and batch(es) you teach.</p>
+                                        <ul class="text-muted small ps-3 mb-0">
+                                            <li>Assignments, quizzes, reports &amp; coursework on MMHC.</li>
+                                            <li>Choose an existing institute and at least one batch your college set up.</li>
+                                        </ul>
+                                    </div>
+                                </details>
                             </div>
                         </form>
 
-                        <div class="text-center mt-4">
+                        <a href="{{ route('auth.register') }}" class="ac-reg-healthcare-card d-none d-md-flex">
+                            <span class="ac-reg-healthcare-card__icon" aria-hidden="true"><i class="fas fa-heart-pulse"></i></span>
+                            <span class="ac-reg-healthcare-card__body">
+                                <span class="ac-reg-healthcare-card__eyebrow">Healthcare &amp; home care</span>
+                                <span class="ac-reg-healthcare-card__title">Patient, nurse, or caregiver?</span>
+                                <span class="ac-reg-healthcare-card__desc">Home care, visits, community &amp; care plans on MMHC.</span>
+                            </span>
+                            <span class="ac-reg-healthcare-card__cta">Healthcare registration <i class="fas fa-arrow-right ms-1"></i></span>
+                        </a>
+
+                        <div class="text-center mt-4 register-signin-footer">
                             <p class="text-muted mb-0">
                                 Already have an account?
                                 <a href="{{ route('auth.login') }}" class="text-primary text-decoration-none fw-semibold">Sign in here</a>
                             </p>
                         </div>
+                        </div>{{-- /.register-page-sheet --}}
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
+<div class="register-app-dock" id="registerAppDock">
+    <button type="button" class="register-app-dock__back" id="registerDockBack" disabled>Back</button>
+    <button type="button" class="register-app-dock__primary btn-primary" id="registerDockPrimary" form="academicsRegisterForm">Create academic account</button>
+</div>
+</div>{{-- /#registerShell --}}
+</div>{{-- /.auth-reg-academics-shell --}}
+
+<script src="{{ asset('js/auth-register-app.js') }}?v=20260532"></script>
 <script>
 (function() {
     var inst = document.getElementById('institution_select');

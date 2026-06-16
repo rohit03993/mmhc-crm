@@ -88,7 +88,7 @@ class AuthController extends Controller
         $existingUser = User::where('email', $request->input('email'))->first();
         if ($existingUser && $existingUser->requiresPhoneLogin()) {
             return redirect()->back()
-                ->withErrors(['email' => 'This account must sign in with mobile SMS OTP. Open the Phone tab and use your registered number.'])
+                ->withErrors(['email' => 'This account must sign in with WhatsApp OTP. Open the WhatsApp tab and use your registered number.'])
                 ->withInput($request->only('email'))
                 ->with('login_tab', 'phone');
         }
@@ -107,25 +107,25 @@ class AuthController extends Controller
     }
 
     /**
-     * Send OTP to phone via SMS (Sent.dm) for phone login.
+     * Send OTP to phone via WhatsApp for phone login.
      */
     public function sendLoginOtp(Request $request)
     {
         $phoneDigits = preg_replace('/\D/', '', (string) $request->input('phone', ''));
+        $isResend = $request->boolean('resend');
         $validator = Validator::make(
             ['phone' => $phoneDigits],
             ['phone' => ['required', 'regex:/^[6-9][0-9]{9}$/']],
             [
-                'phone.required' => 'Enter a 10-digit mobile number.',
-                'phone.regex' => 'Enter a valid 10-digit Indian mobile number.',
+                'phone.required' => 'Please enter your valid WhatsApp number (10-digit Indian mobile).',
+                'phone.regex' => 'Please enter a valid WhatsApp number — 10-digit Indian mobile starting with 6–9.',
             ]
         );
 
         if ($validator->fails()) {
-            return redirect()->back()
+            return $this->redirectPhoneLoginBack($request, $phoneDigits, $isResend)
                 ->withErrors($validator)
-                ->withInput()
-                ->with('login_tab', 'phone');
+                ->withInput();
         }
 
         $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
@@ -140,13 +140,12 @@ class AuthController extends Controller
                 ? 'This mobile number is registered but the account is inactive. Please contact MMHC support.'
                 : 'This mobile number is not registered on MMHC. Create an account below, or use the Email tab if you have an older account.';
 
-            return redirect()->back()
+            return $this->redirectPhoneLoginBack($request, $phoneDigits, $isResend)
                 ->withErrors(['phone' => $message])
-                ->withInput()
-                ->with('login_tab', 'phone');
+                ->withInput();
         }
 
-        $result = $this->smsOtpService->sendOtp($normalizedPhone);
+        $result = $this->smsOtpService->sendOtp($normalizedPhone, $user->name);
 
         if (! $result['success']) {
             $message = $result['message'];
@@ -154,18 +153,19 @@ class AuthController extends Controller
                 $message .= ' Check storage/logs/laravel.log for details.';
             }
 
-            return redirect()->back()
+            return $this->redirectPhoneLoginBack($request, $phoneDigits, $isResend)
                 ->withErrors(['phone' => $message])
-                ->withInput()
-                ->with('login_tab', 'phone');
+                ->withInput();
         }
 
-        $masked = substr($phoneDigits, 0, 2).'******'.substr($phoneDigits, -2);
+        $otpMessage = $isResend
+            ? 'A new login code was sent to your WhatsApp number. Enter the 6-digit code below.'
+            : (($result['message'] ?? 'Login code sent.').' Enter the 6-digit code below.');
 
         return redirect()->back()
             ->with('otp_sent', true)
             ->with('otp_phone', $phoneDigits)
-            ->with('success_otp', 'Login code sent by SMS to +91 '.$masked.'. Enter the 6-digit OTP below.')
+            ->with('success_otp', $otpMessage)
             ->with('login_tab', 'phone');
     }
 
@@ -193,7 +193,9 @@ class AuthController extends Controller
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput()
-                ->with('login_tab', 'phone');
+                ->with('login_tab', 'phone')
+                ->with('otp_sent', true)
+                ->with('otp_phone', $phoneDigits ?: session('otp_phone'));
         }
 
         $normalizedPhone = $this->userService->normalizePhone($phoneDigits);
@@ -223,6 +225,22 @@ class AuthController extends Controller
         $user->syncTrustedAccountPhoneState();
 
         return redirect()->intended(PostLoginRedirect::urlFor(Auth::user()));
+    }
+
+    /**
+     * Return to phone login; keep OTP step when resending code for the same number.
+     */
+    protected function redirectPhoneLoginBack(Request $request, string $phoneDigits, bool $isResend): \Illuminate\Http\RedirectResponse
+    {
+        $redirect = redirect()->back()->with('login_tab', 'phone');
+
+        if ($isResend && preg_match('/^[6-9][0-9]{9}$/', $phoneDigits)) {
+            return $redirect
+                ->with('otp_sent', true)
+                ->with('otp_phone', $phoneDigits);
+        }
+
+        return $redirect;
     }
 
     protected function redirectAuthenticatedUser(User $user)
@@ -277,13 +295,13 @@ class AuthController extends Controller
 
         if ($user && ($user->requiresPhoneLogin() || $user->usesPlaceholderEmail())) {
             return redirect()->back()
-                ->withErrors(['email' => 'This account signs in with mobile SMS OTP. Open the Phone tab on the sign-in page and use your registered number.'])
+                ->withErrors(['email' => 'This account signs in with WhatsApp OTP. Open the WhatsApp tab on the sign-in page.'])
                 ->withInput();
         }
 
         if (! $this->passwordResetMailReady()) {
             return redirect()->back()
-                ->withErrors(['email' => 'Password reset by email is not available on this server. Use SMS OTP or contact MMHC support.'])
+                ->withErrors(['email' => 'Password reset by email is not available on this server. Use WhatsApp OTP or contact MMHC support.'])
                 ->withInput();
         }
 
@@ -320,7 +338,7 @@ class AuthController extends Controller
 
         if ($user && ($user->requiresPhoneLogin() || $user->usesPlaceholderEmail())) {
             return redirect()->route('auth.login')
-                ->withErrors(['email' => 'This account uses mobile SMS OTP. Sign in on the Phone tab.'])
+                ->withErrors(['email' => 'This account uses WhatsApp OTP. Sign in on the WhatsApp tab.'])
                 ->with('login_tab', 'phone');
         }
 
