@@ -5,7 +5,7 @@
     'actionUrl' => null,
     'actionLabel' => null,
 ])
-<div class="hc-empty d-md-none">
+<div class="hc-empty">
     <div class="hc-empty__icon" aria-hidden="true">
         <i class="fas {{ $icon }}"></i>
     </div>

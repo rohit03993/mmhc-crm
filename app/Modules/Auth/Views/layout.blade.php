@@ -9,6 +9,7 @@
         ? trim(AcademicsMobileUi::bodyClass(auth()->user()).' '.HealthcareMobileUi::bodyClass(auth()->user()))
         : '';
     $healthcareMobileOn = auth()->check() && HealthcareMobileUi::enabledFor(auth()->user());
+    $healthcareStylesOn = auth()->check() && (auth()->user()->isPatient() || auth()->user()->isStaff());
     $academicsMobileOn = auth()->check() && request()->routeIs('academics.*') && AcademicsMobileUi::enabledFor(auth()->user());
 @endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="@guest mmhc-auth-guest @else {{ $mobileHtmlClasses }} @endguest">
@@ -35,16 +36,16 @@
     <link rel="stylesheet" href="{{ asset('css/academics-mobile.css') }}?v=20260608">
     <meta name="theme-color" content="#4338ca">
     @endif
+    @if($healthcareStylesOn)
+    <link rel="stylesheet" href="{{ asset('css/healthcare-mobile.css') }}?v=20260608">
+    @endif
     @if($healthcareMobileOn)
     <meta name="theme-color" content="{{ auth()->user()->isPatient() ? '#0f766e' : '#4338ca' }}">
     @endif
 
-    @if($healthcareMobileOn)
-    <link rel="stylesheet" href="{{ asset('css/healthcare-mobile.css') }}?v=20260607">
-    @endif
-
-    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260601b">
+    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260608">
     @auth
+    <link rel="stylesheet" href="{{ asset('css/crm-desktop.css') }}?v=20260608">
     <link rel="stylesheet" href="{{ asset('css/mmhc-member-nav.css') }}?v=20260602">
     <link rel="stylesheet" href="{{ asset('css/mmhc-theme-contrast.css') }}?v=20260603">
     @endauth

@@ -1187,4 +1187,25 @@ body.mmhc-healthcare-role-patient .mmhc-ptr-indicator.is-ready .mmhc-ptr-indicat
     .app-bottom-nav {
         display: none !important;
     }
+
+    body.mmhc-crm-auth .sidebar {
+        box-shadow: 2px 0 18px rgba(15, 23, 42, 0.12);
+    }
+
+    body.mmhc-crm-auth .top-navbar {
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    }
+
+    body.mmhc-crm-auth .btn {
+        border-radius: 10px;
+    }
+
+    body.mmhc-crm-auth .btn-primary {
+        font-weight: 600;
+    }
+
+    body.mmhc-crm-auth .form-control,
+    body.mmhc-crm-auth .form-select {
+        border-radius: 10px;
+    }
 }

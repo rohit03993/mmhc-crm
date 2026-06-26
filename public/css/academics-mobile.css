@@ -3109,5 +3109,181 @@
         overflow: hidden;
         box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
     }
+
+    .acad-text-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: var(--acad-primary);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+    }
+
+    .acad-mentor-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .acad-mentor-card {
+        background: var(--acad-card);
+        border: 1px solid var(--acad-border);
+        border-radius: var(--acad-radius);
+        padding: 1rem 1.15rem;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    }
+
+    .acad-mentor-card__head {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+
+    .acad-mentor-card__avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: var(--acad-primary-light);
+        color: var(--acad-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .acad-mentor-card__name {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        margin: 0 0 0.15rem;
+    }
+
+    .acad-mentor-card__name a {
+        color: var(--acad-text);
+        text-decoration: none;
+    }
+
+    .acad-mentor-card__inst {
+        font-size: 0.8125rem;
+        color: var(--acad-muted);
+        margin: 0;
+    }
+
+    .acad-topic-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .acad-topic-card {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.9rem 1rem;
+        background: var(--acad-card);
+        border: 1px solid var(--acad-border);
+        border-radius: var(--acad-radius-sm);
+        text-decoration: none;
+        color: inherit;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+
+    .acad-topic-card__icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: var(--acad-primary-light);
+        color: var(--acad-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .acad-topic-card__title {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        margin: 0 0 0.15rem;
+        color: var(--acad-text);
+    }
+
+    .acad-topic-card__sub {
+        font-size: 0.75rem;
+        color: var(--acad-muted);
+        margin: 0;
+    }
+
+    .acad-topic-card__chev {
+        margin-left: auto;
+        color: #94a3b8;
+    }
+
+    .acad-timeline__item {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .acad-timeline__body {
+        flex: 1;
+        background: var(--acad-card);
+        border: 1px solid var(--acad-border);
+        border-radius: var(--acad-radius-sm);
+        padding: 0.75rem 1rem;
+    }
+
+    .acad-search-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .acad-search-bar__input {
+        flex: 1;
+        min-height: 42px;
+        border-radius: 10px;
+        border: 1px solid var(--acad-border);
+        padding: 0 0.85rem;
+    }
+
+    .acad-exam-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .acad-exam-card {
+        background: var(--acad-card);
+        border: 1px solid var(--acad-border);
+        border-radius: var(--acad-radius);
+        padding: 1rem 1.15rem;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    }
+
+    .acad-form-card {
+        background: var(--acad-card);
+        border: 1px solid var(--acad-border);
+        border-radius: var(--acad-radius);
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    .acad-resource-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .acad-assignment-card__open {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.35rem;
+        margin-top: 0.65rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--acad-primary);
+    }
 }
 
