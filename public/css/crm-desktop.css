@@ -361,4 +361,96 @@
         color: #64748b;
         border-bottom-width: 1px;
     }
+
+    /* Admin dashboard */
+    .admin-header-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.25);
+    }
+
+    .admin-header-card .admin-subtitle,
+    .admin-header-card .text-muted {
+        color: rgba(255, 255, 255, 0.88) !important;
+    }
+
+    .admin-avatar-large {
+        width: 64px;
+        height: 64px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+    }
+
+    .admin-name {
+        font-size: 1.35rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .badge-admin {
+        background: rgba(255, 255, 255, 0.22);
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .stat-card-modern {
+        background: #fff;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-radius: 12px;
+        padding: 1rem 1.15rem;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+        height: 100%;
+    }
+
+    .stat-card-modern .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .stat-card-modern .stat-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+    }
+
+    .admin-quick-links a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.45rem 1rem;
+        border-radius: 999px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        text-decoration: none;
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+    }
+
+    .admin-quick-links a:hover {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+
+    /* Institution admin / faculty academics pages without mobile shell */
+    body.mmhc-crm-auth .acad-mobile-page {
+        padding-top: 0.5rem;
+    }
+
+    /* Profile & documents */
+    body.mmhc-crm-auth .profile-card,
+    body.mmhc-crm-auth .document-card {
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    }
 }

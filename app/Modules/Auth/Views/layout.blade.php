@@ -33,19 +33,19 @@
     @yield('head')
 
     @if($academicsMobileOn || (auth()->check() && request()->routeIs('academics.*')))
-    <link rel="stylesheet" href="{{ asset('css/academics-mobile.css') }}?v=20260608">
+    <link rel="stylesheet" href="{{ asset('css/academics-mobile.css') }}?v=20260608b">
     <meta name="theme-color" content="#4338ca">
     @endif
     @if($healthcareStylesOn)
-    <link rel="stylesheet" href="{{ asset('css/healthcare-mobile.css') }}?v=20260608">
+    <link rel="stylesheet" href="{{ asset('css/healthcare-mobile.css') }}?v=20260608b">
     @endif
     @if($healthcareMobileOn)
     <meta name="theme-color" content="{{ auth()->user()->isPatient() ? '#0f766e' : '#4338ca' }}">
     @endif
 
-    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260608">
+    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260608b">
     @auth
-    <link rel="stylesheet" href="{{ asset('css/crm-desktop.css') }}?v=20260608">
+    <link rel="stylesheet" href="{{ asset('css/crm-desktop.css') }}?v=20260608b">
     <link rel="stylesheet" href="{{ asset('css/mmhc-member-nav.css') }}?v=20260602">
     <link rel="stylesheet" href="{{ asset('css/mmhc-theme-contrast.css') }}?v=20260603">
     @endauth

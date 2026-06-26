@@ -14,7 +14,15 @@ class AcademicsMobileUi
 
     public static function enabledFor(?\App\Models\Core\User $user): bool
     {
-        if (! $user || ! in_array($user->role, self::ACADEMIC_ROLES, true)) {
+        if (! $user) {
+            return false;
+        }
+
+        if (in_array($user->role, ['nurse', 'caregiver'], true)) {
+            return request()->routeIs('academics.open-classrooms.*', 'academics.mentorship.*');
+        }
+
+        if (! in_array($user->role, self::ACADEMIC_ROLES, true)) {
             return false;
         }
 

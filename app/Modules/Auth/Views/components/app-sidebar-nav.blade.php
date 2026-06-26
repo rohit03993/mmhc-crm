@@ -217,6 +217,12 @@
             Mentorship
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link text-white {{ request()->routeIs('academics.open-classrooms.*') ? 'active' : '' }}" href="{{ route('academics.open-classrooms.index') }}">
+            <i class="fas fa-door-open me-2"></i>
+            Open classrooms
+        </a>
+    </li>
     @endif
 
     <li class="nav-item">

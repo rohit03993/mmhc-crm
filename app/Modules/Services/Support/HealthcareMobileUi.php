@@ -31,6 +31,7 @@ class HealthcareMobileUi
         'profile.',
         'documents.',
         'staff.payments.',
+        'academics.open-classrooms.',
         'academics.mentorship.',
     ];
 

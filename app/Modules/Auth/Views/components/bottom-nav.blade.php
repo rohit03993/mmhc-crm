@@ -176,6 +176,10 @@
             <span>Home</span>
         </a>
         @if(in_array(auth()->user()->role, ['nurse', 'caregiver'], true))
+        <a href="{{ route('academics.open-classrooms.index') }}" class="app-nav-item {{ request()->routeIs('academics.open-classrooms.*') ? 'active' : '' }}">
+            <i class="fas fa-door-open"></i>
+            <span>Classrooms</span>
+        </a>
         <a href="{{ route('academics.mentorship.index') }}" class="app-nav-item {{ request()->routeIs('academics.mentorship.*') ? 'active' : '' }}">
             <i class="fas fa-hands-helping"></i>
             <span>Mentors</span>
