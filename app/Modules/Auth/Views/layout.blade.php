@@ -32,7 +32,7 @@
     @yield('head')
 
     @if($academicsMobileOn || (auth()->check() && request()->routeIs('academics.*')))
-    <link rel="stylesheet" href="{{ asset('css/academics-mobile.css') }}?v=20260531">
+    <link rel="stylesheet" href="{{ asset('css/academics-mobile.css') }}?v=20260608">
     <meta name="theme-color" content="#4338ca">
     @endif
     @if($healthcareMobileOn)

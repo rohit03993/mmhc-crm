@@ -68,12 +68,18 @@
         <a class="acad-oc-segment__item {{ $tab === 'browse' ? 'is-active' : '' }}" href="{{ route('academics.open-classrooms.index', ['tab' => 'browse']) }}">Browse</a>
         @if($isLearner || $joinedCount > 0)
             <a class="acad-oc-segment__item {{ $tab === 'joined' ? 'is-active' : '' }}" href="{{ route('academics.open-classrooms.index', ['tab' => 'joined']) }}">
-                Joined@if($joinedCount > 0)<span class="acad-oc-segment__badge">{{ $joinedCount }}</span>@endif
+                Joined
+                @if($joinedCount > 0)
+                    <span class="acad-oc-segment__badge">{{ $joinedCount }}</span>
+                @endif
             </a>
         @endif
         @if(auth()->user()->role === 'faculty')
             <a class="acad-oc-segment__item {{ $tab === 'mine' ? 'is-active' : '' }}" href="{{ route('academics.open-classrooms.index', ['tab' => 'mine']) }}">
-                Mine@if($mineCount > 0)<span class="acad-oc-segment__badge">{{ $mineCount }}</span>@endif
+                Mine
+                @if($mineCount > 0)
+                    <span class="acad-oc-segment__badge">{{ $mineCount }}</span>
+                @endif
             </a>
         @endif
     </nav>

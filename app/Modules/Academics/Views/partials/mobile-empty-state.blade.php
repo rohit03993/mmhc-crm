@@ -5,7 +5,7 @@
     'actionUrl' => null,
     'actionLabel' => null,
 ])
-<div class="acad-empty d-md-none">
+<div class="acad-empty">
     <div class="acad-empty__icon" aria-hidden="true">
         <i class="fas {{ $icon }}"></i>
     </div>
