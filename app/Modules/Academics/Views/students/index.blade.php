@@ -4,8 +4,10 @@
 @section('page-title', 'Students')
 
 @section('content')
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', ['title' => 'Students', 'lede' => 'Enrollment and batch assignments.'])
+
+    <div class="d-none d-md-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
         <h2 class="h5 mb-0">Students</h2>
         <a href="{{ route('academics.students.create') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Add student</a>
     </div>
@@ -31,7 +33,14 @@
     <div class="card shadow-sm">
         <div class="card-body p-0">
             @if($students->isEmpty())
-                <p class="text-muted p-4 mb-0">No students yet.</p>
+                @include('academics::partials.mobile-empty-state', [
+                    'icon' => 'fa-user-graduate',
+                    'title' => 'No students yet',
+                    'text' => 'Add a student to get started.',
+                    'actionUrl' => route('academics.students.create'),
+                    'actionLabel' => 'Add student',
+                ])
+                <p class="text-muted p-4 mb-0 d-none d-md-block">No students yet.</p>
             @else
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">

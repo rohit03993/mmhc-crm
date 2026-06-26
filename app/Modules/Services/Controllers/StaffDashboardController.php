@@ -408,7 +408,7 @@ class StaffDashboardController extends Controller
     }
 
     /**
-     * Send service completion OTP to patient (SMS only).
+     * Send service completion OTP to the patient via WhatsApp.
      */
     public function sendCompletionOtp(Request $request, ServiceRequest $serviceRequest)
     {
@@ -442,14 +442,22 @@ class StaffDashboardController extends Controller
             ], 400);
         }
 
-        if ($serviceRequest->end_date > now()->startOfDay()) {
+        if (! $serviceRequest->isReadyForStaffCompletion()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Service cannot be completed before end date: '.$serviceRequest->end_date->format('M d, Y'),
+                'message' => 'Service can be completed on or after '.$serviceRequest->end_date->format('M d, Y').'.',
             ], 400);
         }
 
         $serviceRequest->load('patient');
+        if ($this->staffMayCompleteWithoutPatientOtp($staff, $serviceRequest)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Patient mobile matches your verified account. Use Complete — no separate patient OTP needed.',
+                'skip_patient_otp' => true,
+            ]);
+        }
+
         $patient = $serviceRequest->patient;
         if (! $patient) {
             return response()->json([
@@ -468,15 +476,15 @@ class StaffDashboardController extends Controller
         $otp = (string) random_int(100000, 999999);
         $expiresAt = now()->addMinutes(5);
 
-        $normalizedPhone = $this->normalizeIndianPhone((string) ($patient->phone ?? $serviceRequest->contact_phone));
+        $normalizedPhone = $this->normalizeIndianPhone((string) ($serviceRequest->patientContactPhone() ?? ''));
         if (! $normalizedPhone) {
             return response()->json([
                 'success' => false,
-                'message' => 'Patient mobile number is missing or invalid. Completion OTP is sent by SMS only.',
+                'message' => 'Patient mobile number is missing or invalid.',
             ], 422);
         }
 
-        $smsResult = app(SmsOtpService::class)->sendCustomOtp($normalizedPhone, $otp);
+        $smsResult = app(SmsOtpService::class)->sendCustomOtp($normalizedPhone, $otp, $patient->name);
         if (! ($smsResult['success'] ?? false)) {
             return response()->json([
                 'success' => false,
@@ -484,25 +492,33 @@ class StaffDashboardController extends Controller
             ], 422);
         }
 
-        app(ScopedSmsOtpRedisService::class)->store(
+        $scopedOtp = app(ScopedSmsOtpRedisService::class);
+        $scopedOtp->store(
+            ScopedSmsOtpRedisService::PURPOSE_SERVICE_COMPLETION,
+            (int) $serviceRequest->id,
+            $otp
+        );
+        $otpDigest = $scopedOtp->buildDigest(
             ScopedSmsOtpRedisService::PURPOSE_SERVICE_COMPLETION,
             (int) $serviceRequest->id,
             $otp
         );
 
+        $channelLabel = app(SmsOtpService::class)->deliveryChannelLabel();
+
         $serviceRequest->update([
-            'completion_otp_hash' => null,
+            'completion_otp_hash' => $otpDigest,
             'completion_otp_expires_at' => $expiresAt,
             'completion_otp_attempts' => 0,
-            'completion_otp_channel' => 'mobile',
-            'completion_otp_sent_to' => $this->maskPhone($normalizedPhone),
+            'completion_otp_channel' => strtolower($channelLabel),
+            'completion_otp_sent_to' => $channelLabel.': '.$this->maskPhone($normalizedPhone),
             'completion_otp_sent_at' => now(),
             'completion_verified_at' => null,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'OTP sent successfully. Enter OTP to complete service.',
+            'message' => 'OTP sent to the patient via '.$channelLabel.'. Ask them for the code to complete the visit.',
             'channel' => $serviceRequest->completion_otp_channel,
             'sent_to' => $serviceRequest->completion_otp_sent_to,
             'expires_at' => optional($serviceRequest->completion_otp_expires_at)->toISOString(),
@@ -549,17 +565,19 @@ class StaffDashboardController extends Controller
         }
 
         // Additional validation: Check if service end date is valid
-        if ($serviceRequest->end_date > now()->startOfDay()) {
+        if (! $serviceRequest->isReadyForStaffCompletion()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Service cannot be completed before the assigned end date: '.$serviceRequest->end_date->format('M d, Y'),
+                'message' => 'Service can be completed on or after the assigned end date: '.$serviceRequest->end_date->format('M d, Y'),
             ], 400);
         }
 
+        $skipPatientOtp = $this->staffMayCompleteWithoutPatientOtp($staff, $serviceRequest);
+
         $validator = Validator::make($request->all(), [
-            'otp_code' => ['required', 'digits:6'],
+            'otp_code' => $skipPatientOtp ? ['nullable', 'digits:6'] : ['required', 'digits:6'],
         ], [
-            'otp_code.required' => 'Completion OTP is required.',
+            'otp_code.required' => 'Patient completion OTP is required.',
             'otp_code.digits' => 'Completion OTP must be 6 digits.',
         ]);
         if ($validator->fails()) {
@@ -569,6 +587,7 @@ class StaffDashboardController extends Controller
             ], 422);
         }
 
+        if (! $skipPatientOtp) {
         if (! $serviceRequest->completion_otp_expires_at) {
             return response()->json([
                 'success' => false,
@@ -595,10 +614,11 @@ class StaffDashboardController extends Controller
         }
 
         $otpCode = (string) $request->input('otp_code');
-        $otpValid = app(ScopedSmsOtpRedisService::class)->verifyAndConsume(
+        $otpValid = app(ScopedSmsOtpRedisService::class)->verifyWithDbFallback(
             ScopedSmsOtpRedisService::PURPOSE_SERVICE_COMPLETION,
             (int) $serviceRequest->id,
-            $otpCode
+            $otpCode,
+            (string) ($serviceRequest->completion_otp_hash ?? '')
         );
 
         if (! $otpValid) {
@@ -611,6 +631,7 @@ class StaffDashboardController extends Controller
                     ? "Invalid OTP. {$remainingAttempts} attempt(s) left."
                     : 'Invalid OTP. No attempts left. Request a new OTP.',
             ], 422);
+        }
         }
 
         // CRITICAL FIX #3: Wrap in transaction
@@ -1096,5 +1117,19 @@ class StaffDashboardController extends Controller
     private function maskPhone(string $normalizedPhone): string
     {
         return str_repeat('*', max(0, strlen($normalizedPhone) - 4)).substr($normalizedPhone, -4);
+    }
+
+    /**
+     * Patient mobile matches staff verified account — login OTP already proved possession.
+     */
+    private function staffMayCompleteWithoutPatientOtp(User $staff, ServiceRequest $serviceRequest): bool
+    {
+        if (! $staff->hasVerifiedPhone()) {
+            return false;
+        }
+
+        $patientPhone = $serviceRequest->patientContactPhone();
+
+        return $patientPhone && $staff->accountPhonesMatch($staff->phone, $patientPhone);
     }
 }

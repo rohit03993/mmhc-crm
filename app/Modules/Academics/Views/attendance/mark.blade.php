@@ -4,8 +4,13 @@
 @section('page-title', 'Mark attendance: ' . $batch->name)
 
 @section('content')
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', [
+        'title' => $batch->name,
+        'lede' => 'Mark attendance for '.\Carbon\Carbon::parse($date)->format('M d, Y'),
+    ])
+
+    <div class="d-none d-md-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
         <h2 class="h5 mb-0">{{ $batch->name }} — {{ \Carbon\Carbon::parse($date)->format('M d, Y') }}</h2>
         <a href="{{ route('academics.attendance.index') }}" class="btn btn-outline-secondary">Back</a>
     </div>

@@ -5,7 +5,7 @@ namespace App\Modules\Auth\Services;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Phone OTP: deliver via WhatsApp (Pal Digital) or SMS (Sent.dm); verify in-app with HMAC.
+ * Phone OTP: deliver via WhatsApp (Pal Digital / mmhc_verification_code2); verify in-app with HMAC.
  */
 class SmsOtpService
 {
@@ -20,24 +20,16 @@ class SmsOtpService
     public function __construct(
         private PhoneNormalizer $phone,
         private PalDigitalWhatsAppService $palDigital,
-        private SentDmSmsService $sentDm,
     ) {}
 
     public function isConfigured(): bool
     {
-        return $this->usesWhatsApp()
-            ? $this->palDigital->isConfigured()
-            : $this->sentDm->isConfigured();
-    }
-
-    public function usesWhatsApp(): bool
-    {
-        return config('services.otp_delivery.channel', 'whatsapp') === 'whatsapp';
+        return $this->palDigital->isConfigured();
     }
 
     public function deliveryChannelLabel(): string
     {
-        return $this->usesWhatsApp() ? 'WhatsApp' : 'SMS';
+        return 'WhatsApp';
     }
 
     /**
@@ -53,9 +45,7 @@ class SmsOtpService
         if (! $this->isConfigured()) {
             return [
                 'success' => false,
-                'message' => $this->usesWhatsApp()
-                    ? 'Phone sign-in is not configured. Set PAL_DIGITAL_INTEGRATION_KEY and PAL_DIGITAL_CAMPAIGN_ID in .env.'
-                    : 'Phone sign-in is not configured. Set SENT_DM_API_KEY and SENT_DM_TEMPLATE_ID.',
+                'message' => 'WhatsApp OTP is not configured. Set PAL_DIGITAL_INTEGRATION_KEY and PAL_DIGITAL_CAMPAIGN_ID in .env.',
             ];
         }
 
@@ -75,15 +65,14 @@ class SmsOtpService
         $send = $this->deliverOtp($e164, $otp, $contactName);
         if (! ($send['success'] ?? false)) {
             Cache::forget(self::CACHE_PREFIX.$e164);
-            $channel = strtolower($this->deliveryChannelLabel());
-            $message = $send['message'] ?? "Could not send the code via {$channel}. Please try again.";
+            $message = $send['message'] ?? 'Could not send the code via WhatsApp. Please try again.';
 
             return ['success' => false, 'message' => $message];
         }
 
         return [
             'success' => true,
-            'message' => 'A login code was sent to your mobile via '.$this->deliveryChannelLabel().'.',
+            'message' => 'A login code was sent to your mobile via WhatsApp.',
         ];
     }
 
@@ -125,9 +114,7 @@ class SmsOtpService
         if (! $this->isConfigured()) {
             return [
                 'success' => false,
-                'message' => $this->usesWhatsApp()
-                    ? 'WhatsApp is not configured. Set PAL_DIGITAL_INTEGRATION_KEY and PAL_DIGITAL_CAMPAIGN_ID.'
-                    : 'SMS is not configured. Set SENT_DM_API_KEY and SENT_DM_TEMPLATE_ID.',
+                'message' => 'WhatsApp OTP is not configured. Set PAL_DIGITAL_INTEGRATION_KEY and PAL_DIGITAL_CAMPAIGN_ID.',
             ];
         }
 
@@ -144,13 +131,7 @@ class SmsOtpService
      */
     private function deliverOtp(string $e164, string $otp, ?string $contactName): array
     {
-        if ($this->usesWhatsApp()) {
-            return $this->palDigital->sendVerificationOtp($e164, $otp, $contactName);
-        }
-
-        $paramName = (string) config('services.sent_dm.otp_parameter_name', 'code');
-
-        return $this->sentDm->sendTemplateSms($e164, [$paramName => $otp]);
+        return $this->palDigital->sendVerificationOtp($e164, $otp, $contactName);
     }
 
     protected function generateOtp(): string

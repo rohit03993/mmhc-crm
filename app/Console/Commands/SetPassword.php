@@ -35,7 +35,6 @@ class SetPassword extends Command
         
         $user->update([
             'password' => Hash::make($password),
-            'plain_password' => $password, // Mutator will auto-encrypt
         ]);
         
         $this->info("✅ Password updated for user '{$user->name}' ({$user->email})");
@@ -43,7 +42,6 @@ class SetPassword extends Command
         $this->info("   Password: {$password}");
         $this->info("   Role: {$user->role}");
         $this->info("   Unique ID: {$user->unique_id}");
-        $this->info("   Plain password stored: ✓");
         
         return 0;
     }

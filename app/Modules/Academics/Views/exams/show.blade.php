@@ -4,8 +4,10 @@
 @section('page-title', $exam->title)
 
 @section('content')
-<div class="container-fluid py-3 py-md-4">
-    <div class="d-flex flex-wrap gap-2 mb-3">
+<div class="container-fluid py-3 py-md-4 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', ['label' => 'Exam', 'title' => $exam->title, 'lede' => $exam->is_published ? 'Published assessment' : 'Draft exam'])
+
+    <div class="d-none d-md-flex flex-wrap gap-2 mb-3">
         <a href="{{ route('academics.exams.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="fas fa-arrow-left me-1"></i>All exams</a>
         @if($canManage)
             <a href="{{ route('academics.exams.edit', $exam) }}" class="btn btn-primary btn-sm rounded-pill"><i class="fas fa-edit me-1"></i>Edit &amp; questions</a>

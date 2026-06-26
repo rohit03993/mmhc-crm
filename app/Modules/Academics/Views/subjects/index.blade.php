@@ -4,8 +4,19 @@
 @section('page-title', 'Subjects')
 
 @section('content')
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', ['title' => 'Subjects', 'lede' => 'Courses within each batch.'])
+
+    <form action="{{ route('academics.subjects.index') }}" method="GET" class="d-md-none mb-3">
+        <select name="batch_id" class="form-select" onchange="this.form.submit()">
+            <option value="">All batches</option>
+            @foreach($batches as $b)
+                <option value="{{ $b->id }}" {{ request('batch_id') == $b->id ? 'selected' : '' }}>{{ $b->name }} ({{ $b->institution->name ?? '' }})</option>
+            @endforeach
+        </select>
+    </form>
+
+    <div class="d-none d-md-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
         <h2 class="h5 mb-0">Subjects</h2>
         <div class="d-flex flex-wrap gap-2">
             <form action="{{ route('academics.subjects.index') }}" method="GET" class="d-inline">
@@ -23,7 +34,14 @@
     <div class="card">
         <div class="card-body p-0">
             @if($subjects->isEmpty())
-                <p class="text-muted p-4 mb-0">No subjects yet. Create one under a batch.</p>
+                @include('academics::partials.mobile-empty-state', [
+                    'icon' => 'fa-book-open',
+                    'title' => 'No subjects',
+                    'text' => 'Create a subject under a batch.',
+                    'actionUrl' => route('academics.subjects.create'),
+                    'actionLabel' => 'Add subject',
+                ])
+                <p class="text-muted p-4 mb-0 d-none d-md-block">No subjects yet. Create one under a batch.</p>
             @else
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">

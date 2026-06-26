@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Blocks authenticated users until their account mobile is SMS-verified.
+ * Blocks authenticated users until their account mobile is verified via WhatsApp OTP.
  */
 class EnsurePhoneVerified
 {
@@ -48,12 +48,12 @@ class EnsurePhoneVerified
         if (! trim((string) ($user->phone ?? ''))) {
             return redirect()
                 ->route('profile.edit')
-                ->with('error', 'Add your mobile number in Profile, then verify it with SMS OTP to use the app.');
+                ->with('error', 'Add your mobile number in Profile, then verify it with WhatsApp OTP to use the app.');
         }
 
         return redirect()
             ->route('profile.verify-phone')
-            ->with('error', 'Verify your mobile number with SMS OTP to continue using MMHC.');
+            ->with('error', 'Verify your mobile number with WhatsApp OTP to continue using MMHC.');
     }
 
     protected function isAllowedRoute(string $routeName): bool

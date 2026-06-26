@@ -4,8 +4,10 @@
 @section('page-title', 'Pending enrollments')
 
 @section('content')
-<div class="container-fluid py-3">
-    <h2 class="h5 mb-4">Pending student enrollments</h2>
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', ['title' => 'Enrollments', 'lede' => 'Review pending student applications.'])
+
+    <h2 class="h5 mb-4 d-none d-md-block">Pending student enrollments</h2>
 
     @if(isset($institutions) && $institutions->isNotEmpty())
     <form action="{{ route('academics.enrollments.index') }}" method="GET" class="row g-2 align-items-end mb-3">
@@ -31,7 +33,12 @@
     <div class="card shadow-sm">
         <div class="card-body p-0">
             @if($applications->isEmpty())
-                <p class="text-muted p-4 mb-0">No pending enrollment requests.</p>
+                @include('academics::partials.mobile-empty-state', [
+                    'icon' => 'fa-user-clock',
+                    'title' => 'All caught up',
+                    'text' => 'No pending enrollment requests right now.',
+                ])
+                <p class="text-muted p-4 mb-0 d-none d-md-block">No pending enrollment requests.</p>
             @else
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">

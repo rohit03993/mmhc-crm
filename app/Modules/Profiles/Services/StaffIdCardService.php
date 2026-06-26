@@ -26,7 +26,7 @@ class StaffIdCardService
         }
 
         if (! $user->hasVerifiedPhone()) {
-            return 'Verify the mobile number on Profile (SMS OTP) before issuing an ID card.';
+            return 'Verify the mobile number on Profile (WhatsApp OTP) before issuing an ID card.';
         }
 
         return null;

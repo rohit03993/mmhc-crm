@@ -192,7 +192,14 @@ class AssignmentController extends Controller
 
     public function downloadAttachment(Assignment $assignment, int $index)
     {
-        $this->authorizeTopic($assignment->topic_id);
+        $user = auth()->user();
+        if ($user->role === 'student') {
+            if (! in_array($user->id, $assignment->eligibleStudentIds(), true)) {
+                abort(403);
+            }
+        } else {
+            $this->authorizeTopic($assignment->topic_id);
+        }
         $attachments = $assignment->attachments ?? [];
         $file = $attachments[$index] ?? null;
         if (! $file || ! Storage::disk('public')->exists($file['path'] ?? '')) {

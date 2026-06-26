@@ -34,7 +34,7 @@
                     <i class="fas fa-id-card me-2"></i>View ID card
                 </a>
             @else
-                <span class="btn btn-light border rounded-pill px-3 shadow-sm text-muted disabled" title="Verify mobile on Profile (SMS OTP) first">
+                <span class="btn btn-light border rounded-pill px-3 shadow-sm text-muted disabled" title="Verify mobile on Profile (WhatsApp OTP) first">
                     <i class="fas fa-id-card me-2"></i>ID card — verify mobile
                 </span>
             @endif
@@ -166,12 +166,12 @@
                         @if(empty($s['mobile_verified']) && (float) ($s['held_earnings_total'] ?? 0) > 0)
                         <div class="col-12">
                             <div class="alert alert-warning py-2 px-2 mb-0 small">
-                                <strong>₹{{ number_format((float) $s['held_earnings_total'], 2) }} on hold</strong> — verified patient rewards / referrals / services waiting for account mobile SMS OTP.
+                                <strong>₹{{ number_format((float) $s['held_earnings_total'], 2) }} on hold</strong> — verified patient rewards / referrals / services waiting for account mobile WhatsApp OTP.
                             </div>
                         </div>
                         @elseif(empty($s['mobile_verified']))
                         <div class="col-12">
-                            <div class="alert alert-warning py-2 px-2 mb-0 small">Account mobile not verified — payable patient rewards and referral totals stay at ₹0 until SMS OTP in Profile.</div>
+                            <div class="alert alert-warning py-2 px-2 mb-0 small">Account mobile not verified — payable patient rewards and referral totals stay at ₹0 until WhatsApp OTP in Profile.</div>
                         </div>
                         @endif
                         <div class="col-12">
@@ -538,10 +538,10 @@
                     <span class="apv-cred-hint small text-muted d-inline-flex align-items-center gap-1">Tap to expand <i class="fas fa-chevron-down apv-cred-chevron small"></i></span>
                 </summary>
                 <div class="apv-cred-body pt-3 mt-2 border-top">
-                    <p class="small text-muted mb-2">For admin use only; store and share passwords securely.</p>
+                    <p class="small text-muted mb-2">Sign-in is via WhatsApp OTP. Use <strong>Generate new password</strong> only if the user needs legacy email/password login — the password is shown once and not stored in readable form.</p>
                     <div class="input-group input-group-sm">
-                        <input type="text" class="form-control font-monospace" id="apvPlainPassword" readonly value="{{ $user->decrypted_password ?? 'Not available' }}">
-                        <button class="btn btn-outline-secondary" type="button" onclick="apvCopyPassword()"><i class="fas fa-copy"></i></button>
+                        <input type="text" class="form-control font-monospace" id="apvPlainPassword" readonly placeholder="Generate to see one-time password" value="">
+                        <button class="btn btn-outline-secondary" type="button" onclick="apvCopyPassword()" title="Copy password"><i class="fas fa-copy"></i></button>
                     </div>
                     <button type="button" class="btn btn-outline-danger btn-sm mt-2 rounded-pill" onclick="apvResetPassword({{ $user->id }})">
                         <i class="fas fa-sync-alt me-1"></i>Generate new password
@@ -625,6 +625,10 @@
 <script>
 function apvCopyPassword() {
     const el = document.getElementById('apvPlainPassword');
+    if (!el.value) {
+        alert('Generate a password first.');
+        return;
+    }
     el.select();
     el.setSelectionRange(0, 99999);
     navigator.clipboard.writeText(el.value).then(function () {

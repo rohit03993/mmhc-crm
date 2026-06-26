@@ -42,7 +42,7 @@ Route::middleware(['web'])->group(function () {
     Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/users', [AuthController::class, 'manageUsers'])->name('users');
         Route::post('/users', [AuthController::class, 'storeUser'])->name('users.store');
-        Route::post('/users/bulk-phone-verification-reminders', [AuthController::class, 'bulkSendPhoneVerificationReminders'])->name('users.bulk-phone-reminders');
+        Route::post('/users/bulk-phone-verification-reminders', [AuthController::class, 'bulkSendPhoneVerificationReminders'])->middleware('throttle:3,1')->name('users.bulk-phone-reminders');
         Route::post('/users/{user}/verify-phone', [AuthController::class, 'adminVerifyUserPhone'])->name('users.verify-phone');
         Route::post('/users/{user}/revoke-phone-verification', [AuthController::class, 'adminRevokeUserPhoneVerification'])->name('users.revoke-phone-verification');
         Route::get('/users/{user}/view', [AuthController::class, 'viewUser'])->name('users.view');

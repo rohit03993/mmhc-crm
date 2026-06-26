@@ -105,8 +105,8 @@ Route::middleware(['auth'])->group(function () {
             // Staff booking acceptance/rejection (One-Way Booking)
             Route::post('/booking/{serviceRequest}/accept', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'acceptBooking'])->name('booking.accept');
             Route::post('/booking/{serviceRequest}/reject', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'rejectBooking'])->name('booking.reject');
-            Route::post('/referrals/verify-otp', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'verifyReferralOtp'])->name('referrals.verify-otp');
-            Route::post('/referrals/resend-otp', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'resendReferralOtp'])->name('referrals.resend-otp');
+            Route::post('/referrals/verify-otp', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'verifyReferralOtp'])->middleware('throttle:10,1')->name('referrals.verify-otp');
+            Route::post('/referrals/resend-otp', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'resendReferralOtp'])->middleware('throttle:5,1')->name('referrals.resend-otp');
 
             // Staff Earnings & Referral Routes (these will be under staff.* prefix from parent)
             Route::get('/rewards', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'rewards'])->name('rewards.index');
@@ -137,11 +137,11 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
         Route::get('/verify-phone', [ProfileController::class, 'verifyPhone'])->name('verify-phone');
-        Route::post('/verify-phone/send', [ProfileController::class, 'sendVerifyPhoneOtp'])->name('verify-phone.send');
+        Route::post('/verify-phone/send', [ProfileController::class, 'sendVerifyPhoneOtp'])->middleware('throttle:5,1')->name('verify-phone.send');
         Route::get('/edit', [ProfileController::class, 'edit'])->name('edit');
         Route::put('/update', [ProfileController::class, 'update'])->name('update');
-        Route::post('/verify-contact-otp', [ProfileController::class, 'verifyContactUpdateOtp'])->name('verify-contact-otp');
-        Route::post('/resend-contact-otp', [ProfileController::class, 'resendContactUpdateOtp'])->name('resend-contact-otp');
+        Route::post('/verify-contact-otp', [ProfileController::class, 'verifyContactUpdateOtp'])->middleware('throttle:10,1')->name('verify-contact-otp');
+        Route::post('/resend-contact-otp', [ProfileController::class, 'resendContactUpdateOtp'])->middleware('throttle:5,1')->name('resend-contact-otp');
         Route::post('/upload-avatar', [ProfileController::class, 'uploadAvatar'])->name('upload-avatar');
         Route::get('/id-card', [StaffIdCardController::class, 'showOwn'])
             ->middleware('role:nurse,caregiver')

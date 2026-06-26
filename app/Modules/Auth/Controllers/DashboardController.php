@@ -837,7 +837,7 @@ class DashboardController extends Controller
                 'icon' => 'fa-user-plus',
                 'color' => 'primary',
                 'message' => 'Account created successfully',
-                'timestamp' => $user->created_at,
+                'timestamp' => $user->created_at ?? now(),
                 'link' => null,
             ]);
         } else {
@@ -847,17 +847,21 @@ class DashboardController extends Controller
                 'icon' => 'fa-user-plus',
                 'color' => 'primary',
                 'message' => 'Account created successfully',
-                'timestamp' => $user->created_at,
+                'timestamp' => $user->created_at ?? now(),
                 'link' => null,
             ]);
         }
 
         // Sort by timestamp (most recent first) and limit to 8
-        return $activities->sortByDesc('timestamp')->take(8)->map(function ($activity) {
-            $activity['time'] = $activity['timestamp']->diffForHumans();
+        return $activities
+            ->sortByDesc(fn (array $activity) => optional($activity['timestamp'])->getTimestamp() ?? 0)
+            ->take(8)
+            ->map(function (array $activity) {
+                $activity['time'] = optional($activity['timestamp'])->diffForHumans() ?? 'Recently';
 
-            return $activity;
-        })->values();
+                return $activity;
+            })
+            ->values();
     }
 
     /**

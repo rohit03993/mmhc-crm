@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Storage\PublicStorageAuthorizationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -10,14 +12,23 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * Serves files from storage/app/public (public disk).
  * Used when the web server cannot follow the public/storage symlink (e.g. disable_symlinks).
  * Only serves files that exist under the public disk; no directory traversal.
+ * Access is authorized per path (public CMS assets vs authenticated user files).
  */
 class StorageController extends Controller
 {
+    public function __construct(
+        private readonly PublicStorageAuthorizationService $storageAuth
+    ) {}
+
     public function show(Request $request): StreamedResponse
     {
         $path = $this->sanitizePath((string) $request->query('path', ''));
         if ($path === null || ! Storage::disk('public')->exists($path)) {
             abort(404);
+        }
+
+        if (! $this->storageAuth->canAccess(Auth::user(), $path)) {
+            abort(Auth::check() ? 403 : 401);
         }
 
         return Storage::disk('public')->response($path);

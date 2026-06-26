@@ -4,8 +4,11 @@
 @section('page-title', 'Rate submission')
 
 @section('content')
-<div class="container-fluid py-3">
-    <a href="{{ route('academics.mentorship.index') }}" class="btn btn-sm btn-outline-secondary mb-3">&larr; Mentorship</a>
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    <a href="{{ route('academics.mentorship.index') }}" class="acad-text-link d-md-none mb-3">
+        <i class="fas fa-arrow-left" aria-hidden="true"></i> Mentorship
+    </a>
+    <a href="{{ route('academics.mentorship.index') }}" class="btn btn-sm btn-outline-secondary mb-3 d-none d-md-inline-flex">&larr; Mentorship</a>
 
     <div class="card shadow-sm mb-3">
         <div class="card-body">

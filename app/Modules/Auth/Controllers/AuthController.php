@@ -221,6 +221,8 @@ class AuthController extends Controller
 
         if (! $user->hasVerifiedPhone()) {
             $user->applyPhoneVerifiedFromLoginOtp();
+        } else {
+            $user->syncStalePhoneVerificationState();
         }
         $user->syncTrustedAccountPhoneState();
 
@@ -347,7 +349,6 @@ class AuthController extends Controller
             function (User $user, string $password) {
                 $user->forceFill([
                     'password' => Hash::make($password),
-                    'plain_password' => $password,
                 ])->save();
             }
         );
@@ -518,8 +519,7 @@ class AuthController extends Controller
             $userData = $request->only(['name', 'password', 'role', 'date_of_birth', 'address', 'pincode']);
             $this->userService->applySelfRegistrationIdentity($userData, $normalizedPhone);
 
-            // Store password (mutator will auto-encrypt plain_password)
-            $userData['plain_password'] = $userData['password'];
+            // Store hashed password only (sign-in via WhatsApp OTP; email/password legacy)
             $userData['password'] = Hash::make($userData['password']);
 
             // Generate unique ID based on role
@@ -635,12 +635,13 @@ class AuthController extends Controller
             'pincode' => 'required|string|regex:/^[1-9][0-9]{5}$/',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:student,faculty',
+            'faculty_teaching_mode' => 'nullable|in:college,independent',
             'academic_institution_id' => [
-                'required',
+                'nullable',
                 'integer',
                 Rule::exists('academic_institutions', 'id'),
             ],
-            'academic_batch_ids' => ['required', 'array', 'min:1'],
+            'academic_batch_ids' => ['nullable', 'array'],
             'academic_batch_ids.*' => ['integer', Rule::exists('academic_batches', 'id')],
             'qualification' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:500',
@@ -652,12 +653,29 @@ class AuthController extends Controller
         ]);
 
         $validator->after(function (\Illuminate\Validation\Validator $v) use ($request) {
-            $id = (int) $request->input('academic_institution_id');
-            if ($id > 0 && ! Institution::query()->where('id', $id)->where('is_active', true)->exists()) {
-                $v->errors()->add('academic_institution_id', 'This institute is not active or could not be found.');
+            $role = (string) $request->input('role');
+            $facultyMode = (string) $request->input('faculty_teaching_mode', 'college');
+            $independentFaculty = $role === 'faculty' && $facultyMode === 'independent';
+
+            if ($role === 'student' || ($role === 'faculty' && ! $independentFaculty)) {
+                if (! $request->filled('academic_institution_id')) {
+                    $v->errors()->add('academic_institution_id', 'Please select your institute.');
+                }
+                $batchIds = (array) $request->input('academic_batch_ids', []);
+                if ($batchIds === []) {
+                    $v->errors()->add('academic_batch_ids', 'Please select at least one batch.');
+                }
             }
-            $this->assertAcademicBatchesBelongToInstitution($v, $request);
-            if ((string) $request->input('role') === 'faculty' && empty(trim((string) $request->input('qualification', '')))) {
+
+            if (! $independentFaculty) {
+                $id = (int) $request->input('academic_institution_id');
+                if ($id > 0 && ! Institution::query()->where('id', $id)->where('is_active', true)->exists()) {
+                    $v->errors()->add('academic_institution_id', 'This institute is not active or could not be found.');
+                }
+                $this->assertAcademicBatchesBelongToInstitution($v, $request);
+            }
+
+            if ($role === 'faculty' && empty(trim((string) $request->input('qualification', '')))) {
                 $v->errors()->add('qualification', 'Qualification is required for faculty registration.');
             }
         });
@@ -670,13 +688,22 @@ class AuthController extends Controller
 
         return DB::transaction(function () use ($request, $normalizedPhone) {
             $role = (string) $request->input('role');
+            $facultyMode = (string) $request->input('faculty_teaching_mode', 'college');
+            $independentFaculty = $role === 'faculty' && $facultyMode === 'independent';
+
             $userData = $request->only(['name', 'password', 'role', 'date_of_birth', 'address', 'pincode']);
             $this->userService->applySelfRegistrationIdentity($userData, $normalizedPhone);
-            $userData['plain_password'] = $userData['password'];
             $userData['password'] = Hash::make($userData['password']);
             $userData['unique_id'] = $this->userService->generateUniqueId($role);
-            $userData['academic_institution_id'] = (int) $request->input('academic_institution_id');
             $userData['is_active'] = true;
+
+            if ($independentFaculty) {
+                $userData['academic_institution_id'] = null;
+                $userData['is_open_teacher'] = true;
+            } else {
+                $userData['academic_institution_id'] = (int) $request->input('academic_institution_id');
+                $userData['is_open_teacher'] = false;
+            }
 
             $pincode = $request->input('pincode');
             $pincodeData = \App\Models\Pincode::findByPincode($pincode);
@@ -702,6 +729,15 @@ class AuthController extends Controller
 
             if ($role === 'faculty' && $request->filled('qualification')) {
                 $user->update(['qualification' => $request->input('qualification')]);
+            }
+
+            if ($independentFaculty) {
+                Auth::login($user);
+
+                return $this->redirectToPhoneVerification(
+                    $user,
+                    'Welcome! Verify your mobile, then create your first open classroom.'
+                );
             }
 
             if ($role === 'student') {
@@ -921,8 +957,6 @@ class AuthController extends Controller
         // Normalize and store phone number
         $userData['phone'] = $normalizedPhone;
 
-        // Store password (mutator will auto-encrypt plain_password)
-        $userData['plain_password'] = $userData['password'];
         $userData['password'] = Hash::make($userData['password']);
 
         // Get pincode coordinates from pincode database
@@ -976,15 +1010,12 @@ class AuthController extends Controller
         // Extract 10-digit phone for display
         $phoneDisplay = $this->userService->extractPhoneDigits($user->phone);
 
-        // Get decrypted password using accessor (admin only)
-        $decryptedPassword = $user->decrypted_password;
-
         $user->loadMissing('academicBatches:id,name,institution_id');
         $user->loadMissing('phoneVerifiedByAdmin:id,name');
 
         return response()->json([
             'success' => true,
-            'user' => $this->adminUserJsonPayload($user, $phoneDisplay, $decryptedPassword),
+            'user' => $this->adminUserJsonPayload($user, $phoneDisplay),
         ]);
     }
 
@@ -996,22 +1027,19 @@ class AuthController extends Controller
         // Extract 10-digit phone for display
         $phoneDisplay = $this->userService->extractPhoneDigits($user->phone);
 
-        // Get decrypted password using accessor (admin only)
-        $decryptedPassword = $user->decrypted_password;
-
         $user->loadMissing('academicBatches:id,name,institution_id');
         $user->loadMissing('phoneVerifiedByAdmin:id,name');
 
         return response()->json([
             'success' => true,
-            'user' => $this->adminUserJsonPayload($user, $phoneDisplay, $decryptedPassword),
+            'user' => $this->adminUserJsonPayload($user, $phoneDisplay),
         ]);
     }
 
   /**
      * @return array<string, mixed>
      */
-    private function adminUserJsonPayload(User $user, string $phoneDisplay, ?string $decryptedPassword): array
+    private function adminUserJsonPayload(User $user, string $phoneDisplay): array
     {
         return [
             'id' => $user->id,
@@ -1025,7 +1053,6 @@ class AuthController extends Controller
             'date_of_birth' => $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : null,
             'is_active' => $user->is_active,
             'created_at' => $user->created_at->format('M d, Y'),
-            'plain_password' => $decryptedPassword,
             'reward_points' => $user->reward_points ?? 0,
             'academic_institution_id' => $user->academic_institution_id,
             'academic_batch_ids' => $user->academicBatches->pluck('id')->values()->all(),
@@ -1056,7 +1083,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Admin: revoke mobile verification (user must verify via SMS OTP again).
+     * Admin: revoke mobile verification (user must verify via WhatsApp OTP again).
      */
     public function adminRevokeUserPhoneVerification(User $user)
     {
@@ -1066,11 +1093,11 @@ class AuthController extends Controller
 
         $user->revokePhoneVerification();
 
-        return redirect()->back()->with('success', "Mobile verification revoked for '{$user->name}'. They must verify again via SMS OTP.");
+        return redirect()->back()->with('success', "Mobile verification revoked for '{$user->name}'. They must verify again via WhatsApp OTP.");
     }
 
     /**
-     * Admin: send verification OTP SMS to all unverified users (batch).
+     * Admin: send verification OTP via WhatsApp to all unverified users (batch).
      */
     public function bulkSendPhoneVerificationReminders(Request $request, PhoneVerificationService $phoneVerificationService)
     {
@@ -1154,10 +1181,9 @@ class AuthController extends Controller
             $updateData['is_active'] = $request->is_active == '1' || $request->is_active === true || $request->is_active === 1;
         }
 
-        // Update password if provided (mutator will auto-encrypt plain_password)
+        // Update password if provided (legacy email login only)
         if ($request->filled('password')) {
             $updateData['password'] = Hash::make($request->password);
-            $updateData['plain_password'] = $request->password;
         }
 
         // Get pincode coordinates from pincode database
@@ -1296,7 +1322,6 @@ class AuthController extends Controller
 
         $user->update([
             'password' => Hash::make($newPassword),
-            'plain_password' => $newPassword, // Mutator will auto-encrypt
         ]);
 
         return response()->json([
@@ -1357,8 +1382,12 @@ class AuthController extends Controller
     /**
      * Delete all non-admin users (Admin only)
      */
-    public function deleteAllNonAdminUsers()
+    public function deleteAllNonAdminUsers(Request $request)
     {
+        $request->validate([
+            'confirm_phrase' => 'required|in:DELETE ALL',
+        ]);
+
         $protected = User::protectedFromBulkUserDeletionRoleSlugs();
         $nonAdminCount = User::whereNotIn('role', $protected)->count();
         $protectedCount = User::whereIn('role', $protected)->count();

@@ -1,10 +1,18 @@
 @extends('auth::layout')
 
+@section('title', $plan->name.' — Plan')
+@section('page-title', 'Plan details')
+
+@section('head')
+@include('services::partials.mobile-assets')
+@endsection
+
 @section('content')
+<div class="mobile-app-container hc-mobile-shell" data-mmhc-ptr>
 <!-- Mobile Header -->
 <div class="app-mobile-header d-md-none">
     <div class="d-flex align-items-center">
-        <a href="{{ route('plans.index') }}" class="btn btn-link text-white p-0 me-3">
+        <a href="{{ route('plans.index') }}" class="btn btn-link text-white p-0 me-3" aria-label="Back to plans">
             <i class="fas fa-arrow-left"></i>
         </a>
         <h5 class="text-white mb-0">Plan Details</h5>
@@ -12,6 +20,11 @@
 </div>
 
 <div class="container-fluid px-3 py-4">
+    <div class="hc-m-hero d-md-none mb-3">
+        <p class="hc-m-hero__label">Subscribe</p>
+        <h2 class="hc-m-hero__title">{{ $plan->name }}</h2>
+        <p class="hc-m-hero__lede">{{ $plan->members_included }} · ₹{{ number_format($plan->monthly_price ?? $plan->price, 0) }}/month</p>
+    </div>
     <div class="row">
         <div class="col-12 col-lg-8 mx-auto">
             <!-- Plan Card -->
@@ -196,6 +209,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 <style>
 .subscription-plan-detail-card {

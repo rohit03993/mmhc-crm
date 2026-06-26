@@ -12,6 +12,8 @@ use App\Modules\Academics\Controllers\ReportController;
 use App\Modules\Academics\Controllers\SubjectController;
 use App\Modules\Academics\Controllers\EnrollmentController;
 use App\Modules\Academics\Controllers\MentorshipController;
+use App\Modules\Academics\Controllers\OpenClassroomAssignmentController;
+use App\Modules\Academics\Controllers\OpenClassroomController;
 use App\Modules\Academics\Controllers\StudentController;
 use App\Modules\Academics\Controllers\SubmissionController;
 use App\Modules\Academics\Controllers\TopicController;
@@ -27,6 +29,27 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->group(function () {
+    Route::middleware(['role:admin,institution_admin,faculty,student,nurse,caregiver'])->prefix('open-classrooms')->name('open-classrooms.')->group(function () {
+        Route::get('/', [OpenClassroomController::class, 'index'])->name('index');
+        Route::get('/create', [OpenClassroomController::class, 'create'])->name('create');
+        Route::post('/', [OpenClassroomController::class, 'store'])->name('store');
+        Route::get('/{openClassroom}', [OpenClassroomController::class, 'show'])->name('show')->whereNumber('openClassroom');
+        Route::get('/{openClassroom}/edit', [OpenClassroomController::class, 'edit'])->name('edit')->whereNumber('openClassroom');
+        Route::put('/{openClassroom}', [OpenClassroomController::class, 'update'])->name('update')->whereNumber('openClassroom');
+        Route::post('/{openClassroom}/join', [OpenClassroomController::class, 'join'])->name('join')->whereNumber('openClassroom');
+        Route::post('/{openClassroom}/leave', [OpenClassroomController::class, 'leave'])->name('leave')->whereNumber('openClassroom');
+        Route::post('/{openClassroom}/resources', [OpenClassroomController::class, 'storeResource'])->name('resources.store')->whereNumber('openClassroom');
+        Route::delete('/{openClassroom}/resources/{resource}', [OpenClassroomController::class, 'destroyResource'])->name('resources.destroy')->whereNumber(['openClassroom', 'resource']);
+        Route::get('/{openClassroom}/resources/{resource}/download', [OpenClassroomController::class, 'downloadResource'])->name('resources.download')->whereNumber(['openClassroom', 'resource']);
+        Route::post('/{openClassroom}/assignments', [OpenClassroomAssignmentController::class, 'store'])->name('assignments.store')->whereNumber('openClassroom');
+        Route::get('/{openClassroom}/assignments/{assignment}', [OpenClassroomAssignmentController::class, 'show'])->name('assignments.show')->whereNumber(['openClassroom', 'assignment']);
+        Route::get('/{openClassroom}/assignments/{assignment}/submissions', [OpenClassroomAssignmentController::class, 'submissions'])->name('assignments.submissions')->whereNumber(['openClassroom', 'assignment']);
+        Route::get('/{openClassroom}/assignments/{assignment}/submit', [OpenClassroomAssignmentController::class, 'submitForm'])->name('assignments.submit')->whereNumber(['openClassroom', 'assignment']);
+        Route::post('/{openClassroom}/assignments/{assignment}/submit', [OpenClassroomAssignmentController::class, 'submitStore'])->name('assignments.submit.store')->whereNumber(['openClassroom', 'assignment']);
+        Route::get('/{openClassroom}/assignments/{assignment}/download/{index}', [OpenClassroomAssignmentController::class, 'downloadAttachment'])->name('assignments.download')->whereNumber(['openClassroom', 'assignment'])->where('index', '[0-9]+');
+        Route::get('/{openClassroom}/submissions/{submission}/download', [OpenClassroomAssignmentController::class, 'downloadSubmission'])->name('submissions.download')->whereNumber(['openClassroom', 'submission']);
+    });
+
     Route::middleware(['role:admin,institution_admin,faculty,student'])->group(function () {
         Route::get('/', [AcademicsDashboardController::class, 'index'])->name('dashboard');
     });
@@ -54,8 +77,10 @@ Route::middleware(['web', 'auth'])->prefix('academics')->name('academics.')->gro
         Route::get('/my-learning-resources', [TopicResourceController::class, 'studentTopicsIndex'])->name('learning-resources');
         Route::get('/my-attendance', [AttendanceController::class, 'myAttendance'])->name('attendance.my');
         Route::get('/my-assignments', [SubmissionController::class, 'index'])->name('my-assignments');
+        Route::get('/my-assignments/{assignment}', [SubmissionController::class, 'show'])->name('my-assignments.show')->whereNumber('assignment');
         Route::get('/assignments/{assignment}/submit', [SubmissionController::class, 'create'])->name('submit.form');
         Route::post('/assignments/{assignment}/submit', [SubmissionController::class, 'store'])->name('submit.store');
+        Route::get('/assignments/{assignment}/download/{index}', [AssignmentController::class, 'downloadAttachment'])->name('assignments.material-download')->whereNumber('assignment')->where('index', '[0-9]+');
         Route::get('/topic-library/{topic}', [TopicResourceController::class, 'studentLibrary'])->name('topics.student-library')->whereNumber('topic');
     });
 

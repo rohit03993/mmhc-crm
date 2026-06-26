@@ -8,7 +8,7 @@
         <i class="fas fa-mobile-alt text-primary mt-1"></i>
         <div class="small">
             <strong>Your MMHC account uses your mobile number.</strong>
-            No email is required to use Community — sign in with SMS OTP on the Phone tab anytime.
+            No email is required to use Community — sign in with WhatsApp OTP on the WhatsApp tab anytime.
             @if($user->unique_id)
                 <span class="d-block text-muted mt-1">Your ID: <strong>{{ $user->unique_id }}</strong></span>
             @endif

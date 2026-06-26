@@ -5,7 +5,7 @@ namespace App\Modules\Auth\Services;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * HMAC-based OTP for SMS flows keyed by domain entity (referral, patient reward, service request).
+ * HMAC-based OTP for WhatsApp flows keyed by domain entity (referral, patient reward, service request).
  * Mobile channel: secret in cache only (no plaintext OTP in DB). Email flows keep Laravel Hash on the model.
  *
  * Key: crm_sms_otp:v1:{purpose}:{id}

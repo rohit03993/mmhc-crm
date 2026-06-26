@@ -96,7 +96,7 @@
                         </div>
                         @if(($unverifiedPhoneCount ?? 0) > 0)
                             <form method="POST" action="{{ route('admin.users.bulk-phone-reminders') }}" class="d-inline flex-shrink-0 align-self-start"
-                                  onsubmit="return confirm('Send verification OTP by SMS to up to 150 users with unverified mobiles? Each user receives a 6-digit code.');">
+                                  onsubmit="return confirm('Send verification OTP via WhatsApp to up to 150 users with unverified mobiles? Each user receives a 6-digit code.');">
                                 @csrf
                                 <input type="hidden" name="limit" value="150">
                                 @if(($segment ?? 'all') !== 'all')
@@ -150,7 +150,7 @@
                             </div>
                         </div>
                         <p class="text-muted small mb-0 mt-2 um-filter-hint"><i class="fas fa-info-circle me-1 opacity-75"></i>Use the list filter with search. Phone: 10 digits or +91 — spaces ignored.</p>
-                        <p class="text-muted small mb-0 mt-1 um-filter-hint"><strong>Mobile verified</strong> means SMS OTP or admin manual verification. Admin verify unlocks app access and staff rewards/payouts.</p>
+                        <p class="text-muted small mb-0 mt-1 um-filter-hint"><strong>Mobile verified</strong> means WhatsApp OTP or admin manual verification. Admin verify unlocks app access and staff rewards/payouts.</p>
                     </form>
                 </div>
             </div>
@@ -748,7 +748,7 @@ function editUser(userId) {
                             <div class="alert ${user.has_verified_phone ? 'alert-success' : 'alert-warning'} mb-2 py-2 small">
                                 ${user.has_verified_phone
                                     ? '<i class="fas fa-check-circle me-1"></i>Verified' + (user.phone_verified_at ? ' — ' + mmhcEscapeHtml(user.phone_verified_at) : '') + (user.phone_verified_source_label ? '<br><span class="text-muted">' + mmhcEscapeHtml(user.phone_verified_source_label) + (user.phone_verified_by_admin ? ' (' + mmhcEscapeHtml(user.phone_verified_by_admin) + ')' : '') + '</span>' : '')
-                                    : '<i class="fas fa-exclamation-triangle me-1"></i>Not verified — user cannot use the app until SMS OTP or you verify manually.'}
+                                    : '<i class="fas fa-exclamation-triangle me-1"></i>Not verified — user cannot use the app until WhatsApp OTP or you verify manually.'}
                             </div>
                             ${!user.has_verified_phone && user.phone ? `
                                 <form method="POST" action="/admin/users/${user.id}/verify-phone" class="d-inline me-2" onsubmit="return confirm('Manually verify this mobile? Unlocks app and staff rewards/payouts.');">
@@ -757,7 +757,7 @@ function editUser(userId) {
                                 </form>
                             ` : ''}
                             ${user.has_verified_phone ? `
-                                <form method="POST" action="/admin/users/${user.id}/revoke-phone-verification" class="d-inline" onsubmit="return confirm('Revoke verification? User must verify again via SMS OTP.');">
+                                <form method="POST" action="/admin/users/${user.id}/revoke-phone-verification" class="d-inline" onsubmit="return confirm('Revoke verification? User must verify again via WhatsApp OTP.');">
                                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-undo me-1"></i>Revoke verification</button>
                                 </form>
@@ -782,9 +782,7 @@ function editUser(userId) {
                         <div class="col-md-12">
                             <div class="alert alert-info mb-0">
                                 <i class="fas fa-info-circle me-2"></i>
-                                ${user.plain_password
-                                    ? 'A password is already set. Leave the fields above blank to keep it, or enter a new password to replace it.'
-                                    : 'No readable stored password (either none was saved for admin view, or it was encrypted on another server — different APP_KEY). Set a new password above if you need to change it.'}
+                                Users sign in with WhatsApp OTP. Password is optional and only for legacy email login — leave blank to keep the current password, or enter a new one to replace it.
                             </div>
                         </div>
                     </div>

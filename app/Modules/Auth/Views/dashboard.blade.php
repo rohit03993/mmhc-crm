@@ -22,7 +22,7 @@
 
 @section('content')
 <!-- Mobile App View -->
-<div class="mobile-app-container">
+<div class="mobile-app-container hc-mobile-shell" data-mmhc-ptr>
     <!-- App Header (Mobile Only) -->
     <div class="app-header-mobile d-md-none">
         <div class="app-header-content">

@@ -1,12 +1,23 @@
 @php
-    $backUrl = $academicsMobileBackUrl ?? route('academics.dashboard');
+    use App\Modules\Academics\Support\AcademicsMobileUi;
+    $backUrl = $academicsMobileBackUrl ?? AcademicsMobileUi::backUrl();
     $headerTitle = trim($__env->yieldContent('page-title')) ?: 'Academics';
 @endphp
-<div class="app-mobile-header d-md-none">
-    <div class="d-flex align-items-center">
-        <a href="{{ $backUrl }}" class="btn btn-link text-white p-0 me-3" aria-label="Back">
-            <i class="fas fa-arrow-left"></i>
+<header class="acad-mobile-header d-md-none" role="banner">
+    <div class="acad-mobile-header__bar">
+        <a href="{{ $backUrl }}" class="acad-mobile-header__back" aria-label="Go back">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
         </a>
-        <h5 class="text-white mb-0 text-truncate">{{ $headerTitle }}</h5>
+        <div class="acad-mobile-header__titles">
+            <h1 class="acad-mobile-header__title">{{ $headerTitle }}</h1>
+            <p class="acad-mobile-header__subtitle mb-0">Academics</p>
+        </div>
+        <button type="button"
+                class="acad-mobile-header__menu"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#mmhcAppSidebar"
+                aria-label="Open menu">
+            <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+        </button>
     </div>
-</div>
+</header>

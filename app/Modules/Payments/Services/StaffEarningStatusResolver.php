@@ -118,13 +118,13 @@ class StaffEarningStatusResolver
             self::PAYABLE => $compact ? 'Payable' : 'Ready for payout',
             self::PENDING_PATIENT_OTP => $compact
                 ? 'Patient mobile OTP pending'
-                : 'Patient mobile OTP pending (SMS to number on form)',
+                : 'Patient mobile OTP pending (WhatsApp to number on form)',
             self::PENDING_REFERRAL_OTP => $compact
                 ? 'Referred staff OTP pending'
                 : 'Referred staff mobile OTP pending',
             self::HELD_ACCOUNT_MOBILE => $compact
                 ? 'Your Profile mobile not verified'
-                : 'Your Profile mobile not verified (SMS OTP)',
+                : 'Your Profile mobile not verified (WhatsApp OTP)',
             default => 'Pending',
         };
     }
@@ -133,10 +133,10 @@ class StaffEarningStatusResolver
     {
         return match ($status) {
             self::PENDING_PATIENT_OTP => $maskedPhone
-                ? "Step 1: SMS OTP required on patient mobile {$maskedPhone} (number entered on form — not your Profile mobile)."
-                : 'Step 1: SMS OTP required on the patient mobile entered on this form.',
-            self::PENDING_REFERRAL_OTP => 'Step 1: The referred nurse/caregiver must complete SMS OTP on their own mobile.',
-            self::HELD_ACCOUNT_MOBILE => 'Step 2: Verify your own account mobile under Profile (SMS OTP). Required in addition to patient/referral OTP before points pay out.',
+                ? "Step 1: WhatsApp OTP required on patient mobile {$maskedPhone} (number entered on form — not your Profile mobile)."
+                : 'Step 1: WhatsApp OTP required on the patient mobile entered on this form.',
+            self::PENDING_REFERRAL_OTP => 'Step 1: The referred nurse/caregiver must complete WhatsApp OTP on their own mobile.',
+            self::HELD_ACCOUNT_MOBILE => 'Step 2: Verify your own account mobile under Profile (WhatsApp OTP). Required in addition to patient/referral OTP before points pay out.',
             self::PAYABLE => null,
             self::PAID => null,
             default => null,

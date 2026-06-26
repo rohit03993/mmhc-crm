@@ -4,7 +4,7 @@
 @section('page-title', 'Community')
 
 @section('content')
-<div class="container-fluid px-2 px-md-3 py-3 community-page">
+<div class="container-fluid px-2 px-md-3 py-3 community-page hc-mobile-shell acad-mobile-page" data-mmhc-ptr>
     <div class="community-shell">
     @if(session('success'))
         <div class="alert alert-success border-0 shadow-sm mb-3" role="alert">

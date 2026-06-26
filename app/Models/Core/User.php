@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Crypt;
 
 class User extends Authenticatable
 {
@@ -33,7 +32,6 @@ class User extends Authenticatable
         'contact_update_otp_sent_at',
         'contact_update_verified_at',
         'password',
-        'plain_password',
         'role',
         'unique_id',
         'address',
@@ -53,6 +51,7 @@ class User extends Authenticatable
         'qr_code_path',
         'academic_institution_id',
         'academic_enrollment_status',
+        'is_open_teacher',
         'deleted_by_admin_id',
     ];
 
@@ -61,7 +60,6 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
-        'plain_password',
         'remember_token',
     ];
 
@@ -74,6 +72,7 @@ class User extends Authenticatable
         'date_of_birth' => 'datetime',
         'password' => 'hashed',
         'is_active' => 'boolean',
+        'is_open_teacher' => 'boolean',
         'login_via_phone_only' => 'boolean',
         'documents' => 'array',
         'reward_points' => 'integer',
@@ -133,7 +132,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Self-registered accounts (after phone-login rollout) must sign in via SMS OTP, not email/password.
+     * Self-registered accounts must sign in via WhatsApp OTP, not email/password.
      */
     public function requiresPhoneLogin(): bool
     {
@@ -178,7 +177,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Nurses/caregivers must verify account mobile (SMS) before earning-related actions.
+     * Nurses/caregivers must verify account mobile (WhatsApp) before earning-related actions.
      */
     public function staffMustVerifyMobileBeforeRewards(): bool
     {
@@ -186,11 +185,48 @@ class User extends Authenticatable
     }
 
     /**
-     * Profile edit flow: new mobile saved, awaiting SMS OTP before it becomes active.
+     * Profile edit flow: new mobile saved, awaiting WhatsApp OTP before it becomes active.
+     * Same number as the account (stale row) does not count as a pending change.
      */
     public function hasPendingMobileContactVerification(): bool
     {
-        return $this->contact_update_channel === 'mobile' && ! empty($this->pending_phone);
+        if ($this->contact_update_channel !== 'mobile' || empty($this->pending_phone)) {
+            return false;
+        }
+
+        if ($this->accountPhonesMatch($this->phone, $this->pending_phone)) {
+            return ! $this->hasVerifiedPhone();
+        }
+
+        return true;
+    }
+
+    /**
+     * Compare two stored phone values (10-digit, +91, 91… formats).
+     */
+    public function accountPhonesMatch(?string $phoneA, ?string $phoneB): bool
+    {
+        $svc = app(\App\Modules\Auth\Services\UserService::class);
+        $a = $svc->parseTenDigitIndianMobile($phoneA);
+        $b = $svc->parseTenDigitIndianMobile($phoneB);
+
+        return $a !== null && $a === $b;
+    }
+
+    /**
+     * Clear redundant pending OTP rows (e.g. login OTP verified the account mobile).
+     */
+    public function syncStalePhoneVerificationState(): void
+    {
+        if (empty($this->pending_phone)) {
+            return;
+        }
+
+        $pendingMatchesAccount = $this->accountPhonesMatch($this->phone, $this->pending_phone);
+
+        if ($pendingMatchesAccount && $this->hasVerifiedPhone()) {
+            $this->forceFill($this->pendingPhoneVerificationFieldClears())->save();
+        }
     }
 
     /**
@@ -204,7 +240,7 @@ class User extends Authenticatable
 
         return match ((string) $this->phone_verified_source) {
             'profile' => 'Profile contact OTP',
-            'login' => 'SMS login OTP',
+            'login' => 'WhatsApp login OTP',
             'referral' => 'Staff referral OTP (mobile)',
             'patient_reward' => 'Patient reward OTP (same mobile as account)',
             'admin' => 'Verified manually by admin',
@@ -227,10 +263,10 @@ class User extends Authenticatable
             'admin' => 'Verified by MMHC admin'
                 .($this->phoneVerifiedByAdmin ? ' ('.$this->phoneVerifiedByAdmin->name.')' : '')
                 .' on '.$date,
-            'profile' => 'Verified with SMS OTP on '.$date,
-            'login' => 'Verified via SMS login on '.$date,
-            'referral' => 'Verified via referral SMS on '.$date,
-            'patient_reward' => 'Verified via patient reward SMS on '.$date,
+            'profile' => 'Verified with WhatsApp OTP on '.$date,
+            'login' => 'Verified when you signed in via WhatsApp · '.$date,
+            'referral' => 'Verified via referral WhatsApp OTP on '.$date,
+            'patient_reward' => 'Verified via patient reward WhatsApp OTP on '.$date,
             default => 'Mobile verified on '.$date,
         };
     }
@@ -263,7 +299,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Admin revoked manual / any verification — user must verify again via SMS OTP.
+     * Admin revoked verification — user must verify again via WhatsApp OTP.
      */
     public function revokePhoneVerification(): void
     {
@@ -275,22 +311,23 @@ class User extends Authenticatable
     }
 
     /**
-     * User proved possession of account mobile via SMS login OTP.
+     * User proved possession of account mobile via WhatsApp login OTP.
      */
     public function applyPhoneVerifiedFromLoginOtp(): void
     {
-        if ($this->hasVerifiedPhone()) {
-            return;
+        $updates = $this->pendingPhoneVerificationFieldClears();
+
+        if (! $this->hasVerifiedPhone()) {
+            $updates['phone_verified_at'] = now();
+            $updates['phone_verified_source'] = 'login';
+            $updates['phone_verified_by_admin_id'] = null;
         }
-        $this->forceFill([
-            'phone_verified_at' => now(),
-            'phone_verified_source' => 'login',
-            'phone_verified_by_admin_id' => null,
-        ])->save();
+
+        $this->forceFill($updates)->save();
     }
 
     /**
-     * CRM / platform admins — trusted accounts; no SMS OTP gate for app access.
+     * CRM / platform admins — trusted accounts; no WhatsApp OTP gate for app access.
      */
     public function isExemptFromPhoneVerification(): bool
     {
@@ -298,7 +335,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Clear in-progress SMS OTP contact change (stuck pending state).
+     * Clear in-progress WhatsApp OTP contact change (stuck pending state).
      */
     public function clearPendingPhoneVerificationState(): void
     {
@@ -365,7 +402,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Referred user completed referral verification via SMS OTP.
+     * Referred user completed referral verification via WhatsApp OTP.
      */
     public function applyPhoneVerifiedFromReferralMobileOtp(): void
     {
@@ -379,7 +416,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Staff verified a patient reward by SMS where patient mobile matches this user's account phone.
+     * Staff verified a patient reward via WhatsApp where patient mobile matches this user's account phone.
      */
     public function applyPhoneVerifiedFromPatientRewardSelfMobileOtp(): void
     {
@@ -581,6 +618,23 @@ class User extends Authenticatable
         return $this->hasMany(\App\Modules\Academics\Models\Submission::class, 'user_id');
     }
 
+    /** Open classrooms this learner joined */
+    public function openClassrooms()
+    {
+        return $this->belongsToMany(
+            \App\Modules\Academics\Models\OpenClassroom::class,
+            'academic_open_classroom_members',
+            'user_id',
+            'open_classroom_id'
+        )->withPivot('joined_at')->withTimestamps();
+    }
+
+    /** Open classrooms owned by this teacher */
+    public function ownedOpenClassrooms()
+    {
+        return $this->hasMany(\App\Modules\Academics\Models\OpenClassroom::class, 'owner_id');
+    }
+
     /**
      * Academic attendance records (as student)
      */
@@ -621,67 +675,5 @@ class User extends Authenticatable
     public function isMenteeEligible(): bool
     {
         return in_array($this->role, \App\Modules\Academics\Services\MentorshipService::menteeRoleSlugs(), true);
-    }
-
-    /**
-     * Get decrypted plain password (admin only - for viewing)
-     * Returns null if password cannot be decrypted (old unencrypted records)
-     *
-     * Usage: $user->decrypted_password
-     */
-    public function getDecryptedPasswordAttribute()
-    {
-        $plainPassword = $this->attributes['plain_password'] ?? null;
-
-        if (! $plainPassword) {
-            return null;
-        }
-
-        try {
-            // Check if it's already encrypted (Laravel Crypt produces base64 strings with length > 60)
-            // Encrypted values from Laravel's Crypt are typically long base64 strings
-            if (strlen($plainPassword) > 60 && base64_decode($plainPassword, true) !== false) {
-                return Crypt::decryptString($plainPassword);
-            }
-
-            // Short legacy plaintext (pre-encryption migration), still stored as-is in DB
-            return $plainPassword;
-        } catch (\Exception $e) {
-            // Wrong APP_KEY (e.g. production DB on local), corrupt payload, or algorithm mismatch —
-            // never return ciphertext to callers (would leak blob into admin UI).
-            \Log::debug('Could not decrypt plain_password for user '.$this->id.': '.$e->getMessage());
-
-            return null;
-        }
-    }
-
-    /**
-     * Set encrypted plain password
-     * Automatically encrypts when setting plain_password attribute
-     */
-    public function setPlainPasswordAttribute($value)
-    {
-        if ($value === null || $value === '') {
-            $this->attributes['plain_password'] = null;
-
-            return;
-        }
-
-        // Only encrypt if it's not already encrypted
-        // Check if it looks like an encrypted string (long and contains special chars)
-        if (strlen($value) > 60 || str_contains($value, ':')) {
-            // Already encrypted, store as is
-            $this->attributes['plain_password'] = $value;
-        } else {
-            // Encrypt the password
-            try {
-                $this->attributes['plain_password'] = Crypt::encryptString($value);
-            } catch (\Exception $e) {
-                // If encryption fails, log error but don't break registration
-                \Log::error('Failed to encrypt plain_password: '.$e->getMessage());
-                // Store as null to prevent plain text storage
-                $this->attributes['plain_password'] = null;
-            }
-        }
     }
 }

@@ -8,6 +8,9 @@ use App\Modules\Academics\Models\Assignment;
 use App\Modules\Academics\Models\Attendance;
 use App\Modules\Academics\Models\Batch;
 use App\Modules\Academics\Models\Institution;
+use App\Modules\Academics\Models\OpenClassroom;
+use App\Modules\Academics\Models\OpenClassroomAssignment;
+use App\Modules\Academics\Models\OpenClassroomSubmission;
 use App\Modules\Academics\Models\Submission;
 use App\Modules\Academics\Services\AcademicScoreService;
 use App\Modules\Academics\Services\EnrollmentService;
@@ -122,6 +125,8 @@ class AcademicsDashboardController extends Controller
             $menteeCount = app(MentorshipService::class)->activeMenteeCountFor($user);
         }
 
+        $openClassroom = $this->openClassroomDashboardStats($user);
+
         return view('academics::dashboard', [
             'user' => $user,
             'institutionsCount' => $institutionsCount,
@@ -146,7 +151,95 @@ class AcademicsDashboardController extends Controller
             'meiBreakdown' => $meiBreakdown,
             'fpiBreakdown' => $user->role === 'faculty' ? ($fpiBreakdown ?? null) : null,
             'mei' => $mei,
+            'openClassroom' => $openClassroom,
         ]);
+    }
+
+    /**
+     * Open classroom counts and short lists for dashboard cards.
+     *
+     * @return array{
+     *     enabled: bool,
+     *     joined_count: int,
+     *     owned_count: int,
+     *     browse_count: int,
+     *     pending_tasks: int,
+     *     pending_tasks_list: \Illuminate\Support\Collection,
+     *     owned_classrooms: \Illuminate\Support\Collection,
+     *     joined_classrooms: \Illuminate\Support\Collection
+     * }
+     */
+    protected function openClassroomDashboardStats(User $user): array
+    {
+        $empty = [
+            'enabled' => false,
+            'joined_count' => 0,
+            'owned_count' => 0,
+            'browse_count' => 0,
+            'pending_tasks' => 0,
+            'pending_tasks_list' => collect(),
+            'owned_classrooms' => collect(),
+            'joined_classrooms' => collect(),
+        ];
+
+        if (! Schema::hasTable('academic_open_classrooms')) {
+            return $empty;
+        }
+
+        $empty['enabled'] = true;
+        $empty['browse_count'] = OpenClassroom::query()
+            ->where('is_active', true)
+            ->where('visibility', OpenClassroom::VISIBILITY_PUBLIC)
+            ->count();
+
+        $canParticipate = in_array($user->role, ['student', 'faculty', 'institution_admin'], true);
+        if (! $canParticipate && ! $user->is_open_teacher) {
+            return $empty;
+        }
+
+        $joinedIds = DB::table('academic_open_classroom_members')
+            ->where('user_id', $user->id)
+            ->pluck('open_classroom_id');
+
+        $empty['joined_count'] = $joinedIds->count();
+        $empty['joined_classrooms'] = OpenClassroom::query()
+            ->whereIn('id', $joinedIds)
+            ->where('is_active', true)
+            ->orderByDesc('updated_at')
+            ->limit(4)
+            ->get();
+
+        if ($user->role === 'faculty' || $user->is_open_teacher) {
+            $empty['owned_count'] = OpenClassroom::query()
+                ->where('owner_id', $user->id)
+                ->count();
+            $empty['owned_classrooms'] = OpenClassroom::query()
+                ->where('owner_id', $user->id)
+                ->orderByDesc('updated_at')
+                ->limit(4)
+                ->get();
+        }
+
+        if ($user->role === 'student' && $joinedIds->isNotEmpty() && Schema::hasTable('academic_open_classroom_submissions')) {
+            $submittedIds = OpenClassroomSubmission::query()
+                ->where('user_id', $user->id)
+                ->pluck('assignment_id');
+
+            $pendingQuery = OpenClassroomAssignment::query()
+                ->whereIn('open_classroom_id', $joinedIds)
+                ->where('is_published', true)
+                ->whereNotIn('id', $submittedIds);
+
+            $empty['pending_tasks'] = (clone $pendingQuery)->count();
+            $empty['pending_tasks_list'] = (clone $pendingQuery)
+                ->with('classroom')
+                ->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END')
+                ->orderBy('due_date')
+                ->limit(5)
+                ->get();
+        }
+
+        return $empty;
     }
 
     /**

@@ -4,8 +4,11 @@
 @section('page-title', 'Review enrollment')
 
 @section('content')
-<div class="container-fluid py-3">
-    <a href="{{ route('academics.enrollments.index') }}" class="btn btn-sm btn-outline-secondary mb-3">&larr; Back</a>
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    <a href="{{ route('academics.enrollments.index') }}" class="acad-text-link d-md-none mb-3">
+        <i class="fas fa-arrow-left" aria-hidden="true"></i> Enrollments
+    </a>
+    <a href="{{ route('academics.enrollments.index') }}" class="btn btn-sm btn-outline-secondary mb-3 d-none d-md-inline-flex">&larr; Back</a>
 
     <div class="card shadow-sm mb-3">
         <div class="card-body">

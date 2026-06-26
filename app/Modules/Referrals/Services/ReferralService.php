@@ -266,7 +266,7 @@ class ReferralService
             return ['success' => false, 'message' => 'Could not send OTP on mobile right now. Please check your registered mobile number.'];
         }
 
-        return ['success' => true, 'message' => 'Referral OTP resent successfully via SMS.'];
+        return ['success' => true, 'message' => 'Referral OTP resent successfully via WhatsApp.'];
     }
 
     public function verifyReferralOtpForReferred(User $referredUser, string $otp): array

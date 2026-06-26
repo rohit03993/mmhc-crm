@@ -102,6 +102,8 @@ class ProfileController extends Controller
     {
         try {
             $user = Auth::user()->loadMissing('phoneVerifiedByAdmin:id,name');
+            $user->syncStalePhoneVerificationState();
+            $user = $user->fresh();
             $profile = $this->profileService->getProfile($user);
             $subscriptionSummary = $this->getPatientSubscriptionSummary($user);
             $membershipSummary = app(SubscriptionPaymentHistoryService::class)
@@ -130,15 +132,21 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
         $user->syncTrustedAccountPhoneState();
+        $user->syncStalePhoneVerificationState();
         $user = $user->fresh();
 
         if ($user->hasVerifiedPhone() || $user->isExemptFromPhoneVerification()) {
             return $this->redirectAfterPhoneVerified($user);
         }
 
+        if ($user->requiresPhoneLogin()) {
+            return redirect()->route('dashboard')
+                ->with('info', 'Sign in with WhatsApp OTP on your mobile — that counts as verification. No separate profile OTP is needed.');
+        }
+
         if (! trim((string) ($user->phone ?? ''))) {
             return redirect()->route('profile.edit')
-                ->with('error', 'Add your mobile number in Profile first, then verify it with SMS OTP.');
+                ->with('error', 'Add your mobile number in Profile first, then verify it with WhatsApp OTP.');
         }
 
         if (! $user->hasPendingMobileContactVerification()) {
@@ -317,7 +325,7 @@ class ProfileController extends Controller
             return redirect()->route('profile.index')->with('success', 'Profile updated successfully.');
         }
 
-        // Trusted CRM admins may update mobile without SMS OTP.
+        // Trusted CRM admins may update mobile without WhatsApp OTP.
         if ($phoneChanged && $user->isExemptFromPhoneVerification()) {
             $user->forceFill(array_merge([
                 'phone' => $normalizedRequestedPhone,
@@ -420,7 +428,7 @@ class ProfileController extends Controller
             return redirect()->back()->with('error', $remaining > 0 ? "Invalid OTP. {$remaining} attempt(s) left." : 'Invalid OTP. No attempts left.');
         }
 
-        $wasPhoneChange = (string) $user->phone !== (string) $user->pending_phone;
+        $wasPhoneChange = ! $user->accountPhonesMatch($user->phone, $user->pending_phone);
 
         $updates = [
             'contact_update_verified_at' => now(),

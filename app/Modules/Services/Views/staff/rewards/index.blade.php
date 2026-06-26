@@ -3,8 +3,12 @@
 @section('title', 'Patient Rewards - Staff Dashboard')
 @section('page-title', 'Patient Rewards')
 
+@section('head')
+@include('services::partials.mobile-assets')
+@endsection
+
 @section('content')
-<div class="mobile-app-container">
+<div class="mobile-app-container hc-mobile-shell" data-mmhc-ptr>
 <!-- Mobile Header -->
 <div class="app-mobile-header d-md-none">
     <div class="d-flex align-items-center">
@@ -18,6 +22,23 @@
 @include('services::partials.staff-referrals-assets')
 
 <div class="container-fluid px-3 py-4">
+    @if(isset($stats))
+    <div class="hc-stat-chips hc-stat-chips--3 d-md-none mb-3">
+        <div class="hc-stat-chip">
+            <span class="hc-stat-chip__val">{{ number_format($stats['total_points']) }}</span>
+            <span class="hc-stat-chip__lbl">Points</span>
+        </div>
+        <div class="hc-stat-chip">
+            <span class="hc-stat-chip__val">₹{{ number_format($stats['payable_amount'], 0) }}</span>
+            <span class="hc-stat-chip__lbl">Payable</span>
+        </div>
+        <div class="hc-stat-chip">
+            <span class="hc-stat-chip__val">{{ $stats['total_submissions'] }}</span>
+            <span class="hc-stat-chip__lbl">Entries</span>
+        </div>
+    </div>
+    @endif
+
     @include('services::partials.staff-earnings-nav', ['activeTab' => 'rewards'])
 
     <div class="row mb-3">
@@ -37,7 +58,7 @@
             <div class="alert alert-warning mb-0 py-2">
                 <i class="fas fa-mobile-alt me-1"></i>
                 @if(($stats['held_amount'] ?? 0) > 0)
-                    ₹{{ number_format((float) $stats['held_amount'], 2) }} is earned but not payable until <strong>your Profile mobile</strong> is SMS-verified (separate from patient mobile OTP on the form).
+                    ₹{{ number_format((float) $stats['held_amount'], 2) }} is earned but not payable until <strong>your Profile mobile</strong> is WhatsApp-verified (separate from patient WhatsApp OTP on the form).
                 @else
                     Verify your account mobile in Profile to unlock reward payouts.
                 @endif
@@ -399,7 +420,7 @@ async function verifyRewardOtp(rewardId) {
     const input = document.getElementById('reward-otp-' + rewardId);
     const otp = (input?.value || '').replace(/\D/g, '');
     if (otp.length !== 6) {
-        rewardOtpFeedback(rewardId, 'Enter the 6-digit OTP from the patient’s SMS.', true);
+        rewardOtpFeedback(rewardId, 'Enter the 6-digit OTP from the patient’s WhatsApp.', true);
         return;
     }
     rewardOtpFeedback(rewardId, 'Verifying…', false);

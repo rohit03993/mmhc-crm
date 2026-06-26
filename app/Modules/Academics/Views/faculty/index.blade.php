@@ -4,8 +4,10 @@
 @section('page-title', 'Faculty')
 
 @section('content')
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', ['title' => 'Faculty', 'lede' => 'College teaching staff and assignments.'])
+
+    <div class="d-none d-md-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
         <h2 class="h5 mb-0">Faculty</h2>
         <a href="{{ route('academics.faculty.create') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Add faculty</a>
     </div>
@@ -34,7 +36,14 @@
     <div class="card shadow-sm">
         <div class="card-body p-0">
             @if($faculty->isEmpty())
-                <p class="text-muted p-4 mb-0">No faculty yet. Use <strong>Add faculty</strong> to create a faculty account, then assign them to batches in <strong>Batches → Edit batch</strong>.</p>
+                @include('academics::partials.mobile-empty-state', [
+                    'icon' => 'fa-chalkboard-teacher',
+                    'title' => 'No faculty yet',
+                    'text' => 'Create faculty, then assign them to batches.',
+                    'actionUrl' => route('academics.faculty.create'),
+                    'actionLabel' => 'Add faculty',
+                ])
+                <p class="text-muted p-4 mb-0 d-none d-md-block">No faculty yet. Use <strong>Add faculty</strong> to create a faculty account, then assign them to batches in <strong>Batches → Edit batch</strong>.</p>
             @else
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">

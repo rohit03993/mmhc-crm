@@ -158,7 +158,7 @@
                         </li>
                     @elseif($user->hasVerifiedPhone())
                         <li>
-                            <form method="POST" action="{{ route('admin.users.revoke-phone-verification', $user) }}" onsubmit="return confirm(@json('Revoke mobile verification for '.$user->name.'? They must verify again via SMS OTP.'));">
+                            <form method="POST" action="{{ route('admin.users.revoke-phone-verification', $user) }}" onsubmit="return confirm(@json('Revoke mobile verification for '.$user->name.'? They must verify again via WhatsApp OTP.'));">
                                 @csrf
                                 <button type="submit" class="dropdown-item text-danger">
                                     <i class="fas fa-mobile-alt me-2"></i>Revoke verification

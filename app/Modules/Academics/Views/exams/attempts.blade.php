@@ -4,8 +4,10 @@
 @section('page-title', 'Exam results')
 
 @section('content')
-<div class="container-fluid py-3 py-md-4">
-    <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+<div class="container-fluid py-3 py-md-4 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', ['label' => 'Results', 'title' => $exam->title, 'lede' => 'Student attempts and scores.'])
+
+    <div class="d-none d-md-flex flex-wrap gap-2 mb-3 align-items-center">
         <a href="{{ route('academics.exams.show', $exam) }}" class="btn btn-outline-secondary btn-sm rounded-pill">Exam detail</a>
         <a href="{{ route('academics.exams.edit', $exam) }}" class="btn btn-outline-primary btn-sm rounded-pill">Edit</a>
         <a href="{{ route('academics.exams.attempts.export', $exam) }}" class="btn btn-success btn-sm rounded-pill ms-md-auto">

@@ -26,7 +26,7 @@
 @endphp
 
 @section('content')
-<div class="sr-detail">
+<div class="sr-detail hc-mobile-shell" data-mmhc-ptr>
     {{-- Mobile top bar --}}
     <div class="sr-detail__mobile-bar mmhc-inverse-surface d-md-none">
         <a href="{{ $backUrl }}" class="sr-detail__icon-btn" aria-label="Back">

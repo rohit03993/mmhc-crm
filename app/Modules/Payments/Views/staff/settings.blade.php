@@ -4,6 +4,7 @@
 @section('page-title', 'Payment Settings')
 
 @section('head')
+@include('services::partials.mobile-assets')
 <style>
     .settings-card {
         background: white;
@@ -31,7 +32,7 @@
 @endsection
 
 @section('content')
-<div class="mobile-app-container">
+<div class="mobile-app-container hc-mobile-shell" data-mmhc-ptr>
 <div class="app-mobile-header d-md-none">
     <div class="d-flex align-items-center">
         <a href="{{ route('staff.dashboard') }}" class="app-back-btn"><i class="fas fa-arrow-left"></i></a>

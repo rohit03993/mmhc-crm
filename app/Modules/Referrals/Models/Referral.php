@@ -118,7 +118,7 @@ class Referral extends Model
     }
 
     /**
-     * Referred staff completed SMS OTP (not legacy/demo completed rows only).
+     * Referred staff completed WhatsApp OTP (not legacy/demo completed rows only).
      */
     public function isReferralMobileOtpVerified(): bool
     {

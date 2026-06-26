@@ -4,7 +4,7 @@
 @section('page-title', 'Refer Friends')
 
 @section('content')
-<div class="mobile-app-container mmhc-referrals-page">
+<div class="mobile-app-container mmhc-referrals-page hc-mobile-shell" data-mmhc-ptr>
     <div class="app-mobile-header d-md-none">
         <div class="d-flex align-items-center">
             <a href="{{ route('dashboard') }}" class="btn btn-link text-white p-0 me-3" aria-label="Back to dashboard">

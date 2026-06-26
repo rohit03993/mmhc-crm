@@ -156,7 +156,7 @@
             @else
                 <div class="verify-status verify-status--bad">
                     @if(empty($phoneVerified))
-                        Mobile number is not verified. This ID card is not valid — staff must verify mobile on Profile (SMS OTP) first.
+                        Mobile number is not verified. This ID card is not valid — staff must verify mobile on Profile (WhatsApp OTP) first.
                     @else
                         This staff account is not active. Contact MMHC if you have concerns.
                     @endif

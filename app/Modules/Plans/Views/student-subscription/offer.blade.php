@@ -15,7 +15,14 @@
     $pendingFinal = $pending ? (float) $pending->total_amount : $membershipTotal;
 @endphp
 
-<div class="container-fluid py-3">
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    <div class="acad-m-hero d-md-none mb-3">
+        <p class="acad-m-hero__label">Student membership</p>
+        <h2 class="acad-m-hero__title">{{ $headline }}</h2>
+        @if($subheadline)
+            <p class="acad-m-hero__lede">{{ $subheadline }}</p>
+        @endif
+    </div>
     <div class="row justify-content-center">
         <div class="col-12 col-md-8 col-lg-6">
             <div class="card border-0 shadow-sm">
@@ -42,8 +49,9 @@
 
                     <div class="alert alert-light border small mb-4">
                         <i class="fas fa-unlock-alt text-primary me-1"></i>
+                        Membership is <strong>platform access</strong> — one payment unlocks the full MMHC experience
+                        (college academics, open classrooms, assignments, exams, mentorship, and more).
                         While payment is pending you can still use <strong>Profile</strong> and <strong>Community</strong>.
-                        Academics unlocks after membership is active.
                     </div>
 
                     @if(!$plan)

@@ -43,7 +43,7 @@
                                        required
                                        oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
                             </div>
-                            <small class="text-muted">Indian mobile numbers only. OTP is sent by SMS. Each number can be submitted once.</small>
+                            <small class="text-muted">Indian mobile numbers only. OTP is sent on WhatsApp. Each number can be submitted once.</small>
                             @error('patient_phone_digits')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>
 

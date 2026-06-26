@@ -15,7 +15,7 @@
                         </div>
                         <h2 class="h5 mb-2">Verify your mobile number</h2>
                         <p class="text-muted small mb-0">
-                            For your security, every MMHC account must confirm its mobile number with a one-time SMS code before using the app.
+                            For your security, every MMHC account must confirm its mobile number with a one-time WhatsApp code before using the app.
                         </p>
                     </div>
 

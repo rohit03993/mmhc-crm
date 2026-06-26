@@ -4,8 +4,16 @@
 @section('page-title', 'Exams')
 
 @section('content')
-<div class="container-fluid py-3 py-md-4">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+<div class="container-fluid py-3 py-md-4 acad-mobile-page" data-mmhc-ptr>
+    @if(($viewerRole ?? '') === 'student')
+    <div class="acad-m-hero d-md-none">
+        <p class="acad-m-hero__label">Assessments</p>
+        <h2 class="acad-m-hero__title">Quizzes &amp; exams</h2>
+        <p class="acad-m-hero__lede">Start an attempt only while the time window is open.</p>
+    </div>
+    @endif
+
+    <div class="d-none d-md-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <div>
             <h1 class="h4 mb-0 fw-bold text-dark">Quizzes &amp; exams</h1>
             <p class="small text-muted mb-0">
@@ -28,7 +36,27 @@
         <div class="alert alert-success py-2 small">{{ session('success') }}</div>
     @endif
 
-    <form method="get" action="{{ route('academics.exams.index') }}" class="card border shadow-sm mb-3">
+    {{-- Mobile filters (student) --}}
+    @if(($viewerRole ?? '') === 'student')
+    <form method="get" action="{{ route('academics.exams.index') }}" class="d-md-none mb-3">
+        <div class="acad-search-bar mb-2">
+            <div class="acad-search-bar__field">
+                <i class="fas fa-search acad-search-bar__icon" aria-hidden="true"></i>
+                <input type="search" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control acad-search-bar__input" placeholder="Search exams…" autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary acad-search-bar__btn">Search</button>
+        </div>
+        @php $win = $filters['window'] ?? 'all'; @endphp
+        <div class="acad-filter-chips">
+            <a href="{{ route('academics.exams.index', array_merge(request()->except('window'), ['window' => 'all'])) }}" class="acad-filter-chip {{ $win === 'all' ? 'is-active' : '' }}">All</a>
+            <a href="{{ route('academics.exams.index', array_merge(request()->except('window'), ['window' => 'open'])) }}" class="acad-filter-chip {{ $win === 'open' ? 'is-active' : '' }}">Open now</a>
+            <a href="{{ route('academics.exams.index', array_merge(request()->except('window'), ['window' => 'upcoming'])) }}" class="acad-filter-chip {{ $win === 'upcoming' ? 'is-active' : '' }}">Upcoming</a>
+            <a href="{{ route('academics.exams.index', array_merge(request()->except('window'), ['window' => 'ended'])) }}" class="acad-filter-chip {{ $win === 'ended' ? 'is-active' : '' }}">Ended</a>
+        </div>
+    </form>
+    @endif
+
+    <form method="get" action="{{ route('academics.exams.index') }}" class="card border shadow-sm mb-3 d-none d-md-block">
         <div class="card-body py-3">
             <div class="row g-2 align-items-end">
                 <div class="col-12 col-md-4 col-lg-3">
@@ -85,11 +113,72 @@
     </form>
 
     @if($exams->isEmpty())
-        <div class="alert alert-light border text-muted mb-0">
+        @include('academics::partials.mobile-empty-state', [
+            'icon' => 'fa-clipboard-check',
+            'title' => 'No exams yet',
+            'text' => ($viewerRole ?? '') === 'student'
+                ? 'Published quizzes for your cohort will appear here when your college schedules them.'
+                : 'Create an exam to get started.',
+            'actionUrl' => !empty($viewerCanCreate) ? route('academics.exams.create') : null,
+            'actionLabel' => 'New exam',
+        ])
+        <div class="alert alert-light border text-muted mb-0 d-none d-md-block">
             No exams to show yet. @if(!empty($viewerCanCreate))Create one to get started.@endif
         </div>
     @else
-        <div class="table-responsive card border shadow-sm">
+        {{-- Mobile exam cards --}}
+        <div class="acad-exam-list d-md-none mb-3">
+            @foreach($exams as $exam)
+                @php
+                    $sched = $exam->scheduleListState();
+                    $pillClass = match($sched) {
+                        'open' => 'acad-status-pill--open',
+                        'upcoming' => 'acad-status-pill--upcoming',
+                        'ended' => 'acad-status-pill--ended',
+                        default => 'acad-status-pill--draft',
+                    };
+                    $pillLabel = match($sched) {
+                        'open' => 'Open',
+                        'upcoming' => 'Upcoming',
+                        'ended' => 'Ended',
+                        default => 'Draft',
+                    };
+                    $audience = str_replace('_', ' ', $exam->audience_type);
+                @endphp
+                <article class="acad-exam-card">
+                    <div class="acad-exam-card__top">
+                        <h3 class="acad-exam-card__title">
+                            <a href="{{ route('academics.exams.show', $exam) }}">{{ $exam->title }}</a>
+                        </h3>
+                        <span class="acad-status-pill {{ $pillClass }}">{{ $pillLabel }}</span>
+                    </div>
+                    <p class="acad-exam-card__meta mb-1">
+                        {{ ucfirst($audience) }}
+                        @if($exam->subject)
+                            · {{ $exam->subject->name }}
+                        @elseif($exam->batch)
+                            · {{ $exam->batch->name }}
+                        @endif
+                    </p>
+                    @if($exam->institution)
+                        <p class="acad-exam-card__meta mb-1"><i class="fas fa-university" aria-hidden="true"></i> {{ $exam->institution->name }}</p>
+                    @endif
+                    <p class="acad-exam-card__schedule mb-0">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                        @if($exam->opens_at || $exam->closes_at)
+                            {{ $exam->opens_at?->format('M j, H:i') ?? '—' }} → {{ $exam->closes_at?->format('M j, H:i') ?? '—' }}
+                        @else
+                            Open schedule
+                        @endif
+                    </p>
+                    <div class="acad-exam-card__actions mt-3">
+                        <a href="{{ route('academics.exams.show', $exam) }}" class="acad-btn-primary">Open exam</a>
+                    </div>
+                </article>
+            @endforeach
+        </div>
+
+        <div class="table-responsive card border shadow-sm d-none d-md-block">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
@@ -137,7 +226,6 @@
                                     @if(in_array($viewerRole, ['institution_admin', 'faculty'], true))
                                         <a href="{{ route('academics.people.show', $exam->creator) }}" class="text-dark text-decoration-none">{{ $creatorLabel }}</a>
                                     @else
-                                        {{-- Students cannot open academics people profiles; show name only. --}}
                                         <span class="text-dark">{{ $creatorLabel }}</span>
                                     @endif
                                     @if($exam->creator->role === 'faculty')

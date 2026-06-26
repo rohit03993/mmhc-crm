@@ -7,7 +7,18 @@
 @php
     use App\Modules\Academics\Models\AcademicExamQuestion;
 @endphp
-<div class="container-fluid py-3 py-md-4">
+<div class="container-fluid py-3 py-md-4 acad-mobile-page" data-mmhc-ptr>
+    <div class="acad-m-hero d-md-none mb-3">
+        <p class="acad-m-hero__label">Quiz result</p>
+        <h2 class="acad-m-hero__title">{{ $exam->title }}</h2>
+        <p class="acad-m-hero__lede mb-0">
+            <span class="fw-bold text-primary">{{ number_format((float) $attempt->score, 2) }}</span>
+            / {{ number_format($maxPoints, 2) }} points
+            @if($maxPoints > 0)
+                · {{ number_format(((float) $attempt->score / $maxPoints) * 100, 1) }}%
+            @endif
+        </p>
+    </div>
     @if(session('success'))
         <div class="alert alert-success py-2 small">{{ session('success') }}</div>
     @endif

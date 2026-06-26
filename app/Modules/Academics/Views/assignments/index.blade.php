@@ -7,8 +7,19 @@
 @php
     use App\Modules\Academics\Support\AcademicsTaxonomy;
 @endphp
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', ['title' => 'Assignments', 'lede' => 'Tasks linked to topics and due dates.'])
+
+    <form action="{{ route('academics.assignments.index') }}" method="GET" class="d-md-none mb-3">
+        <select name="topic_id" class="form-select" onchange="this.form.submit()">
+            <option value="">All topics</option>
+            @foreach($topics as $t)
+                <option value="{{ $t->id }}" {{ request('topic_id') == $t->id ? 'selected' : '' }}>{{ $t->name }} ({{ $t->subject->name ?? '' }})</option>
+            @endforeach
+        </select>
+    </form>
+
+    <div class="d-none d-md-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
         <h2 class="h5 mb-0">Assignments</h2>
         <div class="d-flex flex-wrap gap-2">
             <form action="{{ route('academics.assignments.index') }}" method="GET" class="d-inline">
@@ -26,7 +37,14 @@
     <div class="card">
         <div class="card-body p-0">
             @if($assignments->isEmpty())
-                <p class="text-muted p-4 mb-0">No assignments yet. Create one under a topic.</p>
+                @include('academics::partials.mobile-empty-state', [
+                    'icon' => 'fa-tasks',
+                    'title' => 'No assignments',
+                    'text' => 'Create one under a topic.',
+                    'actionUrl' => route('academics.assignments.create'),
+                    'actionLabel' => 'Add assignment',
+                ])
+                <p class="text-muted p-4 mb-0 d-none d-md-block">No assignments yet. Create one under a topic.</p>
             @else
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">

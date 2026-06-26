@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * After phone verification, students must complete the student journey membership payment.
+ * After phone verification, students must complete platform membership (one payment unlocks all features).
  */
 class EnsureStudentMembershipSubscribed
 {

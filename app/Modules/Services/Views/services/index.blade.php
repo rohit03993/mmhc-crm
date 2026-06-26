@@ -10,7 +10,7 @@
 @endsection
 
 @section('content')
-<div class="mobile-app-container mmhc-page-services">
+<div class="mobile-app-container mmhc-page-services hc-mobile-shell" data-mmhc-ptr>
     <!-- App Header (Mobile Only) -->
     <div class="app-header-mobile d-md-none">
         <div class="app-header-content">

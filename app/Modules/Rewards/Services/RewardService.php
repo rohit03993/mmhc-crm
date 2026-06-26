@@ -50,7 +50,7 @@ class RewardService
     }
 
     /**
-     * Send patient verification OTP by SMS only (Sent.dm).
+     * Send patient verification OTP via WhatsApp (Pal Digital).
      */
     public function sendVerificationOtp(CaregiverReward $reward): array
     {
@@ -116,7 +116,7 @@ class RewardService
 
         $message = 'OTP sent successfully to patient mobile.';
         if ($localDevBypass) {
-            $message = "Local testing: SMS is not configured. Use OTP {$otp} (also in storage/logs/laravel.log).";
+            $message = "Local testing: WhatsApp is not configured. Use OTP {$otp} (also in storage/logs/laravel.log).";
             \Illuminate\Support\Facades\Log::info('Patient reward OTP (local dev)', [
                 'reward_id' => $reward->id,
                 'patient_phone' => $maskedDestination,
@@ -209,9 +209,9 @@ class RewardService
         $patientUid = $reward->patientUser?->unique_id;
         $baseMessage = ($staff && $staff->hasVerifiedPhone())
             ? 'Reward verified and points credited.'
-            : 'Patient mobile verified. Points credit after you verify your Profile mobile (SMS OTP).';
+            : 'Patient mobile verified. Points credit after your account mobile is confirmed (sign in with WhatsApp OTP on that number, or verify in Profile).';
         if ($patientUid) {
-            $baseMessage .= " Patient ID: {$patientUid}. They can sign in with this mobile via SMS OTP.";
+            $baseMessage .= " Patient ID: {$patientUid}. They can sign in with this mobile via WhatsApp OTP.";
         }
 
         return ['success' => true, 'message' => $baseMessage, 'patient_unique_id' => $patientUid];
@@ -273,7 +273,7 @@ class RewardService
     }
 
     /**
-     * Staff reward_points = sum of patient-SMS-verified rows only when Profile mobile is also verified.
+     * Staff reward_points = sum of patient-WhatsApp-verified rows only when Profile mobile is also verified.
      */
     public function syncStaffRewardPoints(User $staff): void
     {

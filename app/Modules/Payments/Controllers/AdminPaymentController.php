@@ -255,7 +255,7 @@ class AdminPaymentController extends Controller
         if (! $this->staffPayoutService->staffMayAccumulatePayouts($staff)) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'This staff member has not verified their account mobile (SMS OTP). Payouts cannot be processed until mobile is verified in Profile.');
+                ->with('error', 'This staff member has not verified their account mobile (WhatsApp OTP). Payouts cannot be processed until mobile is verified in Profile.');
         }
 
         $admin = Auth::user();

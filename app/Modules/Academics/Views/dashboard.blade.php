@@ -115,33 +115,23 @@
 @endsection
 
 @section('content')
-@php $academicsMobileShell = in_array(auth()->user()->role, ['institution_admin', 'faculty'], true); @endphp
+@php $academicsMobileShell = \App\Modules\Academics\Support\AcademicsMobileUi::enabledFor(auth()->user()); @endphp
 @if($academicsMobileShell)
-<div class="mobile-app-container academics-app-content">
-    <div class="app-header-mobile d-md-none">
-        <div class="app-header-content">
-            <div class="app-header-left">
-                <div class="app-user-avatar"><i class="fas fa-graduation-cap"></i></div>
-                <div class="app-user-info">
-                    <div class="app-user-name">{{ Str::limit(auth()->user()->name, 18) }}</div>
-                    <div class="app-user-id">{{ ucfirst(str_replace('_', ' ', auth()->user()->role)) }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="mobile-app-container academics-app-content acad-page-wrap" data-mmhc-ptr>
+    @include('academics::partials.mobile-dashboard-header')
 @endif
-<div class="container-fluid py-3 py-md-4">
+<div class="container-fluid py-3 py-md-4 @if($academicsMobileShell) px-0 px-md-3 @endif">
     @if(auth()->user()->role === 'student' && auth()->user()->academic_enrollment_status === 'pending')
-        <div class="alert alert-warning">
+        <div class="alert alert-warning d-none d-md-block">
             <strong>Awaiting institute approval.</strong>
-            {{ auth()->user()->academicInstitution->name ?? 'Your institute' }} must approve your enrollment before you can access assignments and learning resources.
-            You can still request cross-institute mentors from the sidebar.
+            College assignments, attendance, and SPI unlock after {{ auth()->user()->academicInstitution->name ?? 'your institute' }} approves your enrollment.
+            You can still browse and join <a href="{{ route('academics.open-classrooms.index') }}" class="alert-link">open classrooms</a> and request mentors from the sidebar.
         </div>
     @elseif(auth()->user()->role === 'student' && auth()->user()->academic_enrollment_status === 'rejected')
         <div class="alert alert-danger">Your enrollment request was not approved. Contact your institute admin.</div>
     @endif
     @if(($enrollmentPendingCount ?? 0) > 0 && auth()->user()->role === 'institution_admin')
-        <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 d-none d-md-flex">
             <span><strong>{{ $enrollmentPendingCount }}</strong> student enrollment request(s) awaiting review.</span>
             <a href="{{ route('academics.enrollments.index') }}" class="btn btn-sm btn-primary">Review now</a>
         </div>
@@ -175,20 +165,35 @@
                 <a href="{{ route('academics.reports.show', ['type' => 'student_submission', 'institution_id' => auth()->user()->academic_institution_id]) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-graduate me-1"></i>Student report</a>
             </div>
         @elseif(auth()->user()->role === 'faculty')
-            <p class="academics-dash-hero__lede">Run topics and assignments, review submissions, and track your students.</p>
+            @if(auth()->user()->is_open_teacher && !auth()->user()->academic_institution_id)
+                <p class="academics-dash-hero__lede">Run open classrooms for any student — share notes, set assignments, and review submissions.</p>
+            @else
+                <p class="academics-dash-hero__lede">Run topics and assignments, review submissions, open classrooms, and track your students.</p>
+            @endif
             <div class="academics-quick-links">
+                @if(($openClassroom['enabled'] ?? false) && (($openClassroom['owned_count'] ?? 0) > 0 || auth()->user()->is_open_teacher))
+                    <a href="{{ route('academics.open-classrooms.create') }}" class="btn btn-success btn-sm"><i class="fas fa-door-open me-1"></i>Open classroom</a>
+                    <a href="{{ route('academics.open-classrooms.index', ['tab' => 'mine']) }}" class="btn btn-outline-success btn-sm"><i class="fas fa-chalkboard me-1"></i>My classrooms @if(($openClassroom['owned_count'] ?? 0) > 0)({{ $openClassroom['owned_count'] }})@endif</a>
+                @elseif($openClassroom['enabled'] ?? false)
+                    <a href="{{ route('academics.open-classrooms.index') }}" class="btn btn-outline-success btn-sm"><i class="fas fa-door-open me-1"></i>Open classrooms</a>
+                @endif
                 @if(auth()->user()->academic_institution_id)
                     <a href="{{ route('academics.institutions.show', auth()->user()->academic_institution_id) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-university me-1"></i>College</a>
                 @endif
+                @if(auth()->user()->academic_institution_id)
                 <a href="{{ route('academics.topics.index') }}" class="btn btn-primary btn-sm"><i class="fas fa-list-ul me-1"></i>Topics</a>
                 <a href="{{ route('academics.exams.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-question-circle me-1"></i>Exams</a>
                 <a href="{{ route('academics.assignments.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-tasks me-1"></i>Assignments</a>
                 <a href="{{ route('academics.attendance.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-calendar-check me-1"></i>Attendance</a>
                 <a href="{{ route('academics.reports.show', ['type' => 'student_submission']) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-user-graduate me-1"></i>Student report</a>
+                @endif
             </div>
         @elseif(auth()->user()->role === 'student')
-            <p class="academics-dash-hero__lede">Submit assignments, take quizzes, open learning resources, and track attendance (SPI).</p>
+            <p class="academics-dash-hero__lede">College work, open classrooms, quizzes, learning resources, and SPI — all on one platform after membership.</p>
             <div class="academics-quick-links">
+                @if($openClassroom['enabled'] ?? false)
+                    <a href="{{ route('academics.open-classrooms.index') }}" class="btn btn-success btn-sm"><i class="fas fa-door-open me-1"></i>Open classrooms @if(($openClassroom['joined_count'] ?? 0) > 0)({{ $openClassroom['joined_count'] }} joined)@endif</a>
+                @endif
                 <a href="{{ route('academics.my-assignments') }}" class="btn btn-primary btn-sm"><i class="fas fa-tasks me-1"></i>My assignments</a>
                 <a href="{{ route('academics.learning-resources') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-photo-video me-1"></i>Learning resources</a>
                 <a href="{{ route('academics.exams.index') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-question-circle me-1"></i>Exams</a>
@@ -201,6 +206,8 @@
     </div>
 
     @include('academics::partials.dashboard-insights', ['insights' => $insights])
+
+    @include('academics::partials.open-classroom-dashboard', ['openClassroom' => $openClassroom ?? ['enabled' => false]])
 
     {{-- STUDENT --}}
     @if(auth()->user()->role === 'student')
@@ -246,12 +253,32 @@
                 </div>
             </div>
         </div>
+        @if($openClassroom['enabled'] ?? false)
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-success border-opacity-25">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title d-flex align-items-center mb-2">
+                        <span class="rounded-circle bg-success bg-opacity-10 p-2 me-2"><i class="fas fa-door-open text-success"></i></span>
+                        Open classrooms
+                    </h5>
+                    <p class="card-text display-6 mb-1">{{ $openClassroom['joined_count'] ?? 0 }}</p>
+                    @if(($openClassroom['pending_tasks'] ?? 0) > 0)
+                        <p class="small text-warning mb-2">{{ $openClassroom['pending_tasks'] }} task(s) pending</p>
+                    @else
+                        <p class="small text-muted mb-2">Joined classrooms</p>
+                    @endif
+                    <a href="{{ route('academics.open-classrooms.index') }}" class="btn btn-success btn-sm mt-auto align-self-start rounded-pill">Browse</a>
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
     @endif
 
     {{-- FACULTY --}}
     @if(auth()->user()->role === 'faculty')
     <div class="row g-3">
+        @if(auth()->user()->academic_institution_id)
         <div class="col-12 col-sm-6 col-lg-3">
             <div class="card h-100 border-primary shadow-sm">
                 <div class="card-body d-flex flex-column">
@@ -333,6 +360,22 @@
                 </div>
             </div>
         </div>
+        @endif
+        @if(($openClassroom['enabled'] ?? false) && (auth()->user()->is_open_teacher || ($openClassroom['owned_count'] ?? 0) > 0))
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card h-100 shadow-sm border-success border-opacity-25">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title d-flex align-items-center mb-2">
+                        <span class="rounded-circle bg-success bg-opacity-10 p-2 me-2"><i class="fas fa-door-open text-success"></i></span>
+                        <span class="small">Open classrooms</span>
+                    </h5>
+                    <p class="card-text display-6 mb-2">{{ $openClassroom['owned_count'] ?? 0 }}</p>
+                    <p class="small text-muted mb-2">{{ $openClassroom['joined_count'] ?? 0 }} joined as member</p>
+                    <a href="{{ route('academics.open-classrooms.index', ['tab' => 'mine']) }}" class="btn btn-success btn-sm mt-auto align-self-start rounded-pill">Manage</a>
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
     @endif
 

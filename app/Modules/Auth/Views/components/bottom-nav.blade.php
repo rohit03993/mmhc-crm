@@ -1,17 +1,95 @@
 @once('mmhc-bottom-nav')
-<nav class="app-bottom-nav d-md-none" aria-label="Main navigation">
-    @if(auth()->user()->hasAcademicRole())
+<nav class="app-bottom-nav d-md-none @if(request()->routeIs('academics.*')) app-bottom-nav--academics app-bottom-nav--dense @elseif(auth()->user()->isPatient()) app-bottom-nav--patient @elseif(auth()->user()->isStaff()) app-bottom-nav--staff @endif" aria-label="Main navigation">
+    @if(auth()->user()->hasAcademicRole() && request()->routeIs('academics.*'))
+        <a href="{{ route('academics.dashboard') }}" class="app-nav-item {{ request()->routeIs('academics.dashboard') ? 'active' : '' }}">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        @if(auth()->user()->role === 'student')
+        <a href="{{ route('academics.my-assignments') }}" class="app-nav-item {{ request()->routeIs('academics.my-assignments') || request()->routeIs('academics.my-assignments.show') || request()->routeIs('academics.submit.*') ? 'active' : '' }}">
+            <i class="fas fa-tasks" aria-hidden="true"></i>
+            <span>Tasks</span>
+        </a>
+        <a href="{{ route('academics.learning-resources') }}" class="app-nav-item {{ request()->routeIs('academics.learning-resources') || request()->routeIs('academics.topics.student-library') ? 'active' : '' }}">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>Learn</span>
+        </a>
+        <a href="{{ route('academics.attendance.my') }}" class="app-nav-item {{ request()->routeIs('academics.attendance.my') ? 'active' : '' }}">
+            <i class="fas fa-calendar-check" aria-hidden="true"></i>
+            <span>Attend</span>
+        </a>
+        <a href="{{ route('academics.exams.index') }}" class="app-nav-item {{ request()->routeIs('academics.exams.*') ? 'active' : '' }}">
+            <i class="fas fa-clipboard-check" aria-hidden="true"></i>
+            <span>Exams</span>
+        </a>
+        <a href="{{ route('academics.mentorship.index') }}" class="app-nav-item {{ request()->routeIs('academics.mentorship.*') ? 'active' : '' }}">
+            <i class="fas fa-hands-helping" aria-hidden="true"></i>
+            <span>Mentors</span>
+        </a>
+        @elseif(auth()->user()->role === 'faculty')
+        <a href="{{ route('academics.topics.index') }}" class="app-nav-item {{ request()->routeIs('academics.topics.*') ? 'active' : '' }}">
+            <i class="fas fa-list-ul"></i>
+            <span>Topics</span>
+        </a>
+        <a href="{{ route('academics.assignments.index') }}" class="app-nav-item {{ request()->routeIs('academics.assignments.*') ? 'active' : '' }}">
+            <i class="fas fa-tasks"></i>
+            <span>Tasks</span>
+        </a>
+        <a href="{{ route('academics.attendance.index') }}" class="app-nav-item {{ request()->routeIs('academics.attendance.*') ? 'active' : '' }}">
+            <i class="fas fa-calendar-check"></i>
+            <span>Attend</span>
+        </a>
+        <a href="{{ route('academics.mentorship.index') }}" class="app-nav-item {{ request()->routeIs('academics.mentorship.*') ? 'active' : '' }}">
+            <i class="fas fa-hands-helping"></i>
+            <span>Mentor</span>
+        </a>
+        @elseif(auth()->user()->role === 'institution_admin')
+        <a href="{{ route('academics.students.index') }}" class="app-nav-item {{ request()->routeIs('academics.students.*') ? 'active' : '' }}">
+            <i class="fas fa-user-graduate"></i>
+            <span>Students</span>
+        </a>
+        <a href="{{ route('academics.enrollments.index') }}" class="app-nav-item {{ request()->routeIs('academics.enrollments.*') ? 'active' : '' }}">
+            <i class="fas fa-user-clock"></i>
+            <span>Enroll</span>
+        </a>
+        <a href="{{ route('academics.batches.index') }}" class="app-nav-item {{ request()->routeIs('academics.batches.*') ? 'active' : '' }}">
+            <i class="fas fa-layer-group"></i>
+            <span>Batches</span>
+        </a>
+        <a href="{{ route('academics.reports.index') }}" class="app-nav-item {{ request()->routeIs('academics.reports.*') ? 'active' : '' }}">
+            <i class="fas fa-chart-bar"></i>
+            <span>Reports</span>
+        </a>
+        @else
+        <a href="{{ route('academics.institutions.index') }}" class="app-nav-item {{ request()->routeIs('academics.institutions.*') ? 'active' : '' }}">
+            <i class="fas fa-university"></i>
+            <span>Colleges</span>
+        </a>
+        <a href="{{ route('academics.reports.index') }}" class="app-nav-item {{ request()->routeIs('academics.reports.*') ? 'active' : '' }}">
+            <i class="fas fa-chart-bar"></i>
+            <span>Reports</span>
+        </a>
+        @endif
+    @elseif(auth()->user()->hasAcademicRole())
         <a href="{{ route('academics.dashboard') }}" class="app-nav-item {{ request()->routeIs('academics.dashboard') ? 'active' : '' }}">
             <i class="fas fa-graduation-cap"></i>
             <span>Academics</span>
         </a>
         @if(auth()->user()->role === 'student')
-        <a href="{{ route('academics.my-assignments') }}" class="app-nav-item {{ request()->routeIs('academics.my-assignments') || request()->routeIs('academics.submit.*') ? 'active' : '' }}">
-            <i class="fas fa-tasks"></i>
+        <a href="{{ route('academics.my-assignments') }}" class="app-nav-item {{ request()->routeIs('academics.my-assignments') || request()->routeIs('academics.my-assignments.show') || request()->routeIs('academics.submit.*') ? 'active' : '' }}">
+            <i class="fas fa-tasks" aria-hidden="true"></i>
             <span>Tasks</span>
         </a>
+        <a href="{{ route('academics.learning-resources') }}" class="app-nav-item {{ request()->routeIs('academics.learning-resources') || request()->routeIs('academics.topics.student-library') ? 'active' : '' }}">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>Learn</span>
+        </a>
+        <a href="{{ route('academics.attendance.my') }}" class="app-nav-item {{ request()->routeIs('academics.attendance.my') ? 'active' : '' }}">
+            <i class="fas fa-calendar-check" aria-hidden="true"></i>
+            <span>Attend</span>
+        </a>
         <a href="{{ route('academics.mentorship.index') }}" class="app-nav-item {{ request()->routeIs('academics.mentorship.*') ? 'active' : '' }}">
-            <i class="fas fa-hands-helping"></i>
+            <i class="fas fa-hands-helping" aria-hidden="true"></i>
             <span>Mentors</span>
         </a>
         @elseif(auth()->user()->role === 'faculty')
@@ -77,16 +155,20 @@
         </a>
     @elseif(auth()->user()->isPatient())
         <a href="{{ route('community.index') }}" class="app-nav-item {{ request()->routeIs('community.*') || request()->routeIs('dashboard') ? 'active' : '' }}">
-            <i class="fas fa-home"></i>
+            <i class="fas fa-home" aria-hidden="true"></i>
             <span>Home</span>
         </a>
         <a href="{{ route('services.my-requests') }}" class="app-nav-item {{ request()->routeIs('services.my-requests') || request()->routeIs('services.show') ? 'active' : '' }}">
-            <i class="fas fa-list"></i>
+            <i class="fas fa-list" aria-hidden="true"></i>
             <span>Requests</span>
         </a>
         <a href="{{ route('staff.index') }}" class="app-nav-item {{ request()->routeIs('staff.index') || request()->routeIs('book.*') || request()->routeIs('services.index') ? 'active' : '' }}">
-            <i class="fas fa-user-nurse"></i>
-            <span>Staff</span>
+            <i class="fas fa-user-nurse" aria-hidden="true"></i>
+            <span>Find staff</span>
+        </a>
+        <a href="{{ route('subscriptions.index') }}" class="app-nav-item {{ request()->routeIs('subscriptions.*') ? 'active' : '' }}">
+            <i class="fas fa-id-card" aria-hidden="true"></i>
+            <span>Plans</span>
         </a>
     @elseif(auth()->user()->isStaff())
         <a href="{{ route('staff.dashboard') }}" class="app-nav-item {{ request()->routeIs('staff.dashboard') || request()->routeIs('staff.service-details') ? 'active' : '' }}">

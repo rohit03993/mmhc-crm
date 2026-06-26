@@ -182,7 +182,7 @@
                                                     <td class="text-muted text-nowrap">{{ $sub->submitted_at?->diffForHumans() }}</td>
                                                     <td class="text-end pe-3">
                                                         @if($sub->assignment)
-                                                            <a href="{{ route('academics.submissions', $sub->assignment) }}" class="btn btn-sm btn-outline-primary py-0 px-2">Submissions</a>
+                                                            <a href="{{ route('academics.assignments.submissions', $sub->assignment) }}" class="btn btn-sm btn-outline-primary py-0 px-2">Submissions</a>
                                                         @endif
                                                     </td>
                                                 </tr>
@@ -291,7 +291,7 @@
                                                 <div class="text-muted text-truncate" style="max-width: 14rem;">{{ $sub->assignment->title ?? '' }}</div>
                                             </div>
                                             @if($sub->assignment)
-                                                <a href="{{ route('academics.submissions', $sub->assignment) }}" class="btn btn-sm btn-outline-primary py-0 px-2 flex-shrink-0">View</a>
+                                                <a href="{{ route('academics.assignments.submissions', $sub->assignment) }}" class="btn btn-sm btn-outline-primary py-0 px-2 flex-shrink-0">View</a>
                                             @endif
                                         </li>
                                     @endforeach

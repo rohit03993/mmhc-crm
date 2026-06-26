@@ -4,8 +4,10 @@
 @section('page-title', 'Institutions')
 
 @section('content')
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', ['title' => 'Institutions', 'lede' => 'Colleges on the platform.'])
+
+    <div class="d-none d-md-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 academics-page-toolbar">
         <div>
             <h2 class="h5 mb-1">Institutions</h2>
             <p class="text-muted small mb-0">Each row is a college. <strong>ID</strong> is the database key (for linking users). <strong>Code</strong> is your short institute identifier (e.g. MMCN-BPL).</p>
@@ -16,7 +18,14 @@
     <div class="card">
         <div class="card-body p-0">
             @if($institutions->isEmpty())
-                <p class="text-muted p-4 mb-0">No institutions yet. Create one to get started.</p>
+                @include('academics::partials.mobile-empty-state', [
+                    'icon' => 'fa-university',
+                    'title' => 'No colleges yet',
+                    'text' => 'Create an institution to get started.',
+                    'actionUrl' => route('academics.institutions.create'),
+                    'actionLabel' => 'Add institution',
+                ])
+                <p class="text-muted p-4 mb-0 d-none d-md-block">No institutions yet. Create one to get started.</p>
             @else
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">

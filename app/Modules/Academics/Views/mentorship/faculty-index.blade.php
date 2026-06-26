@@ -4,8 +4,10 @@
 @section('page-title', 'Mentorship')
 
 @section('content')
-<div class="container-fluid py-3">
-    <h2 class="h5 mb-1">My mentees</h2>
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', ['title' => 'My mentees', 'lede' => 'Pending requests and active mentorship.'])
+
+    <h2 class="h5 mb-1 d-none d-md-block">My mentees</h2>
     @if(isset($fpiBreakdown))
         <p class="text-muted small mb-4">
             Active mentees: <strong>{{ $menteeCount }}</strong>

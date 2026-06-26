@@ -85,5 +85,4 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-Route::post('/webhooks/razorpay', [SubscriptionController::class, 'razorpayWebhook'])
-    ->name('webhooks.razorpay');
+// Webhook registered once in routes/web.php (webhooks.razorpay)

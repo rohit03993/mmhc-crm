@@ -3,8 +3,12 @@
 @section('title', 'Subscription Referrals - Staff Dashboard')
 @section('page-title', 'Subscription Referrals')
 
+@section('head')
+@include('services::partials.mobile-assets')
+@endsection
+
 @section('content')
-<div class="mobile-app-container">
+<div class="mobile-app-container hc-mobile-shell" data-mmhc-ptr>
 <!-- Mobile Header -->
 <div class="app-mobile-header d-md-none">
     <div class="d-flex align-items-center">
@@ -18,6 +22,21 @@
 @include('services::partials.staff-referrals-assets')
 
 <div class="container-fluid px-3 py-4">
+    <div class="hc-stat-chips hc-stat-chips--3 d-md-none mb-3">
+        <div class="hc-stat-chip">
+            <span class="hc-stat-chip__val">{{ $stats->total_referrals ?? 0 }}</span>
+            <span class="hc-stat-chip__lbl">Total</span>
+        </div>
+        <div class="hc-stat-chip">
+            <span class="hc-stat-chip__val">{{ $stats->active_referrals ?? 0 }}</span>
+            <span class="hc-stat-chip__lbl">Active</span>
+        </div>
+        <div class="hc-stat-chip">
+            <span class="hc-stat-chip__val">₹{{ number_format($stats->total_commission ?? 0, 0) }}</span>
+            <span class="hc-stat-chip__lbl">Commission</span>
+        </div>
+    </div>
+
     @include('services::partials.staff-earnings-nav', ['activeTab' => 'subscription-referrals'])
 
     @if(empty($staffMobileVerified))

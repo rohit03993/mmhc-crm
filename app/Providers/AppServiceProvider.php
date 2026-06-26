@@ -54,6 +54,7 @@ class AppServiceProvider extends ServiceProvider
             $pendingReferralOtpContacts = null;
             $pendingRewardOtpBanner = null;
             $pendingServiceCompletionBanner = null;
+        $serviceCompletionSkipsPatientOtp = false;
             $hasPendingContactUpdate = false;
             $heldEarningsDueToUnverifiedMobile = null;
             $staffNeedsMobileVerification = false;
@@ -61,6 +62,8 @@ class AppServiceProvider extends ServiceProvider
 
             if (Auth::check()) {
                 $user = Auth::user();
+                $user->syncStalePhoneVerificationState();
+                $user = $user->fresh();
                 $hasPendingContactUpdate = $user->hasPendingMobileContactVerification();
                 $needsPhoneVerification = $user->mustVerifyPhoneBeforeAppAccess();
                 $staffNeedsMobileVerification = $needsPhoneVerification && $user->isStaff();
@@ -109,19 +112,28 @@ class AppServiceProvider extends ServiceProvider
                     ->first();
 
                 $pendingServiceCompletionBanner = ServiceRequest::query()
-                    ->select(['id', 'assigned_staff_id', 'status', 'completion_verified_at', 'patient_id', 'created_at'])
-                    ->with('patient:id,name')
+                    ->select(['id', 'assigned_staff_id', 'status', 'completion_verified_at', 'patient_id', 'contact_phone', 'end_date', 'created_at'])
+                    ->with('patient:id,name,phone')
                     ->where('assigned_staff_id', $user->id)
                     ->where('status', 'in_progress')
                     ->whereNull('completion_verified_at')
+                    ->whereDate('end_date', '<=', now()->toDateString())
                     ->latest('id')
                     ->first();
+
+                if ($pendingServiceCompletionBanner && $user->hasVerifiedPhone()) {
+                    $serviceCompletionSkipsPatientOtp = $user->accountPhonesMatch(
+                        $user->phone,
+                        $pendingServiceCompletionBanner->patientContactPhone()
+                    );
+                }
             }
 
             $view->with('pendingReferralOtpBanner', $pendingReferralOtpBanner);
             $view->with('pendingReferralOtpContacts', $pendingReferralOtpContacts);
             $view->with('pendingRewardOtpBanner', $pendingRewardOtpBanner);
             $view->with('pendingServiceCompletionBanner', $pendingServiceCompletionBanner);
+            $view->with('serviceCompletionSkipsPatientOtp', $serviceCompletionSkipsPatientOtp);
             $view->with('hasPendingContactUpdate', $hasPendingContactUpdate);
             $view->with('heldEarningsDueToUnverifiedMobile', $heldEarningsDueToUnverifiedMobile);
             $view->with('staffNeedsMobileVerification', $staffNeedsMobileVerification);

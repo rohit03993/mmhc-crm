@@ -29,7 +29,7 @@ class PhoneBindOtpService
     }
 
     /**
-     * Store bind OTP digest (after SMS send succeeds).
+     * Store bind OTP digest (after WhatsApp send succeeds).
      */
     public function storeOtp(int $userId, string $destinationPhone, string $otp): void
     {

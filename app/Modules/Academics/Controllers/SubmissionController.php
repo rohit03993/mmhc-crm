@@ -12,6 +12,9 @@ use App\Modules\Academics\Models\Mentorship;
 use App\Modules\Academics\Services\MentorVerificationService;
 use App\Modules\Academics\Services\MentorshipService;
 use App\Modules\Academics\Services\TopicCompletionService;
+use App\Modules\Academics\Services\AcademicScoreService;
+use App\Modules\Academics\Support\StudentAssignmentStatus;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class SubmissionController extends Controller
@@ -36,7 +39,41 @@ class SubmissionController extends Controller
             ->orderBy('title')
             ->paginate(10);
 
-        return view('academics::submissions.my-assignments', compact('assignments', 'examAccess'));
+        $spiBreakdown = AcademicScoreService::getSpiBreakdown(auth()->user());
+        $mentorVerification = app(MentorVerificationService::class);
+
+        return view('academics::submissions.my-assignments', compact('assignments', 'examAccess', 'spiBreakdown', 'mentorVerification'));
+    }
+
+    public function show(Assignment $assignment, ExamAccessService $examAccess, MentorVerificationService $mentorVerification)
+    {
+        $eligibleIds = $assignment->eligibleStudentIds();
+        if (! in_array(auth()->id(), $eligibleIds)) {
+            abort(403, 'You are not eligible to view this assignment.');
+        }
+
+        $assignment->load([
+            'topic.subject.batch',
+            'topic.resources',
+            'exams' => fn ($q) => $q->orderByDesc('id'),
+        ]);
+
+        $submission = Submission::query()
+            ->where('assignment_id', $assignment->id)
+            ->where('user_id', auth()->id())
+            ->first();
+
+        $status = StudentAssignmentStatus::for($assignment, $submission, $mentorVerification);
+        $spiBreakdown = AcademicScoreService::getSpiBreakdown(auth()->user());
+
+        return view('academics::submissions.assignment-detail', compact(
+            'assignment',
+            'submission',
+            'examAccess',
+            'status',
+            'spiBreakdown',
+            'mentorVerification'
+        ));
     }
 
     public function create(Assignment $assignment, ExamAccessService $examAccess, MentorshipService $mentorshipService)
@@ -166,18 +203,16 @@ class SubmissionController extends Controller
 
         TopicCompletionService::checkAndCompleteTopic($assignment->fresh());
 
-        return redirect()->route('academics.my-assignments')->with('success', 'Submission saved successfully.');
+        return redirect()->route('academics.my-assignments.show', $assignment)->with('success', 'Submission saved successfully.');
     }
 
     public function download(Submission $submission)
     {
         $user = auth()->user();
-        if ($user->id === $submission->user_id || in_array($user->role, ['institution_admin', 'faculty'], true)) {
-            if ($submission->assignment && in_array($user->role, ['institution_admin', 'faculty'], true)) {
-                // Platform / college roles: same visibility as assignment management
-            } elseif ($user->id !== $submission->user_id) {
-                $this->authorizeFacultyOrAdminForAssignment($submission->assignment_id);
-            }
+        if ($user->id === $submission->user_id) {
+            // Student downloading own file
+        } elseif (in_array($user->role, ['institution_admin', 'faculty'], true)) {
+            $this->authorizeFacultyOrAdminForAssignment($submission->assignment_id);
         } else {
             abort(403);
         }

@@ -4,8 +4,8 @@
 @section('page-title', 'Reports')
 
 @section('content')
-<div class="container-fluid py-3 py-md-4">
-    <h2 class="h5 mb-3">Generate report</h2>
+<div class="container-fluid py-3 py-md-4 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', ['title' => 'Reports', 'lede' => 'Batch progress, faculty performance, and student SPI.'])
 
     <div class="alert alert-light border mb-4 mb-md-3">
         <strong>Student submission report</strong> – SPI % reflects assignments fully credited (submitted + all shared mentors rated when applicable).

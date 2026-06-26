@@ -3,7 +3,12 @@
 @section('title', 'Subscription Details - MMHC CRM')
 @section('page-title', 'Subscription Details')
 
+@section('head')
+@include('services::partials.mobile-assets')
+@endsection
+
 @section('content')
+<div class="mobile-app-container hc-mobile-shell acad-mobile-page" data-mmhc-ptr>
 <!-- Mobile Header -->
 <div class="app-mobile-header d-md-none">
     <div class="d-flex align-items-center">
@@ -229,6 +234,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 <style>
 /* Mobile padding for bottom nav - prevents content from being blocked */

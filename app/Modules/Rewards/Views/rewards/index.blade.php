@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Mobile App View for Rewards -->
-<div class="mobile-app-container">
+<div class="mobile-app-container hc-mobile-shell" data-mmhc-ptr>
     <!-- App Header (Mobile Only) -->
     <div class="app-header-mobile d-md-none">
         <div class="app-header-content">
@@ -31,7 +31,7 @@
         <div class="d-none d-md-block mb-4">
             <h2 class="mb-0">My Reward Entries</h2>
             @if(!empty($pendingVerificationCount) && $pendingVerificationCount > 0)
-                <p class="text-warning mb-0 mt-1"><i class="fas fa-exclamation-triangle me-1"></i>{{ $pendingVerificationCount }} entries are pending patient SMS OTP and not yet credited.</p>
+                <p class="text-warning mb-0 mt-1"><i class="fas fa-exclamation-triangle me-1"></i>{{ $pendingVerificationCount }} entries are pending patient WhatsApp OTP and not yet credited.</p>
             @endif
             @if(!empty($heldEarningsDueToUnverifiedMobile))
                 <p class="text-warning mb-0 mt-1"><i class="fas fa-mobile-alt me-1"></i>₹{{ number_format((float) $heldEarningsDueToUnverifiedMobile['total'], 2) }} in verified earnings is on hold until you verify your account mobile in Profile.</p>
@@ -110,7 +110,7 @@
                                         <small class="d-block text-success mt-1">₹{{ number_format($reward->reward_amount, 2) }}</small>
                                     @else
                                         <span class="badge bg-secondary">0 pts · not credited</span>
-                                        <small class="d-block text-muted mt-1">Complete patient SMS OTP + Profile mobile</small>
+                                        <small class="d-block text-muted mt-1">Complete patient WhatsApp OTP + Profile mobile</small>
                                     @endif
                                     <div class="mt-1">
                                         @include('services::staff.partials.payout-status-blockers', ['blockers' => $rewardBlockers, 'compact' => true, 'align' => 'end'])
@@ -163,7 +163,7 @@
                                 </div>
                                 @if(in_array(\App\Modules\Payments\Services\StaffEarningStatusResolver::PENDING_PATIENT_OTP, $rewardBlockers, true))
                                 <div class="mt-2 d-flex gap-2 flex-wrap">
-                                    <button class="btn btn-sm btn-outline-primary" type="button" onclick="sendOtp({{ $reward->id }})">Resend SMS OTP</button>
+                                    <button class="btn btn-sm btn-outline-primary" type="button" onclick="sendOtp({{ $reward->id }})">Resend WhatsApp OTP</button>
                                     <button class="btn btn-sm btn-success" type="button" onclick="verifyOtp({{ $reward->id }})">Verify OTP</button>
                                     @if($reward->canChangePatientPhone())
                                     <button class="btn btn-sm btn-outline-secondary btn-change-patient-phone" type="button"

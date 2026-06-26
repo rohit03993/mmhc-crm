@@ -68,8 +68,8 @@
                         <p class="apv-v mb-0">{{ $user->displayPhone() ?: '—' }}</p>
                         <div class="mt-2">
                             @if($pendingDisplay = $user->displayPendingPhone())
-                                <span class="badge bg-warning text-dark">Pending: {{ $pendingDisplay }}</span>
-                                <a href="{{ route('profile.edit') }}" class="small d-block mt-1">Complete OTP verification →</a>
+                                <span class="badge bg-warning text-dark">New number pending: {{ $pendingDisplay }}</span>
+                                <a href="{{ route('profile.edit') }}" class="small d-block mt-1">Complete OTP on new number →</a>
                             @elseif($user->hasVerifiedPhone())
                                 <span class="badge bg-success">Mobile verified</span>
                                 @if($user->phone_verified_source === 'admin')

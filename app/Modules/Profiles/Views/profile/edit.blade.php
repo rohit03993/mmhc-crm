@@ -3,9 +3,13 @@
 @section('title', 'Edit Profile - MMHC CRM')
 @section('page-title', 'Edit Profile')
 
+@section('head')
+@include('services::partials.mobile-assets')
+@endsection
+
 @section('content')
 <!-- Mobile App View for Edit Profile -->
-<div class="mobile-app-container">
+<div class="mobile-app-container hc-mobile-shell acad-mobile-page" data-mmhc-ptr>
     <!-- App Header (Mobile Only) -->
     <div class="app-header-mobile d-md-none">
         <div class="app-header-content">
@@ -127,7 +131,7 @@
                         @endif
                     </div>
                     <div class="app-form-help mb-3">
-                        <i class="fas fa-info-circle me-1"></i>Sign-in is via SMS OTP on your mobile. Changing your number requires OTP verification on the new number.
+                        <i class="fas fa-info-circle me-1"></i>Sign-in is via WhatsApp OTP on your mobile. Changing your number requires OTP verification on the new number.
                     </div>
 
                     <div class="app-form-group">

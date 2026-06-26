@@ -10,6 +10,12 @@
             Academics overview
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link text-white {{ request()->routeIs('academics.open-classrooms.*') ? 'active' : '' }}" href="{{ route('academics.open-classrooms.index') }}">
+            <i class="fas fa-door-open me-2"></i>
+            Open classrooms
+        </a>
+    </li>
     @if(auth()->user()->role === 'institution_admin')
     <li class="nav-item">
         <a class="nav-link text-white {{ request()->routeIs('academics.enrollments.*') ? 'active' : '' }}" href="{{ route('academics.enrollments.index') }}">

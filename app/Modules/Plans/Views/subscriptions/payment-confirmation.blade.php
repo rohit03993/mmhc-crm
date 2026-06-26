@@ -3,6 +3,10 @@
 @section('title', 'Payment Confirmation - MMHC CRM')
 @section('page-title', 'Payment Confirmation')
 
+@section('head')
+@include('services::partials.mobile-assets')
+@endsection
+
 @section('content')
 @php
     $isStudentMembership = $isStudentMembership ?? app(\App\Modules\Plans\Services\StudentSubscriptionService::class)->isStudentPlanSubscription($subscription);
@@ -14,6 +18,7 @@
         false
     );
 @endphp
+<div class="mobile-app-container hc-mobile-shell acad-mobile-page" data-mmhc-ptr>
 <!-- Mobile Header -->
 <div class="app-mobile-header d-md-none">
     <div class="d-flex align-items-center">
@@ -317,6 +322,7 @@
             </button>
         </div>
     </div>
+</div>
 </div>
 
 <style>

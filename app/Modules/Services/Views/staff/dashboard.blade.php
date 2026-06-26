@@ -23,7 +23,7 @@
 
 @section('content')
 <!-- Mobile App View for Staff Dashboard -->
-<div class="mobile-app-container">
+<div class="mobile-app-container hc-mobile-shell" data-mmhc-ptr>
     <!-- App Header (Mobile Only) -->
     <div class="app-header-mobile d-md-none">
         <div class="app-header-content">
@@ -156,7 +156,7 @@
         <div class="col-12">
             <div class="alert alert-warning mb-0">
                 <strong><i class="fas fa-mobile-alt me-1"></i>₹{{ number_format((float) $heldEarningsDueToUnverifiedMobile['total'], 2) }} on hold</strong> until you verify your account mobile in Profile.
-                Patient rewards and referrals below may show earned amounts, but admin payout stays blocked until SMS OTP is complete.
+                Patient rewards and referrals below may show earned amounts, but admin payout stays blocked until WhatsApp OTP is complete.
                 <a href="{{ route('profile.edit') }}" class="alert-link fw-semibold ms-1">Verify mobile now</a>
             </div>
         </div>

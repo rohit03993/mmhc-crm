@@ -3,8 +3,12 @@
 @section('title', 'Staff Referrals - Staff Dashboard')
 @section('page-title', 'Staff Referrals')
 
+@section('head')
+@include('services::partials.mobile-assets')
+@endsection
+
 @section('content')
-<div class="mobile-app-container">
+<div class="mobile-app-container hc-mobile-shell" data-mmhc-ptr>
 <!-- Mobile Header -->
 <div class="app-mobile-header d-md-none">
     <div class="d-flex align-items-center">
@@ -18,6 +22,17 @@
 @include('services::partials.staff-referrals-assets')
 
 <div class="container-fluid px-3 py-4">
+    <div class="hc-stat-chips d-md-none mb-3">
+        <div class="hc-stat-chip">
+            <span class="hc-stat-chip__val">{{ $referralStats['completed_referrals'] }}</span>
+            <span class="hc-stat-chip__lbl">Referrals</span>
+        </div>
+        <div class="hc-stat-chip">
+            <span class="hc-stat-chip__val">₹{{ number_format($staffReferralPayableAmount, 0) }}</span>
+            <span class="hc-stat-chip__lbl">Payable</span>
+        </div>
+    </div>
+
     @include('services::partials.staff-earnings-nav', ['activeTab' => 'staff-referrals'])
 
     <div class="row mb-3">
@@ -37,7 +52,7 @@
             <div class="alert alert-warning mb-0 py-2">
                 <i class="fas fa-mobile-alt me-1"></i>
                 @if($staffReferralHeldAmount > 0)
-                    ₹{{ number_format($staffReferralHeldAmount, 2) }} is earned but not payable until <strong>your Profile mobile</strong> is SMS-verified (separate from the referred person’s mobile OTP).
+                    ₹{{ number_format($staffReferralHeldAmount, 2) }} is earned but not payable until <strong>your Profile mobile</strong> is WhatsApp-verified (separate from the referred person’s WhatsApp OTP).
                 @else
                     Verify your account mobile in Profile to unlock referral payouts.
                 @endif
@@ -51,7 +66,7 @@
                 </div>
                 <div class="stats-content">
                     <div class="stats-value">{{ $referralStats['completed_referrals'] }}</div>
-                    <div class="stats-label">Referrals (referred staff SMS OTP done)</div>
+                    <div class="stats-label">Referrals (referred staff WhatsApp OTP done)</div>
                     @if(($referralStats['pending_referrals'] ?? 0) > 0)
                         <div class="small text-muted mt-1">{{ $referralStats['pending_referrals'] }} waiting on referred staff mobile OTP</div>
                     @endif
@@ -83,7 +98,7 @@
                     <h5 class="mb-0">Your Staff Referral Link</h5>
                 </div>
                 <div class="referral-link-body">
-                    <p class="mb-3">Share this link with nurses and caregivers. Referral stays <strong>pending</strong> until the referred staff completes SMS OTP. After that, base <strong>₹{{ number_format($basePerRef, 0) }}</strong> is earned — payout unlocks once <strong>your account mobile</strong> is verified in Profile.</p>
+                    <p class="mb-3">Share this link with nurses and caregivers. Referral stays <strong>pending</strong> until the referred staff completes WhatsApp OTP. After that, base <strong>₹{{ number_format($basePerRef, 0) }}</strong> is earned — payout unlocks once <strong>your account mobile</strong> is verified in Profile.</p>
                     @include('services::partials.referral-link-share', [
                         'inputId' => 'referralLink',
                         'linkUrl' => $referralLink,
@@ -91,7 +106,7 @@
                         'whatsappText' => 'Join MMHC as nurse/caregiver with my referral link: ',
                     ])
                     <small class="text-muted d-block mt-2">
-                        <i class="fas fa-info-circle me-1"></i>Referral SMS OTP must be completed by the referred staff. Your account mobile must also be verified in Profile before incentive is payable.
+                        <i class="fas fa-info-circle me-1"></i>Referral WhatsApp OTP must be completed by the referred staff. Your account mobile must also be verified in Profile before incentive is payable.
                     </small>
                 </div>
             </div>
@@ -153,7 +168,7 @@
                             <div class="referral-entry-details-modern">
                                 <div class="detail-row">
                                     <i class="fas fa-calendar-alt me-2 text-muted"></i>
-                                    <span>Referred staff SMS OTP verified: {{ ($referral->verified_at ?? $referral->completed_at)->format('M d, Y') }}</span>
+                                    <span>Referred staff WhatsApp OTP verified: {{ ($referral->verified_at ?? $referral->completed_at)->format('M d, Y') }}</span>
                                 </div>
                             </div>
                             @endif

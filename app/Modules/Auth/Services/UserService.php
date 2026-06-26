@@ -303,7 +303,7 @@ class UserService
     }
 
     /**
-     * Phone-first self-registration: normalized phone, SMS login flag, synthetic email.
+     * Phone-first self-registration: normalized phone, WhatsApp login flag, synthetic email.
      *
      * @param  array<string, mixed>  $userData
      */

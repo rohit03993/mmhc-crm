@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
+    @include('services::partials.mobile-assets')
     
     <style>
         :root {
@@ -19,9 +20,28 @@
 @endsection
 
 @section('content')
+@php
+    $statusLabel = ucfirst(str_replace('_', ' ', $serviceRequest->status));
+@endphp
+<div class="mobile-app-container hc-mobile-shell" data-mmhc-ptr>
+    <div class="app-header-mobile d-md-none">
+        <div class="app-header-content">
+            <div class="app-header-left">
+                <a href="{{ route('staff.dashboard') }}" class="app-back-btn" aria-label="Back to dashboard">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <div class="app-header-title">Job #{{ $serviceRequest->id }}</div>
+                    <div class="app-header-subtitle">{{ $serviceRequest->serviceType->name }} · {{ $statusLabel }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-content hc-staff-job-detail">
 <div class="container-fluid px-3 px-md-4 py-4">
     <!-- Header -->
-    <div class="row mb-4">
+    <div class="row mb-4 d-none d-md-flex">
         <div class="col-12">
             <div class="service-details-header mb-3">
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
@@ -370,6 +390,8 @@
         </div>
     </div>
 </div>
+    </div>
+</div>
 
 <!-- Completion OTP Modal -->
 <div class="modal fade" id="completionOtpModal" tabindex="-1" aria-hidden="true">
@@ -380,9 +402,9 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="small text-muted mb-3">We will send a 6-digit OTP to the patient by SMS. Enter it here to complete this service.</p>
+                <p class="small text-muted mb-3">We will send a 6-digit OTP to the patient on WhatsApp. Enter it here to complete this service.</p>
                 <div class="d-flex gap-2 mb-3">
-                    <button type="button" class="btn btn-outline-primary w-100" id="sendCompletionOtpBtn" onclick="sendCompletionOtp()">Send SMS OTP</button>
+                    <button type="button" class="btn btn-outline-primary w-100" id="sendCompletionOtpBtn" onclick="sendCompletionOtp()">Send WhatsApp OTP to patient</button>
                 </div>
                 <div class="mb-2">
                     <label class="form-label">Enter OTP</label>
@@ -907,7 +929,7 @@ function sendCompletionOtp() {
             alert(data.message || 'Failed to send OTP');
             return;
         }
-        document.getElementById('completionOtpHint').textContent = `OTP sent to ${data.sent_to || 'patient'} (SMS).`;
+        document.getElementById('completionOtpHint').textContent = `OTP sent to ${data.sent_to || 'patient'} (WhatsApp).`;
     }).catch(() => {
         alert('Failed to send OTP.');
     }).finally(() => {

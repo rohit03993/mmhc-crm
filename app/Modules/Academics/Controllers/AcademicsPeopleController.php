@@ -4,6 +4,7 @@ namespace App\Modules\Academics\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
+use App\Modules\Academics\Models\Subject;
 use App\Modules\Academics\Services\AcademicScoreService;
 use App\Modules\Academics\Services\MentorshipService;
 use App\Modules\Academics\Support\AcademicsAccess;

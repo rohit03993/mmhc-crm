@@ -1,9 +1,17 @@
 <!DOCTYPE html>
 @php
     use App\Modules\Academics\Support\AcademicsMobileUi;
-    $academicsMobileHtmlClass = auth()->check() ? AcademicsMobileUi::htmlClass(auth()->user()) : '';
+    use App\Modules\Services\Support\HealthcareMobileUi;
+    $mobileHtmlClasses = auth()->check()
+        ? trim(AcademicsMobileUi::htmlClass(auth()->user()).' '.HealthcareMobileUi::htmlClass(auth()->user()))
+        : '';
+    $mobileBodyClasses = auth()->check()
+        ? trim(AcademicsMobileUi::bodyClass(auth()->user()).' '.HealthcareMobileUi::bodyClass(auth()->user()))
+        : '';
+    $healthcareMobileOn = auth()->check() && HealthcareMobileUi::enabledFor(auth()->user());
+    $academicsMobileOn = auth()->check() && request()->routeIs('academics.*') && AcademicsMobileUi::enabledFor(auth()->user());
 @endphp
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="@guest mmhc-auth-guest @else {{ trim($academicsMobileHtmlClass) }} @endguest">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="@guest mmhc-auth-guest @else {{ $mobileHtmlClasses }} @endguest">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -23,8 +31,16 @@
     
     @yield('head')
 
-    @if(auth()->check() && request()->routeIs('academics.*') && AcademicsMobileUi::enabledFor(auth()->user()))
-    <link rel="stylesheet" href="{{ asset('css/academics-mobile.css') }}?v=1">
+    @if($academicsMobileOn || (auth()->check() && request()->routeIs('academics.*')))
+    <link rel="stylesheet" href="{{ asset('css/academics-mobile.css') }}?v=20260531">
+    <meta name="theme-color" content="#4338ca">
+    @endif
+    @if($healthcareMobileOn)
+    <meta name="theme-color" content="{{ auth()->user()->isPatient() ? '#0f766e' : '#4338ca' }}">
+    @endif
+
+    @if($healthcareMobileOn)
+    <link rel="stylesheet" href="{{ asset('css/healthcare-mobile.css') }}?v=20260607">
     @endif
 
     <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260601b">
@@ -243,7 +259,7 @@
         }
     </style>
 </head>
-<body class="@guest mmhc-auth-guest @endguest @if(auth()->check()) mmhc-crm-auth mmhc-app-shell @endif @if(auth()->check() && request()->is('academics*')) mmhc-academics @endif @if(auth()->check() && trim($__env->yieldContent('page-title', '')) !== '') mmhc-has-page-title @endif">
+<body class="@guest mmhc-auth-guest @endguest @if(auth()->check()) mmhc-crm-auth mmhc-app-shell {{ $mobileBodyClasses }} @endif @if(auth()->check() && request()->is('academics*')) mmhc-academics @endif @if(auth()->check() && trim($__env->yieldContent('page-title', '')) !== '') mmhc-has-page-title @endif">
     @if(auth()->check())
         @include('auth::components.navbar')
         <div class="offcanvas offcanvas-start sidebar d-lg-none" tabindex="-1" id="mmhcAppSidebar" aria-labelledby="mmhcAppSidebarLabel" style="--bs-offcanvas-width: min(20rem, 92vw);">
@@ -302,10 +318,10 @@
                         <div class="alert alert-secondary app-alert" role="alert">
                             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap w-100">
                                 <div>
-                                    <div class="fw-semibold mb-1"><i class="fas fa-lock me-2"></i>Action required: verify your updated mobile</div>
+                                    <div class="fw-semibold mb-1"><i class="fas fa-lock me-2"></i>Action required: verify your new mobile number</div>
                                     <div class="small">
-                                        You recently requested a mobile number change. Please complete WhatsApp OTP verification first.
-                                        Until this is done, other OTP tasks (referral/reward/service) are temporarily paused to avoid mismatch.
+                                        You changed your account mobile. Complete OTP on the new number to finish the update.
+                                        Until then, patient reward and referral OTPs are paused so numbers stay in sync.
                                     </div>
                                 </div>
                                 <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-outline-dark">
@@ -322,8 +338,8 @@
                                     <div class="fw-semibold mb-1"><i class="fas fa-mobile-alt me-2"></i>Verify your account mobile to unlock earnings</div>
                                     <div class="small mb-2">
                                         You have already earned the items below (patient reward OTP or referral OTP completed), but
-                                        <strong>payouts stay on hold</strong> until your account mobile is verified by WhatsApp OTP in Profile.
-                                        Once verified, these amounts unlock for admin payout automatically.
+                                        <strong>payouts stay on hold</strong> until your account mobile is confirmed.
+                                        If you sign in with WhatsApp OTP on this number, verification completes automatically.
                                     </div>
                                     <ul class="small mb-0 ps-3">
                                         @if(($heldEarningsDueToUnverifiedMobile['patient_reward']['count'] ?? 0) > 0)
@@ -422,26 +438,36 @@
                         <div class="alert alert-primary app-alert" role="alert">
                             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                                 <div>
-                                    <div class="fw-semibold mb-1"><i class="fas fa-briefcase-medical me-2"></i>Service completion verification pending</div>
+                                    <div class="fw-semibold mb-1"><i class="fas fa-briefcase-medical me-2"></i>Complete visit — Service #{{ $pendingServiceCompletionBanner->id }}</div>
                                     <div class="small">
-                                        Service #{{ $pendingServiceCompletionBanner->id }} for
-                                        <strong>{{ optional($pendingServiceCompletionBanner->patient)->name ?? 'patient' }}</strong>
-                                        requires OTP verification before completion is counted.
-                                        @if(!empty($pendingServiceCompletionBanner->completion_otp_sent_to))
-                                            Last sent to: <strong>{{ $pendingServiceCompletionBanner->completion_otp_sent_to }}</strong>.
+                                        Patient: <strong>{{ optional($pendingServiceCompletionBanner->patient)->name ?? 'patient' }}</strong>.
+                                        @if(!empty($serviceCompletionSkipsPatientOtp))
+                                            Their mobile matches your verified account — your <strong>login OTP already confirmed this number</strong>. No patient OTP needed.
+                                        @else
+                                            Send OTP to the <strong>patient’s mobile</strong> (not your staff login). They share the code so completion is recorded.
+                                            @if(!empty($pendingServiceCompletionBanner->completion_otp_sent_to))
+                                                Last sent to: <strong>{{ $pendingServiceCompletionBanner->completion_otp_sent_to }}</strong>.
+                                            @endif
                                         @endif
                                     </div>
                                 </div>
-                                <div class="d-flex gap-2 flex-wrap">
-                                    <form method="POST" action="{{ route('staff.service.complete-banner', $pendingServiceCompletionBanner) }}" class="d-flex gap-2">
-                                        @csrf
-                                        <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="6-digit OTP" required style="width: 120px;">
-                                        <button type="submit" class="btn btn-sm btn-primary fw-semibold">Verify & Complete</button>
-                                    </form>
-                                    <form method="POST" action="{{ route('staff.service.completion-otp-banner', $pendingServiceCompletionBanner) }}" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">Send WhatsApp OTP</button>
-                                    </form>
+                                <div class="d-flex gap-2 flex-wrap align-items-center">
+                                    @if(!empty($serviceCompletionSkipsPatientOtp))
+                                        <form method="POST" action="{{ route('staff.service.complete-banner', $pendingServiceCompletionBanner) }}">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-primary fw-semibold">Mark visit complete</button>
+                                        </form>
+                                    @else
+                                        <form method="POST" action="{{ route('staff.service.complete-banner', $pendingServiceCompletionBanner) }}" class="d-flex gap-2">
+                                            @csrf
+                                            <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="Patient OTP" required style="width: 120px;">
+                                            <button type="submit" class="btn btn-sm btn-primary fw-semibold">Verify & Complete</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('staff.service.completion-otp-banner', $pendingServiceCompletionBanner) }}" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Send OTP to patient</button>
+                                        </form>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -461,9 +487,9 @@
                         }
                     </style>
 
-                    @if(auth()->check() && AcademicsMobileUi::showMobileHeader(auth()->user()))
+                    @if(auth()->check() && \App\Modules\Academics\Support\AcademicsMobileUi::showMobileHeader(auth()->user()))
                         @include('academics::partials.mobile-header', [
-                            'academicsMobileBackUrl' => AcademicsMobileUi::backUrl(),
+                            'academicsMobileBackUrl' => \App\Modules\Academics\Support\AcademicsMobileUi::backUrl(),
                         ])
                     @endif
 
@@ -496,6 +522,15 @@
     </script>
     @endif
     <script src="{{ asset('js/mobile-crm.js') }}" defer></script>
+    @if($academicsMobileOn || $healthcareMobileOn)
+    <script src="{{ asset('js/mmhc-pull-refresh.js') }}?v=20260604" defer></script>
+    @endif
+    @if($academicsMobileOn)
+    <script src="{{ asset('js/academics-mobile.js') }}?v=20260604" defer></script>
+    @endif
+    @if($healthcareMobileOn)
+    <script src="{{ asset('js/healthcare-mobile.js') }}?v=20260605" defer></script>
+    @endif
     <script src="{{ asset('js/capacitor-app.js') }}" defer></script>
     @yield('scripts')
 </body>

@@ -946,7 +946,7 @@ class SubscriptionController extends Controller
         $eventId = $event['payload']['payment']['entity']['id'] ?? null;
         $eventType = $event['event'] ?? null;
 
-        if (! in_array($eventType, ['payment.captured', 'payment.authorized'], true)) {
+        if (! in_array($eventType, ['payment.captured'], true)) {
             return response()->json(['ok' => true, 'ignored' => true]);
         }
 

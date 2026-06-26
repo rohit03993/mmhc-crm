@@ -5,7 +5,7 @@ namespace App\Modules\Auth\Services;
 use App\Models\Core\User;
 
 /**
- * Send OTP to confirm the mobile number on a user account (WhatsApp or SMS per config).
+ * Send OTP to confirm the mobile number on a user account (WhatsApp / Pal Digital).
  */
 class PhoneVerificationService
 {
@@ -26,8 +26,16 @@ class PhoneVerificationService
             return ['success' => true, 'already_verified' => true, 'message' => 'Mobile already verified.'];
         }
 
+        $user->syncStalePhoneVerificationState();
+        $user = $user->fresh();
+
         if ($user->hasVerifiedPhone() && ! $user->hasPendingMobileContactVerification()) {
             return ['success' => true, 'already_verified' => true, 'message' => 'Mobile already verified.'];
+        }
+
+        // OTP login users already proved possession of this number at sign-in.
+        if ($user->requiresPhoneLogin() && $user->hasVerifiedPhone()) {
+            return ['success' => true, 'already_verified' => true, 'message' => 'Mobile verified at login.'];
         }
 
         $normalizedPhone = $this->normalizeStoredPhone($user);
@@ -107,7 +115,7 @@ class PhoneVerificationService
     }
 
     /**
-     * Send verification OTP SMS to all users with unverified mobiles.
+     * Send verification OTP via WhatsApp to all users with unverified mobiles.
      *
      * @return array{sent: int, skipped: int, failed: int, errors: list<string>}
      */

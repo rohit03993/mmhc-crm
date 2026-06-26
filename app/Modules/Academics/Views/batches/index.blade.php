@@ -4,8 +4,10 @@
 @section('page-title', 'Batches')
 
 @section('content')
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', ['title' => 'Batches', 'lede' => 'Cohorts, faculty, and students per college.'])
+
+    <div class="d-none d-md-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
         <h2 class="h5 mb-0">Batches</h2>
         <a href="{{ route('academics.batches.create') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Add Batch</a>
     </div>
@@ -13,7 +15,14 @@
     <div class="card">
         <div class="card-body p-0">
             @if($batches->isEmpty())
-                <p class="text-muted p-4 mb-0">No batches yet. Create one from an institution.</p>
+                @include('academics::partials.mobile-empty-state', [
+                    'icon' => 'fa-layer-group',
+                    'title' => 'No batches',
+                    'text' => 'Create a batch from an institution.',
+                    'actionUrl' => route('academics.batches.create'),
+                    'actionLabel' => 'Add batch',
+                ])
+                <p class="text-muted p-4 mb-0 d-none d-md-block">No batches yet. Create one from an institution.</p>
             @else
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">

@@ -1,0 +1,10 @@
+{
+  "to_phone_e164": "+918109462946",
+  "name": "Test",
+  "body_parameters": [
+    {"type": "text", "text": "123456"}
+  ],
+  "button_parameters": [
+    {"type": "text", "text": "123456"}
+  ]
+}

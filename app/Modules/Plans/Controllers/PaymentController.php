@@ -68,7 +68,10 @@ class PaymentController extends Controller
      */
     public function receipt(Payment $payment)
     {
-        // Receipt generation logic
+        if ($payment->user_id !== auth()->id() && ! auth()->user()?->isAdmin()) {
+            abort(403);
+        }
+
         return view('plans::payments.receipt', compact('payment'));
     }
 

@@ -3,8 +3,12 @@
 @section('title', 'Subscription Plans')
 @section('page-title', 'Plans')
 
+@section('head')
+@include('services::partials.mobile-assets')
+@endsection
+
 @section('content')
-<div class="mobile-app-container">
+<div class="mobile-app-container hc-mobile-shell" data-mmhc-ptr>
 <!-- Mobile Header -->
 <div class="app-mobile-header d-md-none">
     <div class="d-flex align-items-center">
@@ -16,6 +20,11 @@
 </div>
 
 <div class="container-fluid px-3 py-4">
+    <div class="hc-m-hero d-md-none mb-3">
+        <p class="hc-m-hero__label">Healthcare plans</p>
+        <h2 class="hc-m-hero__title">Choose your plan</h2>
+        <p class="hc-m-hero__lede">10 years of home care coverage. Services are free for subscribed patients.</p>
+    </div>
     <!-- Desktop Header -->
     <div class="d-none d-md-block mb-4">
         <h4 class="page-title">Subscription Plans</h4>

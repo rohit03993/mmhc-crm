@@ -22,7 +22,7 @@ class SiteBackupController extends Controller
             $result = $backupService->createBackup();
         } catch (\Throwable $e) {
             return redirect()->route('admin.backups.index')
-                ->with('error', $e->getMessage());
+                ->with('error', 'Backup could not be created. Check server logs and database tools configuration.');
         }
 
         $mb = round($result['size'] / 1048576, 2);
@@ -48,7 +48,7 @@ class SiteBackupController extends Controller
             $backupService->deleteBackup($filename);
         } catch (\Throwable $e) {
             return redirect()->route('admin.backups.index')
-                ->with('error', $e->getMessage());
+                ->with('error', 'Backup could not be removed.');
         }
 
         return redirect()->route('admin.backups.index')

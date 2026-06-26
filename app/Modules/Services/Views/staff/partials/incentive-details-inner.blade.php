@@ -7,10 +7,10 @@
         <div class="fw-semibold mb-1"><i class="fas fa-mobile-alt me-2"></i>Account mobile not verified</div>
         <div class="small mb-0">
             @if(!empty($heldEarningsDueToUnverifiedMobile) && (float) ($heldEarningsDueToUnverifiedMobile['total'] ?? 0) > 0)
-                <strong>₹{{ number_format((float) $heldEarningsDueToUnverifiedMobile['total'], 2) }}</strong> in verified earnings is on hold until this staff member completes SMS OTP on their account mobile in Profile.
+                <strong>₹{{ number_format((float) $heldEarningsDueToUnverifiedMobile['total'], 2) }}</strong> in verified earnings is on hold until this staff member completes WhatsApp OTP on their account mobile in Profile.
                 Payable totals below show ₹0 until then; row status explains each item.
             @else
-                Patient rewards, staff referrals, and payouts count toward payable totals only after account mobile SMS OTP is verified in Profile.
+                Patient rewards, staff referrals, and payouts count toward payable totals only after account mobile WhatsApp OTP is verified in Profile.
                 <strong>Patient / referred-staff mobile OTP is a separate step on the number entered on the form.</strong>
             @endif
         </div>

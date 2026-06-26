@@ -4,7 +4,8 @@
 @section('page-title', 'Mark Attendance')
 
 @section('content')
-<div class="container-fluid py-3">
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', ['title' => 'Mark attendance', 'lede' => 'Pick a batch and date to record presence.'])
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">{{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>

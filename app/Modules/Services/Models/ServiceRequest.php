@@ -295,4 +295,26 @@ class ServiceRequest extends Model
         return $query->where('total_amount', '>', 0)
             ->whereRaw('prepaid_amount < total_amount');
     }
+
+    /**
+     * Patient mobile on file (profile or booking contact).
+     */
+    public function patientContactPhone(): ?string
+    {
+        $this->loadMissing('patient');
+
+        return (string) ($this->patient?->phone ?: $this->contact_phone ?: '') ?: null;
+    }
+
+    /**
+     * Staff may mark complete only on or after the service end date.
+     */
+    public function isReadyForStaffCompletion(): bool
+    {
+        if ($this->status !== 'in_progress' || $this->completion_verified_at) {
+            return false;
+        }
+
+        return $this->end_date && $this->end_date->lte(now()->startOfDay());
+    }
 }

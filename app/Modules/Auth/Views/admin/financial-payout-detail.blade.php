@@ -347,7 +347,7 @@
     @endif
 
     <p class="small text-muted mt-3 mb-0">
-        Pending amounts require staff <strong>mobile verified</strong> (SMS OTP). Use <strong>Pay</strong> to open the payout form, or
+        Pending amounts require staff <strong>mobile verified</strong> (WhatsApp OTP). Use <strong>Pay</strong> to open the payout form, or
         <a href="{{ route('admin.payments.index', ['type' => $type]) }}">Staff payments</a> from the sidebar.
     </p>
 </div>

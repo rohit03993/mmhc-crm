@@ -74,7 +74,7 @@ class CaregiverReward extends Model
     }
 
     /**
-     * Patient SMS OTP completed (not legacy/demo rows with only verification_status set).
+     * Patient WhatsApp OTP completed (not legacy/demo rows with only verification_status set).
      */
     public function isPatientMobileOtpVerified(): bool
     {

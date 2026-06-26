@@ -7,8 +7,19 @@
 @php
     use App\Modules\Academics\Support\AcademicsTaxonomy;
 @endphp
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
+<div class="container-fluid py-3 acad-mobile-page" data-mmhc-ptr>
+    @include('academics::partials.mobile-list-hero', ['title' => 'Topics', 'lede' => 'Syllabus units under each subject.'])
+
+    <form action="{{ route('academics.topics.index') }}" method="GET" class="d-md-none mb-3">
+        <select name="subject_id" class="form-select" onchange="this.form.submit()">
+            <option value="">All subjects</option>
+            @foreach($subjects as $s)
+                <option value="{{ $s->id }}" {{ request('subject_id') == $s->id ? 'selected' : '' }}>{{ $s->name }} ({{ $s->batch->name ?? '' }})</option>
+            @endforeach
+        </select>
+    </form>
+
+    <div class="d-none d-md-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 academics-page-toolbar">
         <h2 class="h5 mb-0">Topics</h2>
         <div class="d-flex flex-wrap gap-2">
             <form action="{{ route('academics.topics.index') }}" method="GET" class="d-inline">
@@ -26,7 +37,14 @@
     <div class="card">
         <div class="card-body p-0">
             @if($topics->isEmpty())
-                <p class="text-muted p-4 mb-0">No topics yet. Create one under a subject (faculty see only their assigned subjects).</p>
+                @include('academics::partials.mobile-empty-state', [
+                    'icon' => 'fa-book',
+                    'title' => 'No topics yet',
+                    'text' => 'Create a topic under a subject.',
+                    'actionUrl' => route('academics.topics.create'),
+                    'actionLabel' => 'Add topic',
+                ])
+                <p class="text-muted p-4 mb-0 d-none d-md-block">No topics yet. Create one under a subject (faculty see only their assigned subjects).</p>
             @else
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">

@@ -36,39 +36,17 @@ return [
     ],
 
     /*
-    | Sent.dm — SMS OTP (template message)
-    | https://docs.sent.dm/reference/api/messages/SentDmServicesEndpointsCustomerAPIv3MessagesSendMessageV3Endpoint
-    | SENT_DM_OTP_PARAMETER_NAME must match your template placeholder (e.g. code, otp).
+    | OTP storage (HMAC in cache). Use Redis cache store in production.
     */
-    'sent_dm' => [
-        'api_key' => env('SENT_DM_API_KEY'),
-        'template_id' => env('SENT_DM_TEMPLATE_ID'),
-        'otp_parameter_name' => env('SENT_DM_OTP_PARAMETER_NAME', 'code'),
-        'base_url' => env('SENT_DM_BASE_URL', 'https://api.sent.dm/v3/messages'),
-        'sandbox' => filter_var(env('SENT_DM_SANDBOX', false), FILTER_VALIDATE_BOOLEAN),
-        // Windows cURL error 60: set SENT_DM_CA_BUNDLE to path of https://curl.se/ca/cacert.pem
-        'ca_bundle' => env('SENT_DM_CA_BUNDLE'),
-        'http_verify' => filter_var(env('SENT_DM_HTTP_VERIFY', true), FILTER_VALIDATE_BOOLEAN),
-    ],
-
-    /*
-    | Login OTP storage (HMAC in cache). Use Redis cache store in production.
-    */
-        'phone_otp' => [
+    'phone_otp' => [
         'ttl_seconds' => (int) env('PHONE_LOGIN_OTP_TTL_SECONDS', 600),
         'bind_ttl_seconds' => (int) env('PHONE_BIND_OTP_TTL_SECONDS', 300),
         'pepper' => env('OTP_PEPPER', env('APP_KEY')),
     ],
 
     /*
-    | OTP delivery: whatsapp (Pal Digital) or sent_dm_sms (legacy SMS).
-    */
-    'otp_delivery' => [
-        'channel' => env('OTP_DELIVERY_CHANNEL', 'whatsapp'),
-    ],
-
-    /*
-    | Pal Digital — WhatsApp API (mmhc_verification_code2 authentication template).
+    | Pal Digital — WhatsApp OTP (mmhc_verification_code2 authentication template).
+    | All OTP flows (login, profile, rewards, referrals, service completion) use this campaign.
     | Campaign trigger: POST /api/v1/integrations/campaigns/{id}/trigger
     */
     'pal_digital' => [

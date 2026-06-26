@@ -383,6 +383,7 @@
                                         </div>
                                     </div>
 
+                                    <div id="institute-fields" class="row g-3 col-12 px-0 mx-0">
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label class="form-label" for="institution_select">College / institute <span class="text-danger">*</span></label>
@@ -422,6 +423,21 @@
                                             @error('academic_batch_ids')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                                             <div class="form-text small">Select one or more batches for your programme.</div>
                                             <div id="academicsBatchInlineError" class="alert alert-warning py-2 px-2 mt-2 mb-0" role="alert"></div>
+                                        </div>
+                                    </div>
+                                    </div>{{-- /#institute-fields --}}
+
+                                    <div class="col-md-6 faculty-only" style="display: {{ old('role') === 'faculty' ? 'block' : 'none' }};">
+                                        <div class="mb-3">
+                                            <label class="form-label">Teaching mode</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="faculty_teaching_mode" id="mode_college" value="college" {{ old('faculty_teaching_mode', 'college') === 'college' ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="mode_college">College faculty — linked to an institute</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="faculty_teaching_mode" id="mode_independent" value="independent" {{ old('faculty_teaching_mode') === 'independent' ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="mode_independent">Independent teacher — open classrooms (no college)</label>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -542,6 +558,22 @@
     var hintStudent = document.getElementById('hintStudent');
     var hintFaculty = document.getElementById('hintFaculty');
     var batchErr = document.getElementById('academicsBatchInlineError');
+    var instituteFields = document.getElementById('institute-fields');
+    var instSelect = document.getElementById('institution_select');
+
+    function isIndependentFaculty() {
+        var r = document.querySelector('input[name="faculty_teaching_mode"]:checked');
+        return roleInput && roleInput.value === 'faculty' && r && r.value === 'independent';
+    }
+
+    function toggleInstituteFields() {
+        var independent = isIndependentFaculty();
+        if (instituteFields) instituteFields.style.display = independent ? 'none' : '';
+        if (instSelect) instSelect.required = !independent;
+        document.querySelectorAll('input[name="academic_batch_ids[]"]').forEach(function(cb) {
+            cb.required = false;
+        });
+    }
 
     function filterBatches() {
         var id = inst && inst.value ? inst.value : '';
@@ -566,6 +598,7 @@
         var q = document.querySelector('input[name="qualification"]');
         if (q && r === 'student') q.required = false;
         if (q && r === 'faculty') q.required = true;
+        toggleInstituteFields();
         if (hintStudent && hintFaculty) {
             if (r === 'faculty') {
                 hintStudent.classList.add('d-none');
@@ -592,8 +625,14 @@
     });
 
     setRole(roleInput.value || 'student');
+    toggleInstituteFields();
+
+    document.querySelectorAll('input[name="faculty_teaching_mode"]').forEach(function(radio) {
+        radio.addEventListener('change', toggleInstituteFields);
+    });
 
     document.getElementById('academicsRegisterForm').addEventListener('submit', function(e) {
+        if (isIndependentFaculty()) return;
         var any = document.querySelectorAll('input[name="academic_batch_ids[]"]:checked').length > 0;
         if (!any) {
             e.preventDefault();
