@@ -386,6 +386,13 @@
             </a>
         </li>
 
+        <li class="nav-item">
+            <a class="nav-link text-white {{ request()->routeIs('admin.visit-refunds*') ? 'active' : '' }}" href="{{ route('admin.visit-refunds') }}">
+                <i class="fas fa-undo-alt me-2"></i>
+                Visit Refunds
+            </a>
+        </li>
+
         <li class="nav-item mt-3">
             <span class="nav-link text-white-50 text-uppercase small px-3 py-2" style="font-size: 0.7rem; letter-spacing: 0.05em;">Website front page</span>
         </li>

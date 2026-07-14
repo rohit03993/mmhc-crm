@@ -525,11 +525,11 @@ class ServiceController extends Controller
         }
 
         try {
-            app(\App\Modules\Services\Services\ServiceCancellationService::class)
+            $cancelled = app(\App\Modules\Services\Services\ServiceCancellationService::class)
                 ->cancelByPatient($serviceRequest, $user, $request->input('cancellation_reason'));
 
-            $refundNote = ((float) $serviceRequest->total_amount > 0)
-                ? ' If you paid a visit fee, the MMHC team will handle any refund manually.'
+            $refundNote = $cancelled->isRefundDue()
+                ? ' If you paid a visit fee, MMHC will process your refund manually — our team will contact you.'
                 : '';
 
             return redirect()->route('services.my-requests')

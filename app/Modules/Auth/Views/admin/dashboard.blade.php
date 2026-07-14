@@ -80,6 +80,7 @@
     <div class="admin-quick-links" aria-label="Admin shortcuts">
         <a href="{{ route('admin.users') }}"><i class="fas fa-users"></i> Users</a>
         <a href="{{ route('admin.service-requests') }}"><i class="fas fa-clipboard-list"></i> Service requests</a>
+        <a href="{{ route('admin.visit-refunds') }}"><i class="fas fa-undo-alt"></i> Visit refunds</a>
         <a href="{{ route('admin.pending-payments') }}"><i class="fas fa-hand-holding-usd"></i> Pending payments</a>
         <a href="{{ route('admin.service-requests', ['status' => 'completed', 'filter' => 'completed']) }}">
             <i class="fas fa-check-circle"></i> Approve staff payout

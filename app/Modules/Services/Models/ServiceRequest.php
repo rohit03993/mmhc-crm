@@ -48,6 +48,12 @@ class ServiceRequest extends Model
         'cancelled_at',
         'cancelled_by',
         'cancellation_reason',
+        'refund_due_at',
+        'refund_amount',
+        'refunded_at',
+        'refunded_by',
+        'refund_reference',
+        'refund_note',
         'payment_processed_at',
         'staff_payment_processed',
         'staff_payment_processed_at',
@@ -70,6 +76,8 @@ class ServiceRequest extends Model
         'completed_at' => 'datetime',
         'admin_approved_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'refund_due_at' => 'datetime',
+        'refunded_at' => 'datetime',
         'payment_processed_at' => 'datetime',
         'staff_payment_processed_at' => 'datetime',
         'staff_payment_processed' => 'boolean',
@@ -80,6 +88,7 @@ class ServiceRequest extends Model
         'total_amount' => 'decimal:2',
         'total_staff_payout' => 'decimal:2',
         'prepaid_amount' => 'decimal:2',
+        'refund_amount' => 'decimal:2',
         'gateway_payload' => 'array',
         'visit_paid_at' => 'datetime',
     ];
@@ -173,6 +182,10 @@ class ServiceRequest extends Model
 
     public function paymentStatusLabel(): string
     {
+        if ($this->isRefundDue()) {
+            return 'Refund due';
+        }
+
         return match ($this->payment_status) {
             'partially_paid' => 'Partially paid',
             'paid' => 'Paid',
@@ -183,6 +196,10 @@ class ServiceRequest extends Model
 
     public function paymentStatusBadgeClass(): string
     {
+        if ($this->isRefundDue()) {
+            return 'warning';
+        }
+
         return match ($this->payment_status) {
             'paid' => 'success',
             'partially_paid' => 'warning',
@@ -192,9 +209,14 @@ class ServiceRequest extends Model
     }
 
     /**
-     * Statuses a patient may cancel from (v1: before staff has accepted).
+     * Statuses a patient may cancel from (before staff has accepted).
      */
     public const PATIENT_CANCELLABLE_STATUSES = ['pending', 'pending_approval'];
+
+    /**
+     * Statuses assigned staff may cancel from (before visit starts).
+     */
+    public const STAFF_CANCELLABLE_STATUSES = ['pending_approval', 'assigned'];
 
     /**
      * CRITICAL FIX #5: Valid status transitions state machine
@@ -303,11 +325,19 @@ class ServiceRequest extends Model
     }
 
     /**
-     * User who cancelled the request (patient or future admin cancel).
+     * User who cancelled the request (patient or assigned staff — not admin).
      */
     public function cancelledByUser()
     {
         return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    /**
+     * Admin who marked the visit refund as paid offline.
+     */
+    public function refundedByUser()
+    {
+        return $this->belongsTo(User::class, 'refunded_by');
     }
 
     /**
@@ -329,6 +359,68 @@ class ServiceRequest extends Model
         }
 
         return $this->canTransitionTo('cancelled');
+    }
+
+    /**
+     * Assigned nurse/caregiver cancel before visit starts. Admin cannot cancel.
+     */
+    public function canBeCancelledByStaff(?User $user = null): bool
+    {
+        $user = $user ?? auth()->user();
+        if (! $user || ! $user->isStaff()) {
+            return false;
+        }
+
+        if ((int) $this->assigned_staff_id !== (int) $user->id) {
+            return false;
+        }
+
+        if (! in_array($this->status, self::STAFF_CANCELLABLE_STATUSES, true)) {
+            return false;
+        }
+
+        return $this->canTransitionTo('cancelled');
+    }
+
+    /**
+     * Paid visit that should enter the admin manual-refund queue on cancel.
+     */
+    public function shouldQueueManualRefundOnCancel(): bool
+    {
+        if ($this->payment_status === 'refunded' || $this->refunded_at) {
+            return false;
+        }
+
+        if (! $this->requiresVisitPayment()) {
+            return false;
+        }
+
+        return $this->payment_status === 'paid';
+    }
+
+    /**
+     * Cancelled paid visit waiting for admin to refund offline.
+     */
+    public function isRefundDue(): bool
+    {
+        return $this->refund_due_at !== null
+            && $this->refunded_at === null
+            && $this->payment_status !== 'refunded';
+    }
+
+    public function scopeRefundDue($query)
+    {
+        return $query->whereNotNull('refund_due_at')
+            ->whereNull('refunded_at')
+            ->where('payment_status', '!=', 'refunded');
+    }
+
+    public function scopeRefundedVisits($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNotNull('refunded_at')
+                ->orWhere('payment_status', 'refunded');
+        });
     }
 
     /**

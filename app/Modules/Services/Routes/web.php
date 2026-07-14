@@ -33,5 +33,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/service-requests', [ServiceController::class, 'adminIndex'])->name('service-requests');
         Route::get('/service-requests/{serviceRequest}/assign', [ServiceController::class, 'assignForm'])->name('service-requests.assign');
         Route::post('/service-requests/{serviceRequest}/assign', [ServiceController::class, 'assign'])->name('service-requests.assign.post');
+
+        Route::get('/visit-refunds', [\App\Modules\Services\Controllers\AdminVisitRefundController::class, 'index'])->name('visit-refunds');
+        Route::post('/visit-refunds/{serviceRequest}/mark', [\App\Modules\Services\Controllers\AdminVisitRefundController::class, 'markRefunded'])->name('visit-refunds.mark');
     });
 });

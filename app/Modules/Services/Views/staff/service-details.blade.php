@@ -381,6 +381,20 @@
                         </button>
                         <small class="text-muted d-block mb-2">Completion requires patient OTP verification.</small>
                         @endif
+
+                        @if($serviceRequest->canBeCancelledByStaff())
+                        <form method="POST" action="{{ route('staff.booking.cancel', $serviceRequest) }}" class="mb-2"
+                              onsubmit="return confirm('Cancel this booking permanently? If the patient paid, admin will handle the refund manually.');">
+                            @csrf
+                            <div class="mb-2">
+                                <label class="form-label small text-muted mb-1" for="staff_cancel_reason_{{ $serviceRequest->id }}">Cancel reason (optional)</label>
+                                <textarea name="cancellation_reason" id="staff_cancel_reason_{{ $serviceRequest->id }}" class="form-control form-control-sm" rows="2" maxlength="500"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-ban me-2"></i>Cancel booking
+                            </button>
+                        </form>
+                        @endif
                         
                         <a href="{{ route('staff.dashboard') }}" class="btn-action btn-action-secondary w-100">
                             <i class="fas fa-arrow-left me-2"></i>Back to Dashboard

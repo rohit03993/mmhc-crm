@@ -121,6 +121,7 @@ Route::middleware(['auth'])->group(function () {
             // Staff booking acceptance/rejection (One-Way Booking)
             Route::post('/booking/{serviceRequest}/accept', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'acceptBooking'])->name('booking.accept');
             Route::post('/booking/{serviceRequest}/reject', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'rejectBooking'])->name('booking.reject');
+            Route::post('/booking/{serviceRequest}/cancel', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'cancelBooking'])->name('booking.cancel');
             Route::post('/referrals/verify-otp', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'verifyReferralOtp'])->middleware('throttle:10,1')->name('referrals.verify-otp');
             Route::post('/referrals/resend-otp', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'resendReferralOtp'])->middleware('throttle:5,1')->name('referrals.resend-otp');
 

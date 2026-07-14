@@ -872,6 +872,50 @@ class StaffDashboardController extends Controller
     }
 
     /**
+     * Staff: Cancel booking before visit starts (pending_approval / assigned).
+     * Ends the booking (unlike reject, which returns it to the pool). Admin cannot cancel.
+     */
+    public function cancelBooking(Request $request, ServiceRequest $serviceRequest)
+    {
+        $user = Auth::user();
+
+        if (! $user->isStaff()) {
+            abort(403, 'Only nurses and caregivers can cancel assigned bookings.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'cancellation_reason' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        try {
+            $cancelled = app(\App\Modules\Services\Services\ServiceCancellationService::class)
+                ->cancelByStaff($serviceRequest, $user, $request->input('cancellation_reason'));
+
+            $message = 'Booking cancelled.';
+            if ($cancelled->isRefundDue()) {
+                $message .= ' A visit refund of ₹'.number_format((float) $cancelled->refund_amount, 2).' was queued for admin to pay manually.';
+            }
+
+            return redirect()->route('staff.dashboard')->with('success', $message);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Staff booking cancel failed: '.$e->getMessage(), [
+                'service_request_id' => $serviceRequest->id,
+                'staff_id' => $user->id,
+            ]);
+
+            return redirect()->back()->with('error', 'Failed to cancel booking. Please try again.');
+        }
+    }
+
+    /**
      * Show patient rewards page (for submitting patient details)
      */
     public function rewards()

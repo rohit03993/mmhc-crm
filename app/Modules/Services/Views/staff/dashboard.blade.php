@@ -621,6 +621,11 @@
                                     <button type="button" class="btn btn-action-danger w-100" onclick="showRejectModal({{ $service->id }})">
                                         <i class="fas fa-times-circle me-2"></i>Reject Booking
                                     </button>
+                                    @if($service->canBeCancelledByStaff())
+                                    <button type="button" class="btn btn-outline-secondary w-100" onclick="showStaffCancelModal({{ $service->id }})">
+                                        <i class="fas fa-ban me-2"></i>Cancel booking (end request)
+                                    </button>
+                                    @endif
                                 </div>
                                 @else
                                 <div class="d-flex flex-column gap-2 mt-3">
@@ -633,6 +638,11 @@
                                     <button type="button" class="btn btn-action-danger w-100" onclick="showRejectModal({{ $service->id }})">
                                         <i class="fas fa-times-circle me-2"></i>Reject Booking
                                     </button>
+                                    @if($service->canBeCancelledByStaff())
+                                    <button type="button" class="btn btn-outline-secondary w-100" onclick="showStaffCancelModal({{ $service->id }})">
+                                        <i class="fas fa-ban me-2"></i>Cancel booking (end request)
+                                    </button>
+                                    @endif
                                 </div>
                                 @endif
                                 
@@ -651,7 +661,7 @@
                                                       rows="4" 
                                                       required 
                                                       placeholder="Example: Already committed to another service, Personal reasons, Date conflicts, etc."></textarea>
-                                            <small class="text-muted">This helps us improve our service and find alternative staff for the patient.</small>
+                                            <small class="text-muted">This returns the request to admin so another staff member can be assigned. It does not refund the patient.</small>
                                         </div>
                                         <div class="d-flex gap-2">
                                             <button type="submit" class="btn btn-danger flex-fill">
@@ -663,6 +673,36 @@
                                         </div>
                                     </form>
                                 </div>
+
+                                @if($service->canBeCancelledByStaff())
+                                <div id="staffCancelModal{{ $service->id }}" style="display: none;" class="reject-modal-container mt-3">
+                                    <div class="reject-modal-header">
+                                        <i class="fas fa-ban text-secondary me-2"></i>
+                                        <strong>Cancel entire booking</strong>
+                                    </div>
+                                    <form method="POST" action="{{ route('staff.booking.cancel', $service) }}" class="mt-3"
+                                          onsubmit="return confirm('Cancel this booking permanently? If the patient paid, admin will handle the refund manually.');">
+                                        @csrf
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">Reason (optional):</label>
+                                            <textarea name="cancellation_reason"
+                                                      class="form-control"
+                                                      rows="3"
+                                                      maxlength="500"
+                                                      placeholder="Why is this booking ending?"></textarea>
+                                            <small class="text-muted">Ends the request completely (not the same as Reject).</small>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-secondary flex-fill">
+                                                <i class="fas fa-ban me-1"></i>Confirm cancel
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="hideStaffCancelModal({{ $service->id }})">
+                                                Back
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                                @endif
                             </div>
                             @else
                             <a href="{{ route('staff.service-details', $service) }}" 
@@ -673,6 +713,29 @@
                             <button class="btn btn-action-success" onclick="startService({{ $service->id }})">
                                 <i class="fas fa-play me-2"></i>Start Service
                             </button>
+                            @if($service->canBeCancelledByStaff())
+                            <button type="button" class="btn btn-outline-secondary" onclick="showStaffCancelModal({{ $service->id }})">
+                                <i class="fas fa-ban me-2"></i>Cancel booking
+                            </button>
+                            <div id="staffCancelModal{{ $service->id }}" style="display: none;" class="reject-modal-container mt-3 w-100">
+                                <div class="reject-modal-header">
+                                    <i class="fas fa-ban text-secondary me-2"></i>
+                                    <strong>Cancel entire booking</strong>
+                                </div>
+                                <form method="POST" action="{{ route('staff.booking.cancel', $service) }}" class="mt-3"
+                                      onsubmit="return confirm('Cancel this booking permanently? If the patient paid, admin will handle the refund manually.');">
+                                    @csrf
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Reason (optional):</label>
+                                        <textarea name="cancellation_reason" class="form-control" rows="3" maxlength="500"></textarea>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-secondary flex-fill">Confirm cancel</button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="hideStaffCancelModal({{ $service->id }})">Back</button>
+                                    </div>
+                                </form>
+                            </div>
+                            @endif
                             @elseif($service->status === 'in_progress')
                             <a href="{{ route('staff.service-details', $service) }}" class="btn btn-action-warning">
                                 <i class="fas fa-shield-check me-2"></i>Verify OTP & Complete
@@ -2169,6 +2232,25 @@ function hideRejectModal(serviceId) {
     if (modal) {
         modal.style.display = 'none';
         // Clear form
+        const form = modal.querySelector('form');
+        if (form) {
+            form.reset();
+        }
+    }
+}
+
+function showStaffCancelModal(serviceId) {
+    const modal = document.getElementById('staffCancelModal' + serviceId);
+    if (modal) {
+        modal.style.display = 'block';
+        modal.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+function hideStaffCancelModal(serviceId) {
+    const modal = document.getElementById('staffCancelModal' + serviceId);
+    if (modal) {
+        modal.style.display = 'none';
         const form = modal.querySelector('form');
         if (form) {
             form.reset();

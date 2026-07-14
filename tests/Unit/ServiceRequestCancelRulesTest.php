@@ -64,6 +64,46 @@ class ServiceRequestCancelRulesTest extends TestCase
         $this->assertFalse($request->canBeCancelledByPatient($admin));
     }
 
+    public function test_assigned_staff_can_cancel_before_visit_starts(): void
+    {
+        $nurse = $this->makeStaff(40, 'nurse');
+
+        $this->assertTrue($this->makeAssignedRequest(40, 'pending_approval')->canBeCancelledByStaff($nurse));
+        $this->assertTrue($this->makeAssignedRequest(40, 'assigned')->canBeCancelledByStaff($nurse));
+    }
+
+    public function test_staff_cannot_cancel_after_visit_starts(): void
+    {
+        $nurse = $this->makeStaff(41, 'nurse');
+
+        $this->assertFalse($this->makeAssignedRequest(41, 'in_progress')->canBeCancelledByStaff($nurse));
+        $this->assertFalse($this->makeAssignedRequest(41, 'completed')->canBeCancelledByStaff($nurse));
+    }
+
+    public function test_other_staff_or_admin_cannot_cancel(): void
+    {
+        $assigned = $this->makeAssignedRequest(50, 'assigned');
+        $other = $this->makeStaff(99, 'caregiver');
+        $admin = new User(['role' => 'admin']);
+        $admin->id = 1;
+
+        $this->assertFalse($assigned->canBeCancelledByStaff($other));
+        $this->assertFalse($assigned->canBeCancelledByStaff($admin));
+    }
+
+    public function test_paid_cancelled_flags_refund_due(): void
+    {
+        $request = new ServiceRequest([
+            'total_amount' => 500,
+            'payment_status' => 'paid',
+            'refund_due_at' => now(),
+            'refunded_at' => null,
+        ]);
+
+        $this->assertTrue($request->isRefundDue());
+        $this->assertTrue($request->shouldQueueManualRefundOnCancel());
+    }
+
     #[DataProvider('cancellableStatusesProvider')]
     public function test_transition_matrix_allows_cancel_from_cancellable(string $status): void
     {
@@ -76,6 +116,7 @@ class ServiceRequestCancelRulesTest extends TestCase
         return [
             ['pending'],
             ['pending_approval'],
+            ['assigned'],
         ];
     }
 
@@ -91,13 +132,32 @@ class ServiceRequestCancelRulesTest extends TestCase
         return $user;
     }
 
+    private function makeStaff(int $id, string $role): User
+    {
+        $user = new User([
+            'name' => 'Staff '.$id,
+            'email' => "staff{$id}@test.local",
+            'role' => $role,
+        ]);
+        $user->id = $id;
+
+        return $user;
+    }
+
     private function makeRequest(int $patientId, string $status): ServiceRequest
     {
-        $request = new ServiceRequest([
+        return new ServiceRequest([
             'patient_id' => $patientId,
             'status' => $status,
         ]);
+    }
 
-        return $request;
+    private function makeAssignedRequest(int $staffId, string $status): ServiceRequest
+    {
+        return new ServiceRequest([
+            'patient_id' => 1,
+            'assigned_staff_id' => $staffId,
+            'status' => $status,
+        ]);
     }
 }
