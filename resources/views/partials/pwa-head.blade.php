@@ -6,4 +6,4 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="MeD Miracle">
 <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
-<link rel="stylesheet" href="{{ asset('css/pwa-install.css') }}?v=20260714">
+<link rel="stylesheet" href="{{ asset('css/pwa-install.css') }}?v=20260714b">

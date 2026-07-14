@@ -1,5 +1,5 @@
 /* MeD Miracle PWA service worker — network-first for pages, cache for shell assets */
-const CACHE_VERSION = 'mmhc-pwa-v1';
+const CACHE_VERSION = 'mmhc-pwa-v2';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -20,7 +20,15 @@ const PRECACHE_URLS = [
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(SHELL_CACHE).then((cache) => cache.addAll(PRECACHE_URLS)).then(() => self.skipWaiting())
+        caches.open(SHELL_CACHE).then((cache) =>
+            Promise.all(
+                PRECACHE_URLS.map((url) =>
+                    cache.add(url).catch(() => {
+                        /* skip missing/blocked asset so SW still activates */
+                    })
+                )
+            )
+        ).then(() => self.skipWaiting())
     );
 });
 

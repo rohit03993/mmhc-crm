@@ -171,6 +171,64 @@ body.mmhc-pwa-standalone .mmhc-pwa-install {
     font-weight: 600;
 }
 
+.mmhc-pwa-install__tip {
+    margin: 0 0 0.85rem;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--pwa-muted);
+}
+
+.mmhc-pwa-install__tip strong {
+    color: var(--pwa-ink);
+    font-weight: 600;
+}
+
+.mmhc-pwa-install__wait {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 0 0.85rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 0.85rem;
+    background: rgba(15, 118, 110, 0.06);
+    border: 1px solid rgba(15, 118, 110, 0.1);
+}
+
+.mmhc-pwa-install__spinner {
+    flex: 0 0 auto;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 999px;
+    border: 2.5px solid rgba(15, 118, 110, 0.2);
+    border-top-color: var(--pwa-teal);
+    animation: mmhc-pwa-spin 0.75s linear infinite;
+}
+
+.mmhc-pwa-install__wait-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.mmhc-pwa-install__wait-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--pwa-ink);
+}
+
+.mmhc-pwa-install__wait-time {
+    font-size: 0.75rem;
+    color: var(--pwa-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+@keyframes mmhc-pwa-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* Leave room above bottom nav when CRM chrome is present */
 body.mmhc-crm-auth .mmhc-pwa-install {
     bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
