@@ -49,7 +49,7 @@
     <meta name="theme-color" content="{{ auth()->user()->isPatient() ? '#0f766e' : '#4338ca' }}">
     @endif
 
-    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714h">
+    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714i">
     @auth
     <link rel="stylesheet" href="{{ asset('css/crm-desktop.css') }}?v=20260608b">
     <link rel="stylesheet" href="{{ asset('css/mmhc-member-nav.css') }}?v=20260714h">
@@ -347,7 +347,7 @@
                             <span class="mmhc-action-notices__toggle-icon" aria-hidden="true"><i class="fas fa-bell"></i></span>
                             <span class="mmhc-action-notices__toggle-text">
                                 <strong>{{ $mmhcActionNoticeCount }} action{{ $mmhcActionNoticeCount === 1 ? '' : 's' }} needed</strong>
-                                <span>Tap to show or hide — all verify / OTP actions stay the same</span>
+                                <span>Tap to preview — OTP opens on a dedicated page</span>
                             </span>
                             <i class="fas fa-chevron-down mmhc-action-notices__chevron" aria-hidden="true"></i>
                         </button>
@@ -399,7 +399,7 @@
                                         <div class="small mt-2 fw-semibold">Total held: ₹{{ number_format((float) $heldEarningsDueToUnverifiedMobile['total'], 2) }}</div>
                                     @endif
                                 </div>
-                                <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-warning fw-semibold text-dark">Verify mobile</a>
+                                <a href="{{ route('profile.verify-phone') }}" class="btn btn-sm btn-warning fw-semibold text-dark">Verify mobile</a>
                             </div>
                         </div>
                     @elseif(!empty($needsPhoneVerification) && ! request()->routeIs('profile.verify-phone'))
@@ -414,101 +414,56 @@
                         </div>
                     @endif
 
-                    @if(!empty($pendingReferralOtpBanner) && empty($hasPendingContactUpdate))
+                    @if(!empty($pendingReferralOtpBanner) && empty($hasPendingContactUpdate) && ! request()->routeIs('staff.referrals.verify-otp.page'))
                         <div class="alert alert-warning app-alert app-alert--action" role="alert">
-                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap w-100">
                                 <div>
                                     <div class="fw-semibold mb-1"><i class="fas fa-shield-alt me-2"></i>Referral verification pending</div>
                                     <div class="small app-alert__detail">
-                                        Your referral onboarding is still pending OTP verification.
-                                        Last OTP destination:
-                                        <strong>{{ $pendingReferralOtpBanner->verification_otp_sent_to ?: 'not sent yet' }}</strong>.
-                                        Your referral reward is unlocked only after successful OTP verification.
+                                        Finish OTP on a dedicated page — keeps Home clear.
+                                        Last destination: <strong>{{ $pendingReferralOtpBanner->verification_otp_sent_to ?: 'not sent yet' }}</strong>.
                                     </div>
-                                    @if(!empty($pendingReferralOtpContacts))
-                                        <div class="small mt-1 text-muted app-alert__detail">
-                                            Registered mobile: <strong>{{ $pendingReferralOtpContacts['mobile'] ?? 'Not available' }}</strong>
-                                        </div>
-                                    @endif
                                 </div>
-                                <div class="d-flex gap-2 flex-wrap app-alert__actions">
-                                    <form method="POST" action="{{ route('staff.referrals.verify-otp') }}" class="d-flex gap-2">
-                                        @csrf
-                                        <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="6-digit OTP" required style="width: 120px;" autocomplete="one-time-code" inputmode="numeric">
-                                        <button type="submit" class="btn btn-sm btn-warning fw-semibold">Verify OTP</button>
-                                    </form>
-                                    <form method="POST" action="{{ route('staff.referrals.resend-otp') }}" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-sm btn-outline-dark">Resend WhatsApp OTP</button>
-                                    </form>
-                                </div>
+                                <a href="{{ route('staff.referrals.verify-otp.page') }}" class="btn btn-sm btn-warning fw-semibold">
+                                    Open verify page
+                                </a>
                             </div>
                         </div>
                     @endif
 
-                    @if(!empty($pendingRewardOtpBanner) && empty($hasPendingContactUpdate))
+                    @if(!empty($pendingRewardOtpBanner) && empty($hasPendingContactUpdate) && ! request()->routeIs('rewards.verify-otp.page'))
                         <div class="alert alert-info app-alert app-alert--action" role="alert">
-                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap w-100">
                                 <div>
                                     <div class="fw-semibold mb-1"><i class="fas fa-gift me-2"></i>Patient reward verification pending</div>
                                     <div class="small app-alert__detail">
-                                        Patient reward for <strong>{{ $pendingRewardOtpBanner->patient_name }}</strong> is pending OTP verification.
-                                        Credit is added only after OTP verification.
-                                        @if(!empty($pendingRewardOtpBanner->verification_otp_sent_to))
-                                            Last sent to: <strong>{{ $pendingRewardOtpBanner->verification_otp_sent_to }}</strong>.
-                                        @endif
+                                        Reward for <strong>{{ $pendingRewardOtpBanner->patient_name }}</strong> needs OTP.
                                     </div>
                                 </div>
-                                <div class="d-flex gap-2 flex-wrap app-alert__actions">
-                                    <form method="POST" action="{{ route('rewards.verify-otp-banner', $pendingRewardOtpBanner) }}" class="d-flex gap-2">
-                                        @csrf
-                                        <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="6-digit OTP" required style="width: 120px;" autocomplete="one-time-code" inputmode="numeric">
-                                        <button type="submit" class="btn btn-sm btn-info text-white fw-semibold">Verify OTP</button>
-                                    </form>
-                                    <form method="POST" action="{{ route('rewards.send-otp-banner', $pendingRewardOtpBanner) }}" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-sm btn-outline-info">Resend WhatsApp OTP</button>
-                                    </form>
-                                </div>
+                                <a href="{{ route('rewards.verify-otp.page', $pendingRewardOtpBanner) }}" class="btn btn-sm btn-info text-white fw-semibold">
+                                    Open verify page
+                                </a>
                             </div>
                         </div>
                     @endif
 
-                    @if(!empty($pendingServiceCompletionBanner) && empty($hasPendingContactUpdate))
+                    @if(!empty($pendingServiceCompletionBanner) && empty($hasPendingContactUpdate) && ! request()->routeIs('staff.service.complete-otp'))
                         <div class="alert alert-primary app-alert app-alert--action" role="alert">
-                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap w-100">
                                 <div>
                                     <div class="fw-semibold mb-1"><i class="fas fa-briefcase-medical me-2"></i>Complete visit — Service #{{ $pendingServiceCompletionBanner->id }}</div>
                                     <div class="small app-alert__detail">
                                         Patient: <strong>{{ optional($pendingServiceCompletionBanner->patient)->name ?? 'patient' }}</strong>.
                                         @if(!empty($serviceCompletionSkipsPatientOtp))
-                                            Their mobile matches your verified account — your <strong>login OTP already confirmed this number</strong>. No patient OTP needed.
+                                            Same mobile as your account — can complete without a separate patient OTP.
                                         @else
-                                            Send OTP to the <strong>patient’s mobile</strong> (not your staff login). They share the code so completion is recorded.
-                                            @if(!empty($pendingServiceCompletionBanner->completion_otp_sent_to))
-                                                Last sent to: <strong>{{ $pendingServiceCompletionBanner->completion_otp_sent_to }}</strong>.
-                                            @endif
+                                            Open the page to send patient OTP and complete.
                                         @endif
                                     </div>
                                 </div>
-                                <div class="d-flex gap-2 flex-wrap align-items-center app-alert__actions">
-                                    @if(!empty($serviceCompletionSkipsPatientOtp))
-                                        <form method="POST" action="{{ route('staff.service.complete-banner', $pendingServiceCompletionBanner) }}">
-                                            @csrf
-                                            <button type="submit" class="btn btn-sm btn-primary fw-semibold">Mark visit complete</button>
-                                        </form>
-                                    @else
-                                        <form method="POST" action="{{ route('staff.service.complete-banner', $pendingServiceCompletionBanner) }}" class="d-flex gap-2">
-                                            @csrf
-                                            <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="Patient OTP" required style="width: 120px;" autocomplete="one-time-code" inputmode="numeric">
-                                            <button type="submit" class="btn btn-sm btn-primary fw-semibold">Verify & Complete</button>
-                                        </form>
-                                        <form method="POST" action="{{ route('staff.service.completion-otp-banner', $pendingServiceCompletionBanner) }}" class="d-inline">
-                                            @csrf
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">Send OTP to patient</button>
-                                        </form>
-                                    @endif
-                                </div>
+                                <a href="{{ route('staff.service.complete-otp', $pendingServiceCompletionBanner) }}" class="btn btn-sm btn-primary fw-semibold">
+                                    Open complete page
+                                </a>
                             </div>
                         </div>
                     @endif
@@ -582,7 +537,7 @@
         })();
     </script>
     @endif
-    <script src="{{ asset('js/mobile-crm.js') }}?v=20260714h" defer></script>
+    <script src="{{ asset('js/mobile-crm.js') }}?v=20260714i" defer></script>
     @if($mmhcPullRefreshOn)
     <script src="{{ asset('js/mmhc-pull-refresh.js') }}?v=20260714c" defer></script>
     @endif

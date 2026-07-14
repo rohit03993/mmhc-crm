@@ -444,9 +444,9 @@
         <i class="fas fa-play me-1"></i>Start
     </button>
     @elseif($serviceRequest->status === 'in_progress')
-    <button type="button" class="btn btn-warning" onclick="openCompletionOtpModal({{ $serviceRequest->id }})">
+    <a href="{{ route('staff.service.complete-otp', $serviceRequest) }}" class="btn btn-warning">
         <i class="fas fa-check me-1"></i>Complete
-    </button>
+    </a>
     @endif
 </div>
 @endif

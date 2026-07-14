@@ -76,7 +76,6 @@ class AppServiceProvider extends ServiceProvider
                         ->calculateHeldDueToUnverifiedMobile($user);
                 }
                 $pendingReferralOtpBanner = Referral::query()
-                    ->select(['id', 'referred_id', 'status', 'verification_status', 'created_at'])
                     ->where('referred_id', $user->id)
                     ->where('status', 'pending')
                     ->where('verification_status', 'pending')
@@ -105,14 +104,12 @@ class AppServiceProvider extends ServiceProvider
                 ];
 
                 $pendingRewardOtpBanner = CaregiverReward::query()
-                    ->select(['id', 'user_id', 'verification_status', 'created_at'])
                     ->where('user_id', $user->id)
                     ->where('verification_status', 'pending')
                     ->latest('id')
                     ->first();
 
                 $pendingServiceCompletionBanner = ServiceRequest::query()
-                    ->select(['id', 'assigned_staff_id', 'status', 'completion_verified_at', 'patient_id', 'contact_phone', 'end_date', 'created_at'])
                     ->with('patient:id,name,phone')
                     ->where('assigned_staff_id', $user->id)
                     ->where('status', 'in_progress')

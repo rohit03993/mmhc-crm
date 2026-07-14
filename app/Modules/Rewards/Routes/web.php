@@ -10,6 +10,7 @@ Route::middleware(['web', 'auth', 'role:caregiver,nurse'])
         Route::get('/', [RewardController::class, 'index'])->name('index');
         Route::get('/create', [RewardController::class, 'create'])->name('create');
         Route::post('/', [RewardController::class, 'store'])->name('store');
+        Route::get('/{reward}/verify-otp', [RewardController::class, 'showVerifyOtp'])->name('verify-otp.page');
         Route::post('/{reward}/send-otp', [RewardController::class, 'sendOtp'])->middleware('throttle:5,1')->name('send-otp');
         Route::post('/{reward}/verify-otp', [RewardController::class, 'verifyOtp'])->middleware('throttle:10,1')->name('verify-otp');
         Route::post('/{reward}/update-patient-phone', [RewardController::class, 'updatePatientPhone'])->name('update-patient-phone');

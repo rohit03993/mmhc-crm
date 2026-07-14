@@ -10,6 +10,7 @@ use App\Modules\Incentives\Models\IncentiveLedger;
 use App\Modules\Incentives\Services\IncentiveCalculatorService;
 use App\Modules\Payments\Services\StaffPayoutService;
 use App\Modules\Plans\Models\Subscription;
+use App\Modules\Referrals\Models\Referral;
 use App\Modules\Referrals\Services\ReferralService;
 use App\Modules\Rewards\Models\CaregiverReward;
 use App\Modules\Rewards\Services\RewardService;
@@ -1141,6 +1142,57 @@ class StaffDashboardController extends Controller
             ->with(($result['success'] ?? false) ? 'success' : 'error', $result['message'] ?? 'OTP verification failed.');
     }
 
+    public function showVerifyReferralOtp()
+    {
+        $user = Auth::user();
+        $referral = Referral::query()
+            ->where('referred_id', $user->id)
+            ->where('status', 'pending')
+            ->where('verification_status', 'pending')
+            ->latest('id')
+            ->first();
+
+        if (! $referral) {
+            return redirect()->route('staff.dashboard')
+                ->with('success', 'No pending referral OTP right now.');
+        }
+
+        $mobileMasked = null;
+        $digits = preg_replace('/\D+/', '', (string) ($user->pending_phone ?: $user->phone ?? ''));
+        if (strlen($digits) >= 10) {
+            $tail = substr($digits, -10);
+            $mobileMasked = str_repeat('*', 6).substr($tail, -4);
+        }
+        $contacts = ['mobile' => $mobileMasked];
+
+        return view('services::staff.verify-referral-otp', [
+            'referral' => $referral,
+            'contacts' => $contacts,
+        ]);
+    }
+
+    public function showCompleteVisitOtp(ServiceRequest $serviceRequest)
+    {
+        $user = Auth::user();
+        if ((int) $serviceRequest->assigned_staff_id !== (int) $user->id) {
+            abort(403);
+        }
+
+        if ($serviceRequest->status !== 'in_progress' || $serviceRequest->completion_verified_at) {
+            return redirect()->route('staff.service-details', $serviceRequest)
+                ->with('error', 'This visit is not waiting for completion OTP.');
+        }
+
+        $serviceRequest->load(['patient', 'serviceType']);
+        $skipsPatientOtp = $user->hasVerifiedPhone()
+            && $serviceRequest->staffMayCompleteWithoutPatientOtp($user);
+
+        return view('services::staff.complete-visit-otp', [
+            'serviceRequest' => $serviceRequest,
+            'skipsPatientOtp' => $skipsPatientOtp,
+        ]);
+    }
+
     public function resendReferralOtp(Request $request)
     {
         $user = Auth::user();
@@ -1171,8 +1223,13 @@ class StaffDashboardController extends Controller
         $payload = method_exists($response, 'getData') ? (array) $response->getData(true) : [];
         $ok = (bool) ($payload['success'] ?? false);
 
+        if ($ok) {
+            return redirect()->route('staff.dashboard')
+                ->with('success', (string) ($payload['message'] ?? 'Service completed successfully.'));
+        }
+
         return redirect()->back()
-            ->with($ok ? 'success' : 'error', (string) ($payload['message'] ?? ($ok ? 'Service completed successfully.' : 'Failed to complete service.')));
+            ->with('error', (string) ($payload['message'] ?? 'Failed to complete service.'));
     }
 
     private function normalizeIndianPhone(string $phone): ?string

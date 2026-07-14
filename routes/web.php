@@ -112,6 +112,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/service/{serviceRequest}', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'show'])->name('service-details');
 
             // Service action routes
+            Route::get('/service/{serviceRequest}/complete-otp', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'showCompleteVisitOtp'])->name('service.complete-otp');
             Route::post('/service/{serviceRequest}/start', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'startService'])->name('service.start');
             Route::post('/service/{serviceRequest}/completion-otp', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'sendCompletionOtp'])->name('service.completion-otp');
             Route::post('/service/{serviceRequest}/complete', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'completeService'])->name('service.complete');
@@ -122,6 +123,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/booking/{serviceRequest}/accept', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'acceptBooking'])->name('booking.accept');
             Route::post('/booking/{serviceRequest}/reject', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'rejectBooking'])->name('booking.reject');
             Route::post('/booking/{serviceRequest}/cancel', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'cancelBooking'])->name('booking.cancel');
+            Route::get('/referrals/verify-otp', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'showVerifyReferralOtp'])->name('referrals.verify-otp.page');
             Route::post('/referrals/verify-otp', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'verifyReferralOtp'])->middleware('throttle:10,1')->name('referrals.verify-otp');
             Route::post('/referrals/resend-otp', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'resendReferralOtp'])->middleware('throttle:5,1')->name('referrals.resend-otp');
 

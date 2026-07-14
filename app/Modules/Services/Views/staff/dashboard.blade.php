@@ -815,8 +815,8 @@
                             </div>
                             @endif
                             @elseif($service->status === 'in_progress')
-                            <a href="{{ route('staff.service-details', $service) }}" class="btn btn-action-warning">
-                                <i class="fas fa-shield-check me-2"></i>Verify OTP & Complete
+                            <a href="{{ route('staff.service.complete-otp', $service) }}" class="btn btn-action-warning">
+                                <i class="fas fa-shield-check me-2"></i>Complete visit OTP
                             </a>
                             @endif
                             @endif

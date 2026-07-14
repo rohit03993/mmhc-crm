@@ -252,8 +252,29 @@ class RewardController extends Controller
         ]);
         $res = $this->rewardService->verifyRewardOtp($reward, (string) $request->otp_code);
 
+        if ($res['success'] ?? false) {
+            return redirect()->route('staff.rewards.index')
+                ->with('success', $res['message'] ?? 'Reward OTP verified.');
+        }
+
         return redirect()->back()
-            ->with(($res['success'] ?? false) ? 'success' : 'error', $res['message'] ?? 'OTP verification failed.');
+            ->with('error', $res['message'] ?? 'OTP verification failed.');
+    }
+
+    public function showVerifyOtp(CaregiverReward $reward)
+    {
+        if ((int) $reward->user_id !== (int) Auth::id()) {
+            abort(403);
+        }
+
+        if ($reward->verification_status !== 'pending') {
+            return redirect()->route('staff.rewards.index')
+                ->with('success', 'This reward is already verified or closed.');
+        }
+
+        return view('rewards::verify-otp', [
+            'reward' => $reward,
+        ]);
     }
 
     /**
