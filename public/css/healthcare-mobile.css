@@ -21,6 +21,10 @@
         --hc-primary-dark: #115e59;
         --hc-primary-light: #ccfbf1;
         --hc-gradient: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+        --mmhc-primary: #0f766e;
+        --mmhc-primary-dark: #115e59;
+        --mmhc-primary-light: #ccfbf1;
+        --mmhc-header-gradient: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
     }
 
     /* Staff — indigo accent */
@@ -29,6 +33,10 @@
         --hc-primary-dark: #3730a3;
         --hc-primary-light: #eef2ff;
         --hc-gradient: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+        --mmhc-primary: #4338ca;
+        --mmhc-primary-dark: #3730a3;
+        --mmhc-primary-light: #eef2ff;
+        --mmhc-header-gradient: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
     }
 
     body.mmhc-healthcare-app-shell .hc-mobile-shell {

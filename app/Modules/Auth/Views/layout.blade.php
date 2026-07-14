@@ -38,13 +38,13 @@
     <meta name="theme-color" content="#4338ca">
     @endif
     @if($healthcareStylesOn)
-    <link rel="stylesheet" href="{{ asset('css/healthcare-mobile.css') }}?v=20260714c">
+    <link rel="stylesheet" href="{{ asset('css/healthcare-mobile.css') }}?v=20260714d">
     @endif
     @if($healthcareMobileOn)
     <meta name="theme-color" content="{{ auth()->user()->isPatient() ? '#0f766e' : '#4338ca' }}">
     @endif
 
-    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714c">
+    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714d">
     @auth
     <link rel="stylesheet" href="{{ asset('css/crm-desktop.css') }}?v=20260608b">
     <link rel="stylesheet" href="{{ asset('css/mmhc-member-nav.css') }}?v=20260602">

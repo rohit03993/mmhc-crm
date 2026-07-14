@@ -1217,3 +1217,268 @@ body.mmhc-healthcare-role-patient .mmhc-ptr-indicator.is-ready .mmhc-ptr-indicat
         border-radius: 10px;
     }
 }
+
+/* ── MMHC mobile modernization (shared shell, all roles) ── */
+@media (max-width: 767.98px) {
+    :root {
+        --mmhc-bottom-nav-offset: 4.5rem;
+        --mmhc-surface: #f1f5f9;
+        --mmhc-card: #ffffff;
+        --mmhc-radius: 16px;
+        --mmhc-touch: 44px;
+    }
+
+    body.mmhc-healthcare-role-patient {
+        --mmhc-primary: #0f766e;
+        --mmhc-primary-dark: #115e59;
+        --mmhc-primary-light: #ccfbf1;
+        --mmhc-header-gradient: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+        --mmhc-accent: #0f766e;
+    }
+
+    body.mmhc-healthcare-role-staff {
+        --mmhc-primary: #4338ca;
+        --mmhc-primary-dark: #3730a3;
+        --mmhc-primary-light: #eef2ff;
+        --mmhc-header-gradient: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+        --mmhc-accent: #4338ca;
+    }
+
+    body.mmhc-crm-auth:not(.mmhc-healthcare-role-patient):not(.mmhc-healthcare-role-staff) {
+        --mmhc-primary: #1d4ed8;
+        --mmhc-primary-dark: #1e40af;
+        --mmhc-primary-light: #dbeafe;
+        --mmhc-header-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        --mmhc-accent: #1d4ed8;
+    }
+
+    /* Prefer dynamic viewport for app shells */
+    .mobile-app-container,
+    body.mmhc-mobile-app-shell .main-content {
+        min-height: 100vh;
+        min-height: 100dvh;
+    }
+
+    .mobile-app-container {
+        padding-bottom: calc(var(--mmhc-bottom-nav-offset) + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    /* Modern cards across CRM */
+    body.mmhc-crm-auth .main-content .card {
+        border: 1px solid rgba(148, 163, 184, 0.28) !important;
+        border-radius: var(--mmhc-radius) !important;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05) !important;
+        background: var(--mmhc-card);
+    }
+
+    body.mmhc-crm-auth .main-content .card-header {
+        background: transparent;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+        font-weight: 700;
+        padding: 0.85rem 1rem;
+    }
+
+    body.mmhc-crm-auth .main-content .card-body {
+        padding: 1rem;
+    }
+
+    /* Larger touch targets */
+    body.mmhc-crm-auth .main-content .btn-sm,
+    body.mmhc-crm-auth .main-content .btn-group-sm > .btn {
+        min-height: var(--mmhc-touch);
+        min-width: var(--mmhc-touch);
+        padding: 0.45rem 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+    }
+
+    body.mmhc-crm-auth .app-back-btn,
+    body.mmhc-crm-auth .app-header-icon {
+        width: var(--mmhc-touch) !important;
+        height: var(--mmhc-touch) !important;
+        min-width: var(--mmhc-touch) !important;
+    }
+
+    body.mmhc-crm-auth .main-content .form-control,
+    body.mmhc-crm-auth .main-content .form-select,
+    body.mmhc-crm-auth .main-content .btn:not(.btn-sm):not(.btn-close) {
+        min-height: var(--mmhc-touch);
+        border-radius: 12px;
+    }
+
+    body.mmhc-crm-auth .main-content .form-control,
+    body.mmhc-crm-auth .main-content .form-select {
+        font-size: 16px; /* prevent iOS zoom */
+    }
+
+    /* Role-colored primary buttons in healthcare shell */
+    body.mmhc-healthcare-app-shell .btn-primary,
+    body.mmhc-healthcare-app-shell .app-btn-primary,
+    body.mmhc-healthcare-app-shell .app-empty-state .btn-primary {
+        background: var(--mmhc-primary, #0f766e) !important;
+        border-color: var(--mmhc-primary, #0f766e) !important;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+        font-weight: 700;
+    }
+
+    /* Compact alerts — less first-screen clutter */
+    body.mmhc-crm-auth .main-content > .app-alert,
+    body.mmhc-crm-auth .main-content > .alert {
+        border-radius: 14px;
+        margin-bottom: 0.65rem;
+        padding: 0.75rem 0.9rem;
+        font-size: 0.875rem;
+    }
+
+    /* Readable bottom nav labels */
+    .app-bottom-nav {
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        background: rgba(255, 255, 255, 0.96);
+        padding: 4px 2px;
+        padding-bottom: max(4px, env(safe-area-inset-bottom));
+    }
+
+    .app-bottom-nav .app-nav-item {
+        min-height: 52px;
+        gap: 2px;
+        border-radius: 12px;
+        margin: 2px;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .app-bottom-nav .app-nav-item span {
+        font-size: 0.68rem !important;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .app-bottom-nav .app-nav-item i {
+        font-size: 1.15rem !important;
+    }
+
+    .app-bottom-nav .app-nav-item.active {
+        background: rgba(15, 23, 42, 0.04);
+    }
+
+    body.mmhc-healthcare-role-patient .app-bottom-nav .app-nav-item.active,
+    body.mmhc-healthcare-role-patient .app-bottom-nav .app-nav-item.active i,
+    body.mmhc-healthcare-role-patient .app-bottom-nav .app-nav-item.active span {
+        color: #0f766e !important;
+    }
+
+    body.mmhc-healthcare-role-staff .app-bottom-nav .app-nav-item.active,
+    body.mmhc-healthcare-role-staff .app-bottom-nav .app-nav-item.active i,
+    body.mmhc-healthcare-role-staff .app-bottom-nav .app-nav-item.active span {
+        color: #4338ca !important;
+    }
+
+    body.mmhc-crm-auth:not(.mmhc-healthcare-role-patient):not(.mmhc-healthcare-role-staff) .app-bottom-nav .app-nav-item.active,
+    body.mmhc-crm-auth:not(.mmhc-healthcare-role-patient):not(.mmhc-healthcare-role-staff) .app-bottom-nav .app-nav-item.active i {
+        color: #1d4ed8 !important;
+    }
+
+    body.mmhc-healthcare-role-patient .app-nav-item-profile.active .app-nav-profile-thumb {
+        box-shadow: 0 0 0 2px #0f766e;
+    }
+
+    body.mmhc-healthcare-role-staff .app-nav-item-profile.active .app-nav-profile-thumb {
+        box-shadow: 0 0 0 2px #4338ca;
+    }
+
+    /* Shared empty-state aliases → healthcare look */
+    .app-empty-state,
+    .empty-state-modern {
+        text-align: center;
+        padding: 2rem 1.25rem !important;
+        background: #fff !important;
+        border: 1px dashed rgba(148, 163, 184, 0.55) !important;
+        border-radius: var(--mmhc-radius) !important;
+        box-shadow: none !important;
+        margin-bottom: 1rem;
+    }
+
+    .app-empty-state i,
+    .app-empty-state .empty-icon,
+    .empty-state-modern i,
+    .empty-state-modern .empty-icon {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 1rem;
+        border-radius: 16px;
+        background: var(--mmhc-primary-light, #e2e8f0);
+        color: var(--mmhc-primary, #475569);
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem !important;
+    }
+
+    .app-empty-state h3,
+    .app-empty-state h4,
+    .empty-state-modern h3,
+    .empty-state-modern h4 {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+    }
+
+    .app-empty-state p,
+    .empty-state-modern p {
+        font-size: 0.875rem;
+        color: #64748b;
+        line-height: 1.45;
+        margin-bottom: 1rem;
+    }
+
+    .app-empty-state .btn,
+    .empty-state-modern .btn {
+        min-height: 44px;
+        border-radius: 999px !important;
+        font-weight: 700;
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+
+    /* Sticky primary actions above bottom nav (opt-in class) */
+    .mmhc-sticky-actions {
+        position: sticky;
+        bottom: calc(var(--mmhc-bottom-nav-offset) + env(safe-area-inset-bottom, 0px));
+        z-index: 30;
+        display: flex;
+        gap: 0.65rem;
+        padding: 0.75rem 0 0.25rem;
+        background: linear-gradient(180deg, rgba(241, 245, 249, 0) 0%, var(--mmhc-surface) 28%);
+    }
+
+    .mmhc-sticky-actions .btn {
+        flex: 1;
+        min-height: 48px;
+        font-weight: 700;
+        border-radius: 12px !important;
+    }
+
+    /* Table cards slightly tighter / modern */
+    .main-content table.mmhc-table-cards tbody tr {
+        border-radius: var(--mmhc-radius);
+        border-color: rgba(148, 163, 184, 0.3);
+        transition: box-shadow 0.15s ease;
+    }
+
+    .main-content table.mmhc-table-cards tbody tr:active {
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
+    }
+
+    /* Header uses role gradient when tokens present */
+    body.mmhc-crm-auth .app-header-mobile,
+    body.mmhc-crm-auth .app-mobile-header {
+        background: var(--mmhc-header-gradient, linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)) !important;
+    }
+}
