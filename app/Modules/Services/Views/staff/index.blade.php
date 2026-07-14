@@ -292,11 +292,20 @@
                         No nurses found nearby. Update your location or adjust filters.
                     @endif
                 </p>
-                @if(empty($hasPatientLocation))
-                <button type="button" class="app-btn-primary mt-2" onclick="document.getElementById('btnUseMyLocation')?.click();">
-                    <i class="fas fa-crosshairs me-1"></i>Use current location
-                </button>
-                @endif
+                <div class="d-flex flex-column gap-2 mt-2">
+                    @if(empty($hasPatientLocation))
+                    <button type="button" class="app-btn-primary" onclick="document.getElementById('btnUseMyLocation')?.click();">
+                        <i class="fas fa-crosshairs me-1"></i>Use current location
+                    </button>
+                    @else
+                    <button type="button" class="app-btn-primary" onclick="document.getElementById('btnUseMyLocation')?.click();">
+                        <i class="fas fa-crosshairs me-1"></i>Update current location
+                    </button>
+                    <button type="button" class="app-btn-secondary" onclick="document.getElementById('mmhcFilterToggle')?.click();">
+                        <i class="fas fa-sliders-h me-1"></i>Widen filters / distance
+                    </button>
+                    @endif
+                </div>
             </div>
             @endif
         </div>
@@ -403,11 +412,20 @@
                         No caregivers found nearby. Update your location or adjust filters.
                     @endif
                 </p>
-                @if(empty($hasPatientLocation))
-                <button type="button" class="app-btn-primary mt-2" onclick="document.getElementById('btnUseMyLocation')?.click();">
-                    <i class="fas fa-crosshairs me-1"></i>Use current location
-                </button>
-                @endif
+                <div class="d-flex flex-column gap-2 mt-2">
+                    @if(empty($hasPatientLocation))
+                    <button type="button" class="app-btn-primary" onclick="document.getElementById('btnUseMyLocation')?.click();">
+                        <i class="fas fa-crosshairs me-1"></i>Use current location
+                    </button>
+                    @else
+                    <button type="button" class="app-btn-primary" onclick="document.getElementById('btnUseMyLocation')?.click();">
+                        <i class="fas fa-crosshairs me-1"></i>Update current location
+                    </button>
+                    <button type="button" class="app-btn-secondary" onclick="document.getElementById('mmhcFilterToggle')?.click();">
+                        <i class="fas fa-sliders-h me-1"></i>Widen filters / distance
+                    </button>
+                    @endif
+                </div>
             </div>
             @endif
         </div>

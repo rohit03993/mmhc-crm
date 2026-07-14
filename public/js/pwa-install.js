@@ -297,9 +297,9 @@
         var isIos = mode === 'ios';
         var iosSteps = isIos
             ? '<ol class="mmhc-pwa-install__ios-steps">' +
-              '<li>Tap the <strong>Share</strong> button</li>' +
-              '<li>Choose <strong>Add to Home Screen</strong></li>' +
-              '<li>Tap <strong>Add</strong></li>' +
+              '<li>Tap <strong>Share</strong> at the bottom of Safari</li>' +
+              '<li>Scroll and choose <strong>Add to Home Screen</strong></li>' +
+              '<li>Tap <strong>Add</strong> — open from your Home screen</li>' +
               '</ol>'
             : '';
 

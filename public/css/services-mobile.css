@@ -2502,6 +2502,11 @@
 
 /* Compact booking steps on phone — less scroll; links unchanged */
 @media (max-width: 767.98px) {
+  /* My Requests uses bottom nav — hide duplicate step bar */
+  .mmhc-page-requests .mmhc-booking-flow {
+    display: none !important;
+  }
+
   .mmhc-booking-flow { margin-bottom: 0.5rem !important; }
   .mmhc-booking-flow__list {
     flex-wrap: nowrap;
@@ -2520,6 +2525,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* Less scroll on find-staff after listings */
+  .mmhc-page-staff .app-section:has(.app-steps-grid) {
+    display: none;
   }
 }
 .sr-payment-summary { font-size: 0.9rem; }

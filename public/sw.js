@@ -1,5 +1,5 @@
 /* MeD Miracle PWA service worker — network-first for pages, cache for shell assets */
-const CACHE_VERSION = 'mmhc-pwa-v2';
+const CACHE_VERSION = 'mmhc-pwa-v3';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 

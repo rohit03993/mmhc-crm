@@ -68,6 +68,11 @@
             box-shadow: 0 8px 20px rgba(15, 118, 110, 0.25);
         }
         button:active { transform: scale(0.98); }
+        .offline-hint {
+            margin: 1rem 0 0;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
     </style>
 </head>
 <body>
@@ -76,8 +81,9 @@
             <img src="/icons/icon-192.png" alt="MeD Miracle" width="72" height="72">
         </div>
         <h1>You're offline</h1>
-        <p>MeD Miracle needs an internet connection for live care data. Reconnect, then try again.</p>
+        <p>Check your connection, then reopen MeD Miracle from your Home screen.</p>
         <button type="button" onclick="location.reload()">Try again</button>
+        <p class="offline-hint">Your care data loads when you’re back online.</p>
     </div>
 </body>
 </html>

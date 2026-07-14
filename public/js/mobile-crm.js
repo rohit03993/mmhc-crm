@@ -153,12 +153,38 @@
         });
     }
 
+    /** Collapse verbose earnings breakdown on staff mobile — same data, less scroll */
+    function enhanceStaffEarningsCards() {
+        if (!mq.matches || !document.body.classList.contains('mmhc-healthcare-role-staff')) {
+            return;
+        }
+        document.querySelectorAll('.earnings-source-card').forEach(function (card) {
+            if (card.querySelector('.earnings-source-toggle')) {
+                return;
+            }
+            var details = card.querySelector('.earnings-source-details');
+            if (!details) {
+                return;
+            }
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'earnings-source-toggle';
+            btn.textContent = 'Show breakdown';
+            btn.addEventListener('click', function () {
+                var expanded = card.classList.toggle('is-expanded');
+                btn.textContent = expanded ? 'Hide breakdown' : 'Show breakdown';
+            });
+            details.parentNode.insertBefore(btn, details);
+        });
+    }
+
     function initMobileLayout() {
         applyMobileClass();
         markMobileAppShell();
         wrapTables();
         enhanceMobileTables();
         enhanceStickyFormActions();
+        enhanceStaffEarningsCards();
         bindActionNoticesToggle();
     }
 

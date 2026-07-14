@@ -48,6 +48,11 @@
     <div class="app-content">
         @include('services::partials.staff-dashboard-quick-actions', ['pending_booking_count' => $stats['pending_booking_count'] ?? 0])
 
+        <a href="#assignments" class="staff-jobs-jump d-md-none">
+            <span><i class="fas fa-briefcase me-2" aria-hidden="true"></i>Today’s jobs &amp; assignments</span>
+            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+        </a>
+
         <!-- Desktop Header -->
         <div class="d-none d-md-block mb-4">
             <div class="staff-header-card mb-3">

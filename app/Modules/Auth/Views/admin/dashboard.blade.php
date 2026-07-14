@@ -22,9 +22,29 @@
 @endsection
 
 @section('content')
-<div class="container-fluid px-3 px-md-4 py-4">
-    <!-- Header Section -->
-    <div class="row mb-4">
+<div class="mobile-app-container admin-mobile-shell" data-mmhc-ptr>
+    <div class="app-header-mobile d-md-none">
+        <div class="app-header-content">
+            <div class="app-header-left">
+                <div class="app-user-avatar" style="background:rgba(255,255,255,0.2);width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div>
+                    <div class="app-header-title">{{ Str::limit($user->name, 18) }}</div>
+                    <div class="app-header-subtitle">Admin · {{ $user->unique_id }}</div>
+                </div>
+            </div>
+            <div class="app-header-right">
+                <a href="{{ route('profile.edit') }}" class="app-header-icon" title="Profile">
+                    <i class="fas fa-user-circle"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+<div class="container-fluid px-3 px-md-4 py-3 py-md-4 app-content">
+    <!-- Header Section (desktop) -->
+    <div class="row mb-4 d-none d-md-block">
         <div class="col-12">
             <div class="admin-header-card mb-3">
                 <div class="row align-items-center g-3">
@@ -57,7 +77,8 @@
         </div>
     </div>
 
-    <div class="admin-quick-links">
+    <div class="admin-quick-links" aria-label="Admin shortcuts">
+        <a href="{{ route('admin.users') }}"><i class="fas fa-users"></i> Users</a>
         <a href="{{ route('admin.service-requests') }}"><i class="fas fa-clipboard-list"></i> Service requests</a>
         <a href="{{ route('admin.pending-payments') }}"><i class="fas fa-hand-holding-usd"></i> Pending payments</a>
         <a href="{{ route('admin.service-requests', ['status' => 'completed', 'filter' => 'completed']) }}">
@@ -418,6 +439,7 @@
         </div>
     </div>
 </div>
+</div>{{-- .mobile-app-container.admin-mobile-shell --}}
 
 <!-- Comprehensive Mobile-First Styling -->
 <style>
