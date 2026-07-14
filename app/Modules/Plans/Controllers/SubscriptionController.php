@@ -962,23 +962,45 @@ class SubscriptionController extends Controller
             ->where('razorpay_order_id', $orderId)
             ->first();
 
-        if (! $subscription) {
-            return response()->json(['ok' => true, 'message' => 'No matching subscription']);
+        if ($subscription) {
+            if ($subscription->razorpay_event_id && $subscription->razorpay_event_id === $eventId) {
+                return response()->json(['ok' => true, 'duplicate' => true]);
+            }
+
+            $this->finalizeRazorpaySuccess($subscription, [
+                'razorpay_order_id' => $orderId,
+                'razorpay_payment_id' => $paymentId,
+                'razorpay_signature' => $signature,
+                'razorpay_event_id' => $eventId,
+                'gateway_payload' => $event,
+            ]);
+
+            return response()->json(['ok' => true]);
         }
 
-        if ($subscription->razorpay_event_id && $subscription->razorpay_event_id === $eventId) {
+        // Visit fee payments (service requests)
+        $serviceRequest = \App\Modules\Services\Models\ServiceRequest::query()
+            ->where('razorpay_order_id', $orderId)
+            ->first();
+
+        if (! $serviceRequest) {
+            return response()->json(['ok' => true, 'message' => 'No matching subscription or visit']);
+        }
+
+        if ($serviceRequest->razorpay_event_id && $serviceRequest->razorpay_event_id === $eventId) {
             return response()->json(['ok' => true, 'duplicate' => true]);
         }
 
-        $this->finalizeRazorpaySuccess($subscription, [
-            'razorpay_order_id' => $orderId,
-            'razorpay_payment_id' => $paymentId,
-            'razorpay_signature' => $signature,
-            'razorpay_event_id' => $eventId,
-            'gateway_payload' => $event,
-        ]);
+        app(\App\Modules\Services\Services\ServiceVisitPaymentService::class)
+            ->markPaidFromWebhook($serviceRequest, [
+                'razorpay_order_id' => $orderId,
+                'razorpay_payment_id' => $paymentId,
+                'razorpay_signature' => $signature,
+                'razorpay_event_id' => $eventId,
+                'gateway_payload' => $event,
+            ]);
 
-        return response()->json(['ok' => true]);
+        return response()->json(['ok' => true, 'visit' => true]);
     }
 
     /**

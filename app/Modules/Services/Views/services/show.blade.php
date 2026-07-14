@@ -275,6 +275,11 @@
 
                     <div class="sr-card">
                         <h3 class="sr-card__title"><i class="fas fa-bolt me-2 text-secondary"></i>Actions</h3>
+                        @if(auth()->user()->isPatient() && $serviceRequest->requiresVisitPayment() && ! $serviceRequest->isVisitPaymentSettled() && ! $serviceRequest->isCancelled())
+                        <a href="{{ route('services.pay', $serviceRequest) }}" class="btn btn-success w-100 rounded-3 mb-2 fw-semibold">
+                            <i class="fas fa-credit-card me-2"></i>Pay ₹{{ number_format((float) $serviceRequest->total_amount, 2) }}
+                        </a>
+                        @endif
                         @if($serviceRequest->canBeCancelledByPatient())
                         <div class="mb-2 d-none d-md-block">
                             @include('services::services.partials.cancel-request-form', [

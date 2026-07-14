@@ -32,8 +32,19 @@ class StaffDashboardController extends Controller
         $user = Auth::user();
 
         // Get assigned services for this staff member (including pending_approval)
+        // Hide unpaid pending_approval bookings until the patient pays (or amount is free).
         $assignedServices = ServiceRequest::where('assigned_staff_id', $user->id)
             ->whereIn('status', ['pending_approval', 'assigned', 'in_progress', 'completed'])
+            ->where(function ($query) {
+                $query->where('status', '!=', 'pending_approval')
+                    ->orWhere(function ($q) {
+                        $q->where('status', 'pending_approval')
+                            ->where(function ($inner) {
+                                $inner->where('payment_status', 'paid')
+                                    ->orWhere('total_amount', '<=', 0);
+                            });
+                    });
+            })
             ->with(['patient', 'serviceType', 'assignedStaff'])
             ->orderByRaw("CASE WHEN status = 'pending_approval' THEN 0 ELSE 1 END")
             ->orderBy('start_date', 'desc')
@@ -741,6 +752,11 @@ class StaffDashboardController extends Controller
         if ($serviceRequest->status !== 'pending_approval') {
             return redirect()->back()
                 ->with('error', 'This booking cannot be accepted. Current status: '.$serviceRequest->status);
+        }
+
+        if (! $serviceRequest->isVisitPaymentSettled()) {
+            return redirect()->back()
+                ->with('error', 'This booking is unpaid. The patient must complete visit payment before you can accept.');
         }
 
         try {

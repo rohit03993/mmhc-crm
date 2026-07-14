@@ -173,8 +173,8 @@ class ServiceController extends Controller
             'duration_days' => $request->duration_days,
             'total_amount' => $totalAmount,
             'total_staff_payout' => null, // Will be calculated when staff is assigned
-            'prepaid_amount' => $hasActiveSubscription ? 0.00 : $totalAmount,
-            'payment_status' => 'paid',
+            'prepaid_amount' => $hasActiveSubscription ? 0.00 : 0.00,
+            'payment_status' => $hasActiveSubscription || $totalAmount <= 0 ? 'paid' : 'pending',
             'status' => 'pending',
             'notes' => $request->notes,
             'special_requirements' => $request->special_requirements,
@@ -183,12 +183,13 @@ class ServiceController extends Controller
             'contact_phone' => $request->contact_phone,
         ]);
 
-        $successMessage = $hasActiveSubscription
-            ? 'Service request submitted successfully! This service is FREE with your active subscription. Our team will contact you soon.'
-            : 'Service request submitted successfully! Visit fee ₹'.number_format($totalAmount, 0).' is recorded for this booking. Our team will contact you soon.';
+        if ($hasActiveSubscription || $totalAmount <= 0) {
+            return redirect()->route('services.my-requests')
+                ->with('success', 'Service request submitted successfully! This service is FREE with your active subscription. Our team will contact you soon.');
+        }
 
-        return redirect()->route('services.my-requests')
-            ->with('success', $successMessage);
+        return redirect()->route('services.pay', $serviceRequest)
+            ->with('success', 'Booking created. Please pay the visit fee of ₹'.number_format($totalAmount, 0).' to confirm.');
     }
 
     /**
@@ -294,8 +295,8 @@ class ServiceController extends Controller
                 'duration_days' => $request->duration_days,
                 'total_amount' => $totalAmount,
                 'total_staff_payout' => $totalStaffPayout,
-                'prepaid_amount' => $hasActiveSubscription ? 0.00 : $totalAmount,
-                'payment_status' => 'paid',
+                'prepaid_amount' => $hasActiveSubscription || $totalAmount <= 0 ? 0.00 : 0.00,
+                'payment_status' => $hasActiveSubscription || $totalAmount <= 0 ? 'paid' : 'pending',
                 'status' => 'pending_approval', // Staff needs to accept
                 'assigned_at' => now(),
                 'notes' => ($request->notes ?? '').($hasActiveSubscription ? ' [FREE - Covered by Subscription]' : ''),
@@ -313,19 +314,20 @@ class ServiceController extends Controller
 
             DB::commit();
 
-            $successMessage = $hasActiveSubscription
-                ? 'Booking created successfully! This service is FREE with your active subscription. The staff member will be notified.'
-                : 'Booking created successfully! Visit fee ₹'.number_format($totalAmount, 0).' is recorded. The staff member will be notified to accept your request.';
+            if ($hasActiveSubscription || $totalAmount <= 0) {
+                try {
+                    app(\App\Modules\Auth\Services\AppNotificationService::class)
+                        ->notifyBookingCreated($serviceRequest->fresh(['patient', 'serviceType']) ?? $serviceRequest);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
 
-            try {
-                app(\App\Modules\Auth\Services\AppNotificationService::class)
-                    ->notifyBookingCreated($serviceRequest->fresh(['patient', 'serviceType']) ?? $serviceRequest);
-            } catch (\Throwable $e) {
-                report($e);
+                return redirect()->route('services.my-requests')
+                    ->with('success', 'Booking created successfully! This service is FREE with your active subscription. The staff member will be notified.');
             }
 
-            return redirect()->route('services.my-requests')
-                ->with('success', $successMessage);
+            return redirect()->route('services.pay', $serviceRequest)
+                ->with('success', 'Booking created. Pay ₹'.number_format($totalAmount, 0).' online to confirm — staff are notified after payment.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -374,6 +376,126 @@ class ServiceController extends Controller
         $serviceRequest->load(['serviceType', 'assignedStaff', 'dailyServices.staff']);
 
         return view('services::services.show', compact('serviceRequest'));
+    }
+
+    /**
+     * Patient: pay visit fee online (Razorpay).
+     */
+    public function pay(ServiceRequest $serviceRequest)
+    {
+        if ((int) $serviceRequest->patient_id !== (int) Auth::id()) {
+            abort(403);
+        }
+
+        $serviceRequest->load(['serviceType', 'preferredStaff', 'assignedStaff']);
+
+        if ($serviceRequest->isCancelled()) {
+            return redirect()->route('services.my-requests')
+                ->with('error', 'This booking was cancelled.');
+        }
+
+        if ($serviceRequest->isVisitPaymentSettled()) {
+            return redirect()->route('services.show', $serviceRequest)
+                ->with('success', 'This visit is already paid.');
+        }
+
+        $razorpayEnabled = app(\App\Modules\Services\Services\ServiceVisitPaymentService::class)->isRazorpayEnabled();
+
+        return view('services::services.pay', compact('serviceRequest', 'razorpayEnabled'));
+    }
+
+    /**
+     * Create Razorpay order for a visit booking.
+     */
+    public function createVisitRazorpayOrder(ServiceRequest $serviceRequest)
+    {
+        try {
+            $order = app(\App\Modules\Services\Services\ServiceVisitPaymentService::class)
+                ->createOrder($serviceRequest, Auth::user());
+
+            return response()->json([
+                'success' => true,
+                'order_id' => $order['order_id'],
+                'key' => $order['key'],
+                'amount' => $order['amount'],
+                'currency' => $order['currency'],
+                'service_request_id' => $serviceRequest->id,
+                'customer' => [
+                    'name' => Auth::user()->name,
+                    'email' => Auth::user()->email,
+                    'contact' => preg_replace('/\D/', '', (string) Auth::user()->phone),
+                ],
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('Visit Razorpay order creation failed', [
+                'service_request_id' => $serviceRequest->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to create payment order. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Verify Razorpay callback for a visit booking.
+     */
+    public function verifyVisitRazorpayPayment(Request $request, ServiceRequest $serviceRequest)
+    {
+        if ((int) $serviceRequest->patient_id !== (int) Auth::id()) {
+            abort(403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'razorpay_order_id' => 'required|string',
+            'razorpay_payment_id' => 'required|string',
+            'razorpay_signature' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Razorpay callback payload.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            app(\App\Modules\Services\Services\ServiceVisitPaymentService::class)
+                ->verifyAndMarkPaid($serviceRequest, $request->only([
+                    'razorpay_order_id',
+                    'razorpay_payment_id',
+                    'razorpay_signature',
+                ]), Auth::user());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment verified successfully. Staff will be notified.',
+                'redirect_url' => route('services.my-requests'),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('Visit Razorpay verify failed', [
+                'service_request_id' => $serviceRequest->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment verification failed. Please contact support if money was deducted.',
+            ], 500);
+        }
     }
 
     /**

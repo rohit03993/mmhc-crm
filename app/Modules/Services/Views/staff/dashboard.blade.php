@@ -609,6 +609,20 @@
                                     <i class="fas fa-bell text-warning me-2"></i>
                                     <strong>New Booking Request</strong>
                                 </div>
+                                @if(! $service->isVisitPaymentSettled())
+                                <div class="alert alert-warning small mt-3 mb-0">
+                                    <i class="fas fa-rupee-sign me-1"></i>
+                                    Waiting for patient visit payment. You can accept once the fee is paid (or recorded by admin).
+                                </div>
+                                <div class="d-flex flex-column gap-2 mt-3">
+                                    <button type="button" class="btn btn-action-success w-100" disabled>
+                                        <i class="fas fa-lock me-2"></i>Accept (payment pending)
+                                    </button>
+                                    <button type="button" class="btn btn-action-danger w-100" onclick="showRejectModal({{ $service->id }})">
+                                        <i class="fas fa-times-circle me-2"></i>Reject Booking
+                                    </button>
+                                </div>
+                                @else
                                 <div class="d-flex flex-column gap-2 mt-3">
                                     <form method="POST" action="{{ route('staff.booking.accept', $service) }}" class="w-100">
                                         @csrf
@@ -620,6 +634,7 @@
                                         <i class="fas fa-times-circle me-2"></i>Reject Booking
                                     </button>
                                 </div>
+                                @endif
                                 
                                 <!-- Reject Modal - Enhanced -->
                                 <div id="rejectModal{{ $service->id }}" style="display: none;" class="reject-modal-container mt-3">

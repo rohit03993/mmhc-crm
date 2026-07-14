@@ -80,6 +80,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/request', [\App\Modules\Services\Controllers\ServiceController::class, 'store'])->name('store');
         Route::get('/my-requests', [\App\Modules\Services\Controllers\ServiceController::class, 'myRequests'])->name('my-requests');
         Route::post('/{serviceRequest}/cancel', [\App\Modules\Services\Controllers\ServiceController::class, 'cancel'])->name('cancel');
+        Route::get('/{serviceRequest}/pay', [\App\Modules\Services\Controllers\ServiceController::class, 'pay'])->name('pay');
+        Route::post('/{serviceRequest}/razorpay/order', [\App\Modules\Services\Controllers\ServiceController::class, 'createVisitRazorpayOrder'])->name('razorpay.order');
+        Route::post('/{serviceRequest}/razorpay/verify', [\App\Modules\Services\Controllers\ServiceController::class, 'verifyVisitRazorpayPayment'])->name('razorpay.verify');
         Route::get('/{serviceRequest}', [\App\Modules\Services\Controllers\ServiceController::class, 'show'])->name('show');
     });
 

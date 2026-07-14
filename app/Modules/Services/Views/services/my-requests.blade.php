@@ -87,7 +87,12 @@
                                     @if($request->isCoveredBySubscription())
                                         <span class="text-success">FREE</span>
                                     @else
-                                        â‚¹{{ number_format($request->total_amount, 0) }}
+                                        ₹{{ number_format($request->total_amount, 0) }}
+                                        @if($request->requiresVisitPayment() && ! $request->isVisitPaymentSettled())
+                                            <span class="badge bg-warning text-dark ms-1">Unpaid</span>
+                                        @elseif($request->payment_status === 'paid')
+                                            <span class="badge bg-success ms-1">Paid</span>
+                                        @endif
                                     @endif
                                 </div>
                             </div>
@@ -145,10 +150,15 @@
                         
                         <!-- Card Footer Actions -->
                         <div class="card-footer-mobile-full">
-                            <div class="d-flex gap-2 align-items-stretch">
+                            <div class="d-flex gap-2 align-items-stretch flex-wrap">
                                 <a href="{{ route('services.show', $request) }}" class="btn btn-primary btn-sm flex-fill">
                                     <i class="fas fa-eye me-1"></i>View Details
                                 </a>
+                                @if($request->requiresVisitPayment() && ! $request->isVisitPaymentSettled() && ! $request->isCancelled())
+                                <a href="{{ route('services.pay', $request) }}" class="btn btn-success btn-sm flex-fill">
+                                    <i class="fas fa-credit-card me-1"></i>Pay ₹{{ number_format((float) $request->total_amount, 0) }}
+                                </a>
+                                @endif
                                 @if($request->canBeCancelledByPatient())
                                 <form method="POST"
                                       action="{{ route('services.cancel', $request) }}"

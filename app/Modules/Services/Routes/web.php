@@ -22,6 +22,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/request', [ServiceController::class, 'store'])->name('store');
         Route::get('/my-requests', [ServiceController::class, 'myRequests'])->name('my-requests');
         Route::post('/{serviceRequest}/cancel', [ServiceController::class, 'cancel'])->name('cancel');
+        Route::get('/{serviceRequest}/pay', [ServiceController::class, 'pay'])->name('pay');
+        Route::post('/{serviceRequest}/razorpay/order', [ServiceController::class, 'createVisitRazorpayOrder'])->name('razorpay.order');
+        Route::post('/{serviceRequest}/razorpay/verify', [ServiceController::class, 'verifyVisitRazorpayPayment'])->name('razorpay.verify');
         Route::get('/{serviceRequest}', [ServiceController::class, 'show'])->name('show');
     });
     

@@ -22,6 +22,14 @@ class ServiceRequest extends Model
         'total_staff_payout',
         'prepaid_amount',
         'payment_status',
+        'payment_provider',
+        'gateway_status',
+        'gateway_payload',
+        'razorpay_order_id',
+        'razorpay_payment_id',
+        'razorpay_signature',
+        'razorpay_event_id',
+        'visit_paid_at',
         'status', // 'pending', 'pending_approval', 'assigned', 'in_progress', 'completed', 'cancelled'
         'notes',
         'special_requirements',
@@ -72,6 +80,8 @@ class ServiceRequest extends Model
         'total_amount' => 'decimal:2',
         'total_staff_payout' => 'decimal:2',
         'prepaid_amount' => 'decimal:2',
+        'gateway_payload' => 'array',
+        'visit_paid_at' => 'datetime',
     ];
 
     /**
@@ -139,6 +149,26 @@ class ServiceRequest extends Model
     {
         return (float) $this->total_amount <= 0
             && $this->payment_status === 'paid';
+    }
+
+    /**
+     * Visit has a charge that must be settled (online or office collection).
+     */
+    public function requiresVisitPayment(): bool
+    {
+        return (float) $this->total_amount > 0;
+    }
+
+    /**
+     * Online/office fee is settled (free visits count as settled).
+     */
+    public function isVisitPaymentSettled(): bool
+    {
+        if (! $this->requiresVisitPayment()) {
+            return true;
+        }
+
+        return $this->payment_status === 'paid';
     }
 
     public function paymentStatusLabel(): string

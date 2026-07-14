@@ -459,7 +459,7 @@
                     @if(!($hasActiveSubscription ?? false))
                     <p class="app-payment-note small text-muted mb-0 mt-2 px-2">
                         <i class="fas fa-info-circle me-1"></i>
-                        Payment is collected by the MMHC team after booking (cash, UPI, or office). Online pay for visits is coming soon.
+                        After booking you’ll pay the visit fee online via Razorpay (UPI, card, wallet). Office / cash collection by MMHC is still available as a fallback.
                     </p>
                     @endif
                 </div>
