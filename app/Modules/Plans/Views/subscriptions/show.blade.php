@@ -58,7 +58,7 @@
                             <div class="col-6 col-md-3">
                                 <div class="info-item">
                                     <small class="text-muted d-block">Paid Amount</small>
-                                    <strong class="text-success">₹{{ number_format($subscription->paid_amount, 0) }}</strong>
+                                    <strong class="text-{{ ($subscription->paid_amount > 0 && $subscription->payment_status === 'paid') ? 'success' : ($subscription->paid_amount > 0 ? 'primary' : 'muted') }}">₹{{ number_format($subscription->paid_amount, 0) }}</strong>
                                 </div>
                             </div>
                             <div class="col-6 col-md-3">

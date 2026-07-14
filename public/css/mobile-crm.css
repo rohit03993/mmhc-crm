@@ -833,7 +833,7 @@
     position: fixed;
     top: 0;
     left: 50%;
-    transform: translate(-50%, -56px);
+    transform: translate(-50%, -120%);
     z-index: 2000;
     display: flex;
     flex-direction: column;
@@ -846,7 +846,15 @@
     border: 1px solid #e2e8f0;
     border-top: none;
     pointer-events: none;
-    transition: transform 0.15s ease;
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.15s ease, opacity 0.12s ease, visibility 0.12s ease;
+}
+
+/* Only visible while the user is actively pulling / refreshing */
+.mmhc-ptr-indicator.is-visible {
+    opacity: 1;
+    visibility: visible;
 }
 
 .mmhc-ptr-indicator__icon {

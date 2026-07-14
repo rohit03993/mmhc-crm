@@ -2561,3 +2561,41 @@
 }
 .app-book-btn, .app-tab-btn, .app-btn-primary, .app-btn-secondary { min-height: 44px; }
 .capacitor-app .mobile-app-container { padding-bottom: calc(80px + var(--mmhc-safe-bottom)) !important; }
+
+/* Find-staff location CTA — avoid raw browser button / black focus box */
+.staff-location-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    border: 1px solid #99f6e4;
+    background: #fff;
+    color: #0f766e;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+.staff-location-btn:focus {
+    outline: none;
+}
+.staff-location-btn:focus-visible {
+    outline: 2px solid #0f766e;
+    outline-offset: 2px;
+}
+.staff-location-banner {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 0.65rem;
+}
+.staff-location-banner p { margin: 0.2rem 0 0; font-size: 0.8rem; color: #64748b; }
