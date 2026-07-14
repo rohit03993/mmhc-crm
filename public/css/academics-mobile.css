@@ -3299,5 +3299,19 @@
         font-weight: 600;
         color: var(--acad-primary);
     }
+
+    /* Denser list cards on small phones */
+    .acad-mobile-page .acad-exam-card,
+    .acad-mobile-page .acad-form-card {
+        padding: 0.85rem 1rem;
+    }
+
+    .acad-mobile-page .acad-resource-list {
+        gap: 0.5rem;
+    }
+
+    .acad-mobile-header__title {
+        font-size: 1rem;
+    }
 }
 

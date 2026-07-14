@@ -87,8 +87,151 @@
         if (!main) {
             return;
         }
-        if (main.querySelector('.mobile-app-container, .app-mobile-header, .app-header-mobile, .community-page')) {
+        if (main.querySelector('.mobile-app-container, .app-mobile-header, .app-header-mobile, .community-page, .admin-mobile-shell--layout')) {
             document.body.classList.add('mmhc-mobile-app-shell');
+        }
+    }
+
+    /** Toast stack — UI-only replacement for short alert() messages on phone */
+    function initToastStack() {
+        if (document.getElementById('mmhcToastStack')) {
+            return;
+        }
+        var stack = document.createElement('div');
+        stack.id = 'mmhcToastStack';
+        stack.className = 'mmhc-toast-stack';
+        stack.setAttribute('aria-live', 'polite');
+        stack.setAttribute('aria-atomic', 'true');
+        document.body.appendChild(stack);
+
+        window.mmhcToast = function (message, type) {
+            if (!message) {
+                return;
+            }
+            var toast = document.createElement('div');
+            toast.className = 'mmhc-toast mmhc-toast--' + (type || 'info');
+            toast.setAttribute('role', 'status');
+            toast.textContent = String(message);
+            stack.appendChild(toast);
+            requestAnimationFrame(function () {
+                toast.classList.add('is-visible');
+            });
+            window.setTimeout(function () {
+                toast.classList.remove('is-visible');
+                window.setTimeout(function () {
+                    toast.remove();
+                }, 220);
+            }, 3200);
+        };
+
+        if (mq.matches && !window.__mmhcAlertPatched) {
+            window.__mmhcAlertPatched = true;
+            var nativeAlert = window.alert;
+            window.alert = function (msg) {
+                if (typeof msg === 'string' && msg.length > 0 && msg.length <= 240 && !msg.includes('\n')) {
+                    window.mmhcToast(msg, 'info');
+                    return;
+                }
+                nativeAlert(msg);
+            };
+        }
+    }
+
+    function hidePageSkeleton() {
+        document.querySelectorAll('[data-mmhc-skeleton]').forEach(function (el) {
+            el.classList.add('is-hidden');
+            el.setAttribute('aria-hidden', 'true');
+        });
+    }
+
+    /** Admin GET filter forms → bottom sheet on phone (fields unchanged) */
+    function enhanceAdminFilterSheets() {
+        if (!mq.matches) {
+            return;
+        }
+        var root = document.querySelector('.main-content') || document.body;
+        root.querySelectorAll('form[method="get"]').forEach(function (form) {
+            if (form.getAttribute('data-mmhc-filter-sheet') === '1') {
+                return;
+            }
+            if (form.id === 'searchFilterForm' || form.closest('.navbar, .app-bottom-nav, .mmhc-action-notices')) {
+                return;
+            }
+            var fields = form.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), select, textarea');
+            if (fields.length < 2 || fields.length > 10) {
+                return;
+            }
+            if (!form.querySelector('button[type="submit"], input[type="submit"]')) {
+                return;
+            }
+            form.setAttribute('data-mmhc-filter-sheet', '1');
+            form.classList.add('mmhc-admin-filter-panel');
+
+            var toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'mmhc-admin-filter-toggle d-md-none';
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.innerHTML = '<i class="fas fa-sliders-h" aria-hidden="true"></i> Filters';
+
+            var backdrop = document.createElement('div');
+            backdrop.className = 'mmhc-filter-sheet-backdrop';
+            backdrop.setAttribute('aria-hidden', 'true');
+
+            function setOpen(open) {
+                form.classList.toggle('is-open', open);
+                backdrop.classList.toggle('is-open', open);
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                toggle.innerHTML = open
+                    ? '<i class="fas fa-times" aria-hidden="true"></i> Close'
+                    : '<i class="fas fa-sliders-h" aria-hidden="true"></i> Filters';
+                document.body.classList.toggle('mmhc-filter-sheet-open', open);
+            }
+
+            toggle.addEventListener('click', function () {
+                setOpen(!form.classList.contains('is-open'));
+            });
+            backdrop.addEventListener('click', function () {
+                setOpen(false);
+            });
+
+            form.parentNode.insertBefore(toggle, form);
+            document.body.appendChild(backdrop);
+        });
+    }
+
+    /** Legacy Tailwind admin CMS — inject compact mobile header */
+    function enhanceAdminStandaloneChrome() {
+        if (!mq.matches || !document.body.classList.contains('mmhc-admin-standalone')) {
+            return;
+        }
+        if (document.querySelector('.mmhc-admin-mobile-header')) {
+            return;
+        }
+        var desktopHeader = document.querySelector('header');
+        var titleEl = desktopHeader ? desktopHeader.querySelector('h1') : null;
+        var title = titleEl ? (titleEl.textContent || '').trim() : 'Admin';
+        var backHref = desktopHeader ? desktopHeader.querySelector('a[href*="dashboard"]') : null;
+        var backUrl = (window.mmhcAdminDashboardUrl || '/admin/dashboard');
+        if (backHref) {
+            backUrl = backHref.getAttribute('href') || backUrl;
+        }
+
+        var bar = document.createElement('header');
+        bar.className = 'mmhc-admin-mobile-header';
+        bar.setAttribute('role', 'banner');
+        bar.innerHTML =
+            '<div class="mmhc-admin-mobile-header__bar">' +
+            '<a href="' + backUrl + '" class="mmhc-admin-mobile-header__back" aria-label="Back">' +
+            '<i class="fas fa-arrow-left" aria-hidden="true"></i></a>' +
+            '<div class="mmhc-admin-mobile-header__titles">' +
+            '<h1 class="mmhc-admin-mobile-header__title"></h1>' +
+            '<p class="mmhc-admin-mobile-header__subtitle mb-0">MMHC Admin</p></div></div>';
+        bar.querySelector('.mmhc-admin-mobile-header__title').textContent = title;
+
+        var mount = document.querySelector('.min-h-screen') || document.body;
+        mount.insertBefore(bar, mount.firstChild);
+        if (desktopHeader) {
+            desktopHeader.classList.add('mmhc-admin-standalone-desktop-header');
         }
     }
 
@@ -180,15 +323,21 @@
 
     function initMobileLayout() {
         applyMobileClass();
+        initToastStack();
         markMobileAppShell();
         wrapTables();
         enhanceMobileTables();
         enhanceStickyFormActions();
         enhanceStaffEarningsCards();
+        enhanceAdminFilterSheets();
+        enhanceAdminStandaloneChrome();
         bindActionNoticesToggle();
+        hidePageSkeleton();
     }
 
     initMobileLayout();
+
+    window.addEventListener('load', hidePageSkeleton);
 
     if (typeof mq.addEventListener === 'function') {
         mq.addEventListener('change', initMobileLayout);

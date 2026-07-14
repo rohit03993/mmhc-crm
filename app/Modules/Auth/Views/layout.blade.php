@@ -11,6 +11,11 @@
     $healthcareMobileOn = auth()->check() && HealthcareMobileUi::enabledFor(auth()->user());
     $healthcareStylesOn = auth()->check() && (auth()->user()->isPatient() || auth()->user()->isStaff());
     $academicsMobileOn = auth()->check() && request()->routeIs('academics.*') && AcademicsMobileUi::enabledFor(auth()->user());
+    $mmhcAdminMobileLayout = auth()->check()
+        && auth()->user()->isAdmin()
+        && ! request()->routeIs('admin.dashboard')
+        && ! request()->routeIs('academics.*');
+    $mmhcPullRefreshOn = $academicsMobileOn || $healthcareMobileOn || $mmhcAdminMobileLayout;
 @endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="@guest mmhc-auth-guest @else {{ $mobileHtmlClasses }} @endguest">
 <head>
@@ -44,7 +49,7 @@
     <meta name="theme-color" content="{{ auth()->user()->isPatient() ? '#0f766e' : '#4338ca' }}">
     @endif
 
-    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714f">
+    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714g">
     @auth
     <link rel="stylesheet" href="{{ asset('css/crm-desktop.css') }}?v=20260608b">
     <link rel="stylesheet" href="{{ asset('css/mmhc-member-nav.css') }}?v=20260602">
@@ -261,7 +266,7 @@
         }
     </style>
 </head>
-<body class="@guest mmhc-auth-guest @endguest @if(auth()->check()) mmhc-crm-auth mmhc-app-shell {{ $mobileBodyClasses }} @endif @if(auth()->check() && request()->is('academics*')) mmhc-academics @endif @if(auth()->check() && trim($__env->yieldContent('page-title', '')) !== '') mmhc-has-page-title @endif">
+<body class="@guest mmhc-auth-guest @endguest @if(auth()->check()) mmhc-crm-auth mmhc-app-shell {{ $mobileBodyClasses }} @endif @if(auth()->check() && request()->is('academics*')) mmhc-academics @endif @if(!empty($mmhcAdminMobileLayout)) mmhc-admin-mobile-layout @endif @if(auth()->check() && trim($__env->yieldContent('page-title', '')) !== '') mmhc-has-page-title @endif">
     @if(auth()->check())
         @include('auth::components.navbar')
         <div class="offcanvas offcanvas-start sidebar d-lg-none" tabindex="-1" id="mmhcAppSidebar" aria-labelledby="mmhcAppSidebarLabel" style="--bs-offcanvas-width: min(20rem, 92vw);">
@@ -287,7 +292,7 @@
                 </nav>
 
                 <!-- Main content -->
-                <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-0 px-md-4 main-content">
+                <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-0 px-md-4 main-content @if(!empty($mmhcAdminMobileLayout)) mmhc-admin-mobile-main @endif">
                     <!-- Page title (all breakpoints; sidebar is offcanvas on small screens) -->
                     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center border-bottom px-3 px-md-0 mmhc-page-title-bar">
                         <h1 class="h2 mb-0 min-w-0 pe-2">@yield('page-title', 'Dashboard')</h1>
@@ -333,7 +338,7 @@
                             || !empty($pendingServiceCompletionBanner)
                             || !empty($hasPendingContactUpdate);
                     @endphp
-                    <div class="mmhc-action-notices{{ $mmhcNoticesDefaultOpen ? ' is-open' : '' }}" data-mmhc-action-notices data-count="{{ $mmhcActionNoticeCount }}">
+                    <div class="mmhc-action-notices mmhc-otp-panels{{ $mmhcNoticesDefaultOpen ? ' is-open' : '' }}" data-mmhc-action-notices data-count="{{ $mmhcActionNoticeCount }}">
                         <button type="button"
                                 class="mmhc-action-notices__toggle d-md-none"
                                 data-mmhc-notices-toggle
@@ -533,7 +538,23 @@
                         ])
                     @endif
 
+                    @if(!empty($mmhcAdminMobileLayout))
+                    <div class="mobile-app-container admin-mobile-shell admin-mobile-shell--layout" data-mmhc-ptr>
+                        @include('auth::admin.partials.mobile-header')
+                        <div class="app-content admin-layout-content">
+                            <div class="mmhc-page-skeleton d-md-none" data-mmhc-skeleton aria-hidden="true">
+                                <div class="mmhc-page-skeleton__bar"></div>
+                                <div class="mmhc-page-skeleton__card"></div>
+                                <div class="mmhc-page-skeleton__card mmhc-page-skeleton__card--short"></div>
+                            </div>
+                    @endif
+
                     @yield('content')
+
+                    @if(!empty($mmhcAdminMobileLayout))
+                        </div>
+                    </div>
+                    @endif
                 </main>
 
                 @include('auth::components.bottom-nav')
@@ -561,8 +582,8 @@
         })();
     </script>
     @endif
-    <script src="{{ asset('js/mobile-crm.js') }}?v=20260714f" defer></script>
-    @if($academicsMobileOn || $healthcareMobileOn)
+    <script src="{{ asset('js/mobile-crm.js') }}?v=20260714g" defer></script>
+    @if($mmhcPullRefreshOn)
     <script src="{{ asset('js/mmhc-pull-refresh.js') }}?v=20260714c" defer></script>
     @endif
     @if($academicsMobileOn)

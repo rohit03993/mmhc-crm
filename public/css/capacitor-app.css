@@ -56,8 +56,13 @@ body.capacitor-app {
         padding-top: calc(1rem + env(safe-area-inset-top, 0px));
     }
 
-    body.capacitor-app .text-5xl {
-        font-size: 2rem !important;
-        line-height: 1.2 !important;
+    body.capacitor-app .app-header-mobile,
+    body.capacitor-app .mmhc-admin-mobile-header {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    body.capacitor-app .mmhc-sticky-actions,
+    body.capacitor-app .app-form-actions.mmhc-sticky-actions {
+        padding-bottom: calc(0.65rem + env(safe-area-inset-bottom, 0px)) !important;
     }
 }
