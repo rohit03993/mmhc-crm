@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="MeD Miracle Health Care">
+  <rect width="512" height="512" rx="96" fill="#ffffff"/>
+  <!-- Heart-cross mark (safe zone ~20% inset for maskable) -->
+  <g transform="translate(256 256)">
+    <!-- Blue pills forming lower cross -->
+    <rect x="-28" y="-8" width="56" height="130" rx="28" fill="#2563eb" transform="rotate(-35)"/>
+    <rect x="-28" y="-8" width="56" height="130" rx="28" fill="#2563eb" transform="rotate(35)"/>
+    <!-- Green heart top -->
+    <path fill="#22c55e" d="M0,-48 C-42,-118 -118,-78 -118,-18 C-118,42 -28,98 0,128 C28,98 118,42 118,-18 C118,-78 42,-118 0,-48 Z"/>
+    <ellipse cx="0" cy="-20" rx="72" ry="78" fill="#22c55e"/>
+  </g>
+</svg>

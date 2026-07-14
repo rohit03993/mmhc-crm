@@ -9,7 +9,8 @@
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
+    @include('partials.pwa-head')
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -1187,6 +1188,7 @@
 
     <script src="{{ asset('js/mobile-crm.js') }}" defer></script>
     <script src="{{ asset('js/capacitor-app.js') }}" defer></script>
+    @include('partials.pwa-scripts')
     <script>
     (function () {
         var btn = document.getElementById('mmhcMobileMenuBtn');

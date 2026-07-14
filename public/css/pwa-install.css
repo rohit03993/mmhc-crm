@@ -1,0 +1,207 @@
+/**
+ * MeD Miracle — PWA install prompt (modern bottom sheet / tip).
+ * Hidden automatically in installed / native contexts.
+ */
+@media (display-mode: standalone), (display-mode: minimal-ui) {
+    .mmhc-pwa-install {
+        display: none !important;
+    }
+}
+
+html.capacitor-app .mmhc-pwa-install,
+body.capacitor-app .mmhc-pwa-install,
+body.mmhc-pwa-standalone .mmhc-pwa-install {
+    display: none !important;
+}
+
+.mmhc-pwa-install {
+    --pwa-teal: #0f766e;
+    --pwa-sky: #0ea5e9;
+    --pwa-ink: #0f172a;
+    --pwa-muted: #64748b;
+    --pwa-safe-bottom: env(safe-area-inset-bottom, 0px);
+
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1080;
+    padding: 0 0.75rem calc(0.75rem + var(--pwa-safe-bottom));
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(110%);
+    transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mmhc-pwa-install.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.mmhc-pwa-install__sheet {
+    max-width: 26rem;
+    margin: 0 auto;
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    padding: 1rem 1rem 1.05rem;
+    border-radius: 1.15rem 1.15rem 1rem 1rem;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(15, 118, 110, 0.12);
+    box-shadow:
+        0 -4px 24px rgba(15, 23, 42, 0.08),
+        0 12px 40px rgba(15, 118, 110, 0.16);
+}
+
+.mmhc-pwa-install__icon {
+    flex: 0 0 auto;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.85rem;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.12);
+}
+
+.mmhc-pwa-install__icon img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mmhc-pwa-install__body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.mmhc-pwa-install__title {
+    margin: 0 0 0.2rem;
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--pwa-ink);
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+}
+
+.mmhc-pwa-install__text {
+    margin: 0 0 0.85rem;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--pwa-muted);
+}
+
+.mmhc-pwa-install__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+}
+
+.mmhc-pwa-install__btn {
+    appearance: none;
+    border: 0;
+    border-radius: 999px;
+    padding: 0.45rem 0.95rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.mmhc-pwa-install__btn:active {
+    transform: scale(0.97);
+}
+
+.mmhc-pwa-install__btn--primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--pwa-teal) 0%, var(--pwa-sky) 100%);
+    box-shadow: 0 6px 16px rgba(15, 118, 110, 0.28);
+}
+
+.mmhc-pwa-install__btn--ghost {
+    color: var(--pwa-muted);
+    background: transparent;
+}
+
+.mmhc-pwa-install__btn--ghost:hover {
+    color: var(--pwa-ink);
+    background: rgba(15, 23, 42, 0.04);
+}
+
+.mmhc-pwa-install__close {
+    flex: 0 0 auto;
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: #94a3b8;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    margin: -0.15rem -0.25rem 0 0;
+}
+
+.mmhc-pwa-install__close:hover {
+    color: var(--pwa-ink);
+    background: rgba(15, 23, 42, 0.05);
+}
+
+.mmhc-pwa-install__ios-steps {
+    margin: 0 0 0.85rem;
+    padding-left: 1.1rem;
+    color: var(--pwa-muted);
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.mmhc-pwa-install__ios-steps li {
+    margin-bottom: 0.2rem;
+}
+
+.mmhc-pwa-install__ios-steps strong {
+    color: var(--pwa-ink);
+    font-weight: 600;
+}
+
+/* Leave room above bottom nav when CRM chrome is present */
+body.mmhc-crm-auth .mmhc-pwa-install {
+    bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+    body.mmhc-crm-auth .mmhc-pwa-install {
+        bottom: 0;
+    }
+
+    .mmhc-pwa-install {
+        left: auto;
+        right: 1.25rem;
+        bottom: 1.25rem;
+        width: min(100%, 22rem);
+        padding: 0;
+    }
+}
+
+/* Installed PWA — safe areas (mirrors Capacitor polish) */
+@media (display-mode: standalone), (display-mode: minimal-ui) {
+    html {
+        min-height: 100dvh;
+    }
+
+    body.mmhc-pwa-standalone .top-navbar,
+    body.mmhc-pwa-standalone .mmhc-landing-nav {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    body.mmhc-pwa-standalone .app-bottom-nav {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+}

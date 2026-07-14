@@ -23,7 +23,8 @@
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
+    @include('partials.pwa-head')
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -533,6 +534,7 @@
     <script src="{{ asset('js/healthcare-mobile.js') }}?v=20260605" defer></script>
     @endif
     <script src="{{ asset('js/capacitor-app.js') }}" defer></script>
+    @include('partials.pwa-scripts')
     @yield('scripts')
 </body>
 </html>
