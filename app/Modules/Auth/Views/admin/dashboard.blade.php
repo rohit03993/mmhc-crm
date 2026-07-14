@@ -968,33 +968,44 @@
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     .container-fluid {
-        padding: 1rem;
+        padding: 0.75rem;
     }
     
     .admin-header-card {
-        padding: 1rem;
+        padding: 0.85rem !important;
+        border-radius: 14px;
+        margin-bottom: 0.75rem;
     }
     
     .admin-name {
-        font-size: 1.3rem;
-    }
-    
-    .stat-card-modern {
-        padding: 1rem;
-    }
-    
-    .stat-value {
-        font-size: 1.5rem;
-    }
-    
-    .stat-icon {
-        width: 50px;
-        height: 50px;
         font-size: 1.2rem;
     }
     
+    .stat-card-modern {
+        padding: 0.75rem !important;
+        border-radius: 14px;
+        margin-bottom: 0.55rem;
+        min-height: auto;
+    }
+    
+    .stat-value {
+        font-size: 1.35rem;
+    }
+    
+    .stat-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 1.05rem;
+    }
+    
     .modern-card-body {
-        padding: 1rem;
+        padding: 0.85rem;
+    }
+
+    /* Prefer card grid density — less empty vertical gap */
+    .row.g-3, .row.g-4 {
+        --bs-gutter-y: 0.55rem;
+        --bs-gutter-x: 0.55rem;
     }
 }
 

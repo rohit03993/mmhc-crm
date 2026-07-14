@@ -37,6 +37,11 @@
             <div class="acad-oc-tip__body">
                 <strong class="acad-oc-tip__title">How to join</strong>
                 <p class="acad-oc-tip__text mb-0">Pick a classroom under <em>Browse</em>, tap <strong>Join</strong>, then open it for notes and tasks.</p>
+                @if(in_array(auth()->user()->role, ['nurse', 'caregiver'], true))
+                    <a href="{{ route('academics.mentorship.index') }}" class="acad-oc-tip__link mt-2 d-inline-flex align-items-center gap-1">
+                        <i class="fas fa-hands-helping" aria-hidden="true"></i> Open Mentors
+                    </a>
+                @endif
             </div>
         </div>
         @if($joinedCount > 0)

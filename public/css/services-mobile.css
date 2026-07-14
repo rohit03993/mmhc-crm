@@ -144,7 +144,7 @@
 }
 
 .app-input-group i {
-    color: #667eea;
+    color: var(--mmhc-primary);
     font-size: 1rem;
 }
 
@@ -164,7 +164,7 @@
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
     color: white;
     border: none;
     display: flex;
@@ -244,7 +244,7 @@
     flex: 1;
     padding: 12px;
     border-radius: 10px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
     color: white;
     border: none;
     font-weight: 600;
@@ -398,7 +398,7 @@
     font-size: 0.7rem;
     font-weight: 600;
     color: white;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
 }
 
 .app-staff-card-body-full {
@@ -422,7 +422,7 @@
 
 .app-staff-detail-item i {
     width: 20px;
-    color: #667eea;
+    color: var(--mmhc-primary);
     text-align: center;
     font-size: 0.9rem;
 }
@@ -483,7 +483,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
     color: white;
     display: flex;
     align-items: center;
@@ -507,7 +507,7 @@
 }
 
 .app-step-icon.step-search {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
 }
 
 .app-step-icon.step-calendar {
@@ -628,7 +628,7 @@
 }
 
 .app-tab-btn.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
     color: white;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
@@ -818,7 +818,7 @@
     font-size: 0.7rem;
     font-weight: 600;
     color: white;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
 }
 
 /* Marketplace Card Body */
@@ -843,7 +843,7 @@
 }
 
 .app-spec-item i {
-    color: #667eea;
+    color: var(--mmhc-primary);
     font-size: 0.9rem;
 }
 
@@ -875,7 +875,7 @@
     width: 100%;
     padding: 12px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
     color: white;
     text-decoration: none;
     font-weight: 600;
@@ -929,7 +929,7 @@
     position: sticky;
     top: 0;
     z-index: 1000;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
     color: white;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     padding: 12px 16px;
@@ -1030,7 +1030,7 @@
 }
 
 .card-header-mobile-full.status-in_progress {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
 }
 
 .card-header-mobile-full.status-completed {
@@ -1094,7 +1094,7 @@
 
 .detail-label i {
     font-size: 0.7rem;
-    color: #667eea;
+    color: var(--mmhc-primary);
 }
 
 .detail-value {
@@ -1148,7 +1148,7 @@
     align-items: center;
     padding: 12px 24px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
     color: white;
     text-decoration: none;
     font-weight: 600;
@@ -1204,7 +1204,7 @@
     position: sticky;
     top: 0;
     z-index: 1000;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
     color: white;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     padding: 12px 16px;
@@ -1304,7 +1304,7 @@
 }
 
 .app-service-header.service-24 {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
 }
 
 .app-service-header.service-12 {
@@ -1387,7 +1387,7 @@
 }
 
 .app-service-detail-item i {
-    color: #667eea;
+    color: var(--mmhc-primary);
     width: 20px;
     text-align: center;
 }
@@ -1443,7 +1443,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
     color: white;
     display: flex;
     align-items: center;
@@ -1467,7 +1467,7 @@
 }
 
 .app-step-icon.step-register {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
 }
 
 .app-step-icon.step-request {
@@ -1582,7 +1582,7 @@
     padding: 20px;
     margin-bottom: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    border: 2px solid #667eea;
+    border: 2px solid var(--mmhc-primary);
 }
 
 .app-selected-staff-header {
@@ -1637,7 +1637,7 @@
     font-size: 0.75rem;
     font-weight: 600;
     background: #f0f4ff;
-    color: #667eea;
+    color: var(--mmhc-primary);
 }
 
 .app-staff-badge.availability-available {
@@ -1691,7 +1691,7 @@
 }
 
 .app-staff-detail i {
-    color: #667eea;
+    color: var(--mmhc-primary);
 }
 
 /* Alternatives Card */
@@ -1867,7 +1867,7 @@
 }
 
 .app-service-type-radio:checked + .app-service-type-label {
-    border-color: #667eea;
+    border-color: var(--mmhc-primary);
     background: #f0f4ff;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
 }
@@ -1883,7 +1883,7 @@
 }
 
 .app-service-type-header.service-24 {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
 }
 
 .app-service-type-header.service-12 {
@@ -1976,7 +1976,7 @@
     width: 40px;
     height: 40px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2005,7 +2005,7 @@
 }
 
 .app-form-label i {
-    color: #667eea;
+    color: var(--mmhc-primary);
     width: 20px;
 }
 
@@ -2023,7 +2023,7 @@
 
 .app-form-input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--mmhc-primary);
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     background: #fafbff;
 }
@@ -2078,7 +2078,7 @@
     flex: 1;
     padding: 14px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--mmhc-header-gradient);
     color: white;
     border: none;
     font-size: 0.95rem;
@@ -2147,7 +2147,7 @@
 
 .app-quick-booking-header i {
     font-size: 1.3rem;
-    color: #667eea;
+    color: var(--mmhc-primary);
 }
 
 .app-quick-booking-header h4 {
@@ -2178,20 +2178,20 @@
 }
 
 .app-quick-preset:hover {
-    border-color: #667eea;
+    border-color: var(--mmhc-primary);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
 }
 
 .app-quick-preset.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-color: #667eea;
+    background: var(--mmhc-header-gradient);
+    border-color: var(--mmhc-primary);
     color: white;
 }
 
 .app-quick-preset i {
     font-size: 1.2rem;
-    color: #667eea;
+    color: var(--mmhc-primary);
 }
 
 .app-quick-preset.active i {
@@ -2237,8 +2237,8 @@
 
 .app-quick-date-btn:hover {
     background: #e9ecef;
-    border-color: #667eea;
-    color: #667eea;
+    border-color: var(--mmhc-primary);
+    color: var(--mmhc-primary);
 }
 
 .app-duration-wrapper {
@@ -2266,13 +2266,13 @@
 
 .app-duration-preset:hover {
     background: #e9ecef;
-    border-color: #667eea;
-    color: #667eea;
+    border-color: var(--mmhc-primary);
+    color: var(--mmhc-primary);
 }
 
 .app-duration-preset.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-color: #667eea;
+    background: var(--mmhc-header-gradient);
+    border-color: var(--mmhc-primary);
     color: white;
 }
 
@@ -2285,10 +2285,10 @@
     top: 8px;
     right: 8px;
     padding: 6px 12px;
-    border: 1px solid #667eea;
+    border: 1px solid var(--mmhc-primary);
     border-radius: 8px;
     background: white;
-    color: #667eea;
+    color: var(--mmhc-primary);
     font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
@@ -2299,7 +2299,7 @@
 }
 
 .app-quick-fill-btn:hover {
-    background: #667eea;
+    background: var(--mmhc-primary);
     color: white;
 }
 
@@ -2318,10 +2318,10 @@
     right: 8px;
     width: 32px;
     height: 32px;
-    border: 1px solid #667eea;
+    border: 1px solid var(--mmhc-primary);
     border-radius: 8px;
     background: white;
-    color: #667eea;
+    color: var(--mmhc-primary);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -2330,7 +2330,7 @@
 }
 
 .app-quick-fill-btn-small:hover {
-    background: #667eea;
+    background: var(--mmhc-primary);
     color: white;
 }
 
@@ -2418,8 +2418,8 @@
 }
 
 .app-progress-step.active .step-icon {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-color: #667eea;
+    background: var(--mmhc-header-gradient);
+    border-color: var(--mmhc-primary);
     color: white;
     transform: scale(1.1);
 }
@@ -2432,7 +2432,7 @@
 }
 
 .app-progress-step.active .step-label {
-    color: #667eea;
+    color: var(--mmhc-primary);
 }
 
 .btn-loading {
@@ -2499,6 +2499,29 @@
 .mmhc-booking-flow__item.is-active .mmhc-booking-flow__icon { background: var(--mmhc-header-gradient); color: #fff; }
 .mmhc-booking-flow__item.is-active .mmhc-booking-flow__label { color: #334155; }
 .mmhc-booking-flow__item.is-done .mmhc-booking-flow__icon { background: #d1fae5; color: #047857; }
+
+/* Compact booking steps on phone — less scroll; links unchanged */
+@media (max-width: 767.98px) {
+  .mmhc-booking-flow { margin-bottom: 0.5rem !important; }
+  .mmhc-booking-flow__list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.25rem;
+    padding: 0.4rem 0.5rem;
+    scrollbar-width: none;
+  }
+  .mmhc-booking-flow__list::-webkit-scrollbar { display: none; }
+  .mmhc-booking-flow__item { flex: 0 0 auto; min-width: 4.25rem; }
+  .mmhc-booking-flow__link { min-height: 40px; font-size: 0.65rem; gap: 0.15rem; }
+  .mmhc-booking-flow__icon { width: 1.7rem; height: 1.7rem; font-size: 0.68rem; }
+  .mmhc-booking-flow__label {
+    max-width: 4.4rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
 .sr-payment-summary { font-size: 0.9rem; }
 .sr-payment-summary__row { display: flex; justify-content: space-between; align-items: baseline; padding: 0.35rem 0; border-bottom: 1px dashed #e2e8f0; }
 .sr-payment-summary__row--emphasis { border-bottom: none; padding-top: 0.5rem; }

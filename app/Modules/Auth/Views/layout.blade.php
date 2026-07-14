@@ -34,7 +34,7 @@
     @yield('head')
 
     @if($academicsMobileOn || (auth()->check() && request()->routeIs('academics.*')))
-    <link rel="stylesheet" href="{{ asset('css/academics-mobile.css') }}?v=20260608b">
+    <link rel="stylesheet" href="{{ asset('css/academics-mobile.css') }}?v=20260714e">
     <meta name="theme-color" content="#4338ca">
     @endif
     @if($healthcareStylesOn)
@@ -44,7 +44,7 @@
     <meta name="theme-color" content="{{ auth()->user()->isPatient() ? '#0f766e' : '#4338ca' }}">
     @endif
 
-    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714d">
+    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714e">
     @auth
     <link rel="stylesheet" href="{{ asset('css/crm-desktop.css') }}?v=20260608b">
     <link rel="stylesheet" href="{{ asset('css/mmhc-member-nav.css') }}?v=20260602">
@@ -299,7 +299,7 @@
                         </div>
                     </div>
 
-                    <!-- Alerts - Mobile App Style -->
+                    <!-- Alerts - Mobile App Style (flash always visible; action banners compact on phone) -->
                     @if(session('success'))
                         <div class="alert alert-success alert-dismissible fade show app-alert" role="alert">
                             <i class="fas fa-check-circle me-2"></i>
@@ -316,12 +316,45 @@
                         </div>
                     @endif
 
+                    @php
+                        $mmhcActionNoticeCount = 0;
+                        if (!empty($hasPendingContactUpdate)) { $mmhcActionNoticeCount++; }
+                        if (!empty($heldEarningsDueToUnverifiedMobile)) { $mmhcActionNoticeCount++; }
+                        elseif (!empty($needsPhoneVerification) && ! request()->routeIs('profile.verify-phone')) { $mmhcActionNoticeCount++; }
+                        if (!empty($pendingReferralOtpBanner) && empty($hasPendingContactUpdate)) { $mmhcActionNoticeCount++; }
+                        if (!empty($pendingRewardOtpBanner) && empty($hasPendingContactUpdate)) { $mmhcActionNoticeCount++; }
+                        if (!empty($pendingServiceCompletionBanner) && empty($hasPendingContactUpdate)) { $mmhcActionNoticeCount++; }
+                    @endphp
+
+                    @if($mmhcActionNoticeCount > 0)
+                    @php
+                        $mmhcNoticesDefaultOpen = !empty($pendingReferralOtpBanner)
+                            || !empty($pendingRewardOtpBanner)
+                            || !empty($pendingServiceCompletionBanner)
+                            || !empty($hasPendingContactUpdate);
+                    @endphp
+                    <div class="mmhc-action-notices{{ $mmhcNoticesDefaultOpen ? ' is-open' : '' }}" data-mmhc-action-notices data-count="{{ $mmhcActionNoticeCount }}">
+                        <button type="button"
+                                class="mmhc-action-notices__toggle d-md-none"
+                                data-mmhc-notices-toggle
+                                aria-expanded="{{ $mmhcNoticesDefaultOpen ? 'true' : 'false' }}"
+                                aria-controls="mmhcActionNoticesBody">
+                            <span class="mmhc-action-notices__toggle-icon" aria-hidden="true"><i class="fas fa-bell"></i></span>
+                            <span class="mmhc-action-notices__toggle-text">
+                                <strong>{{ $mmhcActionNoticeCount }} action{{ $mmhcActionNoticeCount === 1 ? '' : 's' }} needed</strong>
+                                <span>Tap to show or hide — all verify / OTP actions stay the same</span>
+                            </span>
+                            <i class="fas fa-chevron-down mmhc-action-notices__chevron" aria-hidden="true"></i>
+                        </button>
+                        <div class="mmhc-action-notices__body" id="mmhcActionNoticesBody">
+                    @endif
+
                     @if(!empty($hasPendingContactUpdate))
-                        <div class="alert alert-secondary app-alert" role="alert">
+                        <div class="alert alert-secondary app-alert app-alert--action" role="alert">
                             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap w-100">
                                 <div>
                                     <div class="fw-semibold mb-1"><i class="fas fa-lock me-2"></i>Action required: verify your new mobile number</div>
-                                    <div class="small">
+                                    <div class="small app-alert__detail">
                                         You changed your account mobile. Complete OTP on the new number to finish the update.
                                         Until then, patient reward and referral OTPs are paused so numbers stay in sync.
                                     </div>
@@ -334,16 +367,16 @@
                     @endif
 
                     @if(!empty($heldEarningsDueToUnverifiedMobile))
-                        <div class="alert alert-warning app-alert" role="alert">
+                        <div class="alert alert-warning app-alert app-alert--action" role="alert">
                             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap w-100">
                                 <div>
                                     <div class="fw-semibold mb-1"><i class="fas fa-mobile-alt me-2"></i>Verify your account mobile to unlock earnings</div>
-                                    <div class="small mb-2">
+                                    <div class="small app-alert__detail mb-2">
                                         You have already earned the items below (patient reward OTP or referral OTP completed), but
                                         <strong>payouts stay on hold</strong> until your account mobile is confirmed.
                                         If you sign in with WhatsApp OTP on this number, verification completes automatically.
                                     </div>
-                                    <ul class="small mb-0 ps-3">
+                                    <ul class="small mb-0 ps-3 app-alert__detail">
                                         @if(($heldEarningsDueToUnverifiedMobile['patient_reward']['count'] ?? 0) > 0)
                                             <li><strong>Patient rewards:</strong> ₹{{ number_format((float) $heldEarningsDueToUnverifiedMobile['patient_reward']['amount'], 2) }} ({{ $heldEarningsDueToUnverifiedMobile['patient_reward']['count'] }} verified)</li>
                                         @endif
@@ -365,11 +398,11 @@
                             </div>
                         </div>
                     @elseif(!empty($needsPhoneVerification) && ! request()->routeIs('profile.verify-phone'))
-                        <div class="alert alert-warning app-alert" role="alert">
+                        <div class="alert alert-warning app-alert app-alert--action" role="alert">
                             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap w-100">
                                 <div>
                                     <div class="fw-semibold mb-1"><i class="fas fa-mobile-alt me-2"></i>Mobile verification required</div>
-                                    <div class="small mb-0">Verify your account mobile with WhatsApp OTP to use all MMHC app features (dashboard, academics, bookings, community, and more).</div>
+                                    <div class="small app-alert__detail mb-0">Verify your account mobile with WhatsApp OTP to use all MMHC app features (dashboard, academics, bookings, community, and more).</div>
                                 </div>
                                 <a href="{{ route('profile.verify-phone') }}" class="btn btn-sm btn-outline-dark">Verify now</a>
                             </div>
@@ -377,26 +410,26 @@
                     @endif
 
                     @if(!empty($pendingReferralOtpBanner) && empty($hasPendingContactUpdate))
-                        <div class="alert alert-warning app-alert" role="alert">
+                        <div class="alert alert-warning app-alert app-alert--action" role="alert">
                             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                                 <div>
                                     <div class="fw-semibold mb-1"><i class="fas fa-shield-alt me-2"></i>Referral verification pending</div>
-                                    <div class="small">
+                                    <div class="small app-alert__detail">
                                         Your referral onboarding is still pending OTP verification.
                                         Last OTP destination:
                                         <strong>{{ $pendingReferralOtpBanner->verification_otp_sent_to ?: 'not sent yet' }}</strong>.
                                         Your referral reward is unlocked only after successful OTP verification.
                                     </div>
                                     @if(!empty($pendingReferralOtpContacts))
-                                        <div class="small mt-1 text-muted">
+                                        <div class="small mt-1 text-muted app-alert__detail">
                                             Registered mobile: <strong>{{ $pendingReferralOtpContacts['mobile'] ?? 'Not available' }}</strong>
                                         </div>
                                     @endif
                                 </div>
-                                <div class="d-flex gap-2 flex-wrap">
+                                <div class="d-flex gap-2 flex-wrap app-alert__actions">
                                     <form method="POST" action="{{ route('staff.referrals.verify-otp') }}" class="d-flex gap-2">
                                         @csrf
-                                        <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="6-digit OTP" required style="width: 120px;">
+                                        <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="6-digit OTP" required style="width: 120px;" autocomplete="one-time-code" inputmode="numeric">
                                         <button type="submit" class="btn btn-sm btn-warning fw-semibold">Verify OTP</button>
                                     </form>
                                     <form method="POST" action="{{ route('staff.referrals.resend-otp') }}" class="d-inline">
@@ -409,11 +442,11 @@
                     @endif
 
                     @if(!empty($pendingRewardOtpBanner) && empty($hasPendingContactUpdate))
-                        <div class="alert alert-info app-alert" role="alert">
+                        <div class="alert alert-info app-alert app-alert--action" role="alert">
                             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                                 <div>
                                     <div class="fw-semibold mb-1"><i class="fas fa-gift me-2"></i>Patient reward verification pending</div>
-                                    <div class="small">
+                                    <div class="small app-alert__detail">
                                         Patient reward for <strong>{{ $pendingRewardOtpBanner->patient_name }}</strong> is pending OTP verification.
                                         Credit is added only after OTP verification.
                                         @if(!empty($pendingRewardOtpBanner->verification_otp_sent_to))
@@ -421,10 +454,10 @@
                                         @endif
                                     </div>
                                 </div>
-                                <div class="d-flex gap-2 flex-wrap">
+                                <div class="d-flex gap-2 flex-wrap app-alert__actions">
                                     <form method="POST" action="{{ route('rewards.verify-otp-banner', $pendingRewardOtpBanner) }}" class="d-flex gap-2">
                                         @csrf
-                                        <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="6-digit OTP" required style="width: 120px;">
+                                        <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="6-digit OTP" required style="width: 120px;" autocomplete="one-time-code" inputmode="numeric">
                                         <button type="submit" class="btn btn-sm btn-info text-white fw-semibold">Verify OTP</button>
                                     </form>
                                     <form method="POST" action="{{ route('rewards.send-otp-banner', $pendingRewardOtpBanner) }}" class="d-inline">
@@ -437,11 +470,11 @@
                     @endif
 
                     @if(!empty($pendingServiceCompletionBanner) && empty($hasPendingContactUpdate))
-                        <div class="alert alert-primary app-alert" role="alert">
+                        <div class="alert alert-primary app-alert app-alert--action" role="alert">
                             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                                 <div>
                                     <div class="fw-semibold mb-1"><i class="fas fa-briefcase-medical me-2"></i>Complete visit — Service #{{ $pendingServiceCompletionBanner->id }}</div>
-                                    <div class="small">
+                                    <div class="small app-alert__detail">
                                         Patient: <strong>{{ optional($pendingServiceCompletionBanner->patient)->name ?? 'patient' }}</strong>.
                                         @if(!empty($serviceCompletionSkipsPatientOtp))
                                             Their mobile matches your verified account — your <strong>login OTP already confirmed this number</strong>. No patient OTP needed.
@@ -453,7 +486,7 @@
                                         @endif
                                     </div>
                                 </div>
-                                <div class="d-flex gap-2 flex-wrap align-items-center">
+                                <div class="d-flex gap-2 flex-wrap align-items-center app-alert__actions">
                                     @if(!empty($serviceCompletionSkipsPatientOtp))
                                         <form method="POST" action="{{ route('staff.service.complete-banner', $pendingServiceCompletionBanner) }}">
                                             @csrf
@@ -462,7 +495,7 @@
                                     @else
                                         <form method="POST" action="{{ route('staff.service.complete-banner', $pendingServiceCompletionBanner) }}" class="d-flex gap-2">
                                             @csrf
-                                            <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="Patient OTP" required style="width: 120px;">
+                                            <input type="text" name="otp_code" class="form-control form-control-sm" maxlength="6" placeholder="Patient OTP" required style="width: 120px;" autocomplete="one-time-code" inputmode="numeric">
                                             <button type="submit" class="btn btn-sm btn-primary fw-semibold">Verify & Complete</button>
                                         </form>
                                         <form method="POST" action="{{ route('staff.service.completion-otp-banner', $pendingServiceCompletionBanner) }}" class="d-inline">
@@ -473,6 +506,11 @@
                                 </div>
                             </div>
                         </div>
+                    @endif
+
+                    @if($mmhcActionNoticeCount > 0)
+                        </div>{{-- .mmhc-action-notices__body --}}
+                    </div>{{-- .mmhc-action-notices --}}
                     @endif
                     
                     <style>
@@ -523,7 +561,7 @@
         })();
     </script>
     @endif
-    <script src="{{ asset('js/mobile-crm.js') }}" defer></script>
+    <script src="{{ asset('js/mobile-crm.js') }}?v=20260714e" defer></script>
     @if($academicsMobileOn || $healthcareMobileOn)
     <script src="{{ asset('js/mmhc-pull-refresh.js') }}?v=20260714c" defer></script>
     @endif

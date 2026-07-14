@@ -1893,6 +1893,20 @@
         line-height: 1.45;
     }
 
+    .acad-oc-tip__link {
+        margin-top: 0.55rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--acad-primary, #4338ca);
+        text-decoration: none;
+        min-height: 40px;
+        align-items: center;
+    }
+
+    .acad-oc-tip__link:active {
+        opacity: 0.85;
+    }
+
     .acad-oc-stat-row {
         display: grid;
         grid-template-columns: repeat(2, 1fr);

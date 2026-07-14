@@ -273,34 +273,34 @@
     .um-col-user, .um-col-contact, .um-col-institution, .um-col-profile, .um-col-status { width: auto; }
 }
 @media (max-width: 767.98px) {
-    .um-table-wrap { overflow-x: visible; padding: 0.75rem; }
+    .um-table-wrap { overflow-x: visible; padding: 0.5rem; }
     .um-table thead { display: none; }
     .um-table, .um-table tbody, .um-table tr, .um-table td { display: block; width: 100%; }
     .um-table tbody tr {
         background: #fff;
         border: 1px solid #e2e8f0;
-        border-radius: 0.75rem;
-        margin-bottom: 0.75rem;
-        padding: 0.75rem 0.875rem;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+        border-radius: 0.85rem;
+        margin-bottom: 0.55rem;
+        padding: 0.65rem 0.8rem;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
     }
     .um-table tbody td {
         border: 0;
-        padding: 0.35rem 0;
+        padding: 0.28rem 0;
         text-align: left !important;
     }
     .um-table tbody td::before {
         content: attr(data-label);
         display: block;
-        font-size: 0.68rem;
+        font-size: 0.65rem;
         font-weight: 700;
         letter-spacing: 0.04em;
         text-transform: uppercase;
         color: #64748b;
-        margin-bottom: 0.2rem;
+        margin-bottom: 0.15rem;
     }
     .um-table tbody td.um-col-actions::before { display: none; }
-    .um-table tbody td.um-col-actions { padding-top: 0.5rem; }
+    .um-table tbody td.um-col-actions { padding-top: 0.45rem; }
     .um-table tbody td.ps-4, .um-table tbody td.pe-4 { padding-left: 0 !important; padding-right: 0 !important; }
 }
 </style>
