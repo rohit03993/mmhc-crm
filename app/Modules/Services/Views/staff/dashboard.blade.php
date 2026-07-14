@@ -46,16 +46,16 @@
     </div>
 
     <!-- Main Content -->
-    <div class="app-content">
+    <div class="app-content staff-day-flow">
         @include('services::partials.staff-dashboard-quick-actions', ['pending_booking_count' => $stats['pending_booking_count'] ?? 0])
 
-        <a href="#assignments" class="staff-jobs-jump d-md-none">
-            <span><i class="fas fa-briefcase me-2" aria-hidden="true"></i>Today’s jobs &amp; assignments</span>
+        <a href="#today-jobs" class="staff-jobs-jump d-md-none">
+            <span><i class="fas fa-briefcase me-2" aria-hidden="true"></i>Today’s jobs</span>
             <i class="fas fa-chevron-down" aria-hidden="true"></i>
         </a>
 
         <!-- Desktop Header -->
-        <div class="d-none d-md-block mb-4">
+        <div class="d-none d-md-block mb-4 staff-dash-desktop-header">
             <div class="staff-header-card mb-3">
                 <div class="row align-items-center g-3">
                     <div class="col-12 col-md-8">
@@ -87,7 +87,7 @@
         </div>
 
     <!-- Statistics Cards - Mobile Optimized -->
-    <div class="row g-3 mb-4">
+    <div class="row g-3 mb-4 staff-dash-stats">
         <div class="col-6 col-md-3">
             <div class="stat-card stat-primary">
                 <div class="stat-icon">
@@ -133,6 +133,14 @@
             </div>
         </div>
     </div>
+
+    <div class="staff-dash-earnings">
+    <details class="staff-earnings-fold mb-4" open>
+        <summary class="staff-earnings-fold__summary d-md-none">
+            <span><i class="fas fa-wallet me-2" aria-hidden="true"></i>Earnings &amp; incentives</span>
+            <span class="staff-earnings-fold__hint">₹{{ number_format($totalOverallEarnings, 0) }} payable</span>
+        </summary>
+        <div class="staff-earnings-fold__body">
 
     <!-- Total Overall Earnings - Top Banner -->
     <div class="row mb-4">
@@ -456,24 +464,71 @@
         </div>
     </div>
 
+        </div>{{-- .staff-earnings-fold__body --}}
+    </details>
+    </div>{{-- .staff-dash-earnings --}}
+
     <!-- Assigned Services Section -->
     <div id="assignments">
     <div class="row">
         <div class="col-12">
-            <div class="services-section-header mb-3">
+            <div class="services-section-header mb-3" id="today-jobs">
                 <h3 class="section-title">
                     <i class="fas fa-tasks me-2"></i>My Assigned Services
                 </h3>
-                <p class="section-subtitle text-muted">Manage your healthcare service assignments</p>
+                <p class="section-subtitle text-muted d-none d-md-block">Manage your healthcare service assignments</p>
+                <p class="section-subtitle text-muted d-md-none mb-0">Today first — then upcoming and past jobs</p>
             </div>
         </div>
     </div>
 
     @if($assignedServices->count() > 0)
-        <div class="row g-3 g-md-4">
-            @foreach($assignedServices as $service)
+        @php
+            $today = now()->startOfDay();
+            $jobsToday = collect();
+            $jobsUpcoming = collect();
+            $jobsPast = collect();
+            foreach ($assignedServices as $svc) {
+                $needsAction = $svc->status === 'pending_approval';
+                $inWindow = $svc->start_date && $svc->end_date
+                    && $svc->start_date->copy()->startOfDay()->lte($today)
+                    && $svc->end_date->copy()->startOfDay()->gte($today);
+                $activeStatuses = in_array($svc->status, ['assigned', 'in_progress'], true);
+                if ($needsAction || ($activeStatuses && $inWindow) || ($svc->status === 'assigned' && $svc->start_date && $svc->start_date->isSameDay($today))) {
+                    $jobsToday->push($svc);
+                } elseif ($svc->status === 'completed' || ($svc->end_date && $svc->end_date->copy()->startOfDay()->lt($today))) {
+                    $jobsPast->push($svc);
+                } else {
+                    $jobsUpcoming->push($svc);
+                }
+            }
+            $jobGroups = [
+                'today' => ['label' => 'Today', 'items' => $jobsToday, 'icon' => 'fa-sun'],
+                'upcoming' => ['label' => 'Upcoming', 'items' => $jobsUpcoming, 'icon' => 'fa-calendar-alt'],
+                'past' => ['label' => 'Past', 'items' => $jobsPast, 'icon' => 'fa-history'],
+            ];
+        @endphp
+        @foreach($jobGroups as $groupKey => $group)
+            @if($group['items']->isEmpty())
+                @continue
+            @endif
+            @if($groupKey === 'past')
+            <details class="staff-past-jobs mb-3">
+                <summary class="staff-past-jobs__summary d-md-none">
+                    <i class="fas {{ $group['icon'] }} me-2" aria-hidden="true"></i>{{ $group['label'] }} ({{ $group['items']->count() }})
+                </summary>
+                <div class="row g-3 g-md-4 mt-1">
+            @else
+            <div class="staff-job-group staff-job-group--{{ $groupKey }} mb-3">
+                <div class="staff-job-group__title d-md-none">
+                    <i class="fas {{ $group['icon'] }} me-2" aria-hidden="true"></i>{{ $group['label'] }}
+                    <span class="badge bg-light text-dark ms-1">{{ $group['items']->count() }}</span>
+                </div>
+                <div class="row g-3 g-md-4">
+            @endif
+            @foreach($group['items'] as $service)
             <div class="col-12 col-md-6 col-lg-4">
-                <div class="service-card-modern">
+                <div class="service-card-modern{{ $groupKey === 'today' ? ' service-card--today' : '' }}{{ $groupKey === 'past' ? ' service-card--past' : '' }}">
                     <!-- Service Header -->
                     <div class="service-card-header service-status-{{ $service->status }}">
                         <div class="d-flex justify-content-between align-items-start">
@@ -483,6 +538,9 @@
                                     {{ $service->serviceType->name }}
                                 </div>
                                 <div class="service-status-badge status-{{ $service->status }}">
+                                    @if($groupKey === 'today' && $service->status !== 'pending_approval')
+                                        <span class="badge bg-warning text-dark me-1">Today</span>
+                                    @endif
                                     @if($service->status === 'pending_approval')
                                         <i class="fas fa-exclamation-circle me-1"></i>Action Required
                                     @else
@@ -506,6 +564,26 @@
                             <div class="info-value">{{ $service->patient->name }}</div>
                             <div class="info-subtext">{{ Str::limit($service->location, 30) }}</div>
                         </div>
+
+                        @php
+                            $callPhone = $service->contact_phone ?: ($service->patient->phone ?? null);
+                            $mapsQuery = trim((string) $service->location);
+                        @endphp
+                        @if($callPhone || $mapsQuery !== '')
+                        <div class="staff-job-quick-links mb-3">
+                            @if($callPhone)
+                            <a href="tel:{{ preg_replace('/\s+/', '', $callPhone) }}" class="staff-job-quick-link">
+                                <i class="fas fa-phone" aria-hidden="true"></i> Call
+                            </a>
+                            @endif
+                            @if($mapsQuery !== '')
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($mapsQuery) }}"
+                               target="_blank" rel="noopener noreferrer" class="staff-job-quick-link">
+                                <i class="fas fa-map-marker-alt" aria-hidden="true"></i> Navigate
+                            </a>
+                            @endif
+                        </div>
+                        @endif
 
                         <!-- Duration -->
                         <div class="row g-2 mb-3">
@@ -747,8 +825,15 @@
                 </div>
             </div>
             @endforeach
-        </div>
-        
+            @if($groupKey === 'past')
+                </div>
+            </details>
+            @else
+                </div>
+            </div>
+            @endif
+        @endforeach
+
         <!-- Pagination -->
         <div class="row mt-4">
             <div class="col-12">

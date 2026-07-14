@@ -436,42 +436,43 @@
                     </div>
                 </div>
 
-                <!-- Cost Summary -->
-                <div class="app-cost-summary">
-                    <div class="app-cost-header">
-                        <h4>Cost Summary</h4>
+                <!-- Cost + confirm dock (mobile: single footer; desktop: normal flow) -->
+                <div class="app-book-dock">
+                    <div class="app-cost-summary">
+                        <div class="app-cost-header">
+                            <h4>Cost Summary</h4>
+                        </div>
+                        <div class="app-cost-details">
+                            <div class="app-cost-row">
+                                <span>Service Rate:</span>
+                                <span id="serviceRate">₹0/day</span>
+                            </div>
+                            <div class="app-cost-row">
+                                <span>Duration:</span>
+                                <span id="durationDisplay">0 days</span>
+                            </div>
+                            <div class="app-cost-divider"></div>
+                            <div class="app-cost-row total">
+                                <span>Total Amount:</span>
+                                <span id="totalAmount">₹0</span>
+                            </div>
+                        </div>
+                        @if(!($hasActiveSubscription ?? false))
+                        <p class="app-payment-note small text-muted mb-0 mt-2 px-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            After booking you’ll pay the visit fee online via Razorpay (UPI, card, wallet). Office / cash collection by MMHC is still available as a fallback.
+                        </p>
+                        @endif
                     </div>
-                    <div class="app-cost-details">
-                        <div class="app-cost-row">
-                            <span>Service Rate:</span>
-                            <span id="serviceRate">â‚¹0/day</span>
-                        </div>
-                        <div class="app-cost-row">
-                            <span>Duration:</span>
-                            <span id="durationDisplay">0 days</span>
-                        </div>
-                        <div class="app-cost-divider"></div>
-                        <div class="app-cost-row total">
-                            <span>Total Amount:</span>
-                            <span id="totalAmount">â‚¹0</span>
-                        </div>
-                    </div>
-                    @if(!($hasActiveSubscription ?? false))
-                    <p class="app-payment-note small text-muted mb-0 mt-2 px-2">
-                        <i class="fas fa-info-circle me-1"></i>
-                        After booking you’ll pay the visit fee online via Razorpay (UPI, card, wallet). Office / cash collection by MMHC is still available as a fallback.
-                    </p>
-                    @endif
-                </div>
 
-                <!-- Submit Button -->
-                <div class="app-form-actions">
-                    <a href="{{ route('staff.index') }}" class="app-btn-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Cancel
-                    </a>
-                    <button type="submit" class="app-btn-submit">
-                        <i class="fas fa-check me-2"></i>Confirm Booking
-                    </button>
+                    <div class="app-form-actions">
+                        <a href="{{ route('staff.index') }}" class="app-btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="app-btn-submit">
+                            <i class="fas fa-check me-2"></i>Confirm Booking
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>

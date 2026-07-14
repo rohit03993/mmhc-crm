@@ -1,6 +1,6 @@
 {{-- Shared mobile assets for legacy Tailwind admin CMS pages (standalone HTML). --}}
 @include('partials.pwa-head')
-<link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714g">
+<link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714h">
 <link rel="stylesheet" href="{{ asset('css/capacitor-app.css') }}">
 <script>window.mmhcAdminDashboardUrl = @json(route('admin.dashboard'));</script>
 <script src="{{ asset('js/mobile-crm.js') }}?v=20260714g" defer></script>

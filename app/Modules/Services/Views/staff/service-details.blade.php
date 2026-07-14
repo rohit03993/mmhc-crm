@@ -23,6 +23,8 @@
 @section('content')
 @php
     $statusLabel = ucfirst(str_replace('_', ' ', $serviceRequest->status));
+    $detailPhone = $serviceRequest->contact_phone ?: ($serviceRequest->patient->phone ?? null);
+    $detailMaps = trim((string) $serviceRequest->location);
 @endphp
 <div class="mobile-app-container hc-mobile-shell" data-mmhc-ptr>
     <div class="app-header-mobile d-md-none">
@@ -382,6 +384,22 @@
                         <small class="text-muted d-block mb-2">Completion requires patient OTP verification.</small>
                         @endif
 
+                        @if($detailPhone || $detailMaps !== '')
+                        <div class="staff-job-quick-links mb-2">
+                            @if($detailPhone)
+                            <a href="tel:{{ preg_replace('/\s+/', '', $detailPhone) }}" class="staff-job-quick-link">
+                                <i class="fas fa-phone" aria-hidden="true"></i> Call
+                            </a>
+                            @endif
+                            @if($detailMaps !== '')
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($detailMaps) }}"
+                               target="_blank" rel="noopener noreferrer" class="staff-job-quick-link">
+                                <i class="fas fa-map-marker-alt" aria-hidden="true"></i> Navigate
+                            </a>
+                            @endif
+                        </div>
+                        @endif
+
                         @if($serviceRequest->canBeCancelledByStaff())
                         <form method="POST" action="{{ route('staff.booking.cancel', $serviceRequest) }}" class="mb-2"
                               onsubmit="return confirm('Cancel this booking permanently? If the patient paid, admin will handle the refund manually.');">
@@ -407,6 +425,31 @@
 </div>
     </div>
 </div>
+
+@if(in_array($serviceRequest->status, ['assigned', 'in_progress'], true))
+<div class="hc-staff-day-dock d-md-none" role="region" aria-label="Day actions">
+    @if($detailPhone)
+    <a href="tel:{{ preg_replace('/\s+/', '', $detailPhone) }}" class="btn btn-outline-primary">
+        <i class="fas fa-phone me-1"></i>Call
+    </a>
+    @endif
+    @if($detailMaps !== '')
+    <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($detailMaps) }}"
+       target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">
+        <i class="fas fa-map-marker-alt me-1"></i>Map
+    </a>
+    @endif
+    @if($serviceRequest->status === 'assigned')
+    <button type="button" class="btn btn-success" onclick="startService({{ $serviceRequest->id }})">
+        <i class="fas fa-play me-1"></i>Start
+    </button>
+    @elseif($serviceRequest->status === 'in_progress')
+    <button type="button" class="btn btn-warning" onclick="openCompletionOtpModal({{ $serviceRequest->id }})">
+        <i class="fas fa-check me-1"></i>Complete
+    </button>
+    @endif
+</div>
+@endif
 
 <!-- Completion OTP Modal -->
 <div class="modal fade" id="completionOtpModal" tabindex="-1" aria-hidden="true">

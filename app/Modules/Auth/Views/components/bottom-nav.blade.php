@@ -175,17 +175,10 @@
             <i class="fas fa-home"></i>
             <span>Home</span>
         </a>
-        @if(in_array(auth()->user()->role, ['nurse', 'caregiver'], true))
-        <a href="{{ route('academics.open-classrooms.index') }}" class="app-nav-item {{ request()->routeIs('academics.open-classrooms.*') || request()->routeIs('academics.mentorship.*') ? 'active' : '' }}">
-            <i class="fas fa-graduation-cap"></i>
-            <span>Learn</span>
-        </a>
-        @else
-        <a href="{{ route('staff.dashboard') }}#assignments" class="app-nav-item">
+        <a href="{{ route('staff.dashboard') }}#assignments" class="app-nav-item" data-mmhc-staff-jobs-tab>
             <i class="fas fa-briefcase"></i>
             <span>Jobs</span>
         </a>
-        @endif
         <a href="{{ route('staff.rewards.index') }}" class="app-nav-item {{ request()->routeIs('staff.rewards.*') || request()->routeIs('rewards.*') || request()->routeIs('staff-referrals.*') ? 'active' : '' }}">
             <i class="fas fa-gift"></i>
             <span>Rewards</span>

@@ -1683,6 +1683,129 @@ body.mmhc-healthcare-role-patient .mmhc-ptr-indicator.is-ready .mmhc-ptr-indicat
         transform: scale(0.99);
     }
 
+    .staff-day-flow {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .staff-day-flow > .mmhc-quick-actions { order: 1; }
+    .staff-day-flow > .staff-jobs-jump { order: 2; }
+    .staff-day-flow > #assignments { order: 3; }
+    .staff-day-flow > .staff-dash-stats { order: 4; }
+    .staff-day-flow > .staff-dash-earnings { order: 5; }
+
+    .staff-earnings-fold {
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .staff-earnings-fold__summary {
+        list-style: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.85rem 1rem;
+        font-weight: 700;
+        color: #1e293b;
+        cursor: pointer;
+        min-height: 48px;
+    }
+
+    .staff-earnings-fold__summary::-webkit-details-marker { display: none; }
+
+    .staff-earnings-fold__hint {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #047857;
+        background: #ecfdf5;
+        padding: 0.25rem 0.55rem;
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+
+    .staff-earnings-fold__body {
+        padding: 0 0.75rem 0.75rem;
+    }
+
+    .staff-job-group__title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #334155;
+        margin: 0.25rem 0 0.65rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .staff-past-jobs__summary {
+        list-style: none;
+        font-weight: 700;
+        color: #64748b;
+        padding: 0.65rem 0.85rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    .staff-past-jobs__summary::-webkit-details-marker { display: none; }
+
+    .staff-job-quick-links {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .staff-job-quick-link {
+        flex: 1 1 auto;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.65rem;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        color: #334155;
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .service-card--today {
+        box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35);
+    }
+
+    .hc-staff-day-dock {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: calc(var(--mmhc-nav-height, 64px) + var(--mmhc-safe-bottom, 0px));
+        z-index: 45;
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.65rem 1rem;
+        background: rgba(255, 255, 255, 0.97);
+        border-top: 1px solid #e2e8f0;
+        box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
+    }
+
+    .hc-staff-day-dock .btn {
+        flex: 1;
+        min-height: 48px;
+        font-weight: 700;
+    }
+
+    .hc-staff-job-detail {
+        padding-bottom: calc(88px + var(--mmhc-safe-bottom, 0px)) !important;
+    }
+
     body.mmhc-healthcare-role-staff .earnings-source-card .earnings-source-details {
         display: none;
     }
@@ -1704,6 +1827,41 @@ body.mmhc-healthcare-role-patient .mmhc-ptr-indicator.is-ready .mmhc-ptr-indicat
         color: #475569;
         font-size: 0.8rem;
         font-weight: 600;
+    }
+}
+
+/* Desktop: earnings panel always expanded (summary is mobile-only) */
+@media (min-width: 768px) {
+    .staff-earnings-fold {
+        border: 0;
+        background: transparent;
+        overflow: visible;
+    }
+
+    .staff-earnings-fold__body {
+        padding: 0;
+        display: block !important;
+    }
+
+    .staff-job-group__title {
+        display: none !important;
+    }
+
+    .staff-past-jobs__summary {
+        display: none !important;
+    }
+
+    .app-book-dock .app-form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 1rem;
+    }
+
+    .app-book-dock .app-btn-submit,
+    .app-book-dock .app-btn-secondary {
+        flex: 1;
+        min-height: 48px;
+        justify-content: center;
     }
 }
 

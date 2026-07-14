@@ -301,6 +301,9 @@
         if (!mq.matches || !document.body.classList.contains('mmhc-healthcare-role-staff')) {
             return;
         }
+        document.querySelectorAll('.staff-earnings-fold').forEach(function (fold) {
+            fold.open = false;
+        });
         document.querySelectorAll('.earnings-source-card').forEach(function (card) {
             if (card.querySelector('.earnings-source-toggle')) {
                 return;
@@ -321,6 +324,25 @@
         });
     }
 
+    /** Jobs tab scrolls to assignments; open past jobs on desktop */
+    function enhanceStaffJobsTab() {
+        document.querySelectorAll('[data-mmhc-staff-jobs-tab]').forEach(function (link) {
+            link.addEventListener('click', function () {
+                setTimeout(function () {
+                    var el = document.getElementById('today-jobs') || document.getElementById('assignments');
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 50);
+            });
+        });
+        if (!mq.matches) {
+            document.querySelectorAll('.staff-past-jobs').forEach(function (el) {
+                el.open = true;
+            });
+        }
+    }
+
     function initMobileLayout() {
         applyMobileClass();
         initToastStack();
@@ -329,6 +351,7 @@
         enhanceMobileTables();
         enhanceStickyFormActions();
         enhanceStaffEarningsCards();
+        enhanceStaffJobsTab();
         enhanceAdminFilterSheets();
         enhanceAdminStandaloneChrome();
         bindActionNoticesToggle();

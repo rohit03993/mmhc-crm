@@ -49,7 +49,7 @@
     <meta name="theme-color" content="{{ auth()->user()->isPatient() ? '#0f766e' : '#4338ca' }}">
     @endif
 
-    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714g">
+    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714h">
     @auth
     <link rel="stylesheet" href="{{ asset('css/crm-desktop.css') }}?v=20260608b">
     <link rel="stylesheet" href="{{ asset('css/mmhc-member-nav.css') }}?v=20260714h">
@@ -582,7 +582,7 @@
         })();
     </script>
     @endif
-    <script src="{{ asset('js/mobile-crm.js') }}?v=20260714g" defer></script>
+    <script src="{{ asset('js/mobile-crm.js') }}?v=20260714h" defer></script>
     @if($mmhcPullRefreshOn)
     <script src="{{ asset('js/mmhc-pull-refresh.js') }}?v=20260714c" defer></script>
     @endif

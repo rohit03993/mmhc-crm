@@ -2505,36 +2505,86 @@
 .mmhc-booking-flow__item.is-active .mmhc-booking-flow__label { color: #334155; }
 .mmhc-booking-flow__item.is-done .mmhc-booking-flow__icon { background: #d1fae5; color: #047857; }
 
-/* Compact booking steps on phone — less scroll; links unchanged */
+/* Compact booking progress on phone — bottom nav owns navigation */
 @media (max-width: 767.98px) {
-  /* My Requests uses bottom nav — hide duplicate step bar */
-  .mmhc-page-requests .mmhc-booking-flow {
+  /* Hide step chrome where bottom nav already covers the path */
+  .mmhc-page-requests .mmhc-booking-flow,
+  .mmhc-page-services .mmhc-booking-flow,
+  .mmhc-page-staff .mmhc-booking-flow {
     display: none !important;
   }
 
-  .mmhc-booking-flow { margin-bottom: 0.5rem !important; }
-  .mmhc-booking-flow__list {
+  /* Book only: thin Find → Book → Confirm progress (not a second nav) */
+  .mmhc-page-book .mmhc-booking-flow { margin-bottom: 0.5rem !important; }
+  .mmhc-page-book .mmhc-booking-flow__list {
     flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    justify-content: space-between;
     gap: 0.25rem;
-    padding: 0.4rem 0.5rem;
-    scrollbar-width: none;
+    padding: 0.4rem 0.65rem;
   }
-  .mmhc-booking-flow__list::-webkit-scrollbar { display: none; }
-  .mmhc-booking-flow__item { flex: 0 0 auto; min-width: 4.25rem; }
-  .mmhc-booking-flow__link { min-height: 40px; font-size: 0.65rem; gap: 0.15rem; }
-  .mmhc-booking-flow__icon { width: 1.7rem; height: 1.7rem; font-size: 0.68rem; }
-  .mmhc-booking-flow__label {
-    max-width: 4.4rem;
+  .mmhc-page-book .mmhc-booking-flow__item { flex: 1 1 0; min-width: 0; }
+  .mmhc-page-book .mmhc-booking-flow__link { min-height: 36px; font-size: 0.65rem; gap: 0.15rem; pointer-events: none; }
+  .mmhc-page-book .mmhc-booking-flow__icon { width: 1.7rem; height: 1.7rem; font-size: 0.68rem; }
+  .mmhc-page-book .mmhc-booking-flow__label {
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  /* Less scroll on find-staff after listings */
-  .mmhc-page-staff .app-section:has(.app-steps-grid) {
+  /* Less scroll — How It Works / edu grids */
+  .mmhc-page-staff .app-section:has(.app-steps-grid),
+  .mmhc-page-services .app-section:has(.app-steps-grid) {
     display: none;
+  }
+
+  /* Book: hide bottom nav — header back + confirm dock are enough */
+  body:has(.mmhc-page-book) .app-bottom-nav {
+    display: none !important;
+  }
+  .mmhc-page-book.mobile-app-container {
+    padding-bottom: calc(128px + var(--mmhc-safe-bottom)) !important;
+  }
+  .mmhc-page-book .app-book-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    padding: 10px 16px calc(10px + var(--mmhc-safe-bottom));
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.12);
+  }
+  .mmhc-page-book .app-book-dock .app-cost-summary {
+    position: static;
+    margin: 0 0 8px;
+    box-shadow: none;
+    padding: 0.5rem 0.65rem;
+  }
+  .mmhc-page-book .app-book-dock .app-cost-details .app-cost-row:not(.total) {
+    display: none;
+  }
+  .mmhc-page-book .app-book-dock .app-payment-note {
+    display: none;
+  }
+  .mmhc-page-book .app-book-dock .app-form-actions {
+    position: static;
+    display: flex;
+    gap: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+  .mmhc-page-book .app-book-dock .app-btn-secondary {
+    display: none;
+  }
+  .mmhc-page-book .app-book-dock .app-btn-submit {
+    flex: 1;
+    min-height: 48px;
+    justify-content: center;
   }
 }
 .sr-payment-summary { font-size: 0.9rem; }
@@ -2550,10 +2600,8 @@
 }
 @media (min-width: 768px) { .mmhc-filter-toggle { display: none !important; } .app-filters.mmhc-filter-panel { display: block !important; } }
 @media (max-width: 767px) {
-  .mmhc-page-book.mobile-app-container { padding-bottom: calc(180px + var(--mmhc-safe-bottom)) !important; }
-  .mmhc-page-book .app-cost-summary { position: sticky; bottom: calc(var(--mmhc-nav-height) + var(--mmhc-safe-bottom) + 8px); z-index: 40; box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.12); margin-bottom: 12px; }
-  .mmhc-page-book .app-form-actions { position: fixed; left: 0; right: 0; bottom: calc(var(--mmhc-nav-height) + var(--mmhc-safe-bottom)); z-index: 45; display: flex; gap: 10px; padding: 10px 16px; background: rgba(255,255,255,0.96); backdrop-filter: blur(8px); border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 16px rgba(0,0,0,0.06); }
-  .mmhc-page-book .app-form-actions .app-btn-submit, .mmhc-page-book .app-form-actions .app-btn-secondary { flex: 1; min-height: 48px; justify-content: center; }
+  /* Legacy book dock rules replaced by .app-book-dock block above — keep desktop untouched */
+  .mmhc-page-book .app-form-actions .app-btn-submit { min-height: 48px; justify-content: center; }
 }
 .app-book-btn, .app-tab-btn, .app-btn-primary, .app-btn-secondary { min-height: 44px; }
 .capacitor-app .mobile-app-container { padding-bottom: calc(80px + var(--mmhc-safe-bottom)) !important; }

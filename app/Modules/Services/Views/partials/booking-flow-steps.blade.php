@@ -1,21 +1,26 @@
 @php
-    $current = $currentStep ?? 'services';
+    $current = $currentStep ?? 'staff';
+    // Linear path: Find staff → Book → Confirm (My requests). Bottom nav covers Services / Requests.
     $steps = [
-        'services' => ['label' => 'Services', 'route' => route('services.index'), 'icon' => 'fa-list'],
-        'staff' => ['label' => 'Find staff', 'route' => route('staff.index'), 'icon' => 'fa-users'],
+        'staff' => ['label' => 'Find', 'route' => route('staff.index'), 'icon' => 'fa-search'],
         'book' => ['label' => 'Book', 'route' => null, 'icon' => 'fa-calendar-check'],
-        'requests' => ['label' => 'My requests', 'route' => route('services.my-requests'), 'icon' => 'fa-clipboard-list'],
+        'requests' => ['label' => 'Confirm', 'route' => route('services.my-requests'), 'icon' => 'fa-check'],
     ];
+    // Map legacy 'services' to Find so old includes still highlight correctly.
+    if ($current === 'services') {
+        $current = 'staff';
+    }
 @endphp
-<nav class="mmhc-booking-flow mb-3" aria-label="Booking steps">
+<nav class="mmhc-booking-flow mb-3" aria-label="Booking progress">
     <ol class="mmhc-booking-flow__list">
         @foreach($steps as $key => $step)
             @php
+                $keys = array_keys($steps);
                 $isActive = $current === $key;
-                $isPast = array_search($key, array_keys($steps), true) < array_search($current, array_keys($steps), true);
+                $isPast = array_search($key, $keys, true) < array_search($current, $keys, true);
             @endphp
             <li class="mmhc-booking-flow__item {{ $isActive ? 'is-active' : '' }} {{ $isPast ? 'is-done' : '' }}">
-                @if($step['route'] && ! $isActive)
+                @if($step['route'] && ! $isActive && $isPast)
                     <a href="{{ $step['route'] }}" class="mmhc-booking-flow__link">
                         <span class="mmhc-booking-flow__icon"><i class="fas {{ $step['icon'] }}"></i></span>
                         <span class="mmhc-booking-flow__label">{{ $step['label'] }}</span>
