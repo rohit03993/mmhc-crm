@@ -1,5 +1,5 @@
-/* MeD Miracle PWA service worker — network-first for pages, cache for shell assets */
-const CACHE_VERSION = 'mmhc-pwa-v3';
+/* MeD Miracle PWA service worker — network-first for pages, cache for shell assets + Web Push */
+const CACHE_VERSION = 'mmhc-pwa-v4';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -14,6 +14,7 @@ const PRECACHE_URLS = [
     '/css/capacitor-app.css',
     '/css/pwa-install.css',
     '/js/pwa-install.js',
+    '/js/pwa-push.js',
     '/js/capacitor-app.js',
     '/js/mobile-crm.js',
 ];
@@ -126,4 +127,60 @@ self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
+});
+
+self.addEventListener('push', (event) => {
+    let data = {
+        title: 'MeD Miracle',
+        body: 'You have a new update.',
+        url: '/dashboard',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+    };
+
+    try {
+        if (event.data) {
+            const parsed = event.data.json();
+            data = Object.assign(data, parsed || {});
+        }
+    } catch (e) {
+        try {
+            data.body = event.data ? event.data.text() : data.body;
+        } catch (e2) { /* ignore */ }
+    }
+
+    event.waitUntil(
+        self.registration.showNotification(data.title || 'MeD Miracle', {
+            body: data.body || '',
+            icon: data.icon || '/icons/icon-192.png',
+            badge: data.badge || '/icons/icon-192.png',
+            data: { url: data.url || '/dashboard' },
+            vibrate: [120, 60, 120],
+        })
+    );
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const targetUrl = (event.notification.data && event.notification.data.url)
+        ? event.notification.data.url
+        : '/dashboard';
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            for (const client of clientList) {
+                if ('focus' in client) {
+                    client.focus();
+                    if ('navigate' in client) {
+                        return client.navigate(targetUrl);
+                    }
+                    return undefined;
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
+            return undefined;
+        })
+    );
 });

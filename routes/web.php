@@ -68,6 +68,13 @@ Route::get('/verify/staff/{uniqueId}', [StaffIdCardController::class, 'verify'])
 
 // Services module routes
 Route::middleware(['auth'])->group(function () {
+    Route::get('/push/vapid-public-key', [\App\Modules\Auth\Controllers\PushSubscriptionController::class, 'vapidPublicKey'])
+        ->name('push.vapid-public-key');
+    Route::post('/push/subscribe', [\App\Modules\Auth\Controllers\PushSubscriptionController::class, 'store'])
+        ->name('push.subscribe');
+    Route::post('/push/unsubscribe', [\App\Modules\Auth\Controllers\PushSubscriptionController::class, 'destroy'])
+        ->name('push.unsubscribe');
+
     Route::post('/notifications/{userNotification}/open', [\App\Modules\Auth\Controllers\NotificationInboxController::class, 'open'])
         ->name('notifications.open');
     Route::post('/notifications/read-all', [\App\Modules\Auth\Controllers\NotificationInboxController::class, 'markAllRead'])

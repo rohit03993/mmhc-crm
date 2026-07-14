@@ -23,7 +23,7 @@ class AppNotificationService
                 return null;
             }
 
-            return UserNotification::create([
+            $notification = UserNotification::create([
                 'user_id' => $userId,
                 'type' => $type,
                 'title' => $title,
@@ -31,6 +31,23 @@ class AppNotificationService
                 'action_url' => $actionUrl,
                 'meta' => $meta ?: null,
             ]);
+
+            try {
+                app(WebPushService::class)->sendToUser(
+                    $userId,
+                    $title,
+                    $body,
+                    $actionUrl,
+                    ['type' => $type]
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Web Push send failed: '.$e->getMessage(), [
+                    'user_id' => $userId,
+                    'type' => $type,
+                ]);
+            }
+
+            return $notification;
         } catch (\Throwable $e) {
             Log::warning('Failed to create user notification: '.$e->getMessage(), [
                 'type' => $type,
