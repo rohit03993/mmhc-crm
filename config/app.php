@@ -13,7 +13,16 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => (static function (): string {
+        $name = trim((string) env('APP_NAME', 'MeD Miracle Health Care'));
+
+        // Never expose the framework default name in browser titles / UI.
+        if ($name === '' || strcasecmp($name, 'Laravel') === 0) {
+            return 'MeD Miracle Health Care';
+        }
+
+        return $name;
+    })(),
 
     /*
     |--------------------------------------------------------------------------
