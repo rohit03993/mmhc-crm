@@ -52,7 +52,7 @@
     <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714g">
     @auth
     <link rel="stylesheet" href="{{ asset('css/crm-desktop.css') }}?v=20260608b">
-    <link rel="stylesheet" href="{{ asset('css/mmhc-member-nav.css') }}?v=20260602">
+    <link rel="stylesheet" href="{{ asset('css/mmhc-member-nav.css') }}?v=20260714h">
     <link rel="stylesheet" href="{{ asset('css/mmhc-theme-contrast.css') }}?v=20260603">
     @endauth
     <link rel="stylesheet" href="{{ asset('css/mmhc-public-mobile.css') }}">

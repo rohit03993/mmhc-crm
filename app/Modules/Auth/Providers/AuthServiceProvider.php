@@ -22,6 +22,10 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->loadViews();
         $this->publishAssets();
+
+        view()->composer('auth::components.navbar', function ($view) {
+            app(\App\Modules\Auth\Services\NotificationInboxService::class)->shareNavbarData($view);
+        });
     }
 
     /**

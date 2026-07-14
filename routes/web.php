@@ -68,6 +68,11 @@ Route::get('/verify/staff/{uniqueId}', [StaffIdCardController::class, 'verify'])
 
 // Services module routes
 Route::middleware(['auth'])->group(function () {
+    Route::post('/notifications/{userNotification}/open', [\App\Modules\Auth\Controllers\NotificationInboxController::class, 'open'])
+        ->name('notifications.open');
+    Route::post('/notifications/read-all', [\App\Modules\Auth\Controllers\NotificationInboxController::class, 'markAllRead'])
+        ->name('notifications.read-all');
+
     // Service Routes
     Route::prefix('services')->name('services.')->group(function () {
         Route::get('/', [\App\Modules\Services\Controllers\ServiceController::class, 'index'])->name('index');

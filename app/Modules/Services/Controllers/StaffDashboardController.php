@@ -759,6 +759,13 @@ class StaffDashboardController extends Controller
 
             DB::commit();
 
+            try {
+                app(\App\Modules\Auth\Services\AppNotificationService::class)
+                    ->notifyBookingAccepted($serviceRequest->fresh(['assignedStaff', 'serviceType', 'patient']) ?? $serviceRequest);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+
             return redirect()->route('staff.dashboard')
                 ->with('success', 'Booking accepted successfully! You can now view the service details.');
 
@@ -821,6 +828,16 @@ class StaffDashboardController extends Controller
                 ->delete();
 
             DB::commit();
+
+            try {
+                app(\App\Modules\Auth\Services\AppNotificationService::class)
+                    ->notifyBookingRejected(
+                        $serviceRequest->fresh(['serviceType', 'patient']) ?? $serviceRequest,
+                        $request->rejection_reason
+                    );
+            } catch (\Throwable $e) {
+                report($e);
+            }
 
             return redirect()->route('staff.dashboard')
                 ->with('success', 'Booking rejected. The patient will be notified and admin can assign another staff member.');

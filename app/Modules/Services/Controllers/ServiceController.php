@@ -317,6 +317,13 @@ class ServiceController extends Controller
                 ? 'Booking created successfully! This service is FREE with your active subscription. The staff member will be notified.'
                 : 'Booking created successfully! Visit fee ₹'.number_format($totalAmount, 0).' is recorded. The staff member will be notified to accept your request.';
 
+            try {
+                app(\App\Modules\Auth\Services\AppNotificationService::class)
+                    ->notifyBookingCreated($serviceRequest->fresh(['patient', 'serviceType']) ?? $serviceRequest);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+
             return redirect()->route('services.my-requests')
                 ->with('success', $successMessage);
 
@@ -583,6 +590,13 @@ class ServiceController extends Controller
             $this->createDailyServiceRecords($serviceRequest);
 
             DB::commit();
+
+            try {
+                app(\App\Modules\Auth\Services\AppNotificationService::class)
+                    ->notifyStaffAssigned($serviceRequest->fresh(['patient', 'serviceType']) ?? $serviceRequest);
+            } catch (\Throwable $e) {
+                report($e);
+            }
 
             return redirect()->route('admin.service-requests')
                 ->with('success', 'Staff assigned successfully!');

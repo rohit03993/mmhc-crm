@@ -25,12 +25,10 @@ class NotificationController extends Controller
 
     public function markAllRead()
     {
-        CommunityNotification::query()
-            ->where('recipient_user_id', Auth::id())
-            ->whereNull('read_at')
-            ->update(['read_at' => now()]);
+        app(\App\Modules\Auth\Services\NotificationInboxService::class)
+            ->markAllReadForUser((int) Auth::id());
 
-        return redirect()->back()->with('success', 'Community notifications marked as read.');
+        return redirect()->back()->with('success', 'All notifications marked as read.');
     }
 }
 

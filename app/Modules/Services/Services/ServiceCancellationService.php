@@ -34,6 +34,7 @@ class ServiceCancellationService
             DB::beginTransaction();
 
             $previousStatus = $serviceRequest->status;
+            $previousStaffId = $serviceRequest->assigned_staff_id;
 
             $serviceRequest->update([
                 'status' => 'cancelled',
@@ -56,6 +57,13 @@ class ServiceCancellationService
                 'patient_id' => $patient->id,
                 'previous_status' => $previousStatus,
             ]);
+
+            try {
+                app(\App\Modules\Auth\Services\AppNotificationService::class)
+                    ->notifyBookingCancelled($serviceRequest->fresh(['patient', 'serviceType']) ?? $serviceRequest, $previousStaffId);
+            } catch (\Throwable $e) {
+                report($e);
+            }
 
             return $serviceRequest->fresh();
         } catch (\Throwable $e) {

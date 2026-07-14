@@ -117,9 +117,40 @@
 
 .mmhc-nav-notifications-menu {
     min-width: min(320px, 92vw);
+    max-height: min(70vh, 420px);
+    overflow-y: auto;
     border-radius: 14px;
     border: 1px solid #e2e8f0;
     padding: 0.35rem 0;
+}
+
+.mmhc-notif-item {
+    white-space: normal;
+    padding: 0.65rem 0.9rem;
+    line-height: 1.35;
+}
+
+.mmhc-notif-item.is-unread {
+    background: #f8fafc;
+}
+
+.mmhc-notif-item__icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2ff;
+    color: #4338ca;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    margin-top: 0.1rem;
+}
+
+.mmhc-notif-item__body {
+    font-size: 0.75rem;
+    margin-top: 0.15rem;
 }
 
 /* Profile chip — desktop */
