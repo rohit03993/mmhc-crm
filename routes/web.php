@@ -74,6 +74,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/request', [\App\Modules\Services\Controllers\ServiceController::class, 'create'])->name('create');
         Route::post('/request', [\App\Modules\Services\Controllers\ServiceController::class, 'store'])->name('store');
         Route::get('/my-requests', [\App\Modules\Services\Controllers\ServiceController::class, 'myRequests'])->name('my-requests');
+        Route::post('/{serviceRequest}/cancel', [\App\Modules\Services\Controllers\ServiceController::class, 'cancel'])->name('cancel');
         Route::get('/{serviceRequest}', [\App\Modules\Services\Controllers\ServiceController::class, 'show'])->name('show');
     });
 

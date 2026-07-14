@@ -572,7 +572,7 @@ class StaffDashboardController extends Controller
             ], 400);
         }
 
-        $skipPatientOtp = $this->staffMayCompleteWithoutPatientOtp($staff, $serviceRequest);
+        $skipPatientOtp = $serviceRequest->staffMayCompleteWithoutPatientOtp($staff);
 
         $validator = Validator::make($request->all(), [
             'otp_code' => $skipPatientOtp ? ['nullable', 'digits:6'] : ['required', 'digits:6'],
@@ -1124,12 +1124,6 @@ class StaffDashboardController extends Controller
      */
     private function staffMayCompleteWithoutPatientOtp(User $staff, ServiceRequest $serviceRequest): bool
     {
-        if (! $staff->hasVerifiedPhone()) {
-            return false;
-        }
-
-        $patientPhone = $serviceRequest->patientContactPhone();
-
-        return $patientPhone && $staff->accountPhonesMatch($staff->phone, $patientPhone);
+        return $serviceRequest->staffMayCompleteWithoutPatientOtp($staff);
     }
 }

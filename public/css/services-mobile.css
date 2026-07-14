@@ -1021,7 +1021,8 @@
     font-weight: 600;
 }
 
-.card-header-mobile-full.status-pending {
+.card-header-mobile-full.status-pending,
+.card-header-mobile-full.status-pending_approval {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
@@ -1035,6 +1036,10 @@
 
 .card-header-mobile-full.status-completed {
     background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.card-header-mobile-full.status-cancelled {
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
 }
 
 .service-status-icon-full {

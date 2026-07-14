@@ -37,6 +37,9 @@ class ServiceRequest extends Model
         'completed_at',
         'admin_approved_at',
         'approved_by',
+        'cancelled_at',
+        'cancelled_by',
+        'cancellation_reason',
         'payment_processed_at',
         'staff_payment_processed',
         'staff_payment_processed_at',
@@ -58,6 +61,7 @@ class ServiceRequest extends Model
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'admin_approved_at' => 'datetime',
+        'cancelled_at' => 'datetime',
         'payment_processed_at' => 'datetime',
         'staff_payment_processed_at' => 'datetime',
         'staff_payment_processed' => 'boolean',
@@ -158,6 +162,11 @@ class ServiceRequest extends Model
     }
 
     /**
+     * Statuses a patient may cancel from (v1: before staff has accepted).
+     */
+    public const PATIENT_CANCELLABLE_STATUSES = ['pending', 'pending_approval'];
+
+    /**
      * CRITICAL FIX #5: Valid status transitions state machine
      */
     private static $validTransitions = [
@@ -256,6 +265,43 @@ class ServiceRequest extends Model
     }
 
     /**
+     * Check if request is cancelled
+     */
+    public function isCancelled(): bool
+    {
+        return $this->status === 'cancelled';
+    }
+
+    /**
+     * User who cancelled the request (patient or future admin cancel).
+     */
+    public function cancelledByUser()
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    /**
+     * Patient self-cancel: own request, pending or pending_approval only.
+     */
+    public function canBeCancelledByPatient(?User $user = null): bool
+    {
+        $user = $user ?? auth()->user();
+        if (! $user || ! $user->isPatient()) {
+            return false;
+        }
+
+        if ((int) $this->patient_id !== (int) $user->id) {
+            return false;
+        }
+
+        if (! in_array($this->status, self::PATIENT_CANCELLABLE_STATUSES, true)) {
+            return false;
+        }
+
+        return $this->canTransitionTo('cancelled');
+    }
+
+    /**
      * Scope for pending requests
      */
     public function scopePending($query)
@@ -304,6 +350,21 @@ class ServiceRequest extends Model
         $this->loadMissing('patient');
 
         return (string) ($this->patient?->phone ?: $this->contact_phone ?: '') ?: null;
+    }
+
+    /**
+     * Patient mobile matches staff verified account — login OTP already proved possession.
+     * When true, completion does not need a separate patient OTP.
+     */
+    public function staffMayCompleteWithoutPatientOtp(User $staff): bool
+    {
+        if (! $staff->hasVerifiedPhone()) {
+            return false;
+        }
+
+        $patientPhone = $this->patientContactPhone();
+
+        return $patientPhone && $staff->accountPhonesMatch($staff->phone, $patientPhone);
     }
 
     /**

@@ -21,6 +21,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/request', [ServiceController::class, 'create'])->name('create');
         Route::post('/request', [ServiceController::class, 'store'])->name('store');
         Route::get('/my-requests', [ServiceController::class, 'myRequests'])->name('my-requests');
+        Route::post('/{serviceRequest}/cancel', [ServiceController::class, 'cancel'])->name('cancel');
         Route::get('/{serviceRequest}', [ServiceController::class, 'show'])->name('show');
     });
     

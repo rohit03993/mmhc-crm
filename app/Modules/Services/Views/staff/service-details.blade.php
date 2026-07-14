@@ -8,6 +8,7 @@
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
     @include('services::partials.mobile-assets')
+    @include('services::partials.staff-service-actions')
     
     <style>
         :root {
@@ -398,23 +399,28 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Verify Patient OTP</h5>
+                <h5 class="modal-title">Complete service</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="small text-muted mb-3">We will send a 6-digit OTP to the patient on WhatsApp. Enter it here to complete this service.</p>
+                <p class="small text-muted mb-3">
+                    Normally we send a 6-digit OTP to the <strong>patient</strong> so they can confirm the visit.
+                    If the patient contact mobile is the same as your verified staff mobile, you can complete without a separate OTP.
+                </p>
                 <div class="d-flex gap-2 mb-3">
-                    <button type="button" class="btn btn-outline-primary w-100" id="sendCompletionOtpBtn" onclick="sendCompletionOtp()">Send WhatsApp OTP to patient</button>
+                    <button type="button" class="btn btn-outline-primary w-100" id="sendCompletionOtpBtn" onclick="sendCompletionOtp()">
+                        Send OTP to patient
+                    </button>
                 </div>
-                <div class="mb-2">
-                    <label class="form-label">Enter OTP</label>
-                    <input type="text" id="completionOtpInput" class="form-control" maxlength="6" placeholder="6-digit OTP">
+                <div class="mb-2" id="completionOtpFieldWrap">
+                    <label class="form-label" for="completionOtpInput">Enter patient OTP</label>
+                    <input type="text" id="completionOtpInput" class="form-control" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit OTP">
                 </div>
-                <small class="text-muted" id="completionOtpHint">OTP expires in 5 minutes.</small>
+                <small class="text-muted" id="completionOtpHint">OTP expires in 5 minutes. Tap Send OTP first.</small>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="verifyCompletionOtpBtn" onclick="verifyAndCompleteService()">Verify & Complete</button>
+                <button type="button" class="btn btn-success" id="verifyCompletionOtpBtn" onclick="verifyAndCompleteService()">Verify &amp; Complete</button>
             </div>
         </div>
     </div>
@@ -895,126 +901,4 @@
     }
 }
 </style>
-
-<script>
-let activeCompletionServiceId = null;
-let completionOtpModal = null;
-
-function openCompletionOtpModal(serviceId) {
-    activeCompletionServiceId = serviceId;
-    if (!completionOtpModal) {
-        completionOtpModal = new bootstrap.Modal(document.getElementById('completionOtpModal'));
-    }
-    document.getElementById('completionOtpInput').value = '';
-    document.getElementById('completionOtpHint').textContent = 'OTP expires in 5 minutes.';
-    completionOtpModal.show();
-}
-
-function sendCompletionOtp() {
-    if (!activeCompletionServiceId) return;
-    const btn = document.getElementById('sendCompletionOtpBtn');
-    const old = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
-    fetch(`/staff/service/${activeCompletionServiceId}/completion-otp`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({})
-    }).then(r => r.json()).then(data => {
-        if (!data.success) {
-            alert(data.message || 'Failed to send OTP');
-            return;
-        }
-        document.getElementById('completionOtpHint').textContent = `OTP sent to ${data.sent_to || 'patient'} (WhatsApp).`;
-    }).catch(() => {
-        alert('Failed to send OTP.');
-    }).finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = old;
-    });
-}
-
-function verifyAndCompleteService() {
-    if (!activeCompletionServiceId) return;
-    const otp = (document.getElementById('completionOtpInput').value || '').trim();
-    if (!/^\d{6}$/.test(otp)) {
-        alert('Please enter valid 6-digit OTP.');
-        return;
-    }
-    const btn = document.getElementById('verifyCompletionOtpBtn');
-    const old = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Verifying...';
-    fetch(`/staff/service/${activeCompletionServiceId}/complete`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ otp_code: otp })
-    }).then(r => r.json()).then(data => {
-        if (!data.success) {
-            alert(data.message || 'OTP verification failed.');
-            return;
-        }
-        completionOtpModal.hide();
-        setTimeout(() => location.reload(), 300);
-    }).catch(() => {
-        alert('Failed to verify OTP.');
-    }).finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = old;
-    });
-}
-
-function startService(serviceId) {
-    if (confirm('Are you sure you want to start this service?')) {
-        // Show loading state
-        const btn = event.target.closest('.btn-action-start');
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Starting...';
-        
-        fetch(`/staff/service/${serviceId}/start`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Show success message
-                btn.innerHTML = '<i class="fas fa-check me-2"></i>Started!';
-                btn.classList.remove('btn-action-start');
-                btn.classList.add('btn-action-secondary');
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
-            } else {
-                alert(data.message || 'Failed to start service');
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while starting the service. Please try again.');
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-        });
-    }
-}
-
-function completeService(serviceId) {
-    openCompletionOtpModal(serviceId);
-}
-</script>
 @endsection

@@ -9,6 +9,7 @@
     <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
     <link rel="stylesheet" href="{{ asset('css/dashboard-patient.css') }}?v=2">
     @include('services::partials.staff-referrals-assets')
+    @include('services::partials.staff-service-actions')
     
     <style>
         :root {
@@ -2160,56 +2161,6 @@ function hideRejectModal(serviceId) {
     }
 }
 
-function startService(serviceId) {
-    if (confirm('Are you sure you want to start this service?')) {
-        // AJAX request to start service will be implemented
-        fetch(`/staff/service/${serviceId}/start`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert(data.message || 'Failed to start service');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to start service. Please retry. If issue persists, contact support.');
-        });
-    }
-}
-
-function completeService(serviceId) {
-    if (confirm('Are you sure you want to mark this service as completed?')) {
-        // AJAX request to complete service will be implemented
-        fetch(`/staff/service/${serviceId}/complete`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert(data.message || 'Failed to complete service');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to complete service. Please retry. If issue persists, contact support.');
-        });
-    }
-}
-
-// Mobile menu toggle is handled by the shared bottom-nav component
+// startService / complete OTP live in staff-service-actions.js
 </script>
 @endsection

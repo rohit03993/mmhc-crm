@@ -370,6 +370,50 @@ class ServiceController extends Controller
     }
 
     /**
+     * Patient: cancel own pending / pending_approval service request.
+     */
+    public function cancel(Request $request, ServiceRequest $serviceRequest)
+    {
+        $user = Auth::user();
+
+        if ($serviceRequest->patient_id !== $user->id) {
+            abort(403);
+        }
+
+        if (! $user->isPatient()) {
+            return redirect()->route('services.my-requests')
+                ->with('error', 'Only patients can cancel their own service requests.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'cancellation_reason' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        try {
+            app(\App\Modules\Services\Services\ServiceCancellationService::class)
+                ->cancelByPatient($serviceRequest, $user, $request->input('cancellation_reason'));
+
+            $refundNote = ((float) $serviceRequest->total_amount > 0)
+                ? ' If you paid a visit fee, the MMHC team will handle any refund manually.'
+                : '';
+
+            return redirect()->route('services.my-requests')
+                ->with('success', 'Service request cancelled successfully.'.$refundNote);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            return redirect()->back()
+                ->with('error', 'Failed to cancel this request. Please try again.');
+        }
+    }
+
+    /**
      * Admin: Display all service requests
      */
     public function adminIndex(Request $request)

@@ -18,9 +18,11 @@
     $statusLabel = ucfirst(str_replace('_', ' ', $serviceRequest->status));
     $statusClass = match ($serviceRequest->status) {
         'pending' => 'sr-pill--warning',
+        'pending_approval' => 'sr-pill--warning',
         'assigned' => 'sr-pill--info',
         'in_progress' => 'sr-pill--primary',
         'completed' => 'sr-pill--success',
+        'cancelled' => 'sr-pill--muted',
         default => 'sr-pill--muted',
     };
 @endphp
@@ -199,14 +201,27 @@
                             </div>
                         </li>
                         @endif
+                        @if($serviceRequest->cancelled_at)
+                        <li class="sr-timeline__item">
+                            <span class="sr-timeline__dot sr-timeline__dot--muted"></span>
+                            <div>
+                                <strong class="sr-timeline__label">Request cancelled</strong>
+                                <div class="sr-timeline__meta">{{ $serviceRequest->cancelled_at->format('M d, Y g:i A') }}</div>
+                                @if($serviceRequest->cancellation_reason)
+                                <div class="sr-timeline__meta mt-1">{{ $serviceRequest->cancellation_reason }}</div>
+                                @endif
+                            </div>
+                        </li>
+                        @endif
                     </ul>
                 </div>
 
-                @if($serviceRequest->status === 'pending')
+                @if($serviceRequest->canBeCancelledByPatient())
                 <div class="d-md-none mt-3">
-                    <button type="button" class="btn btn-warning w-100 rounded-3 py-3 fw-semibold" onclick="cancelRequest({{ $serviceRequest->id }})">
-                        <i class="fas fa-times me-2"></i>Cancel request
-                    </button>
+                    @include('services::services.partials.cancel-request-form', [
+                        'serviceRequest' => $serviceRequest,
+                        'compact' => false,
+                    ])
                 </div>
                 @endif
             </div>
@@ -260,10 +275,25 @@
 
                     <div class="sr-card">
                         <h3 class="sr-card__title"><i class="fas fa-bolt me-2 text-secondary"></i>Actions</h3>
-                        @if($serviceRequest->status === 'pending')
-                        <button type="button" class="btn btn-outline-warning w-100 rounded-3 mb-2 fw-semibold" onclick="cancelRequest({{ $serviceRequest->id }})">
-                            <i class="fas fa-times me-2"></i>Cancel request
-                        </button>
+                        @if($serviceRequest->canBeCancelledByPatient())
+                        <div class="mb-2 d-none d-md-block">
+                            @include('services::services.partials.cancel-request-form', [
+                                'serviceRequest' => $serviceRequest,
+                                'compact' => false,
+                            ])
+                        </div>
+                        @elseif($serviceRequest->isCancelled())
+                        <div class="alert alert-secondary small mb-2">
+                            <i class="fas fa-ban me-1"></i>This request was cancelled
+                            @if($serviceRequest->cancelled_at)
+                                on {{ $serviceRequest->cancelled_at->format('M d, Y g:i A') }}.
+                            @else
+                                .
+                            @endif
+                            @if($serviceRequest->cancellation_reason)
+                                <div class="mt-1"><strong>Reason:</strong> {{ $serviceRequest->cancellation_reason }}</div>
+                            @endif
+                        </div>
                         @endif
                         <a href="{{ $backUrl }}" class="btn btn-outline-secondary w-100 rounded-3">
                             <i class="fas fa-arrow-left me-2"></i>Back to list
@@ -542,12 +572,4 @@
     }
 }
 </style>
-
-<script>
-function cancelRequest(requestId) {
-    if (confirm('Are you sure you want to cancel this service request?')) {
-        alert('Request cancellation feature will be implemented soon.');
-    }
-}
-</script>
 @endsection

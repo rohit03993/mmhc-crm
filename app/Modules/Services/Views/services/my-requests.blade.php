@@ -56,7 +56,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="service-status-icon-full">
-                                    <i class="fas fa-{{ $request->status === 'pending' ? 'clock' : ($request->status === 'assigned' ? 'user-check' : ($request->status === 'in_progress' ? 'play-circle' : 'check-circle')) }}"></i>
+                                    <i class="fas fa-{{ $request->status === 'pending' || $request->status === 'pending_approval' ? 'clock' : ($request->status === 'assigned' ? 'user-check' : ($request->status === 'in_progress' ? 'play-circle' : ($request->status === 'cancelled' ? 'ban' : 'check-circle'))) }}"></i>
                                 </div>
                                 <div>
                                     <h6 class="mb-0 text-white">{{ $request->serviceType->name }}</h6>
@@ -145,14 +145,20 @@
                         
                         <!-- Card Footer Actions -->
                         <div class="card-footer-mobile-full">
-                            <div class="d-flex gap-2">
+                            <div class="d-flex gap-2 align-items-stretch">
                                 <a href="{{ route('services.show', $request) }}" class="btn btn-primary btn-sm flex-fill">
                                     <i class="fas fa-eye me-1"></i>View Details
                                 </a>
-                                @if($request->status === 'pending')
-                                <button class="btn btn-outline-warning btn-sm" onclick="cancelRequest({{ $request->id }})">
-                                    <i class="fas fa-times"></i>
-                                </button>
+                                @if($request->canBeCancelledByPatient())
+                                <form method="POST"
+                                      action="{{ route('services.cancel', $request) }}"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Cancel this service request? This cannot be undone.');">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-warning btn-sm h-100" title="Cancel request" aria-label="Cancel request">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
                                 @endif
                             </div>
                         </div>
@@ -183,12 +189,4 @@
 
     <!-- Bottom Navigation -->
 </div>
-<script>
-function cancelRequest(requestId) {
-    if (confirm('Are you sure you want to cancel this service request?')) {
-        // Here you would typically make an AJAX request to cancel the request
-        alert('Request cancellation feature will be implemented soon.');
-    }
-}
-</script>
 @endsection
