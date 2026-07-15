@@ -1,12 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="MeD Miracle Health Care">
-  <rect width="512" height="512" rx="96" fill="#2E48A2"/>
-  <!-- Mark: green heart over white crossed pills (official MeD) -->
-  <g transform="translate(256 230)">
+  <rect width="512" height="512" fill="#2E48A2"/>
+  <!-- Official-style mark: green heart over white crossed pills -->
+  <g transform="translate(256 250)">
     <g fill="#FFFFFF">
-      <rect x="-28" y="-10" width="56" height="168" rx="28" transform="rotate(-38)"/>
-      <rect x="-28" y="-10" width="56" height="168" rx="28" transform="rotate(38)"/>
+      <rect x="-30" y="-14" width="60" height="200" rx="30" transform="rotate(-38)"/>
+      <rect x="-30" y="-14" width="60" height="200" rx="30" transform="rotate(38)"/>
     </g>
-    <path fill="#55B776" d="M0,-78 C-48,-148 -132,-118 -132,-42 C-132,18 -48,78 0,118 C48,78 132,18 132,-42 C132,-118 48,-148 0,-78 Z"/>
+    <path fill="#55B776" d="M0,-92 C-52,-170 -148,-132 -148,-48 C-148,24 -52,92 0,140 C52,92 148,24 148,-48 C148,-132 52,-170 0,-92 Z"/>
   </g>
-  <text x="256" y="430" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="56" font-weight="700" fill="#FFFFFF">MeD</text>
 </svg>

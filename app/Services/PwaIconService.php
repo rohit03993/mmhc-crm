@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\SiteSetting;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class PwaIconService
@@ -14,6 +15,8 @@ class PwaIconService
         512 => 'icon-512.png',
         180 => 'apple-touch-icon.png',
     ];
+
+    public const BRAND_BLUE = [0x2E, 0x48, 0xA2];
 
     /**
      * Store an admin-uploaded PWA icon, generate sizes, and sync public/icons for PWA install.
@@ -36,21 +39,16 @@ class PwaIconService
     }
 
     /**
-     * Absolute URL for the primary PWA icon (192), with cache-bust when available.
-     * Prefers public/icons (synced on upload) so the service worker and install flow keep working.
+     * Absolute URL for a PWA icon size.
+     * When an admin icon exists in storage, that wins — never fall back to stale public/icons.
      */
     public function iconUrl(int $size = 192): string
     {
         $version = SiteSetting::get('pwa_icon_version');
         $query = $version ? '?v=' . urlencode((string) $version) : '';
         $filename = self::SIZES[$size] ?? self::SIZES[192];
-
-        $publicPath = public_path('icons/' . $filename);
-        if (is_file($publicPath)) {
-            return asset('icons/' . $filename) . $query;
-        }
-
         $storageName = 'pwa-icons/' . $filename;
+
         if (Storage::disk('public')->exists($storageName)) {
             return (storage_asset($storageName) ?: asset('icons/' . $filename)) . $query;
         }
@@ -73,7 +71,6 @@ class PwaIconService
         foreach (self::SIZES as $px => $filename) {
             $resized = $this->resizeToSquarePng($sourceAbsolutePath, $px);
             if ($resized === null) {
-                // Fallback: copy original bytes (still works for PWA, just not ideally sized)
                 $bytes = file_get_contents($sourceAbsolutePath);
             } else {
                 $bytes = $resized;
@@ -82,7 +79,10 @@ class PwaIconService
             Storage::disk('public')->put('pwa-icons/' . $filename, $bytes);
 
             $publicTarget = $publicIcons . DIRECTORY_SEPARATOR . $filename;
-            @file_put_contents($publicTarget, $bytes);
+            $written = @file_put_contents($publicTarget, $bytes);
+            if ($written === false) {
+                Log::warning('PWA icon could not write public/icons file', ['path' => $publicTarget]);
+            }
 
             if ($filename === 'apple-touch-icon.png') {
                 @file_put_contents(public_path('apple-touch-icon.png'), $bytes);
@@ -90,6 +90,9 @@ class PwaIconService
         }
     }
 
+    /**
+     * Contain-fit logo onto a brand-blue square (letterbox, no crop).
+     */
     private function resizeToSquarePng(string $sourcePath, int $size): ?string
     {
         if (! function_exists('imagecreatetruecolor')) {
@@ -123,23 +126,23 @@ class PwaIconService
             return null;
         }
 
-        imagealphablending($canvas, false);
-        imagesavealpha($canvas, true);
-        $transparent = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
-        imagefilledrectangle($canvas, 0, 0, $size, $size, $transparent);
-        imagealphablending($canvas, true);
+        [$br, $bg, $bb] = self::BRAND_BLUE;
+        $blue = imagecolorallocate($canvas, $br, $bg, $bb);
+        imagefilledrectangle($canvas, 0, 0, $size, $size, $blue);
 
-        // Cover-fit into square (center crop)
-        $scale = max($size / max($width, 1), $size / max($height, 1));
-        $newW = (int) round($width * $scale);
-        $newH = (int) round($height * $scale);
+        // Keep ~10% padding so maskable installs don't clip the mark
+        $pad = (int) round($size * 0.10);
+        $box = max(1, $size - ($pad * 2));
+        $scale = min($box / max($width, 1), $box / max($height, 1));
+        $newW = max(1, (int) round($width * $scale));
+        $newH = max(1, (int) round($height * $scale));
         $dstX = (int) round(($size - $newW) / 2);
         $dstY = (int) round(($size - $newH) / 2);
 
+        imagealphablending($canvas, true);
         imagecopyresampled($canvas, $src, $dstX, $dstY, 0, 0, $newW, $newH, $width, $height);
 
         ob_start();
-        imagesavealpha($canvas, true);
         imagepng($canvas, null, 6);
         $png = ob_get_clean();
 

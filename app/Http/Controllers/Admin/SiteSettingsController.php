@@ -88,6 +88,9 @@ class SiteSettingsController extends Controller
 
         if ($request->hasFile('pwa_icon')) {
             $pwaIcons->storeUploadedIcon($request->file('pwa_icon'));
+
+            return redirect()->route('admin.site-settings.index')
+                ->with('success', 'Site settings updated. PWA icon saved — remove and re-add the installed app on your phone if the old icon is still cached.');
         }
 
         return redirect()->route('admin.site-settings.index')
