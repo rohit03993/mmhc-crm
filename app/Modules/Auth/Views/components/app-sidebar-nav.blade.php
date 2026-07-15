@@ -438,6 +438,13 @@
         </li>
     @endif
 
+    <li class="nav-item mt-3 mmhc-pwa-install-nav">
+        <a class="nav-link text-white" href="{{ url('/install') }}" data-mmhc-pwa-install title="Install MeD Miracle on your phone">
+            <i class="fas fa-mobile-alt me-2"></i>
+            Install App
+        </a>
+    </li>
+
     <li class="nav-item mt-3">
         <form method="POST" action="{{ route('auth.logout') }}">
             @csrf

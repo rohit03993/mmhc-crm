@@ -354,11 +354,58 @@
         return root;
     }
 
-    function showSheet(mode) {
-        if (shouldSkipPrompt() && !waitingForInstalled) return;
-        if (!sheetEl) buildSheet(mode || 'android');
+    function showSheet(mode, force) {
+        if (!force && shouldSkipPrompt() && !waitingForInstalled) return;
+        if (!sheetEl) buildSheet(mode || (isIosSafari() ? 'ios' : 'android'));
         requestAnimationFrame(function () {
             if (sheetEl) sheetEl.classList.add('is-visible');
+        });
+    }
+
+    /**
+     * Manual install from menu / /install page — does not wait for the auto popup.
+     */
+    function openInstallPrompt() {
+        if (isNativeCapacitor()) {
+            return false;
+        }
+        if (isStandaloneDisplay()) {
+            try {
+                alert('MeD Miracle is already installed. Open it from your Home screen.');
+            } catch (e) { /* ignore */ }
+            return false;
+        }
+
+        // Manual open ignores the 14-day "Not now" dismiss
+        if (showTimer) {
+            clearTimeout(showTimer);
+            showTimer = null;
+        }
+
+        var mode = isIosSafari() ? 'ios' : 'android';
+        if (sheetEl) {
+            sheetEl.remove();
+            sheetEl = null;
+        }
+        buildSheet(mode);
+        showSheet(mode, true);
+
+        if (mode === 'android' && !deferredPrompt) {
+            showHelpState(
+                'Install MeD Miracle',
+                'Tap Chrome menu (⋮) → Install app / Add to Home screen. Or wait a moment on this page and tap Install again when Chrome is ready.'
+            );
+        }
+
+        return true;
+    }
+
+    function bindMenuTriggers() {
+        document.addEventListener('click', function (e) {
+            var trigger = e.target.closest('[data-mmhc-pwa-install]');
+            if (!trigger) return;
+            e.preventDefault();
+            openInstallPrompt();
         });
     }
 
@@ -464,12 +511,31 @@
                 localStorage.setItem(INSTALLED_KEY, '1');
             } catch (e) { /* ignore */ }
             registerServiceWorker();
+            bindMenuTriggers();
+            window.mmhcPwa = {
+                install: openInstallPrompt,
+                isInstalled: function () { return true; },
+                canPrompt: function () { return false; }
+            };
             return;
         }
 
         registerServiceWorker();
+        bindMenuTriggers();
+        window.mmhcPwa = {
+            install: openInstallPrompt,
+            isInstalled: isStandaloneDisplay,
+            canPrompt: function () { return !!deferredPrompt; }
+        };
         if (isNativeCapacitor()) return;
         bindInstallEvents();
+
+        // /install page opens the sheet immediately
+        if (document.body && document.body.getAttribute('data-mmhc-pwa-autostart') === '1') {
+            setTimeout(function () {
+                openInstallPrompt();
+            }, 600);
+        }
     }
 
     if (document.readyState === 'loading') {

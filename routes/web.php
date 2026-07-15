@@ -25,6 +25,8 @@ Route::get('/pwa-icon/{size}', PwaIconController::class)
     ->whereNumber('size')
     ->name('pwa.icon');
 
+Route::view('/install', 'install-app')->name('pwa.install');
+
 // Shared landing page data builder
 $buildLandingData = function (): array {
     $pageContent = \App\Models\PageContent::getAllSections();

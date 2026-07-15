@@ -14,6 +14,18 @@ body.mmhc-pwa-standalone .mmhc-pwa-install {
     display: none !important;
 }
 
+html.capacitor-app .mmhc-pwa-install-nav,
+body.capacitor-app .mmhc-pwa-install-nav,
+body.mmhc-pwa-standalone .mmhc-pwa-install-nav {
+    display: none !important;
+}
+
+@media (display-mode: standalone), (display-mode: minimal-ui) {
+    .mmhc-pwa-install-nav {
+        display: none !important;
+    }
+}
+
 .mmhc-pwa-install {
     --pwa-teal: #0f766e;
     --pwa-sky: #0ea5e9;

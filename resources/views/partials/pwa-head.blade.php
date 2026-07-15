@@ -12,4 +12,4 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="{{ $siteCompanyName ?? 'MeD Miracle' }}">
 <link rel="apple-touch-icon" href="{{ $pwaAppleIcon }}">
-<link rel="stylesheet" href="{{ asset('css/pwa-install.css') }}?v=20260714b">
+<link rel="stylesheet" href="{{ asset('css/pwa-install.css') }}?v=20260715a">

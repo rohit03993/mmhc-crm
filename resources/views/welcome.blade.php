@@ -148,6 +148,7 @@
                     <a href="#plans" class="text-gray-700 hover:text-blue-600 font-medium transition">Plans</a>
                     <a href="#about" class="text-gray-700 hover:text-blue-600 font-medium transition">About</a>
                     <a href="#contact" class="text-gray-700 hover:text-blue-600 font-medium transition">Contact</a>
+                    <a href="{{ route('pwa.install') }}" class="text-blue-700 hover:text-blue-800 font-semibold transition mmhc-pwa-install-nav">Install App</a>
                 </div>
                 
                 <!-- Login Buttons -->
@@ -185,6 +186,9 @@
                 </a>
                 <a href="#contact" class="mmhc-landing-mobile-menu__link flex items-center text-gray-700 hover:text-blue-600 font-medium rounded-xl px-3 py-3">
                     <i class="fas fa-envelope mr-3 w-5 text-center opacity-75" aria-hidden="true"></i>Contact
+                </a>
+                <a href="{{ route('pwa.install') }}" class="mmhc-landing-mobile-menu__link flex items-center text-blue-700 hover:text-blue-800 font-semibold rounded-xl px-3 py-3 mmhc-pwa-install-nav">
+                    <i class="fas fa-mobile-alt mr-3 w-5 text-center opacity-75" aria-hidden="true"></i>Install App
                 </a>
                 <div class="mmhc-landing-mobile-menu__actions pt-3 mt-2 border-t border-gray-200 space-y-2">
                     <a href="{{ route('auth.login') }}" class="block w-full text-center px-5 py-3 text-blue-600 border-2 border-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition">
@@ -1164,6 +1168,7 @@
 
     <!-- Mobile app: quick sign-in / register -->
     <div class="mmhc-landing-mobile-bar md:hidden" role="navigation" aria-label="Quick actions">
+        <a href="{{ route('pwa.install') }}" class="mmhc-landing-mobile-bar__btn mmhc-landing-mobile-bar__btn--outline mmhc-pwa-install-nav">Install</a>
         <a href="{{ route('auth.login') }}" class="mmhc-landing-mobile-bar__btn mmhc-landing-mobile-bar__btn--outline">Sign in</a>
         <a href="{{ route('auth.register') }}" class="mmhc-landing-mobile-bar__btn mmhc-landing-mobile-bar__btn--primary">Get started</a>
     </div>
@@ -1177,6 +1182,7 @@
                     © {{ date('Y') }} Med Miracle Health Care (MMHC). All rights reserved. | Founded by Mantu Kumar
                 </div>
                 <div class="flex space-x-6 text-sm">
+                    <a href="{{ route('pwa.install') }}" class="text-gray-400 hover:text-white transition mmhc-pwa-install-nav">Install App</a>
                     <a href="{{ route('legal.privacy') }}" class="text-gray-400 hover:text-white transition">Privacy Policy</a>
                     <a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a>
                     <a href="#" class="text-gray-400 hover:text-white transition">Cookie Policy</a>
