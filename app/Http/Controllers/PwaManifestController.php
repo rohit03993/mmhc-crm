@@ -14,7 +14,6 @@ class PwaManifestController extends Controller
         $shortName = 'MeD Miracle';
         $icon192 = $icons->iconUrl(192);
         $icon512 = $icons->iconUrl(512);
-        $version = SiteSetting::get('pwa_icon_version');
 
         $payload = [
             'id' => '/',
