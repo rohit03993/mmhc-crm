@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\PageContentController;
 use App\Http\Controllers\Admin\SiteBackupController;
 use App\Http\Controllers\Admin\SiteSettingsController;
 use App\Http\Controllers\Admin\TestimonialController;
+use App\Http\Controllers\PwaManifestController;
 use App\Http\Controllers\StorageController;
 use App\Modules\Profiles\Controllers\DocumentController;
 use App\Modules\Profiles\Controllers\ProfileController;
@@ -15,6 +16,9 @@ use Illuminate\Support\Facades\Schema;
 
 // Serve storage/app/public via Laravel using a non-static path (avoids conflict with public/storage symlink directory)
 Route::get('/media-file', [StorageController::class, 'show'])->name('storage.serve');
+
+// Dynamic PWA manifest (icons/name can be managed from Admin → Site Settings)
+Route::get('/manifest.webmanifest', PwaManifestController::class)->name('pwa.manifest');
 
 // Shared landing page data builder
 $buildLandingData = function (): array {

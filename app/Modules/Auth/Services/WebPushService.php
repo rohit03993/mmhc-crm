@@ -97,8 +97,8 @@ class WebPushService
             'title' => $title,
             'body' => $body,
             'url' => $url ?: url('/dashboard'),
-            'icon' => url('/icons/icon-192.png'),
-            'badge' => url('/icons/icon-192.png'),
+            'icon' => app(\App\Services\PwaIconService::class)->iconUrl(192),
+            'badge' => app(\App\Services\PwaIconService::class)->iconUrl(192),
         ] + $extra));
 
         foreach ($subs as $sub) {

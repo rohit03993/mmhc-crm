@@ -36,7 +36,7 @@
                     <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
                     <div>
                         <h3 class="font-semibold text-blue-900 mb-1">Logo & branding</h3>
-                        <p class="text-blue-800 text-sm">These details appear in the sidebar, login/register pages, and landing page header. Leave logo empty to keep the current image.</p>
+                        <p class="text-blue-800 text-sm">These details appear in the sidebar, login/register pages, and landing page header. The PWA / App icon controls what users see when they install the site on their phone. Leave uploads empty to keep the current images.</p>
                     </div>
                 </div>
             </div>
@@ -67,6 +67,19 @@
                     @endif
                     <input type="file" name="founder_image" accept="image/*" class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700">
                     @error('founder_image') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">PWA / App icon (Add to Home Screen)</label>
+                    <div class="mb-3 flex items-center gap-4">
+                        <img src="{{ $pwaIconPreviewUrl }}" alt="Current PWA icon" class="h-16 w-16 rounded-xl object-cover border border-gray-200 bg-gray-100">
+                        <div class="text-sm text-gray-500">
+                            <p>Shown when users install the app on their phone.</p>
+                            <p class="mt-1">Use a square PNG (512×512 recommended). Brand logo with blue background works best.</p>
+                        </div>
+                    </div>
+                    <input type="file" name="pwa_icon" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700">
+                    @error('pwa_icon') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>

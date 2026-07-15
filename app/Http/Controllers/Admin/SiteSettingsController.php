@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
+use App\Services\PwaIconService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -13,6 +14,7 @@ class SiteSettingsController extends Controller
     {
         $logoPath = SiteSetting::get('logo_path');
         $founderImagePath = SiteSetting::get('founder_image_path');
+        $pwaIconPath = SiteSetting::get('pwa_icon_path');
         $companyName = SiteSetting::get('company_name', 'MeD Miracle Health Care');
         $tagline = SiteSetting::get('tagline', 'Miracle Health Care');
         $contactAddress = SiteSetting::get('contact_address', "Udgam Incubation Centre, Rohit Nagar\nPhase 1 (Near Surya Children School)\nBhopal 462023, Madhya Pradesh");
@@ -20,20 +22,23 @@ class SiteSettingsController extends Controller
         $contactWebsite = SiteSetting::get('contact_website', 'www.themmhc.com');
         $contactEmail = SiteSetting::get('contact_email', 'Care@themmhc.com');
         $serviceLocations = SiteSetting::get('service_locations', "Patna | Ranchi | Bhopal\nNoida | Gurgaon");
+        $pwaIconPreviewUrl = app(PwaIconService::class)->iconUrl(192);
 
         return view('admin.site-settings.index', compact(
-            'logoPath', 'founderImagePath', 'companyName', 'tagline',
+            'logoPath', 'founderImagePath', 'pwaIconPath', 'pwaIconPreviewUrl',
+            'companyName', 'tagline',
             'contactAddress', 'contactPhone', 'contactWebsite', 'contactEmail', 'serviceLocations'
         ));
     }
 
-    public function update(Request $request)
+    public function update(Request $request, PwaIconService $pwaIcons)
     {
         $validated = $request->validate([
             'company_name' => 'nullable|string|max:255',
             'tagline' => 'nullable|string|max:255',
             'logo' => 'nullable|image|max:2048',
             'founder_image' => 'nullable|image|max:2048',
+            'pwa_icon' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:4096',
             'contact_address' => 'nullable|string|max:1000',
             'contact_phone' => 'nullable|string|max:100',
             'contact_website' => 'nullable|string|max:255',
@@ -79,6 +84,10 @@ class SiteSettingsController extends Controller
             }
             $path = $request->file('founder_image')->store('site-settings', 'public');
             SiteSetting::set('founder_image_path', $path);
+        }
+
+        if ($request->hasFile('pwa_icon')) {
+            $pwaIcons->storeUploadedIcon($request->file('pwa_icon'));
         }
 
         return redirect()->route('admin.site-settings.index')

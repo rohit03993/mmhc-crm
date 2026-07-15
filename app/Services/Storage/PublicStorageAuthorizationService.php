@@ -22,6 +22,7 @@ class PublicStorageAuthorizationService
         'achievement-media/',
         'page-content/',
         'site-settings/',
+        'pwa-icons/',
         'community/posts/',
     ];
 
