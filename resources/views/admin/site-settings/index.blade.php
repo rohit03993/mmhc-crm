@@ -72,7 +72,8 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">PWA / App icon (Add to Home Screen)</label>
                     <div class="mb-3 flex items-center gap-4">
-                        <img src="{{ $pwaIconPreviewUrl }}" alt="Current PWA icon" class="h-16 w-16 rounded-xl object-cover border border-gray-200 bg-gray-100">
+                        <img src="{{ $pwaIconPreviewUrl }}" alt="Current PWA icon" class="h-16 w-16 rounded-xl object-cover border border-gray-200 bg-gray-100"
+                             onerror="this.onerror=null;this.src='{{ asset('icons/icon-192.png') }}?t='+Date.now();">
                         <div class="text-sm text-gray-500">
                             <p>Shown when users install the app on their phone.</p>
                             <p class="mt-1">Use a square PNG (512×512 recommended). Brand logo with blue background works best.</p>

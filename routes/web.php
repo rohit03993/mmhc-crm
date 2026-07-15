@@ -20,7 +20,8 @@ Route::get('/media-file', [StorageController::class, 'show'])->name('storage.ser
 
 // Dynamic PWA manifest (icons/name can be managed from Admin → Site Settings)
 Route::get('/manifest.webmanifest', PwaManifestController::class)->name('pwa.manifest');
-Route::get('/pwa-icon/{size}.png', PwaIconController::class)
+// No .png extension — nginx/Hostinger often 404s missing *.png before Laravel can serve the route
+Route::get('/pwa-icon/{size}', PwaIconController::class)
     ->whereNumber('size')
     ->name('pwa.icon');
 

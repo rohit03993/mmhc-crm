@@ -44,23 +44,27 @@ class PwaIconService
 
     /**
      * Absolute URL for a PWA icon size.
-     * Uses /pwa-icon/{size}.png so uploads are not blocked by stale public/icons CDN copies.
+     * Prefer synced public/icons (with ?v=) — Hostinger serves those reliably.
+     * Fallback: /pwa-icon/{size} (no .png) so nginx does not 404 before Laravel.
      */
     public function iconUrl(int $size = 192): string
     {
         $version = SiteSetting::get('pwa_icon_version');
         $filename = self::SIZES[$size] ?? self::SIZES[192];
         $storageName = 'pwa-icons/'.$filename;
+        $publicPath = public_path('icons/'.$filename);
 
-        // Keep public/icons in sync for offline.html / older bookmarks
         if (Storage::disk('public')->exists($storageName)) {
             $this->syncStorageIconToPublic($storageName, $filename);
         }
 
-        $px = array_key_exists($size, self::SIZES) ? $size : 192;
-        $url = url('/pwa-icon/'.$px.'.png');
+        if (is_file($publicPath)) {
+            return $this->withCacheBust(asset('icons/'.$filename), $version);
+        }
 
-        return $this->withCacheBust($url, $version);
+        $px = array_key_exists($size, self::SIZES) ? $size : 192;
+
+        return $this->withCacheBust(url('/pwa-icon/'.$px), $version);
     }
 
     private function withCacheBust(string $url, ?string $version): string
