@@ -367,12 +367,12 @@
      */
     function openInstallPrompt() {
         if (isNativeCapacitor()) {
+            showAlreadyInstalledSheet('You’re using the native MeD Miracle app. No extra install is needed.');
             return false;
         }
         if (isStandaloneDisplay()) {
-            try {
-                alert('MeD Miracle is already installed. Open it from your Home screen.');
-            } catch (e) { /* ignore */ }
+            showAlreadyInstalledSheet('MeD Miracle is already installed on this phone. Open it from your Home screen.');
+            window.dispatchEvent(new CustomEvent('mmhc-pwa-already-installed'));
             return false;
         }
 
@@ -391,13 +391,41 @@
         showSheet(mode, true);
 
         if (mode === 'android' && !deferredPrompt) {
-            showHelpState(
-                'Install MeD Miracle',
-                'Tap Chrome menu (⋮) → Install app / Add to Home screen. Or wait a moment on this page and tap Install again when Chrome is ready.'
-            );
+            if (isMarkedInstalled()) {
+                showAlreadyInstalledSheet(
+                    'MeD Miracle looks like it was installed earlier. Check your Home screen for the MeD Miracle icon. If you removed it, use Chrome menu (⋮) → Install app.'
+                );
+            } else {
+                showHelpState(
+                    'Install MeD Miracle',
+                    'Tap Chrome menu (⋮) → Install app / Add to Home screen. Or wait a moment on this page and tap Install again when Chrome is ready.'
+                );
+            }
         }
 
         return true;
+    }
+
+    function showAlreadyInstalledSheet(message) {
+        if (showTimer) {
+            clearTimeout(showTimer);
+            showTimer = null;
+        }
+        if (sheetEl) {
+            sheetEl.remove();
+            sheetEl = null;
+        }
+        buildSheet(isIosSafari() ? 'ios' : 'android');
+        setSheetContent({
+            title: 'App already installed',
+            text: message || 'MeD Miracle is already on this device. Open it from your Home screen.',
+            tip: 'Look for the MeD Miracle icon on your phone’s Home screen or app drawer.',
+            actions: [
+                { label: 'OK, got it', action: 'close-success', primary: true }
+            ]
+        });
+        if (sheetEl) sheetEl.classList.add('is-visible');
+        window.dispatchEvent(new CustomEvent('mmhc-pwa-already-installed'));
     }
 
     function bindMenuTriggers() {
@@ -530,9 +558,13 @@
         if (isNativeCapacitor()) return;
         bindInstallEvents();
 
-        // /install page opens the sheet immediately
+        // /install page opens the sheet immediately (unless already installed)
         if (document.body && document.body.getAttribute('data-mmhc-pwa-autostart') === '1') {
             setTimeout(function () {
+                if (isStandaloneDisplay()) {
+                    window.dispatchEvent(new CustomEvent('mmhc-pwa-already-installed'));
+                    return;
+                }
                 openInstallPrompt();
             }, 600);
         }
