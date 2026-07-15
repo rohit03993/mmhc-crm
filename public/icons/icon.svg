@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="MeD Miracle Health Care">
-  <rect width="512" height="512" rx="96" fill="#ffffff"/>
-  <!-- Heart-cross mark (safe zone ~20% inset for maskable) -->
-  <g transform="translate(256 256)">
-    <!-- Blue pills forming lower cross -->
-    <rect x="-28" y="-8" width="56" height="130" rx="28" fill="#2563eb" transform="rotate(-35)"/>
-    <rect x="-28" y="-8" width="56" height="130" rx="28" fill="#2563eb" transform="rotate(35)"/>
-    <!-- Green heart top -->
-    <path fill="#22c55e" d="M0,-48 C-42,-118 -118,-78 -118,-18 C-118,42 -28,98 0,128 C28,98 118,42 118,-18 C118,-78 42,-118 0,-48 Z"/>
-    <ellipse cx="0" cy="-20" rx="72" ry="78" fill="#22c55e"/>
+  <rect width="512" height="512" rx="96" fill="#2E48A2"/>
+  <!-- Mark: green heart over white crossed pills (official MeD) -->
+  <g transform="translate(256 230)">
+    <g fill="#FFFFFF">
+      <rect x="-28" y="-10" width="56" height="168" rx="28" transform="rotate(-38)"/>
+      <rect x="-28" y="-10" width="56" height="168" rx="28" transform="rotate(38)"/>
+    </g>
+    <path fill="#55B776" d="M0,-78 C-48,-148 -132,-118 -132,-42 C-132,18 -48,78 0,118 C48,78 132,18 132,-42 C132,-118 48,-148 0,-78 Z"/>
   </g>
+  <text x="256" y="430" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="56" font-weight="700" fill="#FFFFFF">MeD</text>
 </svg>
