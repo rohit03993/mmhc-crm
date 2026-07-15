@@ -40,20 +40,63 @@ class PwaIconService
 
     /**
      * Absolute URL for a PWA icon size.
-     * When an admin icon exists in storage, that wins — never fall back to stale public/icons.
+     * Always use /icons/... static paths (with ?v= cache bust).
+     * Never append ?v= onto /media-file?path=... — that breaks the path and shows a blank icon.
      */
     public function iconUrl(int $size = 192): string
     {
         $version = SiteSetting::get('pwa_icon_version');
-        $query = $version ? '?v=' . urlencode((string) $version) : '';
         $filename = self::SIZES[$size] ?? self::SIZES[192];
         $storageName = 'pwa-icons/' . $filename;
+        $publicPath = public_path('icons/' . $filename);
 
         if (Storage::disk('public')->exists($storageName)) {
-            return (storage_asset($storageName) ?: asset('icons/' . $filename)) . $query;
+            $this->syncStorageIconToPublic($storageName, $filename);
         }
 
-        return asset('icons/' . $filename) . $query;
+        $url = asset('icons/' . $filename);
+        if (! is_file($publicPath) && Storage::disk('public')->exists($storageName)) {
+            // public/icons not writable — use media-file with &v= (not ?v=)
+            $url = storage_asset($storageName) ?: $url;
+        }
+
+        return $this->withCacheBust($url, $version);
+    }
+
+    private function withCacheBust(string $url, ?string $version): string
+    {
+        if ($version === null || $version === '') {
+            return $url;
+        }
+
+        $sep = str_contains($url, '?') ? '&' : '?';
+
+        return $url . $sep . 'v=' . urlencode($version);
+    }
+
+    private function syncStorageIconToPublic(string $storageName, string $filename): void
+    {
+        $publicIcons = public_path('icons');
+        if (! File::isDirectory($publicIcons)) {
+            File::makeDirectory($publicIcons, 0755, true);
+        }
+
+        $bytes = Storage::disk('public')->get($storageName);
+        if ($bytes === null || $bytes === '') {
+            return;
+        }
+
+        $publicTarget = $publicIcons . DIRECTORY_SEPARATOR . $filename;
+        $written = @file_put_contents($publicTarget, $bytes);
+        if ($written === false) {
+            Log::warning('PWA icon could not sync to public/icons', ['path' => $publicTarget]);
+
+            return;
+        }
+
+        if ($filename === 'apple-touch-icon.png') {
+            @file_put_contents(public_path('apple-touch-icon.png'), $bytes);
+        }
     }
 
     public function generateSizedIcons(string $sourceAbsolutePath): void

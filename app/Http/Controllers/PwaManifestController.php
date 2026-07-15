@@ -84,6 +84,6 @@ class PwaManifestController extends Controller
         return response()
             ->json($payload)
             ->header('Content-Type', 'application/manifest+json')
-            ->header('Cache-Control', $version ? 'public, max-age=3600' : 'public, max-age=86400');
+            ->header('Cache-Control', 'no-cache, must-revalidate');
     }
 }
