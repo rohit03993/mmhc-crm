@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\PageContentController;
 use App\Http\Controllers\Admin\SiteBackupController;
 use App\Http\Controllers\Admin\SiteSettingsController;
 use App\Http\Controllers\Admin\TestimonialController;
+use App\Http\Controllers\PwaIconController;
 use App\Http\Controllers\PwaManifestController;
 use App\Http\Controllers\StorageController;
 use App\Modules\Profiles\Controllers\DocumentController;
@@ -19,6 +20,9 @@ Route::get('/media-file', [StorageController::class, 'show'])->name('storage.ser
 
 // Dynamic PWA manifest (icons/name can be managed from Admin → Site Settings)
 Route::get('/manifest.webmanifest', PwaManifestController::class)->name('pwa.manifest');
+Route::get('/pwa-icon/{size}.png', PwaIconController::class)
+    ->whereNumber('size')
+    ->name('pwa.icon');
 
 // Shared landing page data builder
 $buildLandingData = function (): array {

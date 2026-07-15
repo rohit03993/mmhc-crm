@@ -43,23 +43,22 @@ class PwaIconService
     }
 
     /**
-     * Absolute URL for a PWA icon size — always static /icons/*.png (+ cache bust).
+     * Absolute URL for a PWA icon size.
+     * Uses /pwa-icon/{size}.png so uploads are not blocked by stale public/icons CDN copies.
      */
     public function iconUrl(int $size = 192): string
     {
         $version = SiteSetting::get('pwa_icon_version');
         $filename = self::SIZES[$size] ?? self::SIZES[192];
         $storageName = 'pwa-icons/'.$filename;
-        $publicPath = public_path('icons/'.$filename);
 
+        // Keep public/icons in sync for offline.html / older bookmarks
         if (Storage::disk('public')->exists($storageName)) {
             $this->syncStorageIconToPublic($storageName, $filename);
         }
 
-        $url = asset('icons/'.$filename);
-        if (! is_file($publicPath) && Storage::disk('public')->exists($storageName)) {
-            $url = storage_asset($storageName) ?: $url;
-        }
+        $px = array_key_exists($size, self::SIZES) ? $size : 192;
+        $url = url('/pwa-icon/'.$px.'.png');
 
         return $this->withCacheBust($url, $version);
     }

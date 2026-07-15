@@ -1,5 +1,5 @@
 /* MeD Miracle PWA service worker — network-first for pages, cache for shell assets + Web Push */
-const CACHE_VERSION = 'mmhc-pwa-v6';
+const CACHE_VERSION = 'mmhc-pwa-v7';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -77,6 +77,7 @@ function isStaticAsset(url) {
 function isIconOrManifest(url) {
     return (
         url.pathname.startsWith('/icons/') ||
+        url.pathname.startsWith('/pwa-icon/') ||
         url.pathname === '/apple-touch-icon.png' ||
         url.pathname === '/manifest.webmanifest'
     );
