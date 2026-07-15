@@ -28,7 +28,11 @@ class PwaIconService
             Storage::disk('public')->delete($oldPath);
         }
 
-        $path = $file->store('site-settings', 'public');
+        $path = $file->storeAs(
+            'site-settings',
+            'pwa-icon-source.'.$file->getClientOriginalExtension(),
+            'public'
+        );
         SiteSetting::set('pwa_icon_path', $path);
         SiteSetting::set('pwa_icon_version', (string) time());
 
@@ -39,24 +43,21 @@ class PwaIconService
     }
 
     /**
-     * Absolute URL for a PWA icon size.
-     * Always use /icons/... static paths (with ?v= cache bust).
-     * Never append ?v= onto /media-file?path=... — that breaks the path and shows a blank icon.
+     * Absolute URL for a PWA icon size — always static /icons/*.png (+ cache bust).
      */
     public function iconUrl(int $size = 192): string
     {
         $version = SiteSetting::get('pwa_icon_version');
         $filename = self::SIZES[$size] ?? self::SIZES[192];
-        $storageName = 'pwa-icons/' . $filename;
-        $publicPath = public_path('icons/' . $filename);
+        $storageName = 'pwa-icons/'.$filename;
+        $publicPath = public_path('icons/'.$filename);
 
         if (Storage::disk('public')->exists($storageName)) {
             $this->syncStorageIconToPublic($storageName, $filename);
         }
 
-        $url = asset('icons/' . $filename);
+        $url = asset('icons/'.$filename);
         if (! is_file($publicPath) && Storage::disk('public')->exists($storageName)) {
-            // public/icons not writable — use media-file with &v= (not ?v=)
             $url = storage_asset($storageName) ?: $url;
         }
 
@@ -71,7 +72,7 @@ class PwaIconService
 
         $sep = str_contains($url, '?') ? '&' : '?';
 
-        return $url . $sep . 'v=' . urlencode($version);
+        return $url.$sep.'v='.urlencode($version);
     }
 
     private function syncStorageIconToPublic(string $storageName, string $filename): void
@@ -86,7 +87,7 @@ class PwaIconService
             return;
         }
 
-        $publicTarget = $publicIcons . DIRECTORY_SEPARATOR . $filename;
+        $publicTarget = $publicIcons.DIRECTORY_SEPARATOR.$filename;
         $written = @file_put_contents($publicTarget, $bytes);
         if ($written === false) {
             Log::warning('PWA icon could not sync to public/icons', ['path' => $publicTarget]);
@@ -114,14 +115,15 @@ class PwaIconService
         foreach (self::SIZES as $px => $filename) {
             $resized = $this->resizeToSquarePng($sourceAbsolutePath, $px);
             if ($resized === null) {
+                Log::warning('PWA icon resize failed; copying source bytes', ['source' => $sourceAbsolutePath]);
                 $bytes = file_get_contents($sourceAbsolutePath);
             } else {
                 $bytes = $resized;
             }
 
-            Storage::disk('public')->put('pwa-icons/' . $filename, $bytes);
+            Storage::disk('public')->put('pwa-icons/'.$filename, $bytes);
 
-            $publicTarget = $publicIcons . DIRECTORY_SEPARATOR . $filename;
+            $publicTarget = $publicIcons.DIRECTORY_SEPARATOR.$filename;
             $written = @file_put_contents($publicTarget, $bytes);
             if ($written === false) {
                 Log::warning('PWA icon could not write public/icons file', ['path' => $publicTarget]);
@@ -134,7 +136,8 @@ class PwaIconService
     }
 
     /**
-     * Contain-fit logo onto a brand-blue square (letterbox, no crop).
+     * Fit the uploaded image into a square as faithfully as possible.
+     * Uses corner-sampled letterbox colour (so a blue MeD logo stays blue).
      */
     private function resizeToSquarePng(string $sourcePath, int $size): ?string
     {
@@ -162,6 +165,12 @@ class PwaIconService
             return null;
         }
 
+        if (function_exists('imagepalettetotruecolor')) {
+            @imagepalettetotruecolor($src);
+        }
+        imagealphablending($src, true);
+        imagesavealpha($src, true);
+
         $canvas = imagecreatetruecolor($size, $size);
         if ($canvas === false) {
             imagedestroy($src);
@@ -169,12 +178,12 @@ class PwaIconService
             return null;
         }
 
-        [$br, $bg, $bb] = self::BRAND_BLUE;
-        $blue = imagecolorallocate($canvas, $br, $bg, $bb);
-        imagefilledrectangle($canvas, 0, 0, $size, $size, $blue);
+        [$fr, $fg, $fb] = $this->sampleFillColor($src, $width, $height);
+        $fill = imagecolorallocate($canvas, $fr, $fg, $fb);
+        imagefilledrectangle($canvas, 0, 0, $size, $size, $fill);
 
-        // Keep ~10% padding so maskable installs don't clip the mark
-        $pad = (int) round($size * 0.10);
+        // Small safe inset only (maskable safe zone still covered at ~8%)
+        $pad = (int) round($size * 0.06);
         $box = max(1, $size - ($pad * 2));
         $scale = min($box / max($width, 1), $box / max($height, 1));
         $newW = max(1, (int) round($width * $scale));
@@ -193,5 +202,41 @@ class PwaIconService
         imagedestroy($canvas);
 
         return $png === false ? null : $png;
+    }
+
+    /**
+     * @return array{0:int,1:int,2:int}
+     */
+    private function sampleFillColor($src, int $width, int $height): array
+    {
+        $points = [
+            [2, 2],
+            [max(0, $width - 3), 2],
+            [2, max(0, $height - 3)],
+            [max(0, $width - 3), max(0, $height - 3)],
+        ];
+
+        $r = $g = $b = $n = 0;
+        foreach ($points as [$x, $y]) {
+            $rgba = @imagecolorat($src, $x, $y);
+            if ($rgba === false) {
+                continue;
+            }
+            $a = ($rgba & 0x7F000000) >> 24;
+            // Skip largely transparent samples
+            if ($a > 64) {
+                continue;
+            }
+            $r += ($rgba >> 16) & 0xFF;
+            $g += ($rgba >> 8) & 0xFF;
+            $b += $rgba & 0xFF;
+            $n++;
+        }
+
+        if ($n === 0) {
+            return self::BRAND_BLUE;
+        }
+
+        return [(int) round($r / $n), (int) round($g / $n), (int) round($b / $n)];
     }
 }

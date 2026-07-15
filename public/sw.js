@@ -1,15 +1,10 @@
 /* MeD Miracle PWA service worker — network-first for pages, cache for shell assets + Web Push */
-const CACHE_VERSION = 'mmhc-pwa-v5';
+const CACHE_VERSION = 'mmhc-pwa-v6';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
 const PRECACHE_URLS = [
     '/offline.html',
-    '/manifest.webmanifest',
-    '/icons/icon-192.png',
-    '/icons/icon-512.png',
-    '/icons/icon.svg',
-    '/favicon.svg',
     '/css/mobile-crm.css',
     '/css/capacitor-app.css',
     '/css/pwa-install.css',
@@ -71,14 +66,33 @@ function isStaticAsset(url) {
     return (
         url.pathname.startsWith('/css/') ||
         url.pathname.startsWith('/js/') ||
-        url.pathname.startsWith('/icons/') ||
         url.pathname.startsWith('/images/') ||
         url.pathname.startsWith('/fonts/') ||
         url.pathname === '/favicon.svg' ||
         url.pathname === '/favicon.ico' ||
-        url.pathname === '/manifest.webmanifest' ||
         url.pathname === '/offline.html'
     );
+}
+
+function isIconOrManifest(url) {
+    return (
+        url.pathname.startsWith('/icons/') ||
+        url.pathname === '/apple-touch-icon.png' ||
+        url.pathname === '/manifest.webmanifest'
+    );
+}
+
+async function networkFirstAsset(request) {
+    try {
+        const response = await fetch(request, { cache: 'no-store' });
+        if (response && response.ok) {
+            const cache = await caches.open(RUNTIME_CACHE);
+            cache.put(request, response.clone());
+        }
+        return response;
+    } catch (err) {
+        return (await caches.match(request)) || Response.error();
+    }
 }
 
 async function networkFirstNavigation(request) {
@@ -115,6 +129,11 @@ self.addEventListener('fetch', (event) => {
 
     if (request.mode === 'navigate') {
         event.respondWith(networkFirstNavigation(request));
+        return;
+    }
+
+    if (isIconOrManifest(url)) {
+        event.respondWith(networkFirstAsset(request));
         return;
     }
 

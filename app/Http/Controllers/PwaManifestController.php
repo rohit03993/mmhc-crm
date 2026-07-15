@@ -55,12 +55,6 @@ class PwaManifestController extends Controller
                     'type' => 'image/png',
                     'purpose' => 'maskable',
                 ],
-                [
-                    'src' => url('/icons/icon.svg'),
-                    'sizes' => 'any',
-                    'type' => 'image/svg+xml',
-                    'purpose' => 'any',
-                ],
             ],
             'shortcuts' => [
                 [
