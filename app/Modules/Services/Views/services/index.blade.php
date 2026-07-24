@@ -87,7 +87,7 @@
                     <p class="app-service-desc">{{ $serviceType->description }}</p>
                     
                     <div class="app-service-pricing">
-                        <div class="app-service-price">â‚¹{{ number_format($serviceType->patient_charge) }}</div>
+                        <div class="app-service-price">₹{{ number_format($serviceType->patient_charge) }}</div>
                         <small class="app-service-period">per {{ $serviceType->duration_hours == 1 ? 'visit' : 'day' }}</small>
                     </div>
                     

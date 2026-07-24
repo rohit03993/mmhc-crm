@@ -211,9 +211,9 @@
                                             <span class="service-price">
                                                 @if(isset($hasActiveSubscription) && $hasActiveSubscription)
                                                     <span class="text-success fw-bold">FREE</span>
-                                                    <small class="text-muted text-decoration-line-through ms-1">â‚¹{{ number_format($serviceType->patient_charge) }}/day</small>
+                                                    <small class="text-muted text-decoration-line-through ms-1">₹{{ number_format($serviceType->patient_charge) }}/day</small>
                                                 @else
-                                                    â‚¹{{ number_format($serviceType->patient_charge) }}/day
+                                                    ₹{{ number_format($serviceType->patient_charge) }}/day
                                                 @endif
                                             </span>
                                         </div>
@@ -504,21 +504,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const total = displayPrice * duration;
 
             if (hasSubscription) {
-                serviceRateSpan.innerHTML = '<span class="text-success fw-bold">FREE</span> <small class="text-muted text-decoration-line-through">â‚¹' + pricePerDay.toLocaleString('en-IN') + '/day</small>';
+                serviceRateSpan.innerHTML = '<span class="text-success fw-bold">FREE</span> <small class="text-muted text-decoration-line-through">₹' + pricePerDay.toLocaleString('en-IN') + '/day</small>';
             } else {
-                serviceRateSpan.textContent = `â‚¹${pricePerDay.toLocaleString('en-IN')}/day`;
+                serviceRateSpan.textContent = `₹${pricePerDay.toLocaleString('en-IN')}/day`;
             }
             durationDisplaySpan.textContent = `${duration} ${duration === 1 ? 'day' : 'days'}`;
             if (hasSubscription) {
                 totalAmountSpan.innerHTML = '<span class="text-success fw-bold">FREE</span>';
             } else {
-                totalAmountSpan.textContent = `â‚¹${total.toLocaleString('en-IN')}`;
+                totalAmountSpan.textContent = `₹${total.toLocaleString('en-IN')}`;
             }
             updateProgress(2);
         } else {
-            serviceRateSpan.textContent = 'â‚¹0/day';
+            serviceRateSpan.textContent = '₹0/day';
             durationDisplaySpan.textContent = '0 days';
-            totalAmountSpan.textContent = 'â‚¹0';
+            totalAmountSpan.textContent = '₹0';
         }
     }
 
