@@ -16,7 +16,7 @@ return new class extends Migration
             $table->decimal('rating', 2, 1)->nullable();
             $table->unsignedInteger('reviews_count')->nullable();
             $table->text('bio')->nullable();
-            $table->string('skills')->nullable(); // comma-separated for tags
+            $table->string('skills', 500)->nullable(); // comma-separated for tags
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
         });
