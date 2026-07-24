@@ -48,14 +48,14 @@
     <meta name="theme-color" content="{{ auth()->user()->isPatient() ? '#0f766e' : '#4338ca' }}">
     @endif
 
-    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260714i">
+    <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}?v=20260724a">
     @auth
     <link rel="stylesheet" href="{{ asset('css/crm-desktop.css') }}?v=20260608b">
     <link rel="stylesheet" href="{{ asset('css/mmhc-member-nav.css') }}?v=20260714h">
     <link rel="stylesheet" href="{{ asset('css/mmhc-theme-contrast.css') }}?v=20260603">
     @endauth
     <link rel="stylesheet" href="{{ asset('css/mmhc-public-mobile.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/capacitor-app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/capacitor-app.css') }}?v=20260724a">
     
     <style>
         .top-navbar {
@@ -303,6 +303,17 @@
                         </div>
                     </div>
 
+                    @if(!empty($mmhcAdminMobileLayout))
+                    <div class="mobile-app-container admin-mobile-shell admin-mobile-shell--layout" data-mmhc-ptr>
+                        @include('auth::admin.partials.mobile-header')
+                        <div class="app-content admin-layout-content">
+                            <div class="mmhc-page-skeleton d-md-none" data-mmhc-skeleton aria-hidden="true">
+                                <div class="mmhc-page-skeleton__bar"></div>
+                                <div class="mmhc-page-skeleton__card"></div>
+                                <div class="mmhc-page-skeleton__card mmhc-page-skeleton__card--short"></div>
+                            </div>
+                    @endif
+
                     <!-- Alerts - Mobile App Style (flash always visible; action banners compact on phone) -->
                     @if(session('success'))
                         <div class="alert alert-success alert-dismissible fade show app-alert" role="alert">
@@ -490,17 +501,6 @@
                         @include('academics::partials.mobile-header', [
                             'academicsMobileBackUrl' => \App\Modules\Academics\Support\AcademicsMobileUi::backUrl(),
                         ])
-                    @endif
-
-                    @if(!empty($mmhcAdminMobileLayout))
-                    <div class="mobile-app-container admin-mobile-shell admin-mobile-shell--layout" data-mmhc-ptr>
-                        @include('auth::admin.partials.mobile-header')
-                        <div class="app-content admin-layout-content">
-                            <div class="mmhc-page-skeleton d-md-none" data-mmhc-skeleton aria-hidden="true">
-                                <div class="mmhc-page-skeleton__bar"></div>
-                                <div class="mmhc-page-skeleton__card"></div>
-                                <div class="mmhc-page-skeleton__card mmhc-page-skeleton__card--short"></div>
-                            </div>
                     @endif
 
                     @yield('content')

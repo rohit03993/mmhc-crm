@@ -1932,6 +1932,49 @@ body.mmhc-healthcare-role-patient .mmhc-ptr-indicator.is-ready .mmhc-ptr-indicat
         padding-right: 0.75rem !important;
     }
 
+    /*
+     * Admin secondary header: in-flow under top navbar (not sticky).
+     * Sticky + high z-index was overlapping flash alerts and looking "floating".
+     */
+    body.mmhc-admin-mobile-layout .admin-mobile-header.app-header-mobile {
+        position: relative !important;
+        top: auto !important;
+        z-index: 1;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        margin-bottom: 0.65rem;
+        border-radius: 0 0 16px 16px;
+        padding: 0.7rem 0.9rem;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.18);
+    }
+
+    body.mmhc-admin-mobile-layout .admin-mobile-header .app-header-title {
+        font-size: 1rem;
+    }
+
+    body.mmhc-admin-mobile-layout .admin-mobile-header .app-header-subtitle {
+        font-size: 0.72rem;
+        opacity: 0.88;
+    }
+
+    body.mmhc-admin-mobile-layout .admin-mobile-shell--layout > .app-alert,
+    body.mmhc-admin-mobile-layout .admin-layout-content > .app-alert {
+        margin-left: 0.75rem;
+        margin-right: 0.75rem;
+    }
+
+    body.mmhc-admin-mobile-layout .community-page {
+        padding-top: 0.15rem;
+    }
+
+    body.mmhc-admin-mobile-layout .community-page .community-hero .badge {
+        display: none;
+    }
+
+    body.mmhc-admin-mobile-layout .community-page .floating-compose-btn {
+        bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+    }
+
     .admin-mobile-header .app-back-btn {
         display: inline-flex;
         align-items: center;

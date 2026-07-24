@@ -6,11 +6,7 @@
 @section('content')
 <div class="container-fluid px-2 px-md-3 py-3 community-page hc-mobile-shell acad-mobile-page" data-mmhc-ptr>
     <div class="community-shell">
-    @if(session('success'))
-        <div class="alert alert-success border-0 shadow-sm mb-3" role="alert">
-            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-        </div>
-    @endif
+    {{-- Flash messages come from auth layout — avoid duplicate banners on mobile --}}
     @if($errors->any())
         <div class="alert alert-danger border-0 shadow-sm mb-3" role="alert">
             <i class="fas fa-triangle-exclamation me-2"></i>{{ $errors->first() }}
@@ -23,7 +19,7 @@
                 <h2 class="mb-2"><i class="fas fa-users me-2"></i>Community Hub</h2>
                 <p class="mb-0 text-white-75">One place for your MMHC family — updates, support, and event notices. Sign in with your mobile; no email needed.</p>
             </div>
-            <span class="badge rounded-pill text-bg-light px-3 py-2">
+            <span class="badge rounded-pill text-bg-light px-3 py-2 d-none d-md-inline-flex align-items-center">
                 <i class="fas fa-bolt me-1 text-warning"></i>Main Experience
             </span>
         </div>

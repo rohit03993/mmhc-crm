@@ -56,7 +56,7 @@ body.capacitor-app {
         padding-top: calc(1rem + env(safe-area-inset-top, 0px));
     }
 
-    body.capacitor-app .app-header-mobile,
+    /* Safe-area belongs on the fixed top navbar only — not on in-page headers */
     body.capacitor-app .mmhc-admin-mobile-header {
         padding-top: env(safe-area-inset-top, 0px);
     }
