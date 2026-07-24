@@ -1,5 +1,6 @@
 /**
- * Patient staff search: uses device GPS (current location), not pincode.
+ * Device GPS helper for Find staff (patients) and staff location sharing.
+ * Uses browser geolocation — works on HTTPS web and Capacitor WebView.
  */
 (function () {
     const btn = document.getElementById('btnUseMyLocation');
@@ -11,6 +12,7 @@
     const resolveUrl = btn.dataset.resolveUrl;
     const statusEl = document.getElementById('staffLocationStatus');
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const mode = btn.dataset.mode || 'patient';
 
     function setStatus(message, type) {
         if (!statusEl) {
@@ -30,7 +32,7 @@
         }
     }
 
-  btn.dataset.defaultLabel = btn.querySelector('.btn-label')?.textContent || 'Use current location';
+    btn.dataset.defaultLabel = btn.querySelector('.btn-label')?.textContent || 'Use current location';
 
     function requestLocation() {
         if (!navigator.geolocation) {
@@ -48,7 +50,7 @@
 
         navigator.geolocation.getCurrentPosition(
             function (position) {
-                setStatus('Finding nearest staff…', 'info');
+                setStatus(mode === 'staff' ? 'Saving your location…' : 'Finding nearest staff…', 'info');
 
                 fetch(resolveUrl, {
                     method: 'POST',
@@ -72,12 +74,18 @@
                     })
                     .then(function ({ ok, data }) {
                         setLoading(false);
-                        if (ok && data.success && data.redirect_url) {
-                            setStatus(data.message || 'Redirecting…', 'success');
-                            window.location.href = data.redirect_url;
+                        if (ok && data.success) {
+                            setStatus(data.message || 'Location saved.', 'success');
+                            if (data.redirect_url) {
+                                window.location.href = data.redirect_url;
+                                return;
+                            }
+                            window.setTimeout(function () {
+                                window.location.reload();
+                            }, 700);
                             return;
                         }
-                        setStatus(data.message || 'Could not use your location.', 'error');
+                        setStatus((data && data.message) || 'Could not use your location.', 'error');
                     })
                     .catch(function () {
                         setLoading(false);
@@ -107,8 +115,9 @@
     btn.addEventListener('click', requestLocation);
 
     if (panel && panel.dataset.autoLocate === '1') {
-        if (!sessionStorage.getItem('mmhc_staff_gps_prompted')) {
-            sessionStorage.setItem('mmhc_staff_gps_prompted', '1');
+        var promptKey = mode === 'staff' ? 'mmhc_staff_share_gps_prompted' : 'mmhc_staff_gps_prompted';
+        if (!sessionStorage.getItem(promptKey)) {
+            sessionStorage.setItem(promptKey, '1');
             setTimeout(requestLocation, 800);
         }
     }

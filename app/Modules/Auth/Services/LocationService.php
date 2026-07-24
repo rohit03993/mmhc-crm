@@ -223,7 +223,8 @@ class LocationService
     }
 
     /**
-     * Store the patient's live GPS position on their profile.
+     * Store live GPS position on a user profile (patient or staff).
+     * Updates existing latitude / longitude / location columns only.
      */
     public static function applyGpsCoordinatesToUser(\App\Models\Core\User $user, float $latitude, float $longitude): void
     {

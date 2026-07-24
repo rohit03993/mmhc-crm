@@ -47,6 +47,7 @@
 
     <!-- Main Content -->
     <div class="app-content staff-day-flow">
+        @include('services::partials.staff-share-location')
         @include('services::partials.staff-dashboard-quick-actions', ['pending_booking_count' => $stats['pending_booking_count'] ?? 0])
 
         <a href="#today-jobs" class="staff-jobs-jump d-md-none">

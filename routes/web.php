@@ -120,6 +120,9 @@ Route::middleware(['auth'])->group(function () {
         // Staff Dashboard Routes - Only for Nurses and Caregivers
         Route::middleware('role:nurse,caregiver')->group(function () {
             Route::get('/dashboard', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'index'])->name('dashboard');
+            Route::post('/update-location', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'updateLocation'])
+                ->middleware('throttle:30,1')
+                ->name('update-location');
             Route::get('/service/{serviceRequest}', [\App\Modules\Services\Controllers\StaffDashboardController::class, 'show'])->name('service-details');
 
             // Service action routes

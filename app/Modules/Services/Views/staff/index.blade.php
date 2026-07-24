@@ -58,7 +58,7 @@
                     <i class="fas fa-location-crosshairs"></i>
                     <div>
                         <strong>Find staff near you</strong>
-                        <p>We use your phoneâ€™s <strong>current GPS location</strong> (not pincode) to show the nearest nurses and caregivers.</p>
+                        <p>We use your phone's <strong>current GPS location</strong> (not pincode) to show the nearest nurses and caregivers.</p>
                     </div>
                 </div>
                 @elseif(!empty($hasPatientLocation))
@@ -68,9 +68,9 @@
                         <strong>Showing staff near your current location</strong>
                         <p>
                             @if(!empty($locationFromGps))
-                                Live GPS Â· within {{ $distance ?: '25' }} km Â· nearest first
+                                Live GPS · within {{ $distance ?: '25' }} km · nearest first
                             @elseif($distance)
-                                Within {{ $distance }} km Â· nearest first
+                                Within {{ $distance }} km · nearest first
                             @else
                                 Sorted by distance (nearest first)
                             @endif
@@ -287,9 +287,9 @@
                     @if(empty($hasPatientLocation))
                         Turn on current location to see nurses sorted by distance from you.
                     @elseif($distance)
-                        No nurses within {{ $distance }} km. Try a larger distance or update your location.
+                        No nurses within {{ $distance }} km of your current location. Expand the search radius or show all distances.
                     @else
-                        No nurses found nearby. Update your location or adjust filters.
+                        No nurses found with a saved location near you. Ask staff to share live GPS from their dashboard, or update your location.
                     @endif
                 </p>
                 <div class="d-flex flex-column gap-2 mt-2">
@@ -298,11 +298,24 @@
                         <i class="fas fa-crosshairs me-1"></i>Use current location
                     </button>
                     @else
+                    @php
+                        $gpsBase = ['lat' => $patientLat, 'lng' => $patientLng, 'location' => 'gps', 'sort' => 'distance'];
+                    @endphp
                     <button type="button" class="app-btn-primary" onclick="document.getElementById('btnUseMyLocation')?.click();">
                         <i class="fas fa-crosshairs me-1"></i>Update current location
                     </button>
+                    @if($distance && (int) $distance < 50)
+                    <a href="{{ route('staff.index', array_merge($gpsBase, ['distance' => 50])) }}" class="app-btn-secondary">
+                        <i class="fas fa-expand me-1"></i>Expand to 50 km
+                    </a>
+                    @endif
+                    @if($distance)
+                    <a href="{{ route('staff.index', $gpsBase) }}" class="app-btn-secondary">
+                        <i class="fas fa-globe me-1"></i>Show all distances
+                    </a>
+                    @endif
                     <button type="button" class="app-btn-secondary" onclick="document.getElementById('mmhcFilterToggle')?.click();">
-                        <i class="fas fa-sliders-h me-1"></i>Widen filters / distance
+                        <i class="fas fa-sliders-h me-1"></i>Open filters
                     </button>
                     @endif
                 </div>
@@ -407,9 +420,9 @@
                     @if(empty($hasPatientLocation))
                         Turn on current location to see caregivers sorted by distance from you.
                     @elseif($distance)
-                        No caregivers within {{ $distance }} km. Try a larger distance or update your location.
+                        No caregivers within {{ $distance }} km of your current location. Expand the search radius or show all distances.
                     @else
-                        No caregivers found nearby. Update your location or adjust filters.
+                        No caregivers found with a saved location near you. Ask staff to share live GPS from their dashboard, or update your location.
                     @endif
                 </p>
                 <div class="d-flex flex-column gap-2 mt-2">
@@ -418,11 +431,24 @@
                         <i class="fas fa-crosshairs me-1"></i>Use current location
                     </button>
                     @else
+                    @php
+                        $gpsBaseCg = ['lat' => $patientLat, 'lng' => $patientLng, 'location' => 'gps', 'sort' => 'distance'];
+                    @endphp
                     <button type="button" class="app-btn-primary" onclick="document.getElementById('btnUseMyLocation')?.click();">
                         <i class="fas fa-crosshairs me-1"></i>Update current location
                     </button>
+                    @if($distance && (int) $distance < 50)
+                    <a href="{{ route('staff.index', array_merge($gpsBaseCg, ['distance' => 50])) }}" class="app-btn-secondary">
+                        <i class="fas fa-expand me-1"></i>Expand to 50 km
+                    </a>
+                    @endif
+                    @if($distance)
+                    <a href="{{ route('staff.index', $gpsBaseCg) }}" class="app-btn-secondary">
+                        <i class="fas fa-globe me-1"></i>Show all distances
+                    </a>
+                    @endif
                     <button type="button" class="app-btn-secondary" onclick="document.getElementById('mmhcFilterToggle')?.click();">
-                        <i class="fas fa-sliders-h me-1"></i>Widen filters / distance
+                        <i class="fas fa-sliders-h me-1"></i>Open filters
                     </button>
                     @endif
                 </div>
@@ -498,7 +524,7 @@ function showTab(tabName) {
 </script>
 @auth
     @if(auth()->user()->isPatient())
-    <script src="{{ asset('js/staff-location.js') }}" defer></script>
+    <script src="{{ asset('js/staff-location.js') }}?v=20260724a" defer></script>
     @endif
 @endauth
 @endsection

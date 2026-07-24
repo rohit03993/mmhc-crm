@@ -4,6 +4,7 @@ namespace App\Modules\Services\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
+use App\Modules\Auth\Services\LocationService;
 use App\Modules\Auth\Services\ScopedSmsOtpRedisService;
 use App\Modules\Auth\Services\SmsOtpService;
 use App\Modules\Incentives\Models\IncentiveLedger;
@@ -286,6 +287,58 @@ class StaffDashboardController extends Controller
             'heldEarningsDueToUnverifiedMobile',
             'staffMobileVerified'
         ));
+    }
+
+    /**
+     * Save nurse/caregiver live GPS so patients can find them nearby.
+     * Reuses existing users.latitude / longitude / location columns — no schema change.
+     */
+    public function updateLocation(Request $request)
+    {
+        $validated = $request->validate([
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'save_to_profile' => 'sometimes|boolean',
+        ]);
+
+        $latitude = (float) $validated['latitude'];
+        $longitude = (float) $validated['longitude'];
+
+        if (! LocationService::hasUsableCoordinates($latitude, $longitude)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid location received. Please try again.',
+            ], 422);
+        }
+
+        $user = Auth::user();
+        if (! $user || ! $user->isStaff()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only nurses and caregivers can update staff location.',
+            ], 403);
+        }
+
+        try {
+            LocationService::applyGpsCoordinatesToUser($user, $latitude, $longitude);
+        } catch (\Throwable $e) {
+            Log::warning('Could not save staff GPS coordinates', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not save your location. Please try again.',
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'message' => 'Location saved. Patients near you can find you on Find staff.',
+        ]);
     }
 
     /**
