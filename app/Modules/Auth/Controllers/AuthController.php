@@ -378,6 +378,11 @@ class AuthController extends Controller
             return $redirect;
         }
 
+        // WhatsApp-only accounts verify on login OTP — not profile.verify-phone (avoids redirect loop).
+        if ($user->requiresPhoneLogin()) {
+            return $this->redirectToLoginWithOtpAfterRegistration($user, $successMessage);
+        }
+
         $send = app(PhoneVerificationService::class)->sendAccountVerificationOtp($user);
         $redirect = redirect()->route('profile.verify-phone');
 
@@ -389,6 +394,48 @@ class AuthController extends Controller
             $redirect = $redirect->with('success', trim(($successMessage ? $successMessage.' ' : '').'We sent a 6-digit OTP to your mobile.'));
         } elseif (! ($send['success'] ?? false)) {
             $redirect = $redirect->with('error', $send['message'] ?? 'Could not send verification OTP.');
+        }
+
+        return $redirect;
+    }
+
+    /**
+     * After self-registration: sign out and land on login with WhatsApp OTP step (not profile verify).
+     */
+    protected function redirectToLoginWithOtpAfterRegistration(User $user, ?string $successMessage = null): \Illuminate\Http\RedirectResponse
+    {
+        $phoneDigits = preg_replace('/\D/', '', (string) ($user->phone ?? ''));
+        if (strlen($phoneDigits) > 10) {
+            $phoneDigits = substr($phoneDigits, -10);
+        }
+
+        $otpResult = ['success' => false, 'message' => 'Could not send WhatsApp code.'];
+        if (preg_match('/^[6-9][0-9]{9}$/', $phoneDigits)) {
+            $otpResult = $this->smsOtpService->sendOtp(
+                $this->userService->normalizePhone($phoneDigits),
+                $user->name
+            );
+        }
+
+        Auth::logout();
+        request()->session()->regenerate();
+
+        $redirect = redirect()->route('auth.login')
+            ->with('login_tab', 'phone')
+            ->with('otp_sent', true)
+            ->with('otp_phone', $phoneDigits);
+
+        if ($successMessage) {
+            $redirect = $redirect->with('success', $successMessage);
+        }
+
+        if ($otpResult['success'] ?? false) {
+            $otpMessage = trim(($successMessage ? $successMessage.' ' : '').'We sent a 6-digit code to your WhatsApp. Enter it below to sign in.');
+            $redirect = $redirect->with('success_otp', $otpMessage);
+        } else {
+            $redirect = $redirect->withErrors([
+                'phone' => $otpResult['message'] ?? 'Could not send WhatsApp code. Tap Send code on WhatsApp to try again.',
+            ]);
         }
 
         return $redirect;

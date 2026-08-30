@@ -140,8 +140,18 @@ class ProfileController extends Controller
         }
 
         if ($user->requiresPhoneLogin()) {
-            return redirect()->route('dashboard')
-                ->with('info', 'Sign in with WhatsApp OTP on your mobile — that counts as verification. No separate profile OTP is needed.');
+            $phoneDigits = preg_replace('/\D/', '', (string) ($user->phone ?? ''));
+            if (strlen($phoneDigits) > 10) {
+                $phoneDigits = substr($phoneDigits, -10);
+            }
+
+            Auth::logout();
+            request()->session()->regenerate();
+
+            return redirect()->route('auth.login')
+                ->with('login_tab', 'phone')
+                ->with('otp_phone', $phoneDigits)
+                ->with('info', 'Sign in with your WhatsApp number. Tap Send code to receive your one-time login code.');
         }
 
         if (! trim((string) ($user->phone ?? ''))) {
