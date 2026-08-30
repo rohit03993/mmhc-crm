@@ -565,9 +565,6 @@ class AuthController extends Controller
             $userData = $request->only(['name', 'role', 'date_of_birth', 'address', 'pincode']);
             $this->userService->applySelfRegistrationIdentity($userData, $normalizedPhone);
 
-            // Generate unique ID based on role
-            $userData['unique_id'] = $this->userService->generateUniqueId($userData['role']);
-
             // Get pincode coordinates from pincode database
             $pincode = $request->input('pincode');
             $pincodeData = \App\Models\Pincode::findByPincode($pincode);
@@ -594,7 +591,7 @@ class AuthController extends Controller
                 $userData['location'] = \DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
             }
 
-            $user = User::create($userData);
+            $user = $this->userService->createWithUniqueId($userData);
 
             // Handle staff-specific data (nurse or caregiver)
             if (in_array($userData['role'], ['nurse', 'caregiver'])) {
@@ -735,7 +732,6 @@ class AuthController extends Controller
 
             $userData = $request->only(['name', 'role', 'date_of_birth', 'address', 'pincode']);
             $this->userService->applySelfRegistrationIdentity($userData, $normalizedPhone);
-            $userData['unique_id'] = $this->userService->generateUniqueId($role);
             $userData['is_active'] = true;
 
             if ($independentFaculty) {
@@ -766,7 +762,7 @@ class AuthController extends Controller
                 $userData['location'] = DB::raw("ST_GeomFromText('POINT(0 0)', 4326)");
             }
 
-            $user = User::create($userData);
+            $user = $this->userService->createWithUniqueId($userData);
 
             if ($role === 'faculty' && $request->filled('qualification')) {
                 $user->update(['qualification' => $request->input('qualification')]);

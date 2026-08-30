@@ -3,6 +3,7 @@
 namespace App\Modules\Auth\Services;
 
 use App\Models\Core\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -35,19 +36,24 @@ class UserService
             ? self::UNIQUE_ID_START_NUMBER
             : 1;
 
-        // Get the highest existing number for this role (numeric part after prefix-)
-        $maxId = User::where('role', $role)
+        // Include soft-deleted rows — unique_id stays in DB until tombstoned on delete.
+        $maxNum = (int) User::withTrashed()
             ->where('unique_id', 'like', $prefix.'-%')
-            ->selectRaw('CAST(SUBSTRING(unique_id, '.(strlen($prefix) + 2).') AS UNSIGNED) as id_num')
-            ->orderBy('id_num', 'desc')
-            ->first();
+            ->pluck('unique_id')
+            ->map(function (string $id) use ($prefix) {
+                if (! preg_match('/^'.preg_quote($prefix, '/').'-(\d+)$/', $id, $matches)) {
+                    return 0;
+                }
 
-        $nextNumber = $maxId ? max($maxId->id_num + 1, $startNumber) : $startNumber;
+                return (int) $matches[1];
+            })
+            ->max();
 
-        // Ensure uniqueness by checking if the ID already exists
+        $nextNumber = max($maxNum + 1, $startNumber);
+
         do {
             $uniqueId = $prefix.'-'.str_pad((string) $nextNumber, 6, '0', STR_PAD_LEFT);
-            $exists = User::where('unique_id', $uniqueId)->exists();
+            $exists = User::withTrashed()->where('unique_id', $uniqueId)->exists();
             if ($exists) {
                 $nextNumber++;
             }
@@ -57,13 +63,30 @@ class UserService
     }
 
     /**
+     * Create a user, retrying unique_id if a deleted/hidden row still holds that ID.
+     */
+    public function createWithUniqueId(array $userData): User
+    {
+        $attempts = 0;
+        while (true) {
+            $attempts++;
+            $userData['unique_id'] = $this->generateUniqueId($userData['role']);
+            try {
+                return User::create($userData);
+            } catch (UniqueConstraintViolationException $e) {
+                if ($attempts >= 20 || ! str_contains($e->getMessage(), 'unique_id')) {
+                    throw $e;
+                }
+            }
+        }
+    }
+
+    /**
      * Create a new user
      */
     public function createUser(array $userData): User
     {
-        $userData['unique_id'] = $this->generateUniqueId($userData['role']);
-
-        return User::create($userData);
+        return $this->createWithUniqueId($userData);
     }
 
     /**
@@ -281,7 +304,8 @@ class UserService
 
     public function phoneAlreadyRegistered(string $phoneOrDigits, ?int $exceptUserId = null): bool
     {
-        $query = $this->applyMatchingPhone(User::query(), $phoneOrDigits);
+        $query = $this->applyMatchingPhone(User::query(), $phoneOrDigits)
+            ->where('is_active', true);
         if ($exceptUserId !== null) {
             $query->where('id', '!=', $exceptUserId);
         }

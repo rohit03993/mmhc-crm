@@ -39,6 +39,11 @@ class UserContactRelease
             $updates['email'] = $this->tombstoneEmail($user->id, $originalEmail);
         }
 
+        if ($user->unique_id) {
+            // Free N-UID / P-UID / etc. so a new registration can use the next slot.
+            $updates['unique_id'] = '__deleted_'.$user->id.'__';
+        }
+
         $user->forceFill($updates)->save();
 
         return [
