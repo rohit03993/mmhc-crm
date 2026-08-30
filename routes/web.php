@@ -30,7 +30,65 @@ Route::view('/install', 'install-app')->name('pwa.install');
 // Shared landing page data builder
 $buildLandingData = function (): array {
     $pageContent = \App\Models\PageContent::getAllSections();
-    $healthcarePlans = \App\Modules\Plans\Models\Plan::active()->ordered()->get();
+    // Landing shows care packages + Student Journey only (not Individual/Parent/Family/Premium).
+    $healthcarePlans = \App\Modules\Plans\Models\Plan::active()
+        ->forStudentAudience()
+        ->ordered()
+        ->get();
+    $carePackages = [
+        [
+            'name' => 'Half-yearly Care',
+            'description' => 'Pay for 6 months. Coverage for 6 months. No extra years.',
+            'price_label' => 'Contact',
+            'duration' => '/6 months',
+            'icon' => 'fa-calendar-alt',
+            'popular' => false,
+            'features' => [
+                'Months 1–3: 1 Home + 1 Regular per month',
+                'Months 4–6: 2 Home + 2 Regular per month',
+                'Total: 9 short home + 9 regular visits',
+                'Free booking opens from month 4',
+                '12h & 24h care available as paid extras',
+            ],
+            'button_text' => 'Talk to us',
+            'button_href' => '#contact',
+        ],
+        [
+            'name' => 'Annual Care',
+            'description' => 'Pay 1 year at a time. Five consecutive annual payments unlock 10 years of service.',
+            'price_label' => 'Contact',
+            'duration' => '/year',
+            'icon' => 'fa-heartbeat',
+            'popular' => true,
+            'popular_label' => 'Most Popular',
+            'features' => [
+                'Year 1: 30 Home + 30 Regular (flyer slots)',
+                '5 paid years → 5 extra years (10 years total)',
+                'Stop before 5th payment: no extra years',
+                'Free booking opens from month 4',
+                '12h & 24h care available as paid extras',
+            ],
+            'button_text' => 'Talk to us',
+            'button_href' => '#contact',
+        ],
+        [
+            'name' => '3-Year Care Pack',
+            'description' => 'One-time payment for 3 years. Get 10 years of service (7 extra years).',
+            'price_label' => 'Contact',
+            'duration' => '/3 years',
+            'icon' => 'fa-hand-holding-heart',
+            'popular' => false,
+            'features' => [
+                'Pay 3 years once → 10 years of care',
+                'Same Year 1 month slots as the flyer',
+                'Extra years include visits (not empty years)',
+                'Free booking opens from month 4',
+                '12h & 24h care available as paid extras',
+            ],
+            'button_text' => 'Talk to us',
+            'button_href' => '#contact',
+        ],
+    ];
     $achievementMedia = \App\Models\AchievementMedia::ordered()->get();
     $featuredTeam = \App\Models\FeaturedTeam::ordered()->get();
     $testimonials = \App\Models\Testimonial::ordered()->get();
@@ -50,6 +108,7 @@ $buildLandingData = function (): array {
     return compact(
         'pageContent',
         'healthcarePlans',
+        'carePackages',
         'achievementMedia',
         'featuredTeam',
         'testimonials',

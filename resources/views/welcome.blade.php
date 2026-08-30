@@ -954,13 +954,46 @@
                     Subscription <span class="gradient-text">Plans</span>
                 </h2>
                 <p class="text-lg md:text-xl text-slate-500 max-w-3xl mx-auto leading-relaxed">
-                    Affordable monthly plans for your family’s home care. Clear pricing, professional nursing, and 24×7 support.
+                    Patient care packages and student membership — clear coverage, professional nursing, and 24×7 support.
                 </p>
             </div>
-            
-            <!-- Plans Grid -->
+
+            <!-- Plans Grid: 3 care packages + Student Journey -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
-                @forelse($healthcarePlans as $plan)
+                @foreach(($carePackages ?? []) as $pack)
+                    <div class="mmhc-plan-card {{ !empty($pack['popular']) ? 'is-popular' : '' }}">
+                        @if(!empty($pack['popular']))
+                            <span class="mmhc-plan-badge">{{ $pack['popular_label'] ?? 'Most Popular' }}</span>
+                        @endif
+
+                        <div class="text-center flex flex-col flex-1">
+                            <div class="mmhc-plan-icon">
+                                <i class="fas {{ $pack['icon'] ?? 'fa-heartbeat' }}"></i>
+                            </div>
+                            <h3 class="mmhc-plan-title">{{ $pack['name'] }}</h3>
+                            <p class="mmhc-plan-desc">{{ $pack['description'] }}</p>
+                            <div class="mmhc-plan-price">
+                                <span class="mmhc-plan-price-amount">{{ $pack['price_label'] }}</span>
+                                <span class="mmhc-plan-price-duration">{{ $pack['duration'] }}</span>
+                            </div>
+
+                            <ul class="mmhc-plan-features">
+                                @foreach($pack['features'] as $feature)
+                                    <li>
+                                        <i class="fas fa-check" aria-hidden="true"></i>
+                                        <span>{{ $feature }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+
+                            <a href="{{ $pack['button_href'] ?? '#contact' }}" class="mmhc-plan-cta">
+                                {{ $pack['button_text'] ?? 'Talk to us' }}
+                            </a>
+                        </div>
+                    </div>
+                @endforeach
+
+                @foreach($healthcarePlans as $plan)
                     <div class="mmhc-plan-card {{ $plan->is_popular ? 'is-popular' : '' }}">
                         @if($plan->is_popular)
                             <span class="mmhc-plan-badge">
@@ -974,7 +1007,7 @@
 
                         <div class="text-center flex flex-col flex-1">
                             <div class="mmhc-plan-icon">
-                                <i class="fas {{ $plan->icon_class ?? 'fa-heartbeat' }}"></i>
+                                <i class="fas {{ $plan->icon_class ?? 'fa-graduation-cap' }}"></i>
                             </div>
                             <h3 class="mmhc-plan-title">{{ $plan->name }}</h3>
                             <p class="mmhc-plan-desc">{{ $plan->description }}</p>
@@ -992,21 +1025,20 @@
                                 @endforeach
                             </ul>
 
-                            <a href="{{ $plan->button_link ?: route('auth.register') }}?role=patient&plan={{ strtolower(str_replace(' ', '_', $plan->name)) }}"
-                               class="mmhc-plan-cta">
-                                {{ $plan->button_text ?? 'Get Started' }}
+                            @php
+                                $planCtaBase = $plan->button_link ?: route('auth.register');
+                                $planRole = $plan->isStudentPlan() ? 'student' : 'patient';
+                                $planSlug = $plan->slug ?? strtolower(str_replace(' ', '_', $plan->name));
+                                $planCtaHref = $planCtaBase.(str_contains($planCtaBase, '?') ? '&' : '?').'role='.$planRole.'&plan='.$planSlug;
+                            @endphp
+                            <a href="{{ $planCtaHref }}" class="mmhc-plan-cta">
+                                {{ $plan->button_text ?? 'Subscribe now' }}
                             </a>
                         </div>
                     </div>
-                @empty
-                    <div class="col-span-4 text-center py-12">
-                        <i class="fas fa-heartbeat text-slate-300 text-5xl mb-4"></i>
-                        <p class="text-slate-600">No healthcare plans available at the moment.</p>
-                        <p class="text-sm text-slate-400 mt-2">Please contact us for more information.</p>
-                    </div>
-                @endforelse
+                @endforeach
             </div>
-            
+
             <!-- Bottom CTA -->
             <div class="text-center mt-12">
                 <p class="text-slate-500 mb-3">Not sure which plan is right for you?</p>
