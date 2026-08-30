@@ -35,72 +35,114 @@ $buildLandingData = function (): array {
         ->forStudentAudience()
         ->ordered()
         ->get();
-    // Household sizes × payment packages (old CRM monthly bases: 999 / 1699 / 2999).
+    // 4 household sizes (brochure) × 3 payment packages.
+    // Monthly bases: 999 / 1699 / 2199 / 2999. Half-year ×6, annual ×12, 3-year ×36.
+    $householdTiers = [
+        [
+            'id' => 'individual',
+            'label' => 'Individual',
+            'short' => '1',
+            'covers' => '1 person can access all our services',
+            'members' => 'Covers 1 member',
+            'monthly' => 999,
+        ],
+        [
+            'id' => 'parents',
+            'label' => 'Parent',
+            'short' => '2',
+            'covers' => 'Including 2 members of the family',
+            'members' => 'Covers 2 members',
+            'monthly' => 1699,
+        ],
+        [
+            'id' => 'family',
+            'label' => 'Family',
+            'short' => '3',
+            'covers' => 'Including 2 adults and 1 child in the family',
+            'members' => 'Covers 3 members',
+            'monthly' => 2199,
+        ],
+        [
+            'id' => 'premium',
+            'label' => 'Premium',
+            'short' => '4',
+            'covers' => 'Including 4 family members in the family',
+            'members' => 'Covers 4 members',
+            'monthly' => 2999,
+        ],
+    ];
+
+    $formatInr = static fn (int $amount): string => '₹'.number_format($amount, 0, '.', ',');
+
+    $tierPrices = static function (array $tiers, int $months, callable $formatInr): array {
+        return array_map(static function (array $tier) use ($months, $formatInr) {
+            $price = (int) $tier['monthly'] * $months;
+
+            return [
+                'id' => $tier['id'],
+                'label' => $tier['label'],
+                'short' => $tier['short'],
+                'covers' => $tier['covers'],
+                'members' => $tier['members'],
+                'price' => $price,
+                'price_label' => $formatInr($price),
+            ];
+        }, $tiers);
+    };
+
     $carePackages = [
         [
             'slug' => 'half_yearly',
             'name' => 'Half-yearly Care',
             'description' => 'Pay for 6 months. Coverage for 6 months. No extra years.',
             'duration' => '/6 months',
-            'duration_note' => 'one payment covers 6 months',
+            'duration_note' => 'one payment · 6 months coverage',
             'icon' => 'fa-calendar-alt',
             'popular' => false,
-            'tiers' => [
-                ['id' => 'individual', 'label' => 'Individual', 'short' => '1', 'members' => '1 person', 'price' => 5994, 'price_label' => '₹5,994'],
-                ['id' => 'parents', 'label' => '2 Parents', 'short' => '2', 'members' => '2 members', 'price' => 10194, 'price_label' => '₹10,194'],
-                ['id' => 'family4', 'label' => '4 Family', 'short' => '4', 'members' => '4 members', 'price' => 17994, 'price_label' => '₹17,994'],
-            ],
+            'tiers' => $tierPrices($householdTiers, 6, $formatInr),
             'features' => [
+                'Pick who is covered: 1, 2, 3, or 4 members',
                 'Months 1–3: 1 Home + 1 Regular per month',
                 'Months 4–6: 2 Home + 2 Regular per month',
                 'Total: 9 short home + 9 regular visits',
                 'Free booking opens from month 4',
-                '12h & 24h care as paid extras',
             ],
             'button_text' => 'Get Started',
         ],
         [
             'slug' => 'annual',
             'name' => 'Annual Care',
-            'description' => 'Pay 1 year at a time. Five consecutive annual payments unlock 10 years of service.',
+            'description' => 'Pay 1 full year (12 months) at a time. Five consecutive annual payments unlock 10 years of service.',
             'duration' => '/year',
-            'duration_note' => 'billed once a year',
+            'duration_note' => '12 months · billed yearly',
             'icon' => 'fa-heartbeat',
             'popular' => true,
             'popular_label' => 'Most Popular',
-            'tiers' => [
-                ['id' => 'individual', 'label' => 'Individual', 'short' => '1', 'members' => '1 person', 'price' => 9990, 'price_label' => '₹9,990'],
-                ['id' => 'parents', 'label' => '2 Parents', 'short' => '2', 'members' => '2 members', 'price' => 16990, 'price_label' => '₹16,990'],
-                ['id' => 'family4', 'label' => '4 Family', 'short' => '4', 'members' => '4 members', 'price' => 29990, 'price_label' => '₹29,990'],
-            ],
+            'tiers' => $tierPrices($householdTiers, 12, $formatInr),
             'features' => [
+                'Pick who is covered: 1, 2, 3, or 4 members',
                 'Year 1: 30 Home + 30 Regular visits',
                 '5 paid years → 5 extra years (10 total)',
                 'Stop before 5th payment: no extra years',
                 'Free booking opens from month 4',
-                '12h & 24h care as paid extras',
             ],
             'button_text' => 'Get Started',
         ],
         [
             'slug' => 'three_year',
             'name' => '3-Year Care Pack',
-            'description' => 'One-time payment for 3 years. Get 10 years of service (7 extra years).',
+            'description' => 'Pay 3 years once (36 months). Get 10 years of service — 7 extra years of care.',
             'duration' => '/3 years',
-            'duration_note' => 'single upfront payment',
+            'duration_note' => '36 months · one-time payment',
             'icon' => 'fa-hand-holding-heart',
             'popular' => false,
-            'tiers' => [
-                ['id' => 'individual', 'label' => 'Individual', 'short' => '1', 'members' => '1 person', 'price' => 29970, 'price_label' => '₹29,970'],
-                ['id' => 'parents', 'label' => '2 Parents', 'short' => '2', 'members' => '2 members', 'price' => 50970, 'price_label' => '₹50,970'],
-                ['id' => 'family4', 'label' => '4 Family', 'short' => '4', 'members' => '4 members', 'price' => 89970, 'price_label' => '₹89,970'],
-            ],
+            'tiers' => $tierPrices($householdTiers, 36, $formatInr),
             'features' => [
+                'Pick who is covered: 1, 2, 3, or 4 members',
                 'Pay 3 years once → 10 years of care',
                 'Same Year 1 month slots as the flyer',
                 'Extra years include visits',
                 'Free booking opens from month 4',
-                '12h & 24h care as paid extras',
             ],
             'button_text' => 'Get Started',
         ],

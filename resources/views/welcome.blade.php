@@ -152,9 +152,9 @@
         }
         .mmhc-plan-tier-switch {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.35rem;
-            padding: 0.3rem;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.3rem;
+            padding: 0.28rem;
             margin-bottom: 1rem;
             background: #f1f5f9;
             border-radius: 0.85rem;
@@ -164,10 +164,10 @@
             border: 0;
             background: transparent;
             color: #64748b;
-            font-size: 0.72rem;
+            font-size: 0.62rem;
             font-weight: 600;
-            line-height: 1.2;
-            padding: 0.55rem 0.25rem;
+            line-height: 1.15;
+            padding: 0.5rem 0.15rem;
             border-radius: 0.65rem;
             cursor: pointer;
             transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
@@ -186,7 +186,40 @@
             font-size: 0.95rem;
             font-weight: 700;
             color: inherit;
-            margin-bottom: 0.1rem;
+            margin-bottom: 0.08rem;
+        }
+        .mmhc-plan-covers {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            text-align: left;
+            background: #f0fdfa;
+            border: 1px solid #ccfbf1;
+            border-radius: 0.75rem;
+            padding: 0.65rem 0.75rem;
+            margin-bottom: 1rem;
+            min-height: 3.1rem;
+        }
+        .mmhc-plan-covers i {
+            color: #0f766e;
+            margin-top: 0.15rem;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .mmhc-plan-covers-title {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #0f766e;
+            margin-bottom: 0.15rem;
+        }
+        .mmhc-plan-covers-text {
+            font-size: 0.8rem;
+            color: #334155;
+            line-height: 1.35;
+            font-weight: 500;
         }
         .mmhc-plan-price {
             margin-bottom: 0.35rem;
@@ -1023,7 +1056,7 @@
                     Subscription <span class="gradient-text">Plans</span>
                 </h2>
                 <p class="text-lg md:text-xl text-slate-500 max-w-3xl mx-auto leading-relaxed">
-                    Choose how you pay, then pick household size — Individual, 2 Parents, or 4 Family. Same care visits; clear pricing.
+                    Choose how you pay, then who is covered — Individual (1), Parent Care (2), Family Care (2 adults + 1 child), or Premium Family (4).
                 </p>
             </div>
 
@@ -1062,7 +1095,8 @@
                             <h3 class="mmhc-plan-title">{{ $pack['name'] }}</h3>
                             <p class="mmhc-plan-desc">{{ $pack['description'] }}</p>
 
-                            <div class="mmhc-plan-tier-switch" role="tablist" aria-label="Household size">
+                            <p class="text-left text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2 px-0.5">Who is covered?</p>
+                            <div class="mmhc-plan-tier-switch" role="tablist" aria-label="Who is covered">
                                 @foreach($pack['tiers'] as $index => $tier)
                                     <button
                                         type="button"
@@ -1071,6 +1105,7 @@
                                         @click="active = {{ $index }}"
                                         role="tab"
                                         :aria-selected="active === {{ $index }}"
+                                        :aria-label="{{ \Illuminate\Support\Js::from($tier['label'].' — '.$tier['covers']) }}"
                                     >
                                         <span class="tier-count">{{ $tier['short'] }}</span>
                                         {{ $tier['label'] }}
@@ -1078,12 +1113,20 @@
                                 @endforeach
                             </div>
 
+                            <div class="mmhc-plan-covers" aria-live="polite">
+                                <i class="fas fa-users" aria-hidden="true"></i>
+                                <div>
+                                    <span class="mmhc-plan-covers-title" x-text="current.members || ''">{{ $defaultTier['members'] ?? '' }}</span>
+                                    <span class="mmhc-plan-covers-text" x-text="current.covers || ''">{{ $defaultTier['covers'] ?? '' }}</span>
+                                </div>
+                            </div>
+
                             <div class="mmhc-plan-price">
                                 <span class="mmhc-plan-price-amount" x-text="current.price_label">{{ $defaultTier['price_label'] ?? '' }}</span>
                                 <span class="mmhc-plan-price-duration">{{ $pack['duration'] }}</span>
                             </div>
-                            <p class="mmhc-plan-members" x-text="(current.members || '') + (durationNote ? ' · ' + durationNote : '')">
-                                {{ ($defaultTier['members'] ?? '') . (!empty($pack['duration_note']) ? ' · '.$pack['duration_note'] : '') }}
+                            <p class="mmhc-plan-members" x-text="durationNote || ''">
+                                {{ $pack['duration_note'] ?? '' }}
                             </p>
 
                             <ul class="mmhc-plan-features">
