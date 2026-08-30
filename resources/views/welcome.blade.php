@@ -152,9 +152,9 @@
         }
         .mmhc-plan-tier-switch {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 0.3rem;
-            padding: 0.28rem;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.35rem;
+            padding: 0.3rem;
             margin-bottom: 1rem;
             background: #f1f5f9;
             border-radius: 0.85rem;
@@ -164,13 +164,14 @@
             border: 0;
             background: transparent;
             color: #64748b;
-            font-size: 0.62rem;
+            font-size: 0.72rem;
             font-weight: 600;
-            line-height: 1.15;
-            padding: 0.5rem 0.15rem;
+            line-height: 1.2;
+            padding: 0.55rem 0.35rem;
             border-radius: 0.65rem;
             cursor: pointer;
             transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
         }
         .mmhc-plan-tier-btn:hover {
             color: #0f172a;
@@ -220,6 +221,24 @@
             color: #334155;
             line-height: 1.35;
             font-weight: 500;
+        }
+        .mmhc-plan-monthly-ref {
+            font-size: 0.78rem;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 0.85rem;
+        }
+        .mmhc-plan-term-summary {
+            font-size: 0.82rem;
+            color: #475569;
+            line-height: 1.45;
+            text-align: left;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 0.65rem 0.75rem;
+            margin-bottom: 1rem;
+            min-height: 2.75rem;
         }
         .mmhc-plan-price {
             margin-bottom: 0.35rem;
@@ -418,9 +437,9 @@
                 display: none;
             }
         }
-        @media (min-width: 1024px) {
+        @media (min-width: 1280px) {
             .mmhc-plan-slider-track {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
+                grid-template-columns: repeat(4, minmax(0, 1fr));
             }
         }
 
@@ -1164,11 +1183,11 @@
                     Subscription <span class="gradient-text">Plans</span>
                 </h2>
                 <p class="text-lg md:text-xl text-slate-500 max-w-3xl mx-auto leading-relaxed">
-                    Choose how you pay, then who is covered — Individual (1), Parent Care (2), Family Care (2 adults + 1 child), or Premium Family (4).
+                    Pick your household package — 1, 2, 3, or 4 members — then choose how you pay: 6 months, 1 year, or 3 years.
                 </p>
             </div>
 
-            <!-- Patient care packages: swipe on mobile, grid on desktop -->
+            <!-- Household packages: swipe on mobile, grid on desktop -->
             @php $carePackageCount = count($carePackages ?? []); @endphp
             <div
                 class="mmhc-plan-slider"
@@ -1205,23 +1224,21 @@
                 @foreach(($carePackages ?? []) as $pack)
                     @php
                         $registerBase = route('auth.register');
-                        $tiersForJs = collect($pack['tiers'])->values()->all();
-                        $defaultTier = $pack['tiers'][0] ?? null;
+                        $termsForJs = collect($pack['terms'])->values()->all();
+                        $defaultTerm = $pack['terms'][1] ?? $pack['terms'][0] ?? null;
                     @endphp
                     <div class="mmhc-plan-slide">
                     <div
                         class="mmhc-plan-card {{ !empty($pack['popular']) ? 'is-popular' : '' }}"
                         x-data="{
-                            active: 0,
-                            tiers: {{ \Illuminate\Support\Js::from($tiersForJs) }},
-                            duration: {{ \Illuminate\Support\Js::from($pack['duration']) }},
-                            durationNote: {{ \Illuminate\Support\Js::from($pack['duration_note'] ?? '') }},
-                            package: {{ \Illuminate\Support\Js::from($pack['slug']) }},
+                            active: 1,
+                            terms: {{ \Illuminate\Support\Js::from($termsForJs) }},
+                            household: {{ \Illuminate\Support\Js::from($pack['slug']) }},
                             registerBase: {{ \Illuminate\Support\Js::from($registerBase) }},
-                            get current() { return this.tiers[this.active] || this.tiers[0]; },
+                            get current() { return this.terms[this.active] || this.terms[0]; },
                             get ctaHref() {
-                                const tier = this.current?.id || 'individual';
-                                return this.registerBase + '?role=patient&package=' + this.package + '&tier=' + tier;
+                                const pkg = this.current?.id || 'annual';
+                                return this.registerBase + '?role=patient&package=' + pkg + '&tier=' + this.household;
                             }
                         }"
                     >
@@ -1231,14 +1248,22 @@
 
                         <div class="text-center flex flex-col flex-1">
                             <div class="mmhc-plan-icon">
-                                <i class="fas {{ $pack['icon'] ?? 'fa-heartbeat' }}"></i>
+                                <i class="fas {{ $pack['icon'] ?? 'fa-users' }}"></i>
                             </div>
                             <h3 class="mmhc-plan-title">{{ $pack['name'] }}</h3>
-                            <p class="mmhc-plan-desc">{{ $pack['description'] }}</p>
+                            <p class="mmhc-plan-monthly-ref">Base rate {{ $pack['monthly_label'] }}</p>
 
-                            <p class="text-left text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2 px-0.5">Who is covered?</p>
-                            <div class="mmhc-plan-tier-switch" role="tablist" aria-label="Who is covered">
-                                @foreach($pack['tiers'] as $index => $tier)
+                            <div class="mmhc-plan-covers" aria-live="polite">
+                                <i class="fas fa-users" aria-hidden="true"></i>
+                                <div>
+                                    <span class="mmhc-plan-covers-title">{{ $pack['members'] }}</span>
+                                    <span class="mmhc-plan-covers-text">{{ $pack['covers'] }}</span>
+                                </div>
+                            </div>
+
+                            <p class="text-left text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2 px-0.5">Payment term</p>
+                            <div class="mmhc-plan-tier-switch" role="tablist" aria-label="Payment term">
+                                @foreach($pack['terms'] as $index => $term)
                                     <button
                                         type="button"
                                         class="mmhc-plan-tier-btn"
@@ -1246,41 +1271,41 @@
                                         @click="active = {{ $index }}"
                                         role="tab"
                                         :aria-selected="active === {{ $index }}"
-                                        :aria-label="{{ \Illuminate\Support\Js::from($tier['label'].' — '.$tier['covers']) }}"
+                                        aria-label="{{ $term['label'] }}"
                                     >
-                                        <span class="tier-count">{{ $tier['short'] }}</span>
-                                        {{ $tier['label'] }}
+                                        <span class="tier-count">{{ $term['short'] }}</span>
+                                        {{ $term['label'] }}
                                     </button>
                                 @endforeach
                             </div>
 
-                            <div class="mmhc-plan-covers" aria-live="polite">
-                                <i class="fas fa-users" aria-hidden="true"></i>
-                                <div>
-                                    <span class="mmhc-plan-covers-title" x-text="current.members || ''">{{ $defaultTier['members'] ?? '' }}</span>
-                                    <span class="mmhc-plan-covers-text" x-text="current.covers || ''">{{ $defaultTier['covers'] ?? '' }}</span>
-                                </div>
-                            </div>
-
                             <div class="mmhc-plan-price">
-                                <span class="mmhc-plan-price-amount" x-text="current.price_label">{{ $defaultTier['price_label'] ?? '' }}</span>
-                                <span class="mmhc-plan-price-duration">{{ $pack['duration'] }}</span>
+                                <span class="mmhc-plan-price-amount" x-text="current.price_label">{{ $defaultTerm['price_label'] ?? '' }}</span>
+                                <span class="mmhc-plan-price-duration" x-text="current.duration || ''">{{ $defaultTerm['duration'] ?? '' }}</span>
                             </div>
-                            <p class="mmhc-plan-members" x-text="durationNote || ''">
-                                {{ $pack['duration_note'] ?? '' }}
+                            <p class="mmhc-plan-members" x-text="current.duration_note || ''">
+                                {{ $defaultTerm['duration_note'] ?? '' }}
+                            </p>
+                            <p class="mmhc-plan-term-summary" x-text="current.summary || ''">
+                                {{ $defaultTerm['summary'] ?? '' }}
                             </p>
 
                             <ul class="mmhc-plan-features">
-                                @foreach($pack['features'] as $feature)
-                                    <li>
-                                        <i class="fas fa-check" aria-hidden="true"></i>
-                                        <span>{{ $feature }}</span>
-                                    </li>
+                                @foreach($pack['terms'] as $termIndex => $term)
+                                    @foreach($term['features'] as $feature)
+                                        <li
+                                            x-show="active === {{ $termIndex }}"
+                                            @if($termIndex !== 1) style="display: none" @endif
+                                        >
+                                            <i class="fas fa-check" aria-hidden="true"></i>
+                                            <span>{{ $feature }}</span>
+                                        </li>
+                                    @endforeach
                                 @endforeach
                             </ul>
 
                             <a
-                                href="{{ $registerBase }}?role=patient&package={{ $pack['slug'] }}&tier={{ $defaultTier['id'] ?? 'individual' }}"
+                                href="{{ $registerBase }}?role=patient&package={{ $defaultTerm['id'] ?? 'annual' }}&tier={{ $pack['slug'] }}"
                                 :href="ctaHref"
                                 class="mmhc-plan-cta"
                             >
@@ -1294,7 +1319,7 @@
 
                 @if($carePackageCount > 1)
                     <div class="mmhc-plan-slider-nav" aria-label="Plan slides">
-                        <button type="button" class="mmhc-plan-slider-btn" @click="go(slide - 1)" :disabled="slide === 0" aria-label="Previous plan">
+                        <button type="button" class="mmhc-plan-slider-btn" @click="go(slide - 1)" :disabled="slide === 0" aria-label="Previous package">
                             <i class="fas fa-chevron-left" aria-hidden="true"></i>
                         </button>
                         <div class="mmhc-plan-slider-dots">
@@ -1304,15 +1329,15 @@
                                     class="mmhc-plan-slider-dot"
                                     :class="{ 'is-active': slide === {{ $i }} }"
                                     @click="go({{ $i }})"
-                                    aria-label="Show plan {{ $i + 1 }}"
+                                    aria-label="Show package {{ $i + 1 }}"
                                 ></button>
                             @endfor
                         </div>
-                        <button type="button" class="mmhc-plan-slider-btn" @click="go(slide + 1)" :disabled="slide === total - 1" aria-label="Next plan">
+                        <button type="button" class="mmhc-plan-slider-btn" @click="go(slide + 1)" :disabled="slide === total - 1" aria-label="Next package">
                             <i class="fas fa-chevron-right" aria-hidden="true"></i>
                         </button>
                     </div>
-                    <p class="mmhc-plan-slider-hint">Swipe for the next package</p>
+                    <p class="mmhc-plan-slider-hint">Swipe for the next household package</p>
                 @endif
             </div>
 

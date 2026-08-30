@@ -35,118 +35,138 @@ $buildLandingData = function (): array {
         ->forStudentAudience()
         ->ordered()
         ->get();
-    // 4 household sizes (brochure) × 3 payment packages.
-    // Monthly bases: 999 / 1699 / 2199 / 2999. Half-year ×6, annual ×12, 3-year ×36.
-    $householdTiers = [
-        [
-            'id' => 'individual',
-            'label' => 'Individual',
-            'short' => '1',
-            'covers' => '1 person can access all our services',
-            'members' => 'Covers 1 member',
-            'monthly' => 999,
-        ],
-        [
-            'id' => 'parents',
-            'label' => 'Parent',
-            'short' => '2',
-            'covers' => 'Including 2 members of the family',
-            'members' => 'Covers 2 members',
-            'monthly' => 1699,
-        ],
-        [
-            'id' => 'family',
-            'label' => 'Family',
-            'short' => '3',
-            'covers' => 'Including 2 adults and 1 child in the family',
-            'members' => 'Covers 3 members',
-            'monthly' => 2199,
-        ],
-        [
-            'id' => 'premium',
-            'label' => 'Premium',
-            'short' => '4',
-            'covers' => 'Including 4 family members in the family',
-            'members' => 'Covers 4 members',
-            'monthly' => 2999,
-        ],
-    ];
-
+    // 4 household packages × 3 payment terms (monthly ×6 / ×12 / ×36).
     $formatInr = static fn (int $amount): string => '₹'.number_format($amount, 0, '.', ',');
 
-    $tierPrices = static function (array $tiers, int $months, callable $formatInr): array {
-        return array_map(static function (array $tier) use ($months, $formatInr) {
-            $price = (int) $tier['monthly'] * $months;
-
-            return [
-                'id' => $tier['id'],
-                'label' => $tier['label'],
-                'short' => $tier['short'],
-                'covers' => $tier['covers'],
-                'members' => $tier['members'],
-                'price' => $price,
-                'price_label' => $formatInr($price),
-            ];
-        }, $tiers);
-    };
-
-    $carePackages = [
+    $paymentTerms = [
         [
-            'slug' => 'half_yearly',
-            'name' => 'Half-yearly Care',
-            'description' => 'Pay for 6 months. Coverage for 6 months. No extra years.',
+            'id' => 'half_yearly',
+            'label' => '6 Months',
+            'short' => '6M',
             'duration' => '/6 months',
             'duration_note' => 'one payment · 6 months coverage',
-            'icon' => 'fa-calendar-alt',
-            'popular' => false,
-            'tiers' => $tierPrices($householdTiers, 6, $formatInr),
+            'summary' => 'Pay 6 months. Coverage 6 months. No extra years.',
+            'months' => 6,
             'features' => [
-                'Pick who is covered: 1, 2, 3, or 4 members',
                 'Months 1–3: 1 Home + 1 Regular per month',
                 'Months 4–6: 2 Home + 2 Regular per month',
                 'Total: 9 short home + 9 regular visits',
                 'Free booking opens from month 4',
             ],
-            'button_text' => 'Get Started',
         ],
         [
-            'slug' => 'annual',
-            'name' => 'Annual Care',
-            'description' => 'Pay 1 full year (12 months) at a time. Five consecutive annual payments unlock 10 years of service.',
+            'id' => 'annual',
+            'label' => '1 Year',
+            'short' => '1Y',
             'duration' => '/year',
             'duration_note' => '12 months · billed yearly',
-            'icon' => 'fa-heartbeat',
+            'summary' => 'Pay 12 months. Five consecutive years unlock 10 years of service.',
+            'months' => 12,
             'popular' => true,
-            'popular_label' => 'Most Popular',
-            'tiers' => $tierPrices($householdTiers, 12, $formatInr),
             'features' => [
-                'Pick who is covered: 1, 2, 3, or 4 members',
                 'Year 1: 30 Home + 30 Regular visits',
                 '5 paid years → 5 extra years (10 total)',
                 'Stop before 5th payment: no extra years',
                 'Free booking opens from month 4',
             ],
-            'button_text' => 'Get Started',
         ],
         [
-            'slug' => 'three_year',
-            'name' => '3-Year Care Pack',
-            'description' => 'Pay 3 years once (36 months). Get 10 years of service — 7 extra years of care.',
+            'id' => 'three_year',
+            'label' => '3 Years',
+            'short' => '3Y',
             'duration' => '/3 years',
             'duration_note' => '36 months · one-time payment',
-            'icon' => 'fa-hand-holding-heart',
-            'popular' => false,
-            'tiers' => $tierPrices($householdTiers, 36, $formatInr),
+            'summary' => 'Pay 36 months once. Get 10 years of service (7 extra years).',
+            'months' => 36,
             'features' => [
-                'Pick who is covered: 1, 2, 3, or 4 members',
                 'Pay 3 years once → 10 years of care',
                 'Same Year 1 month slots as the flyer',
                 'Extra years include visits',
                 'Free booking opens from month 4',
             ],
-            'button_text' => 'Get Started',
         ],
     ];
+
+    $householdPackages = [
+        [
+            'id' => 'individual',
+            'name' => '1 Person Package',
+            'short' => '1',
+            'covers' => '1 person can access all our services',
+            'members' => 'Covers 1 member',
+            'monthly' => 999,
+            'monthly_label' => '₹999/month',
+            'icon' => 'fa-user',
+            'popular' => false,
+        ],
+        [
+            'id' => 'parents',
+            'name' => '2 Members Package',
+            'short' => '2',
+            'covers' => 'Including 2 members of the family',
+            'members' => 'Covers 2 members',
+            'monthly' => 1699,
+            'monthly_label' => '₹1,699/month',
+            'icon' => 'fa-user-friends',
+            'popular' => true,
+            'popular_label' => 'Most Popular',
+        ],
+        [
+            'id' => 'family',
+            'name' => '3 Members Package',
+            'short' => '3',
+            'covers' => 'Including 2 adults and 1 child in the family',
+            'members' => 'Covers 3 members',
+            'monthly' => 2199,
+            'monthly_label' => '₹2,199/month',
+            'icon' => 'fa-home',
+            'popular' => false,
+        ],
+        [
+            'id' => 'premium',
+            'name' => '4 Members Package',
+            'short' => '4',
+            'covers' => 'Including 4 family members in the family',
+            'members' => 'Covers 4 members',
+            'monthly' => 2999,
+            'monthly_label' => '₹2,999/month',
+            'icon' => 'fa-users',
+            'popular' => false,
+        ],
+    ];
+
+    $carePackages = array_map(static function (array $household) use ($paymentTerms, $formatInr) {
+        $terms = array_map(static function (array $term) use ($household, $formatInr) {
+            $price = (int) $household['monthly'] * (int) $term['months'];
+
+            return [
+                'id' => $term['id'],
+                'label' => $term['label'],
+                'short' => $term['short'],
+                'duration' => $term['duration'],
+                'duration_note' => $term['duration_note'],
+                'summary' => $term['summary'],
+                'popular' => $term['popular'] ?? false,
+                'price' => $price,
+                'price_label' => $formatInr($price),
+                'features' => $term['features'],
+            ];
+        }, $paymentTerms);
+
+        return [
+            'slug' => $household['id'],
+            'name' => $household['name'],
+            'short' => $household['short'],
+            'covers' => $household['covers'],
+            'members' => $household['members'],
+            'monthly_label' => $household['monthly_label'],
+            'icon' => $household['icon'],
+            'popular' => $household['popular'] ?? false,
+            'popular_label' => $household['popular_label'] ?? 'Most Popular',
+            'terms' => $terms,
+            'button_text' => 'Get Started',
+        ];
+    }, $householdPackages);
     $achievementMedia = \App\Models\AchievementMedia::ordered()->get();
     $featuredTeam = \App\Models\FeaturedTeam::ordered()->get();
     $testimonials = \App\Models\Testimonial::ordered()->get();
