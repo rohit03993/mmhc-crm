@@ -80,10 +80,38 @@
         <div class="mark">
             <img src="/icons/icon-192.png" alt="MeD Miracle" width="72" height="72">
         </div>
-        <h1>You're offline</h1>
-        <p>Check your connection, then reopen MeD Miracle from your Home screen.</p>
-        <button type="button" onclick="location.reload()">Try again</button>
-        <p class="offline-hint">Your care data loads when you’re back online.</p>
+        <h1>Connection problem</h1>
+        <p>We could not reach MeD Miracle. Check mobile data or Wi‑Fi, then try again. The page will reload automatically when you are back online.</p>
+        <button type="button" id="retryBtn">Try again</button>
+        <p class="offline-hint" id="statusHint">Waiting for connection…</p>
     </div>
+    <script>
+        (function () {
+            var retryBtn = document.getElementById('retryBtn');
+            var statusHint = document.getElementById('statusHint');
+
+            function tryReload() {
+                if (statusHint) {
+                    statusHint.textContent = 'Checking connection…';
+                }
+                location.reload();
+            }
+
+            if (retryBtn) {
+                retryBtn.addEventListener('click', tryReload);
+            }
+
+            window.addEventListener('online', function () {
+                if (statusHint) {
+                    statusHint.textContent = 'Back online. Reloading…';
+                }
+                setTimeout(tryReload, 500);
+            });
+
+            if (navigator.onLine && statusHint) {
+                statusHint.textContent = 'Tap Try again, or wait a moment.';
+            }
+        })();
+    </script>
 </body>
 </html>

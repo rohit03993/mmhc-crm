@@ -1,5 +1,5 @@
 /* MeD Miracle PWA service worker — network-first for pages, cache for shell assets + Web Push */
-const CACHE_VERSION = 'mmhc-pwa-v8';
+const CACHE_VERSION = 'mmhc-pwa-v9';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -96,10 +96,26 @@ async function networkFirstAsset(request) {
     }
 }
 
+async function fetchWithRetry(request, attempts, delayMs) {
+    let lastError;
+    for (let i = 0; i < attempts; i++) {
+        try {
+            const response = await fetch(request);
+            return response;
+        } catch (err) {
+            lastError = err;
+            if (i < attempts - 1) {
+                await new Promise((resolve) => setTimeout(resolve, delayMs));
+            }
+        }
+    }
+    throw lastError;
+}
+
 async function networkFirstNavigation(request) {
     try {
-        const response = await fetch(request);
-        return response;
+        // Retry twice on slow mobile networks (common right after OTP login redirects).
+        return await fetchWithRetry(request, 3, 800);
     } catch (err) {
         const offline = await caches.match('/offline.html');
         return offline || Response.error();

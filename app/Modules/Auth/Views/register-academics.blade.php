@@ -474,23 +474,10 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label" for="ac_reg_pw">Password <span class="text-danger">*</span></label>
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                                <input type="password" id="ac_reg_pw" name="password" class="form-control @error('password') is-invalid @enderror" required minlength="6" autocomplete="new-password">
-                                            </div>
-                                            @error('password')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label" for="ac_reg_pw2">Confirm password <span class="text-danger">*</span></label>
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                                <input type="password" id="ac_reg_pw2" name="password_confirmation" class="form-control" required minlength="6" autocomplete="new-password">
-                                            </div>
+                                    <div class="col-12">
+                                        <div class="alert alert-info mb-0">
+                                            <i class="fab fa-whatsapp me-1"></i>
+                                            <strong>Sign in with WhatsApp.</strong> After registration, use your mobile number on the login page. We send a one-time code on WhatsApp — no password needed.
                                         </div>
                                     </div>
                                 </div>

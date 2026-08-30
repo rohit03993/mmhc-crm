@@ -3,6 +3,8 @@
 namespace App\Modules\Auth\Services;
 
 use App\Models\Core\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserService
 {
@@ -312,5 +314,14 @@ class UserService
         $userData['phone'] = $normalizedPhone;
         $userData['email'] = $this->placeholderEmailForPhone($normalizedPhone);
         $userData['login_via_phone_only'] = true;
+        $userData['password'] = $this->randomPhoneOnlyPasswordHash();
+    }
+
+    /**
+     * Unusable random password for WhatsApp-only accounts (DB column still required).
+     */
+    public function randomPhoneOnlyPasswordHash(): string
+    {
+        return Hash::make(Str::random(64));
     }
 }

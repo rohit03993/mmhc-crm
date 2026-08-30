@@ -386,32 +386,9 @@
                                         </div>
 
                                         <div class="register-step col-12" data-step="3">
-                                            <div class="mb-3">
-                                                <label for="patient_password" class="form-label">Password</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">
-                                                        <i class="fas fa-lock"></i>
-                                                    </span>
-                                                    <input type="password" 
-                                                           class="form-control @error('password') is-invalid @enderror" 
-                                                           id="patient_password" 
-                                                           name="password" 
-                                                           required>
-                                                </div>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="patient_password_confirmation" class="form-label">Confirm Password</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">
-                                                        <i class="fas fa-lock"></i>
-                                                    </span>
-                                                    <input type="password" 
-                                                           class="form-control" 
-                                                           id="patient_password_confirmation" 
-                                                           name="password_confirmation" 
-                                                           required>
-                                                </div>
+                                            <div class="alert alert-info mb-3">
+                                                <i class="fab fa-whatsapp me-1"></i>
+                                                <strong>Sign in with WhatsApp.</strong> After you register, use the same mobile number on the login page. We send a one-time code on WhatsApp — no password needed.
                                             </div>
 
                                             <div class="mb-3 form-check">
@@ -562,32 +539,9 @@
                                                 @enderror
                                             </div>
 
-                                            <div class="mb-3">
-                                                <label for="nurse_password" class="form-label">Password</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">
-                                                        <i class="fas fa-lock"></i>
-                                                    </span>
-                                                    <input type="password" 
-                                                           class="form-control @error('password') is-invalid @enderror" 
-                                                           id="nurse_password" 
-                                                           name="password" 
-                                                           required>
-                                                </div>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="nurse_password_confirmation" class="form-label">Confirm Password</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">
-                                                        <i class="fas fa-lock"></i>
-                                                    </span>
-                                                    <input type="password" 
-                                                           class="form-control" 
-                                                           id="nurse_password_confirmation" 
-                                                           name="password_confirmation" 
-                                                           required>
-                                                </div>
+                                            <div class="alert alert-info mb-3">
+                                                <i class="fab fa-whatsapp me-1"></i>
+                                                <strong>Sign in with WhatsApp.</strong> After registration, sign in with your mobile number and the code we send on WhatsApp. No password needed.
                                             </div>
                                         </div>
 
@@ -751,32 +705,9 @@
                                                 @enderror
                                             </div>
 
-                                            <div class="mb-3">
-                                                <label for="caregiver_password" class="form-label">Password</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">
-                                                        <i class="fas fa-lock"></i>
-                                                    </span>
-                                                    <input type="password" 
-                                                           class="form-control @error('password') is-invalid @enderror" 
-                                                           id="caregiver_password" 
-                                                           name="password" 
-                                                           required>
-                                                </div>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="caregiver_password_confirmation" class="form-label">Confirm Password</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">
-                                                        <i class="fas fa-lock"></i>
-                                                    </span>
-                                                    <input type="password" 
-                                                           class="form-control" 
-                                                           id="caregiver_password_confirmation" 
-                                                           name="password_confirmation" 
-                                                           required>
-                                                </div>
+                                            <div class="alert alert-info mb-3">
+                                                <i class="fab fa-whatsapp me-1"></i>
+                                                <strong>Sign in with WhatsApp.</strong> After registration, sign in with your mobile number and the code we send on WhatsApp. No password needed.
                                             </div>
                                         </div>
 

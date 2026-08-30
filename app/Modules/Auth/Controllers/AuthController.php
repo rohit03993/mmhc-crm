@@ -466,7 +466,6 @@ class AuthController extends Controller
                 },
             ],
             'pincode' => 'required|string|regex:/^[1-9][0-9]{5}$/',
-            'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:nurse,caregiver,patient',
             'date_of_birth' => 'nullable|date',
             'address' => 'nullable|string|max:500',
@@ -516,11 +515,8 @@ class AuthController extends Controller
         }
 
         return DB::transaction(function () use ($request, $referralCode, $isReferralRegistration, $normalizedPhone) {
-            $userData = $request->only(['name', 'password', 'role', 'date_of_birth', 'address', 'pincode']);
+            $userData = $request->only(['name', 'role', 'date_of_birth', 'address', 'pincode']);
             $this->userService->applySelfRegistrationIdentity($userData, $normalizedPhone);
-
-            // Store hashed password only (sign-in via WhatsApp OTP; email/password legacy)
-            $userData['password'] = Hash::make($userData['password']);
 
             // Generate unique ID based on role
             $userData['unique_id'] = $this->userService->generateUniqueId($userData['role']);
@@ -633,7 +629,6 @@ class AuthController extends Controller
                 },
             ],
             'pincode' => 'required|string|regex:/^[1-9][0-9]{5}$/',
-            'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:student,faculty',
             'faculty_teaching_mode' => 'nullable|in:college,independent',
             'academic_institution_id' => [
@@ -691,9 +686,8 @@ class AuthController extends Controller
             $facultyMode = (string) $request->input('faculty_teaching_mode', 'college');
             $independentFaculty = $role === 'faculty' && $facultyMode === 'independent';
 
-            $userData = $request->only(['name', 'password', 'role', 'date_of_birth', 'address', 'pincode']);
+            $userData = $request->only(['name', 'role', 'date_of_birth', 'address', 'pincode']);
             $this->userService->applySelfRegistrationIdentity($userData, $normalizedPhone);
-            $userData['password'] = Hash::make($userData['password']);
             $userData['unique_id'] = $this->userService->generateUniqueId($role);
             $userData['is_active'] = true;
 
