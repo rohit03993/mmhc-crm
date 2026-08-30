@@ -80,14 +80,14 @@
 
         /* Landing plan cards — modern, soft, professional */
         .mmhc-plans-section {
-            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 55%, #eef2f7 100%);
         }
         .mmhc-plan-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 1.25rem;
-            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
-            padding: 2rem 1.5rem;
+            border-radius: 1.35rem;
+            box-shadow: 0 4px 24px rgba(15, 23, 42, 0.045);
+            padding: 1.85rem 1.4rem 1.5rem;
             position: relative;
             height: 100%;
             display: flex;
@@ -95,97 +95,143 @@
             transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         }
         .mmhc-plan-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.09);
             border-color: #cbd5e1;
         }
         .mmhc-plan-card.is-popular {
-            border-color: #94a3b8;
-            box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
-            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            border-color: #99f6e4;
+            box-shadow: 0 10px 32px rgba(15, 118, 110, 0.12);
+            background: linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%);
         }
         .mmhc-plan-badge {
             position: absolute;
             top: -0.7rem;
             left: 50%;
             transform: translateX(-50%);
-            background: #334155;
+            background: linear-gradient(135deg, #0f766e, #115e59);
             color: #f8fafc;
-            font-size: 0.7rem;
-            font-weight: 600;
-            letter-spacing: 0.04em;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
-            padding: 0.35rem 0.9rem;
+            padding: 0.35rem 0.95rem;
             border-radius: 999px;
             white-space: nowrap;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+            box-shadow: 0 6px 14px rgba(15, 118, 110, 0.28);
         }
         .mmhc-plan-icon {
-            width: 3.5rem;
-            height: 3.5rem;
-            margin: 0 auto 1.25rem;
+            width: 3.35rem;
+            height: 3.35rem;
+            margin: 0 auto 1rem;
             border-radius: 999px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: #f1f5f9;
             color: #0f766e;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
         }
         .mmhc-plan-card.is-popular .mmhc-plan-icon {
-            background: #ecfdf5;
+            background: #ccfbf1;
             color: #0f766e;
         }
         .mmhc-plan-title {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: #0f172a;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
             line-height: 1.3;
         }
         .mmhc-plan-desc {
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             color: #64748b;
             line-height: 1.5;
-            margin-bottom: 1.25rem;
-            min-height: 3rem;
+            margin-bottom: 1.1rem;
+            min-height: 2.75rem;
+        }
+        .mmhc-plan-tier-switch {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.35rem;
+            padding: 0.3rem;
+            margin-bottom: 1rem;
+            background: #f1f5f9;
+            border-radius: 0.85rem;
+            border: 1px solid #e2e8f0;
+        }
+        .mmhc-plan-tier-btn {
+            border: 0;
+            background: transparent;
+            color: #64748b;
+            font-size: 0.72rem;
+            font-weight: 600;
+            line-height: 1.2;
+            padding: 0.55rem 0.25rem;
+            border-radius: 0.65rem;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .mmhc-plan-tier-btn:hover {
+            color: #0f172a;
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .mmhc-plan-tier-btn.is-active {
+            background: #ffffff;
+            color: #0f766e;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+        }
+        .mmhc-plan-tier-btn .tier-count {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: inherit;
+            margin-bottom: 0.1rem;
         }
         .mmhc-plan-price {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1.25rem;
-            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 0.35rem;
         }
         .mmhc-plan-price-amount {
-            font-size: 2rem;
-            font-weight: 700;
+            font-size: 1.85rem;
+            font-weight: 800;
             color: #0f172a;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.03em;
+            transition: opacity 0.15s ease;
         }
         .mmhc-plan-price-duration {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #64748b;
             font-weight: 500;
+        }
+        .mmhc-plan-members {
+            font-size: 0.78rem;
+            color: #0f766e;
+            font-weight: 600;
+            margin-bottom: 1.1rem;
+            padding-bottom: 1.1rem;
+            border-bottom: 1px solid #e2e8f0;
+            min-height: 1.2rem;
         }
         .mmhc-plan-features {
             list-style: none;
             padding: 0;
-            margin: 0 0 1.75rem;
+            margin: 0 0 1.5rem;
             text-align: left;
             flex: 1;
         }
         .mmhc-plan-features li {
             display: flex;
             align-items: flex-start;
-            gap: 0.65rem;
-            margin-bottom: 0.7rem;
-            font-size: 0.9rem;
+            gap: 0.6rem;
+            margin-bottom: 0.65rem;
+            font-size: 0.84rem;
             color: #334155;
             line-height: 1.4;
         }
         .mmhc-plan-features i {
             color: #0f766e;
             margin-top: 0.2rem;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             opacity: 0.9;
         }
         .mmhc-plan-cta {
@@ -195,9 +241,9 @@
             background: #0f766e;
             color: #ffffff !important;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             padding: 0.8rem 1.25rem;
-            border-radius: 0.75rem;
+            border-radius: 0.8rem;
             transition: background 0.2s ease, box-shadow 0.2s ease;
             text-decoration: none;
         }
@@ -211,6 +257,30 @@
         }
         .mmhc-plan-card.is-popular .mmhc-plan-cta:hover {
             background: #0f766e;
+        }
+        .mmhc-plans-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 2.75rem 0 1.75rem;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .mmhc-plans-divider::before,
+        .mmhc-plans-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
+        }
+        .mmhc-plan-card.is-student {
+            max-width: 22rem;
+            margin-left: auto;
+            margin-right: auto;
+            border-color: #e2e8f0;
         }
 
         /* Achievements & Media: images from Admin → Achievements & Media only; large section */
@@ -948,20 +1018,39 @@
     <!-- PLANS SECTION -->
     <section id="plans" class="py-20 mmhc-plans-section">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Section Header -->
-            <div class="text-center mb-16">
+            <div class="text-center mb-14">
                 <h2 class="text-4xl md:text-5xl font-bold text-slate-800 mb-4">
                     Subscription <span class="gradient-text">Plans</span>
                 </h2>
                 <p class="text-lg md:text-xl text-slate-500 max-w-3xl mx-auto leading-relaxed">
-                    Patient care packages and student membership — clear coverage, professional nursing, and 24×7 support.
+                    Choose how you pay, then pick household size — Individual, 2 Parents, or 4 Family. Same care visits; clear pricing.
                 </p>
             </div>
 
-            <!-- Plans Grid: 3 care packages + Student Journey -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
+            <!-- Patient care packages -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 lg:gap-8 items-stretch">
                 @foreach(($carePackages ?? []) as $pack)
-                    <div class="mmhc-plan-card {{ !empty($pack['popular']) ? 'is-popular' : '' }}">
+                    @php
+                        $registerBase = route('auth.register');
+                        $tiersForJs = collect($pack['tiers'])->values()->all();
+                        $defaultTier = $pack['tiers'][0] ?? null;
+                    @endphp
+                    <div
+                        class="mmhc-plan-card {{ !empty($pack['popular']) ? 'is-popular' : '' }}"
+                        x-data="{
+                            active: 0,
+                            tiers: {{ \Illuminate\Support\Js::from($tiersForJs) }},
+                            duration: {{ \Illuminate\Support\Js::from($pack['duration']) }},
+                            durationNote: {{ \Illuminate\Support\Js::from($pack['duration_note'] ?? '') }},
+                            package: {{ \Illuminate\Support\Js::from($pack['slug']) }},
+                            registerBase: {{ \Illuminate\Support\Js::from($registerBase) }},
+                            get current() { return this.tiers[this.active] || this.tiers[0]; },
+                            get ctaHref() {
+                                const tier = this.current?.id || 'individual';
+                                return this.registerBase + '?role=patient&package=' + this.package + '&tier=' + tier;
+                            }
+                        }"
+                    >
                         @if(!empty($pack['popular']))
                             <span class="mmhc-plan-badge">{{ $pack['popular_label'] ?? 'Most Popular' }}</span>
                         @endif
@@ -972,10 +1061,30 @@
                             </div>
                             <h3 class="mmhc-plan-title">{{ $pack['name'] }}</h3>
                             <p class="mmhc-plan-desc">{{ $pack['description'] }}</p>
+
+                            <div class="mmhc-plan-tier-switch" role="tablist" aria-label="Household size">
+                                @foreach($pack['tiers'] as $index => $tier)
+                                    <button
+                                        type="button"
+                                        class="mmhc-plan-tier-btn"
+                                        :class="{ 'is-active': active === {{ $index }} }"
+                                        @click="active = {{ $index }}"
+                                        role="tab"
+                                        :aria-selected="active === {{ $index }}"
+                                    >
+                                        <span class="tier-count">{{ $tier['short'] }}</span>
+                                        {{ $tier['label'] }}
+                                    </button>
+                                @endforeach
+                            </div>
+
                             <div class="mmhc-plan-price">
-                                <span class="mmhc-plan-price-amount">{{ $pack['price_label'] }}</span>
+                                <span class="mmhc-plan-price-amount" x-text="current.price_label">{{ $defaultTier['price_label'] ?? '' }}</span>
                                 <span class="mmhc-plan-price-duration">{{ $pack['duration'] }}</span>
                             </div>
+                            <p class="mmhc-plan-members" x-text="(current.members || '') + (durationNote ? ' · ' + durationNote : '')">
+                                {{ ($defaultTier['members'] ?? '') . (!empty($pack['duration_note']) ? ' · '.$pack['duration_note'] : '') }}
+                            </p>
 
                             <ul class="mmhc-plan-features">
                                 @foreach($pack['features'] as $feature)
@@ -986,60 +1095,65 @@
                                 @endforeach
                             </ul>
 
-                            <a href="{{ $pack['button_href'] ?? '#contact' }}" class="mmhc-plan-cta">
-                                {{ $pack['button_text'] ?? 'Talk to us' }}
-                            </a>
-                        </div>
-                    </div>
-                @endforeach
-
-                @foreach($healthcarePlans as $plan)
-                    <div class="mmhc-plan-card {{ $plan->is_popular ? 'is-popular' : '' }}">
-                        @if($plan->is_popular)
-                            <span class="mmhc-plan-badge">
-                                @if($plan->popular_label)
-                                    {{ $plan->popular_label }}
-                                @else
-                                    Most Popular
-                                @endif
-                            </span>
-                        @endif
-
-                        <div class="text-center flex flex-col flex-1">
-                            <div class="mmhc-plan-icon">
-                                <i class="fas {{ $plan->icon_class ?? 'fa-graduation-cap' }}"></i>
-                            </div>
-                            <h3 class="mmhc-plan-title">{{ $plan->name }}</h3>
-                            <p class="mmhc-plan-desc">{{ $plan->description }}</p>
-                            <div class="mmhc-plan-price">
-                                <span class="mmhc-plan-price-amount">{{ $plan->formatted_price }}</span>
-                                <span class="mmhc-plan-price-duration">{{ $plan->duration_text }}</span>
-                            </div>
-
-                            <ul class="mmhc-plan-features">
-                                @foreach($plan->features as $feature)
-                                    <li>
-                                        <i class="fas fa-check" aria-hidden="true"></i>
-                                        <span>{{ $feature }}</span>
-                                    </li>
-                                @endforeach
-                            </ul>
-
-                            @php
-                                $planCtaBase = $plan->button_link ?: route('auth.register');
-                                $planRole = $plan->isStudentPlan() ? 'student' : 'patient';
-                                $planSlug = $plan->slug ?? strtolower(str_replace(' ', '_', $plan->name));
-                                $planCtaHref = $planCtaBase.(str_contains($planCtaBase, '?') ? '&' : '?').'role='.$planRole.'&plan='.$planSlug;
-                            @endphp
-                            <a href="{{ $planCtaHref }}" class="mmhc-plan-cta">
-                                {{ $plan->button_text ?? 'Subscribe now' }}
+                            <a
+                                href="{{ $registerBase }}?role=patient&package={{ $pack['slug'] }}&tier={{ $defaultTier['id'] ?? 'individual' }}"
+                                :href="ctaHref"
+                                class="mmhc-plan-cta"
+                            >
+                                {{ $pack['button_text'] ?? 'Get Started' }}
                             </a>
                         </div>
                     </div>
                 @endforeach
             </div>
 
-            <!-- Bottom CTA -->
+            @if($healthcarePlans->isNotEmpty())
+                <div class="mmhc-plans-divider">For students</div>
+                <div class="grid grid-cols-1 gap-8">
+                    @foreach($healthcarePlans as $plan)
+                        <div class="mmhc-plan-card is-student {{ $plan->is_popular ? 'is-popular' : '' }}">
+                            @if($plan->is_popular)
+                                <span class="mmhc-plan-badge">
+                                    {{ $plan->popular_label ?: 'Most Popular' }}
+                                </span>
+                            @endif
+
+                            <div class="text-center flex flex-col flex-1">
+                                <div class="mmhc-plan-icon">
+                                    <i class="fas {{ $plan->icon_class ?? 'fa-graduation-cap' }}"></i>
+                                </div>
+                                <h3 class="mmhc-plan-title">{{ $plan->name }}</h3>
+                                <p class="mmhc-plan-desc">{{ $plan->description }}</p>
+                                <div class="mmhc-plan-price">
+                                    <span class="mmhc-plan-price-amount">{{ $plan->formatted_price }}</span>
+                                    <span class="mmhc-plan-price-duration">{{ $plan->duration_text }}</span>
+                                </div>
+                                <p class="mmhc-plan-members">Students only · one-time membership</p>
+
+                                <ul class="mmhc-plan-features">
+                                    @foreach($plan->features as $feature)
+                                        <li>
+                                            <i class="fas fa-check" aria-hidden="true"></i>
+                                            <span>{{ $feature }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+
+                                @php
+                                    $planCtaBase = $plan->button_link ?: route('auth.register');
+                                    $planRole = $plan->isStudentPlan() ? 'student' : 'patient';
+                                    $planSlug = $plan->slug ?? strtolower(str_replace(' ', '_', $plan->name));
+                                    $planCtaHref = $planCtaBase.(str_contains($planCtaBase, '?') ? '&' : '?').'role='.$planRole.'&plan='.$planSlug;
+                                @endphp
+                                <a href="{{ $planCtaHref }}" class="mmhc-plan-cta">
+                                    {{ $plan->button_text ?? 'Subscribe now' }}
+                                </a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
             <div class="text-center mt-12">
                 <p class="text-slate-500 mb-3">Not sure which plan is right for you?</p>
                 <a href="#contact" class="text-teal-700 hover:text-teal-800 font-semibold">
