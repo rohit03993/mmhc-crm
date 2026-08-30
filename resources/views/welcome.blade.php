@@ -316,6 +316,114 @@
             border-color: #e2e8f0;
         }
 
+        /* Mobile: one plan at a time, swipe sideways */
+        .mmhc-plan-slider {
+            position: relative;
+        }
+        .mmhc-plan-slider-track {
+            display: flex;
+            gap: 0.85rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            scroll-padding-inline: 1rem;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            overscroll-behavior-x: contain;
+            padding: 0.85rem 0 0.5rem;
+            margin: 0 -1rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        .mmhc-plan-slider-track::-webkit-scrollbar {
+            display: none;
+        }
+        .mmhc-plan-slide {
+            flex: 0 0 86%;
+            width: 86%;
+            max-width: 22.5rem;
+            scroll-snap-align: center;
+            scroll-snap-stop: always;
+            display: flex;
+        }
+        .mmhc-plan-slide .mmhc-plan-card {
+            width: 100%;
+        }
+        .mmhc-plan-slider-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .mmhc-plan-slider-btn {
+            width: 2.4rem;
+            height: 2.4rem;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #0f766e;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+        }
+        .mmhc-plan-slider-btn:disabled {
+            opacity: 0.35;
+            cursor: default;
+        }
+        .mmhc-plan-slider-dots {
+            display: flex;
+            gap: 0.4rem;
+            align-items: center;
+        }
+        .mmhc-plan-slider-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 999px;
+            border: 0;
+            padding: 0;
+            background: #cbd5e1;
+            cursor: pointer;
+        }
+        .mmhc-plan-slider-dot.is-active {
+            width: 1.35rem;
+            background: #0f766e;
+        }
+        .mmhc-plan-slider-hint {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 0.45rem;
+            font-weight: 500;
+        }
+        @media (min-width: 768px) {
+            .mmhc-plan-slider-track {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                overflow: visible;
+                scroll-snap-type: none;
+                margin: 0;
+                padding: 0.85rem 0 0;
+                gap: 1.75rem;
+            }
+            .mmhc-plan-slide {
+                flex: none;
+                width: auto;
+                max-width: none;
+            }
+            .mmhc-plan-slider-nav,
+            .mmhc-plan-slider-hint {
+                display: none;
+            }
+        }
+        @media (min-width: 1024px) {
+            .mmhc-plan-slider-track {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
         /* Achievements & Media: images from Admin → Achievements & Media only; large section */
         .achievement-media-section {
             margin-bottom: 4rem;
@@ -1060,14 +1168,47 @@
                 </p>
             </div>
 
-            <!-- Patient care packages -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 lg:gap-8 items-stretch">
+            <!-- Patient care packages: swipe on mobile, grid on desktop -->
+            @php $carePackageCount = count($carePackages ?? []); @endphp
+            <div
+                class="mmhc-plan-slider"
+                x-data="{
+                    slide: 0,
+                    total: {{ $carePackageCount }},
+                    go(index) {
+                        this.slide = Math.max(0, Math.min(this.total - 1, index));
+                        const track = this.$refs.track;
+                        if (!track) return;
+                        const item = track.children[this.slide];
+                        if (item) item.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    },
+                    syncFromScroll() {
+                        const track = this.$refs.track;
+                        if (!track || window.innerWidth >= 768) return;
+                        const center = track.scrollLeft + track.clientWidth / 2;
+                        let best = 0;
+                        let bestDist = Infinity;
+                        Array.from(track.children).forEach((el, i) => {
+                            const mid = el.offsetLeft + el.offsetWidth / 2;
+                            const dist = Math.abs(mid - center);
+                            if (dist < bestDist) { bestDist = dist; best = i; }
+                        });
+                        this.slide = best;
+                    }
+                }"
+            >
+                <div
+                    class="mmhc-plan-slider-track"
+                    x-ref="track"
+                    @scroll.passive.debounce.50ms="syncFromScroll()"
+                >
                 @foreach(($carePackages ?? []) as $pack)
                     @php
                         $registerBase = route('auth.register');
                         $tiersForJs = collect($pack['tiers'])->values()->all();
                         $defaultTier = $pack['tiers'][0] ?? null;
                     @endphp
+                    <div class="mmhc-plan-slide">
                     <div
                         class="mmhc-plan-card {{ !empty($pack['popular']) ? 'is-popular' : '' }}"
                         x-data="{
@@ -1147,7 +1288,32 @@
                             </a>
                         </div>
                     </div>
+                    </div>
                 @endforeach
+                </div>
+
+                @if($carePackageCount > 1)
+                    <div class="mmhc-plan-slider-nav" aria-label="Plan slides">
+                        <button type="button" class="mmhc-plan-slider-btn" @click="go(slide - 1)" :disabled="slide === 0" aria-label="Previous plan">
+                            <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                        </button>
+                        <div class="mmhc-plan-slider-dots">
+                            @for($i = 0; $i < $carePackageCount; $i++)
+                                <button
+                                    type="button"
+                                    class="mmhc-plan-slider-dot"
+                                    :class="{ 'is-active': slide === {{ $i }} }"
+                                    @click="go({{ $i }})"
+                                    aria-label="Show plan {{ $i + 1 }}"
+                                ></button>
+                            @endfor
+                        </div>
+                        <button type="button" class="mmhc-plan-slider-btn" @click="go(slide + 1)" :disabled="slide === total - 1" aria-label="Next plan">
+                            <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <p class="mmhc-plan-slider-hint">Swipe for the next package</p>
+                @endif
             </div>
 
             @if($healthcarePlans->isNotEmpty())
