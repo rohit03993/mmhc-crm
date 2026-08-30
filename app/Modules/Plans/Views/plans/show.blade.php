@@ -62,16 +62,18 @@
                     </ul>
                 </div>
 
-                <!-- Payment Options -->
+                <!-- Payment Options (checkout step — no monthly) -->
                 <div class="plan-section">
                     <h5 class="section-title">
-                        <i class="fas fa-credit-card text-primary me-2"></i>Choose Payment Option
+                        <i class="fas fa-credit-card text-primary me-2"></i>Choose how you pay
                     </h5>
+                    <p class="text-muted small mb-3">Select 6 months, 1 year, or 3 years. Member name &amp; age collection will be added before this step next.</p>
                     
                     @auth
                         @if(auth()->user()->isPatient())
                             @php
                                 $activeSubscription = auth()->user()->activeSubscription;
+                                $checkoutOptions = $plan->checkoutPaymentOptions();
                             @endphp
                             @if($activeSubscription)
                             <div class="alert alert-info mb-3">
@@ -103,31 +105,36 @@
                                 @endif
                                 
                                 <div class="payment-options-grid">
-                                    @if(isset($plan->payment_options))
-                                        @foreach($plan->payment_options as $frequency => $option)
+                                    @foreach($checkoutOptions as $frequency => $option)
                                         <label class="payment-option-card">
                                             <input type="radio" name="payment_frequency" value="{{ $frequency }}" 
-                                                   {{ $loop->first ? 'checked' : '' }} required>
+                                                   {{ $frequency === 'annually' ? 'checked' : '' }} required>
                                             <div class="payment-option-content">
                                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                                     <div>
-                                                        <strong class="option-label">{{ $option['label'] ?? ucfirst(str_replace('_', ' ', $frequency)) }}</strong>
+                                                        <strong class="option-label">{{ $option['label'] }}</strong>
                                                         <p class="option-description small mb-0">{{ $option['description'] ?? '' }}</p>
                                                     </div>
                                                     <span class="option-price">₹{{ number_format($option['price'] ?? 0, 0) }}</span>
                                                 </div>
-                                                @if(isset($option['payable_years']) && isset($option['care_benefits_years']))
+                                                @if(($option['care_benefits_years'] ?? 0) > 0)
                                                 <div class="option-benefits">
                                                     <small class="text-muted">
                                                         <i class="fas fa-calendar me-1"></i>
-                                                        {{ $option['payable_years'] }} years payable + {{ $option['care_benefits_years'] }} years extra = {{ $option['payable_years'] + $option['care_benefits_years'] }} years total
+                                                        {{ $option['payable_years'] }} years payable + {{ $option['care_benefits_years'] }} years extra = {{ ($option['payable_years'] ?? 0) + ($option['care_benefits_years'] ?? 0) }} years total
+                                                    </small>
+                                                </div>
+                                                @elseif($frequency === 'half_yearly')
+                                                <div class="option-benefits">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-calendar me-1"></i>
+                                                        6 months coverage · no extra years
                                                     </small>
                                                 </div>
                                                 @endif
                                             </div>
                                         </label>
-                                        @endforeach
-                                    @endif
+                                    @endforeach
                                 </div>
 
                                 <div class="form-group mt-3">
@@ -152,31 +159,36 @@
                                 @endif
                                 
                                 <div class="payment-options-grid">
-                                    @if(isset($plan->payment_options))
-                                        @foreach($plan->payment_options as $frequency => $option)
+                                    @foreach($checkoutOptions as $frequency => $option)
                                         <label class="payment-option-card">
                                             <input type="radio" name="payment_frequency" value="{{ $frequency }}" 
-                                                   {{ $loop->first ? 'checked' : '' }} required>
+                                                   {{ $frequency === 'annually' ? 'checked' : '' }} required>
                                             <div class="payment-option-content">
                                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                                     <div>
-                                                        <strong class="option-label">{{ $option['label'] ?? ucfirst(str_replace('_', ' ', $frequency)) }}</strong>
+                                                        <strong class="option-label">{{ $option['label'] }}</strong>
                                                         <p class="option-description small mb-0">{{ $option['description'] ?? '' }}</p>
                                                     </div>
                                                     <span class="option-price">₹{{ number_format($option['price'] ?? 0, 0) }}</span>
                                                 </div>
-                                                @if(isset($option['payable_years']) && isset($option['care_benefits_years']))
+                                                @if(($option['care_benefits_years'] ?? 0) > 0)
                                                 <div class="option-benefits">
                                                     <small class="text-muted">
                                                         <i class="fas fa-calendar me-1"></i>
-                                                        {{ $option['payable_years'] }} years payable + {{ $option['care_benefits_years'] }} years extra = {{ $option['payable_years'] + $option['care_benefits_years'] }} years total
+                                                        {{ $option['payable_years'] }} years payable + {{ $option['care_benefits_years'] }} years extra = {{ ($option['payable_years'] ?? 0) + ($option['care_benefits_years'] ?? 0) }} years total
+                                                    </small>
+                                                </div>
+                                                @elseif($frequency === 'half_yearly')
+                                                <div class="option-benefits">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-calendar me-1"></i>
+                                                        6 months coverage · no extra years
                                                     </small>
                                                 </div>
                                                 @endif
                                             </div>
                                         </label>
-                                        @endforeach
-                                    @endif
+                                    @endforeach
                                 </div>
 
                                 <div class="form-group mt-3">
@@ -189,7 +201,7 @@
                                 </div>
 
                                 <button type="submit" class="btn btn-primary btn-lg w-100 mt-4">
-                                    <i class="fas fa-credit-card me-2"></i>Subscribe Now
+                                    <i class="fas fa-credit-card me-2"></i>Continue to pay
                                 </button>
                             </form>
                             @endif

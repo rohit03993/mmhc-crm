@@ -117,7 +117,7 @@
                                 @endif
                                 <div class="plan-upgrade-body flex-grow-1">
                                     <div class="row g-2 g-md-0">
-                                        <div class="col-12 col-md-6 plan-upgrade-col-benefits">
+                                        <div class="col-12 plan-upgrade-col-benefits">
                                             @if($plan->description)
                                             <p class="small text-muted mb-2 mb-md-3">{{ $plan->description }}</p>
                                             @endif
@@ -131,28 +131,10 @@
                                                 @endforeach
                                             </ul>
                                             @endif
-                                        </div>
-                                        <div class="col-12 col-md-6 plan-upgrade-col-payment">
-                                            @if(isset($plan->payment_options) && is_array($plan->payment_options) && count($plan->payment_options))
-                                            <p class="small fw-semibold text-secondary mb-2">
-                                                <i class="fas fa-wallet me-1 text-primary"></i>Payment options
+                                            <p class="small text-muted mt-2 mb-0">
+                                                <i class="fas fa-wallet me-1 text-primary"></i>
+                                                Payment (6 months / 1 year / 3 years) is chosen on the next step.
                                             </p>
-                                            <div class="plan-upgrade-payment-list">
-                                                @foreach($plan->payment_options as $frequency => $option)
-                                                <div class="plan-upgrade-payment-row">
-                                                    <div class="plan-upgrade-payment-label">
-                                                        <strong>{{ $option['label'] ?? ucfirst(str_replace('_', ' ', (string) $frequency)) }}</strong>
-                                                        @if(! empty($option['description']))
-                                                        <small class="d-block text-muted">{{ $option['description'] }}</small>
-                                                        @endif
-                                                    </div>
-                                                    <div class="plan-upgrade-payment-amount">
-                                                        ₹{{ number_format((float) ($option['price'] ?? 0), 0) }}
-                                                    </div>
-                                                </div>
-                                                @endforeach
-                                            </div>
-                                            @endif
                                         </div>
                                     </div>
                                 </div>

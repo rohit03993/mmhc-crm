@@ -22,13 +22,13 @@
 <div class="container-fluid px-3 py-4">
     <div class="hc-m-hero d-md-none mb-3">
         <p class="hc-m-hero__label">Healthcare plans</p>
-        <h2 class="hc-m-hero__title">Choose your plan</h2>
-        <p class="hc-m-hero__lede">10 years of home care coverage. Services are free for subscribed patients.</p>
+        <h2 class="hc-m-hero__title">Choose your package</h2>
+        <p class="hc-m-hero__lede">Pick who is covered (1–4 members). You’ll add names and choose payment next.</p>
     </div>
     <!-- Desktop Header -->
     <div class="d-none d-md-block mb-4">
-        <h4 class="page-title">Subscription Plans</h4>
-        <p class="text-muted">Choose a plan that suits your family's healthcare needs</p>
+        <h4 class="page-title">Healthcare Packages</h4>
+        <p class="text-muted">Choose who is covered first. Member details and payment term come on the next step.</p>
                 </div>
 
     <!-- Info Banner -->
@@ -65,7 +65,7 @@
         <div class="d-flex align-items-start">
             <i class="fas fa-info-circle me-2 mt-1"></i>
             <div>
-                <strong>Note:</strong> All plans include 10 years of total care coverage. Services are FREE for subscribed patients.
+                <strong>How it works:</strong> Select a household package → add member name &amp; age → then choose 6 months, 1 year, or 3 years to pay.
             </div>
         </div>
     </div>
@@ -94,7 +94,7 @@
                     </div>
                     
                 <div class="plan-features">
-                    <h6 class="features-title">Features:</h6>
+                    <h6 class="features-title">What’s included</h6>
                     <ul class="features-list">
                             @foreach($plan->features as $feature)
                         <li>
@@ -102,26 +102,20 @@
                             <span>{{ $feature }}</span>
                             </li>
                             @endforeach
+                        <li>
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <span>Add member name &amp; age after you start</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <span>Then pick payment: 6 months, 1 year, or 3 years</span>
+                        </li>
                         </ul>
                     </div>
-                    
-                <div class="plan-payment-options">
-                    <h6 class="payment-title">Payment Options:</h6>
-                    <div class="payment-options-list">
-                        @if(isset($plan->payment_options))
-                            @foreach($plan->payment_options as $frequency => $option)
-                            <div class="payment-option-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>{{ $option['label'] ?? ucfirst(str_replace('_', ' ', $frequency)) }}</strong>
-                                        <small class="d-block text-muted">{{ $option['description'] ?? '' }}</small>
-                                    </div>
-                                    <span class="payment-amount">₹{{ number_format($option['price'] ?? 0, 0) }}</span>
-                                </div>
-                            </div>
-                            @endforeach
-                        @endif
-                    </div>
+
+                <div class="plan-next-hint">
+                    <i class="fas fa-arrow-right me-2"></i>
+                    Payment term is chosen on the next step — not on this card.
                 </div>
 
                 <div class="plan-actions">
@@ -133,7 +127,7 @@
                             </button>
                             @else
                             <a href="{{ route('plans.show', $plan) }}" class="btn btn-primary w-100">
-                                <i class="fas fa-arrow-right me-2"></i>Subscribe Now
+                                <i class="fas fa-arrow-right me-2"></i>Continue
                             </a>
                             @endif
                         @else
@@ -143,7 +137,7 @@
                         @endif
                     @else
                         <a href="{{ route('auth.login') }}" class="btn btn-primary w-100">
-                            <i class="fas fa-sign-in-alt me-2"></i>Login to Subscribe
+                            <i class="fas fa-sign-in-alt me-2"></i>Login to Continue
                         </a>
                         @endauth
                 </div>
@@ -268,46 +262,16 @@
     flex-shrink: 0;
 }
 
-.plan-payment-options {
-    background: #f8f9fa;
+.plan-next-hint {
+    background: #f0fdfa;
+    border: 1px solid #ccfbf1;
     border-radius: 12px;
-    padding: 16px;
+    padding: 12px 14px;
     margin-bottom: 20px;
-}
-
-.payment-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 12px;
-}
-
-.payment-options-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.payment-option-item {
-    background: white;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
-}
-
-.payment-option-item strong {
     font-size: 13px;
-    color: #212529;
-}
-
-.payment-option-item small {
-    font-size: 11px;
-}
-
-.payment-amount {
-    font-size: 16px;
-    font-weight: 700;
-    color: #007bff;
+    color: #0f766e;
+    font-weight: 500;
+    line-height: 1.4;
 }
 
 .plan-actions {

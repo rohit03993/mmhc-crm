@@ -25,29 +25,24 @@ class SubscriptionPlansSeeder extends Seeder
                 'currency' => 'INR',
                 'duration_days' => 30, // Monthly
                 'payment_options' => [
-                    'monthly' => [
-                        'price' => 999.00,
-                        'label' => 'Monthly',
-                        'description' => 'Pay monthly'
-                    ],
                     'half_yearly' => [
-                        'price' => 5994.00, // 999 * 6 months
-                        'label' => 'Half Yearly',
-                        'description' => '7-year payable, 3 years extra care benefits',
-                        'payable_years' => 7,
-                        'care_benefits_years' => 3
+                        'price' => 5994.00, // 999 * 6
+                        'label' => '6 Months',
+                        'description' => 'Pay 6 months. Coverage 6 months. No extra years.',
+                        'payable_years' => 0.5,
+                        'care_benefits_years' => 0
                     ],
                     'annually' => [
-                        'price' => 9990.00, // 999 * 10 months (discounted)
-                        'label' => 'Annually',
-                        'description' => '5-year payable, 5 years extra care benefits',
+                        'price' => 11988.00, // 999 * 12
+                        'label' => '1 Year',
+                        'description' => 'Pay 12 months. Five consecutive years unlock 10 years of service.',
                         'payable_years' => 5,
                         'care_benefits_years' => 5
                     ],
                     'full_payment' => [
-                        'price' => 29970.00, // 999 * 30 months (3 years)
-                        'label' => 'Full Payment',
-                        'description' => '3-year payment, 7 years extra care benefits',
+                        'price' => 35964.00, // 999 * 36
+                        'label' => '3 Years',
+                        'description' => 'Pay 36 months once. Get 10 years of service (7 extra years).',
                         'payable_years' => 3,
                         'care_benefits_years' => 7
                     ]
@@ -73,29 +68,24 @@ class SubscriptionPlansSeeder extends Seeder
                 'currency' => 'INR',
                 'duration_days' => 30,
                 'payment_options' => [
-                    'monthly' => [
-                        'price' => 1699.00,
-                        'label' => 'Monthly',
-                        'description' => 'Pay monthly'
-                    ],
                     'half_yearly' => [
-                        'price' => 10194.00, // 1699 * 6 months
-                        'label' => 'Half Yearly',
-                        'description' => '7-year payable, 3 years extra care benefits',
-                        'payable_years' => 7,
-                        'care_benefits_years' => 3
+                        'price' => 10194.00, // 1699 * 6
+                        'label' => '6 Months',
+                        'description' => 'Pay 6 months. Coverage 6 months. No extra years.',
+                        'payable_years' => 0.5,
+                        'care_benefits_years' => 0
                     ],
                     'annually' => [
-                        'price' => 16990.00, // 1699 * 10 months (discounted)
-                        'label' => 'Annually',
-                        'description' => '5-year payable, 5 years extra care benefits',
+                        'price' => 20388.00, // 1699 * 12
+                        'label' => '1 Year',
+                        'description' => 'Pay 12 months. Five consecutive years unlock 10 years of service.',
                         'payable_years' => 5,
                         'care_benefits_years' => 5
                     ],
                     'full_payment' => [
-                        'price' => 50970.00, // 1699 * 30 months (3 years)
-                        'label' => 'Full Payment',
-                        'description' => '3-year payment, 7 years extra care benefits',
+                        'price' => 61164.00, // 1699 * 36
+                        'label' => '3 Years',
+                        'description' => 'Pay 36 months once. Get 10 years of service (7 extra years).',
                         'payable_years' => 3,
                         'care_benefits_years' => 7
                     ]
@@ -121,29 +111,24 @@ class SubscriptionPlansSeeder extends Seeder
                 'currency' => 'INR',
                 'duration_days' => 30,
                 'payment_options' => [
-                    'monthly' => [
-                        'price' => 2199.00,
-                        'label' => 'Monthly',
-                        'description' => 'Pay monthly'
-                    ],
                     'half_yearly' => [
-                        'price' => 13194.00, // 2199 * 6 months
-                        'label' => 'Half Yearly',
-                        'description' => '7-year payable, 3 years extra care benefits',
-                        'payable_years' => 7,
-                        'care_benefits_years' => 3
+                        'price' => 13194.00, // 2199 * 6
+                        'label' => '6 Months',
+                        'description' => 'Pay 6 months. Coverage 6 months. No extra years.',
+                        'payable_years' => 0.5,
+                        'care_benefits_years' => 0
                     ],
                     'annually' => [
-                        'price' => 21990.00, // 2199 * 10 months (discounted)
-                        'label' => 'Annually',
-                        'description' => '5-year payable, 5 years extra care benefits',
+                        'price' => 26388.00, // 2199 * 12
+                        'label' => '1 Year',
+                        'description' => 'Pay 12 months. Five consecutive years unlock 10 years of service.',
                         'payable_years' => 5,
                         'care_benefits_years' => 5
                     ],
                     'full_payment' => [
-                        'price' => 65970.00, // 2199 * 30 months (3 years)
-                        'label' => 'Full Payment',
-                        'description' => '3-year payment, 7 years extra care benefits',
+                        'price' => 79164.00, // 2199 * 36
+                        'label' => '3 Years',
+                        'description' => 'Pay 36 months once. Get 10 years of service (7 extra years).',
                         'payable_years' => 3,
                         'care_benefits_years' => 7
                     ]
@@ -169,29 +154,24 @@ class SubscriptionPlansSeeder extends Seeder
                 'currency' => 'INR',
                 'duration_days' => 30,
                 'payment_options' => [
-                    'monthly' => [
-                        'price' => 2999.00,
-                        'label' => 'Monthly',
-                        'description' => 'Pay monthly'
-                    ],
                     'half_yearly' => [
-                        'price' => 17994.00, // 2999 * 6 months
-                        'label' => 'Half Yearly',
-                        'description' => '7-year payable, 3 years extra care benefits',
-                        'payable_years' => 7,
-                        'care_benefits_years' => 3
+                        'price' => 17994.00, // 2999 * 6
+                        'label' => '6 Months',
+                        'description' => 'Pay 6 months. Coverage 6 months. No extra years.',
+                        'payable_years' => 0.5,
+                        'care_benefits_years' => 0
                     ],
                     'annually' => [
-                        'price' => 29990.00, // 2999 * 10 months (discounted)
-                        'label' => 'Annually',
-                        'description' => '5-year payable, 5 years extra care benefits',
+                        'price' => 35988.00, // 2999 * 12
+                        'label' => '1 Year',
+                        'description' => 'Pay 12 months. Five consecutive years unlock 10 years of service.',
                         'payable_years' => 5,
                         'care_benefits_years' => 5
                     ],
                     'full_payment' => [
-                        'price' => 89970.00, // 2999 * 30 months (3 years)
-                        'label' => 'Full Payment',
-                        'description' => '3-year payment, 7 years extra care benefits',
+                        'price' => 107964.00, // 2999 * 36
+                        'label' => '3 Years',
+                        'description' => 'Pay 36 months once. Get 10 years of service (7 extra years).',
                         'payable_years' => 3,
                         'care_benefits_years' => 7
                     ]

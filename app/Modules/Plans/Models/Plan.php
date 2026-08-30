@@ -97,6 +97,57 @@ class Plan extends Model
     }
 
     /**
+     * Payment terms shown at checkout: 6 months, 1 year, 3 years (no monthly).
+     */
+    public function checkoutPaymentOptions(): array
+    {
+        $stored = is_array($this->payment_options) ? $this->payment_options : [];
+        $monthly = (float) ($this->monthly_price ?? $this->price ?? 0);
+
+        $terms = [
+            'half_yearly' => [
+                'label' => '6 Months',
+                'description' => 'Pay 6 months. Coverage 6 months. No extra years.',
+                'months' => 6,
+                'payable_years' => 0.5,
+                'care_benefits_years' => 0,
+            ],
+            'annually' => [
+                'label' => '1 Year',
+                'description' => 'Pay 12 months. Five consecutive years unlock 10 years of service.',
+                'months' => 12,
+                'payable_years' => 5,
+                'care_benefits_years' => 5,
+            ],
+            'full_payment' => [
+                'label' => '3 Years',
+                'description' => 'Pay 36 months once. Get 10 years of service (7 extra years).',
+                'months' => 36,
+                'payable_years' => 3,
+                'care_benefits_years' => 7,
+            ],
+        ];
+
+        $out = [];
+        foreach ($terms as $frequency => $meta) {
+            $existing = $stored[$frequency] ?? [];
+            $price = isset($existing['price'])
+                ? (float) $existing['price']
+                : round($monthly * $meta['months'], 2);
+
+            $out[$frequency] = array_merge($existing, [
+                'label' => $meta['label'],
+                'description' => $meta['description'],
+                'price' => $price,
+                'payable_years' => $existing['payable_years'] ?? $meta['payable_years'],
+                'care_benefits_years' => $existing['care_benefits_years'] ?? $meta['care_benefits_years'],
+            ]);
+        }
+
+        return $out;
+    }
+
+    /**
      * Get formatted price for display
      */
     public function getFormattedPriceAttribute()
