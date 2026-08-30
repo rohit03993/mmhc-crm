@@ -30,8 +30,6 @@
     .mmhc-surface-dark,
     .mmhc-inverse-surface,
     .invoice-brand-bar,
-    .stat-card-tonal,
-    .fin-payout-stat,
     .sub-stat,
     .financial-mrr-card,
     .total-summary,
@@ -58,9 +56,6 @@
     .mmhc-surface-dark,
     .mmhc-inverse-surface,
     .invoice-brand-bar,
-    .stat-card-tonal,
-    [class*="stat-mini-tonal"],
-    .fin-payout-stat,
     .sub-stat,
     .financial-mrr-card,
     .total-summary,
@@ -81,12 +76,28 @@
     color: inherit !important;
 }
 
-.main-content .stat-card-tonal .stat-value,
+/* Soft pastel KPI cards use dark text (set in dashboard CSS) — do not force white */
+.main-content .stat-card-tonal .stat-value {
+    color: #0f172a !important;
+}
 .main-content .stat-card-tonal .stat-label,
-.main-content .stat-card-tonal .stat-sublabel,
-.main-content [class*="stat-mini-tonal"] .stat-mini-value,
+.main-content .stat-card-tonal .stat-sublabel {
+    color: #475569 !important;
+}
+.main-content [class*="stat-mini-tonal"] .stat-mini-value {
+    color: #0f172a !important;
+}
 .main-content [class*="stat-mini-tonal"] .stat-mini-label,
-.main-content [class*="stat-mini-tonal"] .stat-mini-sublabel,
+.main-content [class*="stat-mini-tonal"] .stat-mini-sublabel {
+    color: #475569 !important;
+}
+.main-content .fin-payout-stat .fin-payout-stat-value {
+    color: #0f172a !important;
+}
+.main-content .fin-payout-stat .fin-payout-stat-label,
+.main-content .fin-payout-stat .fin-payout-stat-meta {
+    color: #475569 !important;
+}
 .main-content .sub-stat .sv,
 .main-content .sub-stat .sl,
 .main-content .financial-mrr-card .mrr-label,

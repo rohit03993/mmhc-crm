@@ -555,34 +555,36 @@
     margin-top: 0.2rem;
 }
 
-/* Colored stat cards: force light text on dark gradients */
+/* Soft light financial / academic tiles (readable, not neon) */
 .stat-card-tonal {
-    border: none;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
 }
-.stat-card-tonal .stat-value,
+.stat-card-tonal .stat-value {
+    color: #0f172a !important;
+}
 .stat-card-tonal .stat-label,
 .stat-card-tonal .stat-sublabel {
-    color: #ffffff !important;
+    color: #475569 !important;
 }
 .stat-card-tonal .stat-label {
-    opacity: 0.95;
+    opacity: 1;
 }
 .stat-card-tonal .stat-sublabel {
-    opacity: 0.88;
+    opacity: 0.9;
 }
 .stat-card-students {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    background: #eef2ff;
 }
 .stat-card-faculty {
-    background: linear-gradient(135deg, #0369a1 0%, #2563eb 100%);
+    background: #e0f2fe;
 }
 .stat-card-academics {
-    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    background: #f1f5f9;
 }
 .stat-icon-on-tonal {
-    background: rgba(255, 255, 255, 0.22) !important;
-    color: #fff !important;
+    background: rgba(15, 23, 42, 0.08) !important;
+    color: #334155 !important;
 }
 
 /* Modern Card */
@@ -640,37 +642,44 @@
     background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
 }
 
-/* Financial summary tiles: dark background → light text */
+/* Soft light financial summary tiles */
 .stat-mini-card.stat-mini-tonal {
-    border: none;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
 }
-.stat-mini-tonal .stat-mini-value,
+.stat-mini-tonal .stat-mini-value {
+    color: #0f172a !important;
+}
 .stat-mini-tonal .stat-mini-label,
 .stat-mini-tonal .stat-mini-sublabel {
-    color: #ffffff !important;
+    color: #475569 !important;
 }
 .stat-mini-tonal .stat-mini-label {
-    opacity: 0.92;
+    opacity: 1;
     font-weight: 600;
 }
 .stat-mini-tonal .stat-mini-sublabel {
-    opacity: 0.85;
+    opacity: 0.95;
 }
 .stat-mini-tonal-earn {
-    background: linear-gradient(135deg, #047857 0%, #059669 100%);
+    background: #ecfdf5;
+    border-color: #a7f3d0 !important;
 }
 .stat-mini-tonal-paid {
-    background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+    background: #fef2f2;
+    border-color: #fecaca !important;
 }
 .stat-mini-tonal-net-positive {
-    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+    background: #f0fdfa;
+    border-color: #99f6e4 !important;
 }
 .stat-mini-tonal-net-negative {
-    background: linear-gradient(135deg, #9f1239 0%, #e11d48 100%);
+    background: #fff1f2;
+    border-color: #fecdd3 !important;
 }
 .stat-mini-tonal-collect {
-    background: linear-gradient(135deg, #b45309 0%, #ea580c 100%);
+    background: #fff7ed;
+    border-color: #fed7aa !important;
 }
 .stat-mini-tonal-collect a {
     color: inherit;
@@ -717,32 +726,37 @@
     text-align: center;
     padding: 0.75rem 0.5rem;
     border-radius: 10px;
-    color: #fff;
+    color: #0f172a;
+    border: 1px solid rgba(148, 163, 184, 0.25);
 }
 .fin-payout-stat-label {
     font-size: 0.75rem;
     font-weight: 600;
-    opacity: 0.92;
+    color: #475569;
     margin-bottom: 0.25rem;
 }
 .fin-payout-stat-value {
     font-size: 1.05rem;
     font-weight: 700;
     line-height: 1.2;
+    color: #0f172a;
 }
 .fin-payout-stat-meta {
     font-size: 0.7rem;
-    opacity: 0.88;
+    color: #64748b;
     margin-top: 0.2rem;
 }
 .fin-payout-stat-paid {
-    background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+    background: #fef2f2;
+    border-color: #fecaca;
 }
 .fin-payout-stat-pending {
-    background: linear-gradient(135deg, #92400e 0%, #d97706 100%);
+    background: #fff7ed;
+    border-color: #fed7aa;
 }
 .fin-payout-stat-liability {
-    background: linear-gradient(135deg, #334155 0%, #475569 100%);
+    background: #f8fafc;
+    border-color: #cbd5e1;
 }
 .fin-alert-data {
     background-color: #fffbeb;

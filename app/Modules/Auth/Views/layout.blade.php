@@ -52,11 +52,7 @@
     @auth
     <link rel="stylesheet" href="{{ asset('css/crm-desktop.css') }}?v=20260608b">
     <link rel="stylesheet" href="{{ asset('css/mmhc-member-nav.css') }}?v=20260714h">
-    <link rel="stylesheet" href="{{ asset('css/mmhc-theme-contrast.css') }}?v=20260603">
-    @if(auth()->user()->isAdmin())
-    <link rel="stylesheet" href="{{ asset('css/mmhc-admin-soft-dark.css') }}?v=20260830a">
-    <meta name="theme-color" content="#0f172a">
-    @endif
+    <link rel="stylesheet" href="{{ asset('css/mmhc-theme-contrast.css') }}?v=20260830b">
     @endauth
     <link rel="stylesheet" href="{{ asset('css/mmhc-public-mobile.css') }}">
     <link rel="stylesheet" href="{{ asset('css/capacitor-app.css') }}?v=20260724a">
@@ -269,7 +265,7 @@
         }
     </style>
 </head>
-<body class="@guest mmhc-auth-guest @endguest @if(auth()->check()) mmhc-crm-auth mmhc-app-shell {{ $mobileBodyClasses }} @endif @if(auth()->check() && auth()->user()->isAdmin()) mmhc-admin-soft-dark @endif @if(auth()->check() && request()->is('academics*')) mmhc-academics @endif @if(!empty($mmhcAdminMobileLayout)) mmhc-admin-mobile-layout @endif @if(auth()->check() && trim($__env->yieldContent('page-title', '')) !== '') mmhc-has-page-title @endif">
+<body class="@guest mmhc-auth-guest @endguest @if(auth()->check()) mmhc-crm-auth mmhc-app-shell {{ $mobileBodyClasses }} @endif @if(auth()->check() && request()->is('academics*')) mmhc-academics @endif @if(!empty($mmhcAdminMobileLayout)) mmhc-admin-mobile-layout @endif @if(auth()->check() && trim($__env->yieldContent('page-title', '')) !== '') mmhc-has-page-title @endif">
     @if(auth()->check())
         @include('auth::components.navbar')
         <div class="offcanvas offcanvas-start sidebar d-lg-none" tabindex="-1" id="mmhcAppSidebar" aria-labelledby="mmhcAppSidebarLabel" style="--bs-offcanvas-width: min(20rem, 92vw);">
