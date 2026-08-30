@@ -1183,7 +1183,7 @@
                     Subscription <span class="gradient-text">Plans</span>
                 </h2>
                 <p class="text-lg md:text-xl text-slate-500 max-w-3xl mx-auto leading-relaxed">
-                    Pick your household package — 1, 2, 3, or 4 members — then choose how you pay: 6 months, 1 year, or 3 years.
+                    Choose who is covered — 1, 2, 3, or 4 members. After you start, we’ll collect member details and then you pick how to pay (6 months, 1 year, or 3 years).
                 </p>
             </div>
 
@@ -1224,24 +1224,11 @@
                 @foreach(($carePackages ?? []) as $pack)
                     @php
                         $registerBase = route('auth.register');
-                        $termsForJs = collect($pack['terms'])->values()->all();
-                        $defaultTerm = $pack['terms'][1] ?? $pack['terms'][0] ?? null;
+                        $ctaHref = $registerBase.'?role=patient&tier='.$pack['slug'];
+                        $startingYearly = $pack['terms'][1]['price_label'] ?? null;
                     @endphp
                     <div class="mmhc-plan-slide">
-                    <div
-                        class="mmhc-plan-card {{ !empty($pack['popular']) ? 'is-popular' : '' }}"
-                        x-data="{
-                            active: 1,
-                            terms: {{ \Illuminate\Support\Js::from($termsForJs) }},
-                            household: {{ \Illuminate\Support\Js::from($pack['slug']) }},
-                            registerBase: {{ \Illuminate\Support\Js::from($registerBase) }},
-                            get current() { return this.terms[this.active] || this.terms[0]; },
-                            get ctaHref() {
-                                const pkg = this.current?.id || 'annual';
-                                return this.registerBase + '?role=patient&package=' + pkg + '&tier=' + this.household;
-                            }
-                        }"
-                    >
+                    <div class="mmhc-plan-card {{ !empty($pack['popular']) ? 'is-popular' : '' }}">
                         @if(!empty($pack['popular']))
                             <span class="mmhc-plan-badge">{{ $pack['popular_label'] ?? 'Most Popular' }}</span>
                         @endif
@@ -1251,9 +1238,9 @@
                                 <i class="fas {{ $pack['icon'] ?? 'fa-users' }}"></i>
                             </div>
                             <h3 class="mmhc-plan-title">{{ $pack['name'] }}</h3>
-                            <p class="mmhc-plan-monthly-ref">Base rate {{ $pack['monthly_label'] }}</p>
+                            <p class="mmhc-plan-monthly-ref">From {{ $pack['monthly_label'] }}</p>
 
-                            <div class="mmhc-plan-covers" aria-live="polite">
+                            <div class="mmhc-plan-covers">
                                 <i class="fas fa-users" aria-hidden="true"></i>
                                 <div>
                                     <span class="mmhc-plan-covers-title">{{ $pack['members'] }}</span>
@@ -1261,54 +1248,42 @@
                                 </div>
                             </div>
 
-                            <p class="text-left text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2 px-0.5">Payment term</p>
-                            <div class="mmhc-plan-tier-switch" role="tablist" aria-label="Payment term">
-                                @foreach($pack['terms'] as $index => $term)
-                                    <button
-                                        type="button"
-                                        class="mmhc-plan-tier-btn"
-                                        :class="{ 'is-active': active === {{ $index }} }"
-                                        @click="active = {{ $index }}"
-                                        role="tab"
-                                        :aria-selected="active === {{ $index }}"
-                                        aria-label="{{ $term['label'] }}"
-                                    >
-                                        <span class="tier-count">{{ $term['short'] }}</span>
-                                        {{ $term['label'] }}
-                                    </button>
-                                @endforeach
-                            </div>
-
                             <div class="mmhc-plan-price">
-                                <span class="mmhc-plan-price-amount" x-text="current.price_label">{{ $defaultTerm['price_label'] ?? '' }}</span>
-                                <span class="mmhc-plan-price-duration" x-text="current.duration || ''">{{ $defaultTerm['duration'] ?? '' }}</span>
+                                <span class="mmhc-plan-price-amount">{{ $pack['monthly_label'] ? str_replace('/month', '', $pack['monthly_label']) : '' }}</span>
+                                <span class="mmhc-plan-price-duration">/month</span>
                             </div>
-                            <p class="mmhc-plan-members" x-text="current.duration_note || ''">
-                                {{ $defaultTerm['duration_note'] ?? '' }}
-                            </p>
-                            <p class="mmhc-plan-term-summary" x-text="current.summary || ''">
-                                {{ $defaultTerm['summary'] ?? '' }}
+                            <p class="mmhc-plan-members">
+                                @if($startingYearly)
+                                    Example: {{ $startingYearly }}/year · or choose 6 months / 3 years at checkout
+                                @else
+                                    Choose 6 months, 1 year, or 3 years at checkout
+                                @endif
                             </p>
 
                             <ul class="mmhc-plan-features">
-                                @foreach($pack['terms'] as $termIndex => $term)
-                                    @foreach($term['features'] as $feature)
-                                        <li
-                                            x-show="active === {{ $termIndex }}"
-                                            @if($termIndex !== 1) style="display: none" @endif
-                                        >
-                                            <i class="fas fa-check" aria-hidden="true"></i>
-                                            <span>{{ $feature }}</span>
-                                        </li>
-                                    @endforeach
-                                @endforeach
+                                <li>
+                                    <i class="fas fa-check" aria-hidden="true"></i>
+                                    <span>{{ $pack['covers'] }}</span>
+                                </li>
+                                <li>
+                                    <i class="fas fa-check" aria-hidden="true"></i>
+                                    <span>Add member name &amp; age after you start</span>
+                                </li>
+                                <li>
+                                    <i class="fas fa-check" aria-hidden="true"></i>
+                                    <span>Then pick payment: 6 months, 1 year, or 3 years</span>
+                                </li>
+                                <li>
+                                    <i class="fas fa-check" aria-hidden="true"></i>
+                                    <span>Home &amp; regular care visits as per care schedule</span>
+                                </li>
+                                <li>
+                                    <i class="fas fa-check" aria-hidden="true"></i>
+                                    <span>Free booking opens from month 4</span>
+                                </li>
                             </ul>
 
-                            <a
-                                href="{{ $registerBase }}?role=patient&package={{ $defaultTerm['id'] ?? 'annual' }}&tier={{ $pack['slug'] }}"
-                                :href="ctaHref"
-                                class="mmhc-plan-cta"
-                            >
+                            <a href="{{ $ctaHref }}" class="mmhc-plan-cta">
                                 {{ $pack['button_text'] ?? 'Get Started' }}
                             </a>
                         </div>
