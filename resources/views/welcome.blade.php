@@ -33,7 +33,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
-    <link rel="stylesheet" href="{{ asset('css/mmhc-landing-modern.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/mmhc-landing-modern.css') }}?v=2">
     <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}">
     <link rel="stylesheet" href="{{ asset('css/mmhc-public-mobile.css') }}">
     <link rel="stylesheet" href="{{ asset('css/capacitor-app.css') }}">
@@ -212,42 +212,12 @@
             @php $achievementCount = $achievementMedia->count(); @endphp
             <div id="achievement-media" class="achievement-media-section scroll-mt-24">
                 <h3 class="mmhc-section__title text-center mb-8">Achievements &amp; Media Coverage</h3>
-                <div class="max-w-7xl mx-auto px-2 sm:px-4 achievement-media-inner"
-                     x-data="{
-                         active: 0,
-                         total: {{ $achievementCount }},
-                         timer: null,
-                         touchStartX: 0,
-                         next() { this.active = (this.active + 1) % this.total },
-                         prev() { this.active = (this.active - 1 + this.total) % this.total },
-                         go(index) { this.active = index },
-                         startAuto() {
-                             if (this.timer) clearInterval(this.timer);
-                             if (this.total < 2) return;
-                             this.timer = setInterval(() => this.next(), 5000);
-                         },
-                         stopAuto() {
-                             if (this.timer) clearInterval(this.timer);
-                             this.timer = null;
-                         },
-                         onTouchStart(e) { this.touchStartX = e.changedTouches[0].screenX; },
-                         onTouchEnd(e) {
-                             const diff = this.touchStartX - e.changedTouches[0].screenX;
-                             if (Math.abs(diff) < 50) return;
-                             diff > 0 ? this.next() : this.prev();
-                         }
-                     }"
-                     x-init="startAuto()"
-                     @mouseenter="stopAuto()"
-                     @mouseleave="startAuto()"
-                     @touchstart.passive="onTouchStart($event)"
-                     @touchend.passive="onTouchEnd($event)">
+                <div class="max-w-7xl mx-auto px-2 sm:px-4 achievement-media-inner" id="mmhcAchievementCarousel" data-autoplay="5000">
                     <div class="achievement-media-carousel" role="region" aria-roledescription="carousel" aria-label="Achievements and media coverage">
-                        <div class="achievement-media-carousel__viewport overflow-hidden">
-                            <div class="achievement-media-carousel__track flex h-full transition-transform duration-500 ease-in-out"
-                                 :style="`transform: translateX(-${active * 100}%)`">
+                        <div class="achievement-media-carousel__viewport">
+                            <div class="achievement-media-carousel__track" data-achievement-track>
                                 @foreach($achievementMedia as $index => $item)
-                                <div class="achievement-media-slide w-full flex-shrink-0" :aria-hidden="active !== {{ $index }}">
+                                <div class="achievement-media-slide" data-achievement-slide aria-hidden="{{ $index === 0 ? 'false' : 'true' }}">
                                     <div class="achievement-media-slide__inner">
                                         <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#f3f4f6" width="400" height="300"/><text fill="#9ca3af" font-family="sans-serif" font-size="18" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">No image</text></svg>') }}" alt="{{ $item->caption ?? 'Achievement' }}" class="achievement-media-main-img" loading="lazy">
                                         @if($item->caption)
@@ -261,10 +231,10 @@
                             </div>
                         </div>
                         @if($achievementCount > 1)
-                        <button type="button" @click="prev()" class="mmhc-achievement-nav mmhc-achievement-nav--prev" aria-label="Previous slide">
+                        <button type="button" data-achievement-prev class="mmhc-achievement-nav mmhc-achievement-nav--prev" aria-label="Previous slide">
                             <i class="fas fa-chevron-left" aria-hidden="true"></i>
                         </button>
-                        <button type="button" @click="next()" class="mmhc-achievement-nav mmhc-achievement-nav--next" aria-label="Next slide">
+                        <button type="button" data-achievement-next class="mmhc-achievement-nav mmhc-achievement-nav--next" aria-label="Next slide">
                             <i class="fas fa-chevron-right" aria-hidden="true"></i>
                         </button>
                         @endif
@@ -275,25 +245,25 @@
                         <div class="achievement-media-thumbs" aria-label="Slide thumbnails">
                             @foreach($achievementMedia as $index => $item)
                             <button type="button"
-                                    @click="go({{ $index }})"
-                                    :class="active === {{ $index }} ? 'is-active' : ''"
-                                    class="achievement-media-thumb"
-                                    :aria-current="active === {{ $index }} ? 'true' : 'false'"
+                                    data-achievement-thumb
+                                    data-index="{{ $index }}"
+                                    class="achievement-media-thumb{{ $index === 0 ? ' is-active' : '' }}"
+                                    aria-current="{{ $index === 0 ? 'true' : 'false' }}"
                                     aria-label="Go to slide {{ $index + 1 }}">
                                 <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="60" viewBox="0 0 80 60"><rect fill="#f3f4f6" width="80" height="60"/></svg>') }}" alt="" class="achievement-media-thumb__img" loading="lazy">
                             </button>
                             @endforeach
                         </div>
                         <div class="achievement-media-dots" aria-label="Slide indicators">
-                            <template x-for="i in total" :key="i">
-                                <button type="button"
-                                        @click="go(i - 1)"
-                                        :class="active === (i - 1) ? 'is-active' : ''"
-                                        class="achievement-media-dot"
-                                        :aria-label="`Go to slide ${i}`"
-                                        :aria-current="active === (i - 1) ? 'true' : 'false'">
-                                </button>
-                            </template>
+                            @foreach($achievementMedia as $index => $item)
+                            <button type="button"
+                                    data-achievement-dot
+                                    data-index="{{ $index }}"
+                                    class="achievement-media-dot{{ $index === 0 ? ' is-active' : '' }}"
+                                    aria-label="Go to slide {{ $index + 1 }}"
+                                    aria-current="{{ $index === 0 ? 'true' : 'false' }}">
+                            </button>
+                            @endforeach
                         </div>
                     </div>
                     @endif
@@ -1135,6 +1105,104 @@
         panel.querySelectorAll('a').forEach(function (link) {
             link.addEventListener('click', function () { setOpen(false); });
         });
+    })();
+
+    (function () {
+        var carousel = document.getElementById('mmhcAchievementCarousel');
+        if (!carousel) return;
+
+        var track = carousel.querySelector('[data-achievement-track]');
+        var slides = carousel.querySelectorAll('[data-achievement-slide]');
+        var thumbs = carousel.querySelectorAll('[data-achievement-thumb]');
+        var dots = carousel.querySelectorAll('[data-achievement-dot]');
+        var prevBtn = carousel.querySelector('[data-achievement-prev]');
+        var nextBtn = carousel.querySelector('[data-achievement-next]');
+        var total = slides.length;
+        var active = 0;
+        var timer = null;
+        var touchStartX = 0;
+        var autoplayMs = parseInt(carousel.getAttribute('data-autoplay') || '5000', 10);
+
+        function go(index) {
+            if (!track || total < 1) return;
+            active = ((index % total) + total) % total;
+            track.style.transform = 'translateX(-' + (active * 100) + '%)';
+
+            slides.forEach(function (slide, i) {
+                slide.setAttribute('aria-hidden', i === active ? 'false' : 'true');
+            });
+
+            thumbs.forEach(function (thumb, i) {
+                thumb.classList.toggle('is-active', i === active);
+                thumb.setAttribute('aria-current', i === active ? 'true' : 'false');
+            });
+
+            dots.forEach(function (dot, i) {
+                dot.classList.toggle('is-active', i === active);
+                dot.setAttribute('aria-current', i === active ? 'true' : 'false');
+            });
+        }
+
+        function next() { go(active + 1); }
+        function prev() { go(active - 1); }
+
+        function startAuto() {
+            stopAuto();
+            if (total < 2 || !autoplayMs) return;
+            timer = setInterval(next, autoplayMs);
+        }
+
+        function stopAuto() {
+            if (timer) clearInterval(timer);
+            timer = null;
+        }
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function () {
+                prev();
+                startAuto();
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function () {
+                next();
+                startAuto();
+            });
+        }
+
+        thumbs.forEach(function (thumb) {
+            thumb.addEventListener('click', function () {
+                go(parseInt(thumb.getAttribute('data-index') || '0', 10));
+                startAuto();
+            });
+        });
+
+        dots.forEach(function (dot) {
+            dot.addEventListener('click', function () {
+                go(parseInt(dot.getAttribute('data-index') || '0', 10));
+                startAuto();
+            });
+        });
+
+        carousel.addEventListener('mouseenter', stopAuto);
+        carousel.addEventListener('mouseleave', startAuto);
+
+        carousel.addEventListener('touchstart', function (e) {
+            if (!e.changedTouches || !e.changedTouches.length) return;
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        carousel.addEventListener('touchend', function (e) {
+            if (!e.changedTouches || !e.changedTouches.length) return;
+            var diff = touchStartX - e.changedTouches[0].screenX;
+            if (Math.abs(diff) < 50) return;
+            if (diff > 0) next(); else prev();
+            startAuto();
+        }, { passive: true });
+
+        go(0);
+        startAuto();
     })();
     </script>
 </body>

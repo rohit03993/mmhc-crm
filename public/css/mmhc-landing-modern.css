@@ -697,17 +697,33 @@
     box-shadow: var(--mmhc-shadow-lg);
     border: 1px solid var(--mmhc-line);
     overflow: hidden;
+    width: 100%;
     min-height: 340px;
     height: 400px;
 }
 .achievement-media-carousel__viewport {
+    width: 100%;
     height: 100%;
+    overflow: hidden;
+    position: relative;
 }
 .achievement-media-carousel__track {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    width: 100%;
     height: 100%;
+    transition: transform 0.5s ease-in-out;
+    will-change: transform;
 }
 .achievement-media-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
     height: 100%;
+    box-sizing: border-box;
 }
 .achievement-media-slide__inner {
     position: relative;
