@@ -209,50 +209,94 @@
 
             <!-- Achievements & Media Coverage: only images added in Admin → Achievements & Media (no logo) -->
             @if(isset($achievementMedia) && $achievementMedia->isNotEmpty())
+            @php $achievementCount = $achievementMedia->count(); @endphp
             <div id="achievement-media" class="achievement-media-section scroll-mt-24">
-                <h3 class="text-3xl font-bold text-gray-800 text-center mb-8">Achievements & Media Coverage</h3>
-                <div class="max-w-7xl mx-auto px-2 achievement-media-inner"
+                <h3 class="mmhc-section__title text-center mb-8">Achievements &amp; Media Coverage</h3>
+                <div class="max-w-7xl mx-auto px-2 sm:px-4 achievement-media-inner"
                      x-data="{
                          active: 0,
-                         total: {{ $achievementMedia->count() }},
+                         total: {{ $achievementCount }},
+                         timer: null,
+                         touchStartX: 0,
                          next() { this.active = (this.active + 1) % this.total },
-                         prev() { this.active = (this.active - 1 + this.total) % this.total }
+                         prev() { this.active = (this.active - 1 + this.total) % this.total },
+                         go(index) { this.active = index },
+                         startAuto() {
+                             if (this.timer) clearInterval(this.timer);
+                             if (this.total < 2) return;
+                             this.timer = setInterval(() => this.next(), 5000);
+                         },
+                         stopAuto() {
+                             if (this.timer) clearInterval(this.timer);
+                             this.timer = null;
+                         },
+                         onTouchStart(e) { this.touchStartX = e.changedTouches[0].screenX; },
+                         onTouchEnd(e) {
+                             const diff = this.touchStartX - e.changedTouches[0].screenX;
+                             if (Math.abs(diff) < 50) return;
+                             diff > 0 ? this.next() : this.prev();
+                         }
                      }"
-                     x-init="const advance = () => $data.next(); setInterval(advance, 5000)">
-                    <div class="achievement-media-carousel">
-                        @foreach($achievementMedia as $index => $item)
-                        <div x-show="active === {{ $index }}"
-                             x-transition:enter="transition ease-out duration-300"
-                             x-transition:enter-start="opacity-0"
-                             x-transition:enter-end="opacity-100"
-                             x-transition:leave="transition ease-in duration-200"
-                             x-transition:leave-start="opacity-100"
-                             x-transition:leave-end="opacity-0"
-                             class="absolute inset-0 flex items-center justify-center p-3">
-                            <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#f3f4f6" width="400" height="300"/><text fill="#9ca3af" font-family="sans-serif" font-size="18" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">No image</text></svg>') }}" alt="{{ $item->caption ?? 'Achievement' }}" class="achievement-media-main-img">
-                            @if($item->caption)
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-2 rounded-b-2xl">
-                                <p class="text-white font-medium text-sm text-center">{{ $item->caption }}</p>
+                     x-init="startAuto()"
+                     @mouseenter="stopAuto()"
+                     @mouseleave="startAuto()"
+                     @touchstart.passive="onTouchStart($event)"
+                     @touchend.passive="onTouchEnd($event)">
+                    <div class="achievement-media-carousel" role="region" aria-roledescription="carousel" aria-label="Achievements and media coverage">
+                        <div class="achievement-media-carousel__viewport overflow-hidden">
+                            <div class="achievement-media-carousel__track flex h-full transition-transform duration-500 ease-in-out"
+                                 :style="`transform: translateX(-${active * 100}%)`">
+                                @foreach($achievementMedia as $index => $item)
+                                <div class="achievement-media-slide w-full flex-shrink-0" :aria-hidden="active !== {{ $index }}">
+                                    <div class="achievement-media-slide__inner">
+                                        <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#f3f4f6" width="400" height="300"/><text fill="#9ca3af" font-family="sans-serif" font-size="18" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">No image</text></svg>') }}" alt="{{ $item->caption ?? 'Achievement' }}" class="achievement-media-main-img" loading="lazy">
+                                        @if($item->caption)
+                                        <div class="achievement-media-caption">
+                                            <p>{{ $item->caption }}</p>
+                                        </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endforeach
                             </div>
-                            @endif
                         </div>
-                        @endforeach
-                    </div>
-                    <div class="flex items-center justify-center gap-3 mt-4">
-                        <button @click="prev()" class="p-2 rounded-full bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-600 transition" aria-label="Previous">
-                            <i class="fas fa-chevron-left"></i>
+                        @if($achievementCount > 1)
+                        <button type="button" @click="prev()" class="mmhc-achievement-nav mmhc-achievement-nav--prev" aria-label="Previous slide">
+                            <i class="fas fa-chevron-left" aria-hidden="true"></i>
                         </button>
-                        <div class="flex gap-2 items-center flex-wrap justify-center">
+                        <button type="button" @click="next()" class="mmhc-achievement-nav mmhc-achievement-nav--next" aria-label="Next slide">
+                            <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                        </button>
+                        @endif
+                    </div>
+
+                    @if($achievementCount > 1)
+                    <div class="achievement-media-controls">
+                        <div class="achievement-media-thumbs" aria-label="Slide thumbnails">
                             @foreach($achievementMedia as $index => $item)
-                            <button @click="active = {{ $index }}" :class="active === {{ $index }} ? 'ring-2 ring-blue-600 ring-offset-1' : 'opacity-70 hover:opacity-100'" class="achievement-media-thumb rounded-lg overflow-hidden border border-gray-200 flex-shrink-0 transition" aria-label="Go to slide {{ $index + 1 }}">
-                                <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="60" viewBox="0 0 80 60"><rect fill="#f3f4f6" width="80" height="60"/></svg>') }}" alt="" class="w-full h-full object-cover pointer-events-none">
+                            <button type="button"
+                                    @click="go({{ $index }})"
+                                    :class="active === {{ $index }} ? 'is-active' : ''"
+                                    class="achievement-media-thumb"
+                                    :aria-current="active === {{ $index }} ? 'true' : 'false'"
+                                    aria-label="Go to slide {{ $index + 1 }}">
+                                <img src="{{ storage_asset($item->image_path) ?? 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="60" viewBox="0 0 80 60"><rect fill="#f3f4f6" width="80" height="60"/></svg>') }}" alt="" class="achievement-media-thumb__img" loading="lazy">
                             </button>
                             @endforeach
                         </div>
-                        <button @click="next()" class="p-2 rounded-full bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-600 transition" aria-label="Next">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
+                        <div class="achievement-media-dots" aria-label="Slide indicators">
+                            <template x-for="i in total" :key="i">
+                                <button type="button"
+                                        @click="go(i - 1)"
+                                        :class="active === (i - 1) ? 'is-active' : ''"
+                                        class="achievement-media-dot"
+                                        :aria-label="`Go to slide ${i}`"
+                                        :aria-current="active === (i - 1) ? 'true' : 'false'">
+                                </button>
+                            </template>
+                        </div>
                     </div>
+                    @endif
                 </div>
             </div>
             @endif

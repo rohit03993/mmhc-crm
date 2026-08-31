@@ -684,18 +684,38 @@
 }
 
 /* Achievement carousel */
+.achievement-media-section {
+    margin-bottom: 4rem;
+}
+.achievement-media-inner {
+    width: 100%;
+}
 .achievement-media-carousel {
     position: relative;
     background: #fff;
-    border-radius: var(--mmhc-radius);
-    box-shadow: var(--mmhc-shadow);
+    border-radius: var(--mmhc-radius-lg);
+    box-shadow: var(--mmhc-shadow-lg);
     border: 1px solid var(--mmhc-line);
     overflow: hidden;
     min-height: 340px;
     height: 400px;
 }
-@media (min-width: 768px) {
-    .achievement-media-carousel { min-height: 480px; height: 560px; }
+.achievement-media-carousel__viewport {
+    height: 100%;
+}
+.achievement-media-carousel__track {
+    height: 100%;
+}
+.achievement-media-slide {
+    height: 100%;
+}
+.achievement-media-slide__inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 1rem;
 }
 .achievement-media-main-img {
     max-width: 100%;
@@ -704,6 +724,122 @@
     height: auto;
     object-fit: contain;
     border-radius: 0.5rem;
+}
+.achievement-media-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1.25rem 1rem 0.85rem;
+    background: linear-gradient(to top, rgba(12, 18, 34, 0.72), transparent);
+    border-radius: 0 0 var(--mmhc-radius-lg) var(--mmhc-radius-lg);
+}
+.achievement-media-caption p {
+    margin: 0;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.4;
+}
+.mmhc-achievement-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--mmhc-ink-soft);
+    box-shadow: 0 8px 24px rgba(12, 18, 34, 0.12);
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.mmhc-achievement-nav:hover {
+    background: #fff;
+    color: var(--mmhc-teal-dark);
+    transform: translateY(-50%) scale(1.05);
+}
+.mmhc-achievement-nav--prev { left: 0.75rem; }
+.mmhc-achievement-nav--next { right: 0.75rem; }
+.achievement-media-controls {
+    margin-top: 1rem;
+}
+.achievement-media-thumbs {
+    display: flex;
+    gap: 0.65rem;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 0.35rem 0.15rem 0.5rem;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+.achievement-media-thumb {
+    flex: 0 0 auto;
+    width: 5.5rem;
+    height: 4rem;
+    padding: 0;
+    border: 2px solid var(--mmhc-line);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: #fff;
+    opacity: 0.72;
+    scroll-snap-align: center;
+    transition: opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.achievement-media-thumb:hover {
+    opacity: 1;
+}
+.achievement-media-thumb.is-active {
+    opacity: 1;
+    border-color: var(--mmhc-teal);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.18);
+}
+.achievement-media-thumb__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+}
+.achievement-media-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.45rem;
+    margin-top: 0.85rem;
+}
+.achievement-media-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: #cbd5e1;
+    transition: width 0.2s ease, background 0.2s ease;
+}
+.achievement-media-dot.is-active {
+    width: 1.35rem;
+    background: var(--mmhc-teal-dark);
+}
+@media (min-width: 768px) {
+    .achievement-media-carousel { min-height: 480px; height: 560px; }
+    .achievement-media-thumb { width: 7rem; height: 4.75rem; }
+    .achievement-media-dots { display: none; }
+}
+@media (max-width: 767px) {
+    .mmhc-achievement-nav {
+        width: 2.35rem;
+        height: 2.35rem;
+        font-size: 0.8rem;
+    }
+    .mmhc-achievement-nav--prev { left: 0.5rem; }
+    .mmhc-achievement-nav--next { right: 0.5rem; }
 }
 
 [x-cloak] { display: none !important; }
