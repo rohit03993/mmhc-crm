@@ -15,7 +15,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -24,656 +24,134 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        
-        /* Custom gradient */
-        .gradient-bg {
-            background: linear-gradient(135deg, #0066CC 0%, #00A86B 100%);
-        }
-        
-        .gradient-text {
-            background: linear-gradient(135deg, #0066CC 0%, #00A86B 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        /* Glass morphism effect */
-        .glass {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        /* Smooth scroll */
-        html {
-            scroll-behavior: smooth;
-        }
-        
-        /* Animations */
+        html { scroll-behavior: smooth; }
+        .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(12, 18, 34, 0.1); }
+        .fade-in-up { animation: fadeInUp 0.6s ease-out; }
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .fade-in-up {
-            animation: fadeInUp 0.6s ease-out;
-        }
-        
-        /* Hover effects */
-        .hover-lift {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .hover-lift:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        }
-
-        /* Landing plan cards — modern, soft, professional */
-        .mmhc-plans-section {
-            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 55%, #eef2f7 100%);
-        }
-        .mmhc-plan-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 1.35rem;
-            box-shadow: 0 4px 24px rgba(15, 23, 42, 0.045);
-            padding: 1.85rem 1.4rem 1.5rem;
-            position: relative;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-        }
-        .mmhc-plan-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.09);
-            border-color: #cbd5e1;
-        }
-        .mmhc-plan-card.is-popular {
-            border-color: #99f6e4;
-            box-shadow: 0 10px 32px rgba(15, 118, 110, 0.12);
-            background: linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%);
-        }
-        .mmhc-plan-badge {
-            position: absolute;
-            top: -0.7rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #0f766e, #115e59);
-            color: #f8fafc;
-            font-size: 0.68rem;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            padding: 0.35rem 0.95rem;
-            border-radius: 999px;
-            white-space: nowrap;
-            box-shadow: 0 6px 14px rgba(15, 118, 110, 0.28);
-        }
-        .mmhc-plan-icon {
-            width: 3.35rem;
-            height: 3.35rem;
-            margin: 0 auto 1rem;
-            border-radius: 999px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f1f5f9;
-            color: #0f766e;
-            font-size: 1.2rem;
-        }
-        .mmhc-plan-card.is-popular .mmhc-plan-icon {
-            background: #ccfbf1;
-            color: #0f766e;
-        }
-        .mmhc-plan-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 0.4rem;
-            line-height: 1.3;
-        }
-        .mmhc-plan-desc {
-            font-size: 0.875rem;
-            color: #64748b;
-            line-height: 1.5;
-            margin-bottom: 1.1rem;
-            min-height: 2.75rem;
-        }
-        .mmhc-plan-tier-switch {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.35rem;
-            padding: 0.3rem;
-            margin-bottom: 1rem;
-            background: #f1f5f9;
-            border-radius: 0.85rem;
-            border: 1px solid #e2e8f0;
-        }
-        .mmhc-plan-tier-btn {
-            border: 0;
-            background: transparent;
-            color: #64748b;
-            font-size: 0.72rem;
-            font-weight: 600;
-            line-height: 1.2;
-            padding: 0.55rem 0.35rem;
-            border-radius: 0.65rem;
-            cursor: pointer;
-            transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-            position: relative;
-        }
-        .mmhc-plan-tier-btn:hover {
-            color: #0f172a;
-            background: rgba(255, 255, 255, 0.7);
-        }
-        .mmhc-plan-tier-btn.is-active {
-            background: #ffffff;
-            color: #0f766e;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-        }
-        .mmhc-plan-tier-btn .tier-count {
-            display: block;
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: inherit;
-            margin-bottom: 0.08rem;
-        }
-        .mmhc-plan-covers {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
-            text-align: left;
-            background: #f0fdfa;
-            border: 1px solid #ccfbf1;
-            border-radius: 0.75rem;
-            padding: 0.65rem 0.75rem;
-            margin-bottom: 1rem;
-            min-height: 3.1rem;
-        }
-        .mmhc-plan-covers i {
-            color: #0f766e;
-            margin-top: 0.15rem;
-            font-size: 0.85rem;
-            flex-shrink: 0;
-        }
-        .mmhc-plan-covers-title {
-            display: block;
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            color: #0f766e;
-            margin-bottom: 0.15rem;
-        }
-        .mmhc-plan-covers-text {
-            font-size: 0.8rem;
-            color: #334155;
-            line-height: 1.35;
-            font-weight: 500;
-        }
-        .mmhc-plan-monthly-ref {
-            font-size: 0.78rem;
-            color: #64748b;
-            font-weight: 500;
-            margin-bottom: 0.85rem;
-        }
-        .mmhc-plan-term-summary {
-            font-size: 0.82rem;
-            color: #475569;
-            line-height: 1.45;
-            text-align: left;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.75rem;
-            padding: 0.65rem 0.75rem;
-            margin-bottom: 1rem;
-            min-height: 2.75rem;
-        }
-        .mmhc-plan-price {
-            margin-bottom: 0.35rem;
-        }
-        .mmhc-plan-price-amount {
-            font-size: 1.85rem;
-            font-weight: 800;
-            color: #0f172a;
-            letter-spacing: -0.03em;
-            transition: opacity 0.15s ease;
-        }
-        .mmhc-plan-price-duration {
-            font-size: 0.85rem;
-            color: #64748b;
-            font-weight: 500;
-        }
-        .mmhc-plan-members {
-            font-size: 0.78rem;
-            color: #0f766e;
-            font-weight: 600;
-            margin-bottom: 1.1rem;
-            padding-bottom: 1.1rem;
-            border-bottom: 1px solid #e2e8f0;
-            min-height: 1.2rem;
-        }
-        .mmhc-plan-features {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 1.5rem;
-            text-align: left;
-            flex: 1;
-        }
-        .mmhc-plan-features li {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.6rem;
-            margin-bottom: 0.65rem;
-            font-size: 0.84rem;
-            color: #334155;
-            line-height: 1.4;
-        }
-        .mmhc-plan-features i {
-            color: #0f766e;
-            margin-top: 0.2rem;
-            font-size: 0.7rem;
-            opacity: 0.9;
-        }
-        .mmhc-plan-cta {
-            display: block;
-            width: 100%;
-            text-align: center;
-            background: #0f766e;
-            color: #ffffff !important;
-            font-weight: 600;
-            font-size: 0.92rem;
-            padding: 0.8rem 1.25rem;
-            border-radius: 0.8rem;
-            transition: background 0.2s ease, box-shadow 0.2s ease;
-            text-decoration: none;
-        }
-        .mmhc-plan-cta:hover {
-            background: #0d9488;
-            box-shadow: 0 6px 16px rgba(15, 118, 110, 0.25);
-            color: #ffffff !important;
-        }
-        .mmhc-plan-card.is-popular .mmhc-plan-cta {
-            background: #115e59;
-        }
-        .mmhc-plan-card.is-popular .mmhc-plan-cta:hover {
-            background: #0f766e;
-        }
-        .mmhc-plans-divider {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin: 2.75rem 0 1.75rem;
-            color: #94a3b8;
-            font-size: 0.8rem;
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
-        .mmhc-plans-divider::before,
-        .mmhc-plans-divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
-        }
-        .mmhc-plan-card.is-student {
-            max-width: 22rem;
-            margin-left: auto;
-            margin-right: auto;
-            border-color: #e2e8f0;
-        }
-
-        /* Mobile: one plan at a time, swipe sideways */
-        .mmhc-plan-slider {
-            position: relative;
-        }
-        .mmhc-plan-slider-track {
-            display: flex;
-            gap: 0.85rem;
-            overflow-x: auto;
-            overflow-y: hidden;
-            scroll-snap-type: x mandatory;
-            scroll-padding-inline: 1rem;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            overscroll-behavior-x: contain;
-            padding: 0.85rem 0 0.5rem;
-            margin: 0 -1rem;
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
-        .mmhc-plan-slider-track::-webkit-scrollbar {
-            display: none;
-        }
-        .mmhc-plan-slide {
-            flex: 0 0 86%;
-            width: 86%;
-            max-width: 22.5rem;
-            scroll-snap-align: center;
-            scroll-snap-stop: always;
-            display: flex;
-        }
-        .mmhc-plan-slide .mmhc-plan-card {
-            width: 100%;
-        }
-        .mmhc-plan-slider-nav {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-        .mmhc-plan-slider-btn {
-            width: 2.4rem;
-            height: 2.4rem;
-            border: 1px solid #cbd5e1;
-            background: #ffffff;
-            color: #0f766e;
-            border-radius: 999px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-        }
-        .mmhc-plan-slider-btn:disabled {
-            opacity: 0.35;
-            cursor: default;
-        }
-        .mmhc-plan-slider-dots {
-            display: flex;
-            gap: 0.4rem;
-            align-items: center;
-        }
-        .mmhc-plan-slider-dot {
-            width: 0.5rem;
-            height: 0.5rem;
-            border-radius: 999px;
-            border: 0;
-            padding: 0;
-            background: #cbd5e1;
-            cursor: pointer;
-        }
-        .mmhc-plan-slider-dot.is-active {
-            width: 1.35rem;
-            background: #0f766e;
-        }
-        .mmhc-plan-slider-hint {
-            text-align: center;
-            font-size: 0.75rem;
-            color: #94a3b8;
-            margin-top: 0.45rem;
-            font-weight: 500;
-        }
-        @media (min-width: 768px) {
-            .mmhc-plan-slider-track {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                overflow: visible;
-                scroll-snap-type: none;
-                margin: 0;
-                padding: 0.85rem 0 0;
-                gap: 1.75rem;
-            }
-            .mmhc-plan-slide {
-                flex: none;
-                width: auto;
-                max-width: none;
-            }
-            .mmhc-plan-slider-nav,
-            .mmhc-plan-slider-hint {
-                display: none;
-            }
-        }
-        @media (min-width: 1280px) {
-            .mmhc-plan-slider-track {
-                grid-template-columns: repeat(4, minmax(0, 1fr));
-            }
-        }
-
-        /* Achievements & Media: images from Admin → Achievements & Media only; large section */
-        .achievement-media-section {
-            margin-bottom: 4rem;
-        }
-        .achievement-media-inner {
-            width: 100%;
-        }
-        .achievement-media-carousel {
-            position: relative;
-            background: #fff;
-            border-radius: 1rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            border: 1px solid #f3f4f6;
-            overflow: hidden;
-            min-height: 420px;
-            height: 520px;
-        }
-        .achievement-media-main-img {
-            max-width: 100%;
-            max-height: 100%;
-            width: auto;
-            height: auto;
-            object-fit: contain;
-            border-radius: 0.5rem;
-        }
-        .achievement-media-thumb {
-            width: 100px;
-            height: 72px;
-            display: block;
-            background: #f3f4f6;
-        }
-        @media (min-width: 768px) {
-            .achievement-media-carousel { min-height: 480px; height: 560px; }
-            .achievement-media-thumb { width: 120px; height: 84px; }
-        }
-        @media (max-width: 767px) {
-            .achievement-media-carousel { min-height: 340px; height: 400px; }
-        }
-
-        [x-cloak] { display: none !important; }
-
-        @media (max-width: 767px) {
-            .text-5xl { font-size: 2rem !important; line-height: 1.25 !important; }
-            .text-6xl { font-size: 2.25rem !important; }
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/mmhc-landing-modern.css') }}">
     <link rel="stylesheet" href="{{ asset('css/mobile-crm.css') }}">
     <link rel="stylesheet" href="{{ asset('css/mmhc-public-mobile.css') }}">
     <link rel="stylesheet" href="{{ asset('css/capacitor-app.css') }}">
 </head>
-<body class="bg-gray-50 mmhc-landing-page">
+<body class="mmhc-landing-page">
 
-    <!-- NAVIGATION BAR -->
-    <nav class="fixed w-full bg-white shadow-md z-50 mmhc-landing-nav relative" id="mmhcLandingNav">
+    <!-- NAVIGATION -->
+    <nav class="mmhc-landing-nav" id="mmhcLandingNav">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="mmhc-landing-nav__inner flex justify-between items-center">
-                <!-- Logo -->
                 <div class="flex items-center min-w-0 flex-1">
                     <a href="#home" class="flex items-center min-w-0">
-                        <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo-mobile h-12 w-auto md:h-12">
+                        <img src="{{ $siteLogoUrl ?? asset('images/med-logo.png') }}" alt="{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}" class="brand-logo-mobile h-10 w-auto md:h-11">
                         <span class="sr-only">{{ $siteCompanyName ?? 'MeD Miracle Health Care' }}</span>
                     </a>
                 </div>
-                
-                <!-- Desktop Menu -->
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="#home" class="text-gray-700 hover:text-blue-600 font-medium transition">Home</a>
-                    <a href="#plans" class="text-gray-700 hover:text-blue-600 font-medium transition">Plans</a>
-                    <a href="#about" class="text-gray-700 hover:text-blue-600 font-medium transition">About</a>
-                    <a href="#contact" class="text-gray-700 hover:text-blue-600 font-medium transition">Contact</a>
-                    <a href="{{ route('pwa.install') }}" class="text-blue-700 hover:text-blue-800 font-semibold transition mmhc-pwa-install-nav">Install App</a>
+
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#home" class="mmhc-nav-link">Home</a>
+                    <a href="#plans" class="mmhc-nav-link">Plans</a>
+                    <a href="#about" class="mmhc-nav-link">About</a>
+                    <a href="#contact" class="mmhc-nav-link">Contact</a>
+                    <a href="{{ route('pwa.install') }}" class="mmhc-nav-link mmhc-pwa-install-nav">Install App</a>
                 </div>
-                
-                <!-- Login Buttons -->
-                <div class="hidden md:flex items-center space-x-4">
-                    <a href="{{ route('auth.login') }}" class="px-5 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition">
-                        Login
-                    </a>
-                    <a href="{{ route('auth.register') }}" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-green-500 text-white rounded-lg hover:shadow-lg transition">
-                        Register
-                    </a>
+
+                <div class="hidden md:flex items-center gap-3">
+                    <a href="{{ route('auth.login') }}" class="mmhc-btn mmhc-btn--ghost">Login</a>
+                    <a href="{{ route('auth.register') }}" class="mmhc-btn mmhc-btn--primary">Register</a>
                 </div>
-                
-                <!-- Mobile Menu Button (vanilla JS — reliable in Android WebView) -->
-                <button type="button"
-                        id="mmhcMobileMenuBtn"
-                        class="md:hidden text-gray-700 mmhc-mobile-menu-btn"
-                        aria-expanded="false"
-                        aria-controls="mmhcMobileMenuPanel">
-                    <i class="fas fa-bars text-2xl" aria-hidden="true"></i>
+
+                <button type="button" id="mmhcMobileMenuBtn" class="md:hidden text-slate-700 mmhc-mobile-menu-btn p-2" aria-expanded="false" aria-controls="mmhcMobileMenuPanel">
+                    <i class="fas fa-bars text-xl" aria-hidden="true"></i>
                 </button>
             </div>
         </div>
-        
-        <!-- Mobile Menu (Tailwind + mmhc classes — reliable in browser + Capacitor WebView) -->
-        <div id="mmhcMobileMenuPanel" class="md:hidden hidden mmhc-landing-mobile-menu bg-white border-t border-gray-200" aria-hidden="true">
+
+        <div id="mmhcMobileMenuPanel" class="md:hidden hidden mmhc-landing-mobile-menu bg-white border-t border-slate-200" aria-hidden="true">
             <div class="mmhc-landing-mobile-menu__inner px-4 py-4 space-y-1">
-                <a href="#home" class="mmhc-landing-mobile-menu__link flex items-center text-gray-700 hover:text-blue-600 font-medium rounded-xl px-3 py-3">
-                    <i class="fas fa-home mr-3 w-5 text-center opacity-75" aria-hidden="true"></i>Home
-                </a>
-                <a href="#plans" class="mmhc-landing-mobile-menu__link flex items-center text-gray-700 hover:text-blue-600 font-medium rounded-xl px-3 py-3">
-                    <i class="fas fa-heartbeat mr-3 w-5 text-center opacity-75" aria-hidden="true"></i>Plans
-                </a>
-                <a href="#about" class="mmhc-landing-mobile-menu__link flex items-center text-gray-700 hover:text-blue-600 font-medium rounded-xl px-3 py-3">
-                    <i class="fas fa-info-circle mr-3 w-5 text-center opacity-75" aria-hidden="true"></i>About
-                </a>
-                <a href="#contact" class="mmhc-landing-mobile-menu__link flex items-center text-gray-700 hover:text-blue-600 font-medium rounded-xl px-3 py-3">
-                    <i class="fas fa-envelope mr-3 w-5 text-center opacity-75" aria-hidden="true"></i>Contact
-                </a>
-                <a href="{{ route('pwa.install') }}" class="mmhc-landing-mobile-menu__link flex items-center text-blue-700 hover:text-blue-800 font-semibold rounded-xl px-3 py-3 mmhc-pwa-install-nav">
-                    <i class="fas fa-mobile-alt mr-3 w-5 text-center opacity-75" aria-hidden="true"></i>Install App
-                </a>
-                <div class="mmhc-landing-mobile-menu__actions pt-3 mt-2 border-t border-gray-200 space-y-2">
-                    <a href="{{ route('auth.login') }}" class="block w-full text-center px-5 py-3 text-blue-600 border-2 border-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition">
-                        Login
-                    </a>
-                    <a href="{{ route('auth.register') }}" class="block w-full text-center px-5 py-3 bg-gradient-to-r from-blue-600 to-green-500 text-white rounded-xl font-semibold hover:shadow-lg transition">
-                        Create account
-                    </a>
+                <a href="#home" class="mmhc-landing-mobile-menu__link flex items-center text-slate-700 font-medium rounded-xl px-3 py-3"><i class="fas fa-home mr-3 w-5 opacity-60"></i>Home</a>
+                <a href="#plans" class="mmhc-landing-mobile-menu__link flex items-center text-slate-700 font-medium rounded-xl px-3 py-3"><i class="fas fa-heartbeat mr-3 w-5 opacity-60"></i>Plans</a>
+                <a href="#about" class="mmhc-landing-mobile-menu__link flex items-center text-slate-700 font-medium rounded-xl px-3 py-3"><i class="fas fa-info-circle mr-3 w-5 opacity-60"></i>About</a>
+                <a href="#contact" class="mmhc-landing-mobile-menu__link flex items-center text-slate-700 font-medium rounded-xl px-3 py-3"><i class="fas fa-envelope mr-3 w-5 opacity-60"></i>Contact</a>
+                <a href="{{ route('pwa.install') }}" class="mmhc-landing-mobile-menu__link flex items-center text-teal-700 font-semibold rounded-xl px-3 py-3 mmhc-pwa-install-nav"><i class="fas fa-mobile-alt mr-3 w-5 opacity-60"></i>Install App</a>
+                <div class="pt-3 mt-2 border-t border-slate-200 space-y-2">
+                    <a href="{{ route('auth.login') }}" class="block w-full text-center mmhc-btn mmhc-btn--ghost py-3">Login</a>
+                    <a href="{{ route('auth.register') }}" class="block w-full text-center mmhc-btn mmhc-btn--primary py-3">Create account</a>
                 </div>
             </div>
         </div>
         <div id="mmhcMobileMenuBackdrop" class="mmhc-landing-mobile-menu-backdrop md:hidden hidden" aria-hidden="true"></div>
     </nav>
 
-    <!-- HERO SECTION -->
-    <section id="home" class="mmhc-landing-hero pt-32 pb-20 gradient-bg relative overflow-hidden">
-        <!-- Animated Background Shapes -->
-        <div class="absolute inset-0 opacity-10">
-            <div class="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
-            <div class="absolute bottom-20 right-10 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-        
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <!-- HERO -->
+    <section id="home" class="mmhc-hero">
+        <div class="mmhc-hero__mesh" aria-hidden="true"></div>
+        <div class="mmhc-hero__grid" aria-hidden="true"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <!-- Left Side - Content -->
-                <div class="text-white fade-in-up">
-                    <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+                <div class="mmhc-hero__content fade-in-up">
+                    <div class="mmhc-hero__badge">
+                        <i class="fas fa-heart-pulse" aria-hidden="true"></i>
+                        Trusted home nursing · 10,000+ outcomes
+                    </div>
+                    <h1 class="mmhc-hero__title">
                         @if(isset($pageContent['hero']))
                             {!! nl2br(e($pageContent['hero']->title)) !!}
                         @else
-                            Your Health,<br>
-                            <span class="text-yellow-300">Our Priority</span>
+                            Your Health,<br><em>Our Priority</em>
                         @endif
                     </h1>
-                    <p class="text-xl mb-8 text-gray-100">
+                    <p class="mmhc-hero__lede">
                         @if(isset($pageContent['hero']))
                             {{ $pageContent['hero']->subtitle }}
                         @else
-                            Professional Healthcare Services at Your Doorstep. Connect with certified caregivers and access quality healthcare plans.
+                            Professional healthcare at your doorstep. Certified caregivers, affordable household packages, and care that grows with your family.
                         @endif
                     </p>
-                    
-                    <!-- CTA Buttons -->
-                    <div class="flex flex-col sm:flex-row gap-4 mb-10">
-                        <a href="{{ route('auth.register') }}?role=patient" class="px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:shadow-xl transition transform hover:scale-105 text-center">
-                            <i class="fas fa-user mr-2"></i>I'm a Patient
+                    <div class="mmhc-hero__actions">
+                        <a href="{{ route('auth.register') }}?role=patient" class="mmhc-btn mmhc-btn--white px-6 py-3">
+                            <i class="fas fa-user"></i> I'm a Patient
                         </a>
-                        <a href="{{ route('auth.register') }}?warrior=1" class="px-8 py-4 bg-yellow-400 text-gray-900 rounded-lg font-semibold hover:shadow-xl transition transform hover:scale-105 text-center">
-                            <i class="fas fa-user-nurse mr-2"></i>I'm a Nursing Warrior
+                        <a href="{{ route('auth.register') }}?warrior=1" class="mmhc-btn mmhc-btn--accent px-6 py-3">
+                            <i class="fas fa-user-nurse"></i> Nursing Warrior
                         </a>
                     </div>
-                    
-                    <!-- Trust Indicators -->
-                    <div class="flex flex-wrap gap-8 text-white">
-                        <div>
-                            <div class="text-3xl font-bold">10,000+</div>
-                            <div class="text-sm text-gray-200">Successful Outcomes</div>
-                        </div>
-                        <div>
-                            <div class="text-3xl font-bold">5 Cities</div>
-                            <div class="text-sm text-gray-200">Service Locations</div>
-                        </div>
-                        <div>
-                            <div class="text-3xl font-bold">24/7</div>
-                            <div class="text-sm text-gray-200">Home Care Available</div>
-                        </div>
+                    <div class="mmhc-hero__stats">
+                        <div class="mmhc-hero__stat"><strong>10,000+</strong><span>Outcomes</span></div>
+                        <div class="mmhc-hero__stat"><strong>5 Cities</strong><span>Locations</span></div>
+                        <div class="mmhc-hero__stat"><strong>24/7</strong><span>Home care</span></div>
                     </div>
                 </div>
-                
-                <!-- Right Side - Image/Illustration (desktop only) -->
-                <div class="relative fade-in-up hidden lg:block mmhc-landing-hero-visual">
-                    <!-- Main Image Container -->
-                    <div class="relative z-10 bg-white rounded-3xl shadow-2xl p-4">
-                        <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=600&fit=crop" 
-                             alt="Healthcare Professional" 
-                             class="rounded-2xl w-full">
-                    </div>
-                    
-                    <!-- Floating Cards - Better positioned -->
-                    <div class="absolute top-8 left-8 bg-white p-3 rounded-xl shadow-lg border border-gray-100 hidden lg:block">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                                <i class="fas fa-shield-alt text-white"></i>
-                            </div>
-                            <div>
-                                <div class="font-semibold text-gray-800 text-sm">100%</div>
-                                <div class="text-xs text-gray-600">Verified</div>
-                            </div>
+                <div class="mmhc-hero__visual fade-in-up">
+                    <div class="relative">
+                        <div class="mmhc-hero__card">
+                            <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=600&fit=crop" alt="Healthcare professional at home" loading="lazy">
+                        </div>
+                        <div class="mmhc-hero__float mmhc-hero__float--tl">
+                            <div class="mmhc-hero__float-icon mmhc-hero__float-icon--green"><i class="fas fa-shield-alt"></i></div>
+                            <div><div>100%</div><small class="text-slate-500 font-normal">Verified staff</small></div>
+                        </div>
+                        <div class="mmhc-hero__float mmhc-hero__float--br">
+                            <div class="mmhc-hero__float-icon mmhc-hero__float-icon--gold"><i class="fas fa-star"></i></div>
+                            <div><div>4.9★</div><small class="text-slate-500 font-normal">Patient rating</small></div>
                         </div>
                     </div>
-                    
-                    <div class="absolute bottom-8 right-8 bg-white p-3 rounded-xl shadow-lg border border-gray-100 hidden lg:block">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
-                                <i class="fas fa-star text-white"></i>
-                            </div>
-                            <div>
-                                <div class="font-semibold text-gray-800 text-sm">4.9★</div>
-                                <div class="text-xs text-gray-600">Rating</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Background decoration -->
-                    <div class="absolute inset-0 bg-gradient-to-br from-blue-100 to-green-100 rounded-3xl -z-10 transform rotate-3"></div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ABOUT US SECTION -->
-    <section id="about" class="py-20 bg-white">
+    <!-- ABOUT -->
+    <section id="about" class="mmhc-section mmhc-section--white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Section Header -->
-            <div class="text-center mb-16">
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                    About <span class="gradient-text">Med Miracle Health Care</span>
-                </h2>
-                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Founded by Mantu Kumar with a vision to make quality healthcare accessible and affordable. India's newest home nursing subscription service with 10,000+ successful patient outcomes.
+            <div class="mmhc-section__head">
+                <span class="mmhc-section__label">About us</span>
+                <h2 class="mmhc-section__title">About <span>Med Miracle Health Care</span></h2>
+                <p class="mmhc-section__lede">
+                    Founded by Mantu Kumar — India's trusted home nursing subscription with 10,000+ successful patient outcomes across 5 cities.
                 </p>
             </div>
             
@@ -1053,137 +531,72 @@
     </section>
     @endif
 
-    <!-- WHY CHOOSE MMHC SECTION -->
-    <section id="why-choose" class="py-20 bg-gray-50">
+    <!-- WHY CHOOSE -->
+    <section id="why-choose" class="mmhc-section mmhc-section--alt">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Section Header -->
-            <div class="text-center mb-16">
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                    Why Choose <span class="gradient-text">Med Miracle Health Care?</span>
-                </h2>
-                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    India's first largest superhero nursing association providing comprehensive home healthcare with an empathetic approach. We solve problems of expensive equipment, poor medical environment, and incompetent staff.
+            <div class="mmhc-section__head">
+                <span class="mmhc-section__label">Why MMHC</span>
+                <h2 class="mmhc-section__title">Why Choose <span>Med Miracle Health Care?</span></h2>
+                <p class="mmhc-section__lede">
+                    Comprehensive home healthcare with an empathetic approach — solving expensive equipment, poor environments, and incompetent staff.
                 </p>
             </div>
             
-            <!-- Features Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                
-                <!-- Feature 1 -->
-                <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center group">
-                    <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-blue-200 transition-colors">
-                        <i class="fas fa-clock text-blue-600 text-3xl group-hover:scale-110 transition-transform"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">24x7 Home Health Care</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Round-the-clock personal nursing staff assistance at your doorstep. Free services with quick & easy booking.
-                    </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="mmhc-card">
+                    <div class="mmhc-card__icon"><i class="fas fa-clock"></i></div>
+                    <h3 class="mmhc-card__title">24×7 Home Health Care</h3>
+                    <p class="mmhc-card__text">Round-the-clock nursing at your doorstep. Free services with quick, easy booking.</p>
                 </div>
-                
-                <!-- Feature 2 -->
-                <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center group">
-                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-green-200 transition-colors">
-                        <i class="fas fa-spa text-green-600 text-3xl group-hover:scale-110 transition-transform"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Body-Mind Relaxation Therapy</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Unique holistic approach with advanced wellness equipment including full body massager, foot reflexology, brain & heart function monitoring at home.
-                    </p>
+                <div class="mmhc-card">
+                    <div class="mmhc-card__icon"><i class="fas fa-spa"></i></div>
+                    <h3 class="mmhc-card__title">Body-Mind Relaxation</h3>
+                    <p class="mmhc-card__text">Holistic wellness with massage, reflexology, and monitoring at home.</p>
                 </div>
-                
-                <!-- Feature 3 -->
-                <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center group">
-                    <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-200 transition-colors">
-                        <i class="fas fa-user-nurse text-purple-600 text-3xl group-hover:scale-110 transition-transform"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Expert Nursing Staff</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Well-experienced, trained & verified nursing staff for critical patients who understand psychological needs and provide all-round medical support.
-                    </p>
+                <div class="mmhc-card">
+                    <div class="mmhc-card__icon"><i class="fas fa-user-nurse"></i></div>
+                    <h3 class="mmhc-card__title">Expert Nursing Staff</h3>
+                    <p class="mmhc-card__text">Trained, verified nurses who understand medical and psychological needs.</p>
                 </div>
-                
-                <!-- Feature 4 -->
-                <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center group">
-                    <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-yellow-200 transition-colors">
-                        <i class="fas fa-hands-helping text-yellow-600 text-3xl group-hover:scale-110 transition-transform"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Professional Caretaker Services</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Compassionate caretaker services at home with an empathetic approach, ensuring personal attention to every detail of patient care.
-                    </p>
+                <div class="mmhc-card">
+                    <div class="mmhc-card__icon"><i class="fas fa-hands-helping"></i></div>
+                    <h3 class="mmhc-card__title">Caretaker Services</h3>
+                    <p class="mmhc-card__text">Compassionate home care with personal attention to every detail.</p>
                 </div>
-                
-                <!-- Feature 5 -->
-                <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center group">
-                    <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-red-200 transition-colors">
-                        <i class="fas fa-baby text-red-600 text-3xl group-hover:scale-110 transition-transform"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Special Care Programs</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Dedicated support for pregnant ladies & newborns, plus regular check-ups and specialized care for senior citizens.
-                    </p>
+                <div class="mmhc-card">
+                    <div class="mmhc-card__icon"><i class="fas fa-baby"></i></div>
+                    <h3 class="mmhc-card__title">Special Care Programs</h3>
+                    <p class="mmhc-card__text">Support for pregnant mothers, newborns, and senior citizens.</p>
                 </div>
-                
-                <!-- Feature 6 -->
-                <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center group">
-                    <div class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-orange-200 transition-colors">
-                        <i class="fas fa-rupee-sign text-orange-600 text-3xl group-hover:scale-110 transition-transform"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Affordable Subscriptions</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Starting at just Rs 999/month. All-inclusive subscription plans with no expensive equipment costs - everything provided by us.
-                    </p>
-                </div>
-                
-            </div>
-            
-            <!-- Stats Section -->
-            <div class="mt-20 bg-white rounded-2xl shadow-lg p-8">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-                    <div>
-                        <div class="text-4xl md:text-5xl font-bold text-blue-600 mb-2">10,000+</div>
-                        <div class="text-gray-600 font-semibold">Successful Outcomes</div>
-                    </div>
-                    <div>
-                        <div class="text-4xl md:text-5xl font-bold text-green-600 mb-2">₹999</div>
-                        <div class="text-gray-600 font-semibold">Starting Plan/Month</div>
-                    </div>
-                    <div>
-                        <div class="text-4xl md:text-5xl font-bold text-purple-600 mb-2">5 Cities</div>
-                        <div class="text-gray-600 font-semibold">Service Locations</div>
-                    </div>
-                    <div>
-                        <div class="text-4xl md:text-5xl font-bold text-orange-600 mb-2">24/7</div>
-                        <div class="text-gray-600 font-semibold">Home Care Available</div>
-                    </div>
+                <div class="mmhc-card">
+                    <div class="mmhc-card__icon"><i class="fas fa-rupee-sign"></i></div>
+                    <h3 class="mmhc-card__title">Affordable Packages</h3>
+                    <p class="mmhc-card__text">From ₹999/month. All equipment included — no hidden costs.</p>
                 </div>
             </div>
-            
-            <!-- Bottom CTA -->
+
+            <div class="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="mmhc-stat-pill"><strong>10,000+</strong><span class="text-sm text-slate-500">Outcomes</span></div>
+                <div class="mmhc-stat-pill"><strong>₹999</strong><span class="text-sm text-slate-500">From /month</span></div>
+                <div class="mmhc-stat-pill"><strong>5 Cities</strong><span class="text-sm text-slate-500">Locations</span></div>
+                <div class="mmhc-stat-pill"><strong>24/7</strong><span class="text-sm text-slate-500">Home care</span></div>
+            </div>
+
             <div class="text-center mt-12">
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">Ready to Experience Affordable Home Healthcare?</h3>
-                <p class="text-gray-600 mb-8">Join 10,000+ satisfied patients who trust Med Miracle Health Care. Starting at just Rs 999/month.</p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="{{ route('auth.register') }}?role=patient" class="bg-gradient-to-r from-blue-600 to-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition">
-                        Subscribe Now
-                    </a>
-                    <a href="#contact" class="border-2 border-blue-600 text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
-                        Contact Us
-                    </a>
-                </div>
+                <a href="{{ route('auth.register') }}?role=patient" class="mmhc-btn mmhc-btn--primary px-8 py-3">Subscribe Now</a>
+                <a href="#contact" class="mmhc-btn mmhc-btn--ghost px-8 py-3 ml-0 sm:ml-3 mt-3 sm:mt-0 inline-flex">Contact Us</a>
             </div>
         </div>
     </section>
 
-    <!-- PLANS SECTION -->
-    <section id="plans" class="py-20 mmhc-plans-section">
+    <!-- PLANS -->
+    <section id="plans" class="mmhc-section mmhc-plans-section">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-14">
-                <h2 class="text-4xl md:text-5xl font-bold text-slate-800 mb-4">
-                    Subscription <span class="gradient-text">Plans</span>
-                </h2>
-                <p class="text-lg md:text-xl text-slate-500 max-w-3xl mx-auto leading-relaxed">
-                    Choose who is covered — 1, 2, 3, or 4 members. After you start, we’ll collect member details and then you pick how to pay (6 months, 1 year, or 3 years).
+            <div class="mmhc-section__head">
+                <span class="mmhc-section__label">Packages</span>
+                <h2 class="mmhc-section__title">Household <span>Care Packages</span></h2>
+                <p class="mmhc-section__lede">
+                    Choose who is covered — 1, 2, 3, or 4 members. Add details and pick payment (6 months, 1 year, or 3 years) at checkout.
                 </p>
             </div>
 
@@ -1372,17 +785,13 @@
         </div>
     </section>
 
-    <!-- TESTIMONIALS SECTION -->
-    <section id="testimonials" class="py-20 bg-gray-50">
+    <!-- TESTIMONIALS -->
+    <section id="testimonials" class="mmhc-section mmhc-section--alt">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Section Header -->
-            <div class="text-center mb-16">
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                    What Our <span class="gradient-text">Patients Say</span>
-                </h2>
-                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Don't just take our word for it. Here's what our patients have to say about their experience with MMHC.
-                </p>
+            <div class="mmhc-section__head">
+                <span class="mmhc-section__label">Testimonials</span>
+                <h2 class="mmhc-section__title">What Our <span>Patients Say</span></h2>
+                <p class="mmhc-section__lede">Real stories from families who trust MMHC for home healthcare.</p>
             </div>
             
             <!-- Testimonials Carousel (admin-editable: Admin → Website front page → Testimonials) -->
@@ -1399,7 +808,7 @@
                         @forelse($testimonials as $index => $t)
                         @php $ci = $index % 4; @endphp
                         <div class="w-full flex-shrink-0 px-4">
-                            <div class="bg-white rounded-2xl shadow-lg hover-lift p-8 text-center max-w-4xl mx-auto">
+                            <div class="mmhc-testimonial-card hover-lift">
                                 <div class="w-16 h-16 {{ $quoteBgClasses[$ci] }} rounded-full flex items-center justify-center mx-auto mb-6">
                                     <i class="fas fa-quote-left {{ $quoteIconClasses[$ci] }} text-2xl"></i>
                                 </div>
@@ -1453,102 +862,66 @@
                 @endif
             </div>
             
-            <!-- Stats Row -->
-            <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                <div class="bg-white rounded-2xl shadow-lg p-6">
-                    <div class="text-3xl font-bold text-blue-600 mb-2">10,000+</div>
-                    <div class="text-gray-600 font-semibold">Successful Outcomes</div>
-                </div>
-                <div class="bg-white rounded-2xl shadow-lg p-6">
-                    <div class="text-3xl font-bold text-green-600 mb-2">24x7</div>
-                    <div class="text-gray-600 font-semibold">Home Care Available</div>
-                </div>
-                <div class="bg-white rounded-2xl shadow-lg p-6">
-                    <div class="text-3xl font-bold text-purple-600 mb-2">5 Cities</div>
-                    <div class="text-gray-600 font-semibold">Service Locations</div>
-                </div>
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="mmhc-stat-pill"><strong>10,000+</strong><span class="text-sm text-slate-500">Successful outcomes</span></div>
+                <div class="mmhc-stat-pill"><strong>24×7</strong><span class="text-sm text-slate-500">Home care</span></div>
+                <div class="mmhc-stat-pill"><strong>5 Cities</strong><span class="text-sm text-slate-500">Service locations</span></div>
             </div>
             
-            <!-- Bottom CTA -->
             <div class="text-center mt-12">
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">Join Our Happy Patients</h3>
-                <p class="text-gray-600 mb-8">Experience the same exceptional care that our patients rave about.</p>
-                <a href="{{ route('auth.register') }}?role=patient" class="bg-gradient-to-r from-blue-600 to-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition">
-                    Start Your Journey
-                </a>
+                <a href="{{ route('auth.register') }}?role=patient" class="mmhc-btn mmhc-btn--primary px-8 py-3">Start Your Journey</a>
             </div>
         </div>
     </section>
 
-    <!-- CONTACT FORM SECTION -->
-    <section id="contact" class="py-20 bg-white">
+    <!-- CONTACT -->
+    <section id="contact" class="mmhc-section mmhc-section--white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Section Header -->
-            <div class="text-center mb-16">
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                    Get In <span class="gradient-text">Touch</span>
-                </h2>
-                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Have questions about our services? Ready to start your healthcare journey? We're here to help you every step of the way.
-                </p>
+            <div class="mmhc-section__head">
+                <span class="mmhc-section__label">Contact</span>
+                <h2 class="mmhc-section__title">Get In <span>Touch</span></h2>
+                <p class="mmhc-section__lede">Questions about our services? We're here to help every step of the way.</p>
             </div>
             
-            <!-- Contact Content -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
-                <!-- Contact Form -->
-                <div class="bg-gray-50 rounded-2xl p-8">
-                    <h3 class="text-2xl font-bold text-gray-800 mb-6">Send us a Message</h3>
-                    <form class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="mmhc-contact-form">
+                    <h3 class="text-xl font-bold text-slate-800 mb-6">Send us a message</h3>
+                    <form class="space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
-                                <label for="firstName" class="block text-sm font-semibold text-gray-700 mb-2">First Name</label>
-                                <input type="text" id="firstName" name="firstName" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                <label for="firstName" class="block text-sm font-semibold text-slate-700 mb-2">First Name</label>
+                                <input type="text" id="firstName" name="firstName" class="mmhc-input">
                             </div>
                             <div>
-                                <label for="lastName" class="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
-                                <input type="text" id="lastName" name="lastName" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                <label for="lastName" class="block text-sm font-semibold text-slate-700 mb-2">Last Name</label>
+                                <input type="text" id="lastName" name="lastName" class="mmhc-input">
                             </div>
                         </div>
-                        
                         <div>
-                            <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                            <input type="email" id="email" name="email" 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                            <label for="email" class="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                            <input type="email" id="email" name="email" class="mmhc-input">
                         </div>
-                        
                         <div>
-                            <label for="phone" class="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
-                            <input type="tel" id="phone" name="phone" 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                            <label for="phone" class="block text-sm font-semibold text-slate-700 mb-2">Phone</label>
+                            <input type="tel" id="phone" name="phone" class="mmhc-input">
                         </div>
-                        
                         <div>
-                            <label for="service" class="block text-sm font-semibold text-gray-700 mb-2">Service Interested In</label>
-                            <select id="service" name="service" 
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                                <option value="">Select a service</option>
-                                <option value="basic">Basic Plan</option>
-                                <option value="standard">Standard Plan</option>
-                                <option value="premium">Premium Plan</option>
-                                <option value="family">Family Plan</option>
-                                <option value="caregiver">Become a Caregiver</option>
+                            <label for="service" class="block text-sm font-semibold text-slate-700 mb-2">Interested in</label>
+                            <select id="service" name="service" class="mmhc-input">
+                                <option value="">Select a package</option>
+                                <option value="1-person">1 Person Package</option>
+                                <option value="2-members">2 Members Package</option>
+                                <option value="3-members">3 Members Package</option>
+                                <option value="4-members">4 Members Package</option>
+                                <option value="warrior">Become a Nursing Warrior</option>
                                 <option value="other">Other</option>
                             </select>
                         </div>
-                        
                         <div>
-                            <label for="message" class="block text-sm font-semibold text-gray-700 mb-2">Message</label>
-                            <textarea id="message" name="message" rows="4" 
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                                      placeholder="Tell us how we can help you..."></textarea>
+                            <label for="message" class="block text-sm font-semibold text-slate-700 mb-2">Message</label>
+                            <textarea id="message" name="message" rows="4" class="mmhc-input" placeholder="How can we help?"></textarea>
                         </div>
-                        
-                        <button type="submit" 
-                                class="w-full bg-gradient-to-r from-blue-600 to-green-500 text-white py-3 px-6 rounded-lg font-semibold hover:shadow-lg transition">
-                            Send Message
-                        </button>
+                        <button type="submit" class="mmhc-btn mmhc-btn--primary w-full py-3">Send Message</button>
                     </form>
                 </div>
                 
@@ -1566,10 +939,8 @@
                         <h3 class="text-2xl font-bold text-gray-800 mb-6">Contact Information</h3>
                         <div class="space-y-6">
                             @if($contactAddress)
-                            <div class="flex items-start">
-                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-map-marker-alt text-blue-600"></i>
-                                </div>
+                            <div class="mmhc-contact-info-item">
+                                <div class="mmhc-contact-info-icon"><i class="fas fa-map-marker-alt"></i></div>
                                 <div>
                                     <h4 class="font-semibold text-gray-800 mb-1">Corporate Office</h4>
                                     <p class="text-gray-600">{!! nl2br(e($contactAddress)) !!}</p>
@@ -1659,7 +1030,7 @@
     </div>
 
     <!-- FOOTER -->
-    <footer class="bg-gray-900 text-white py-8 mmhc-landing-footer">
+    <footer class="mmhc-footer mmhc-landing-footer">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Bottom Bar -->
             <div class="flex flex-col md:flex-row justify-between items-center">
@@ -1680,6 +1051,14 @@
     <script src="{{ asset('js/capacitor-app.js') }}" defer></script>
     @include('partials.pwa-scripts')
     <script>
+    (function () {
+        var nav = document.getElementById('mmhcLandingNav');
+        if (nav) {
+            window.addEventListener('scroll', function () {
+                nav.classList.toggle('is-scrolled', window.scrollY > 8);
+            }, { passive: true });
+        }
+    })();
     (function () {
         var btn = document.getElementById('mmhcMobileMenuBtn');
         var panel = document.getElementById('mmhcMobileMenuPanel');
