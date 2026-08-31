@@ -948,10 +948,8 @@
                             </div>
                             @endif
                             @if($contactPhone || $contactWebsite)
-                            <div class="flex items-start">
-                                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-phone text-green-600"></i>
-                                </div>
+                            <div class="mmhc-contact-info-item">
+                                <div class="mmhc-contact-info-icon"><i class="fas fa-phone"></i></div>
                                 <div>
                                     <h4 class="font-semibold text-gray-800 mb-1">Phone (24x7)</h4>
                                     <p class="text-gray-600">{{ $contactPhone }}{!! $contactWebsite ? '<br>' . e($contactWebsite) : '' !!}</p>
@@ -959,10 +957,8 @@
                             </div>
                             @endif
                             @if($contactEmail)
-                            <div class="flex items-start">
-                                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-envelope text-purple-600"></i>
-                                </div>
+                            <div class="mmhc-contact-info-item">
+                                <div class="mmhc-contact-info-icon"><i class="fas fa-envelope"></i></div>
                                 <div>
                                     <h4 class="font-semibold text-gray-800 mb-1">Email</h4>
                                     <p class="text-gray-600">{{ $contactEmail }}</p>
@@ -970,10 +966,8 @@
                             </div>
                             @endif
                             @if($serviceLocations)
-                            <div class="flex items-start">
-                                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-map-marked-alt text-orange-600"></i>
-                                </div>
+                            <div class="mmhc-contact-info-item">
+                                <div class="mmhc-contact-info-icon"><i class="fas fa-map-marked-alt"></i></div>
                                 <div>
                                     <h4 class="font-semibold text-gray-800 mb-1">Service Locations</h4>
                                     <p class="text-gray-600">{!! nl2br(e($serviceLocations)) !!}</p>
